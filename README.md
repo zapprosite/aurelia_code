@@ -6,6 +6,8 @@
 
 Telegram-native. Tool-driven. SQLite-backed. Built to stay light.
 
+One persistent agent, many target projects.
+
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![Runtime](https://img.shields.io/badge/Runtime-Local--First-0F172A)](#runtime-model)
 [![Architecture](https://img.shields.io/badge/Architecture-Modular_Monolith-1F2937)](docs/ARCHITECTURE.md)
