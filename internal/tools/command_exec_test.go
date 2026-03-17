@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -93,7 +95,7 @@ func TestRunCommandHandler_UsesWorkdir(t *testing.T) {
 	}
 
 	result := decodeCommandResult(t, raw)
-	if filepath.Clean(strings.TrimSpace(result.Stdout)) != filepath.Clean(workdir) {
+	if !samePathForTest(strings.TrimSpace(result.Stdout), workdir) {
 		t.Fatalf("expected stdout workdir %q, got %q", workdir, result.Stdout)
 	}
 }
@@ -111,7 +113,7 @@ func TestRunCommandHandler_UsesTaskWorkdirFromContext(t *testing.T) {
 	}
 
 	result := decodeCommandResult(t, raw)
-	if filepath.Clean(strings.TrimSpace(result.Stdout)) != filepath.Clean(workdir) {
+	if !samePathForTest(strings.TrimSpace(result.Stdout), workdir) {
 		t.Fatalf("expected task workdir %q, got %q", workdir, result.Stdout)
 	}
 }
@@ -302,4 +304,30 @@ func TestRunCommandHandler_AllowsNetstatForLocalDiagnostics(t *testing.T) {
 	}
 }
 
+func samePathForTest(got, want string) bool {
+	got = normalizePathForTest(got)
+	want = normalizePathForTest(want)
+	if runtime.GOOS == "windows" {
+		got = strings.ToLower(got)
+		want = strings.ToLower(want)
+	}
+	if got == want {
+		return true
+	}
 
+	gotInfo, gotErr := os.Stat(got)
+	wantInfo, wantErr := os.Stat(want)
+	if gotErr == nil && wantErr == nil {
+		return os.SameFile(gotInfo, wantInfo)
+	}
+	return false
+}
+
+func normalizePathForTest(path string) string {
+	path = filepath.Clean(strings.TrimSpace(path))
+	resolved, err := filepath.EvalSymlinks(path)
+	if err == nil {
+		return filepath.Clean(resolved)
+	}
+	return path
+}

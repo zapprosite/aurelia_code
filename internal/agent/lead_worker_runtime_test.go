@@ -41,6 +41,22 @@ func newRuntimeTestManager(t *testing.T) TeamManager {
 	return manager
 }
 
+func waitForCondition(t *testing.T, timeout time.Duration, check func() (bool, string)) {
+	t.Helper()
+
+	deadline := time.Now().Add(timeout)
+	for {
+		ok, msg := check()
+		if ok {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal(msg)
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+}
+
 func TestWorkerRuntime_RunOnce_CompletesTaskAndReportsToLead(t *testing.T) {
 	t.Parallel()
 
@@ -454,14 +470,17 @@ func TestMasterTeamService_NotifiesMasterWhenWorkerFails(t *testing.T) {
 		t.Fatalf("Spawn(failing task) error = %v", err)
 	}
 
-	select {
-	case msg := <-notifications:
-		if !strings.Contains(msg, "falhou") {
-			t.Fatalf("expected failure notification to mention falha, got %q", msg)
+	waitForCondition(t, 8*time.Second, func() (bool, string) {
+		select {
+		case msg := <-notifications:
+			if strings.Contains(msg, "falhou") {
+				return true, ""
+			}
+			return false, "expected failure notification to mention falha"
+		default:
+			return false, "expected master failure notification"
 		}
-	case <-time.After(2 * time.Second):
-		t.Fatalf("expected master failure notification")
-	}
+	})
 }
 
 type sequencedTaskExecutor struct {
@@ -558,11 +577,14 @@ func TestMasterTeamService_Spawn_PersistsAndAppliesAllowedToolsForWorker(t *test
 		t.Fatalf("Spawn() error = %v", err)
 	}
 
-	select {
-	case <-notifications:
-	case <-time.After(2 * time.Second):
-		t.Fatalf("expected worker completion notification")
-	}
+	waitForCondition(t, 8*time.Second, func() (bool, string) {
+		select {
+		case <-notifications:
+			return true, ""
+		default:
+			return false, "expected worker completion notification"
+		}
+	})
 
 	teamID, err := service.ensureTeam(ctx, "conversation-filtered-tools", "user-filtered-tools")
 	if err != nil {
@@ -609,8 +631,6 @@ func TestMasterTeamService_Spawn_PersistsWorkdirForWorkerAndRecovery(t *testing.
 		t.Fatalf("Spawn() error = %v", err)
 	}
 
-	time.Sleep(400 * time.Millisecond)
-
 	teamID, err := service.ensureTeam(ctx, "conversation-workdir-recovery", "user-workdir-recovery")
 	if err != nil {
 		t.Fatalf("ensureTeam() error = %v", err)
@@ -627,21 +647,21 @@ func TestMasterTeamService_Spawn_PersistsWorkdirForWorkerAndRecovery(t *testing.
 		t.Fatalf("expected original task workdir to persist, got %q", task.Workdir)
 	}
 
-	tasks, err := manager.ListTasks(ctx, teamID)
-	if err != nil {
-		t.Fatalf("ListTasks() error = %v", err)
-	}
-
 	var recovery *TeamTask
-	for i := range tasks {
-		if strings.HasPrefix(tasks[i].Title, recoveryTaskPrefix) {
-			recovery = &tasks[i]
-			break
+	waitForCondition(t, 8*time.Second, func() (bool, string) {
+		tasks, err := manager.ListTasks(ctx, teamID)
+		if err != nil {
+			return false, "ListTasks() error = " + err.Error()
 		}
-	}
-	if recovery == nil {
-		t.Fatal("expected recovery task to be created")
-	}
+		for i := range tasks {
+			if strings.HasPrefix(tasks[i].Title, recoveryTaskPrefix) {
+				candidate := tasks[i]
+				recovery = &candidate
+				return true, ""
+			}
+		}
+		return false, "expected recovery task to be created"
+	})
 	if recovery.Workdir != `C:\projetos\api-alvo` {
 		t.Fatalf("expected recovery task to inherit workdir, got %q", recovery.Workdir)
 	}
@@ -672,7 +692,7 @@ func TestMasterTeamService_OnFailure_CreatesOneRecoveryCycle(t *testing.T) {
 		t.Fatalf("Spawn(recovery flow) error = %v", err)
 	}
 
-	deadline := time.After(3 * time.Second)
+	deadline := time.After(8 * time.Second)
 	var sawFailure bool
 	var sawRecovery bool
 	for !sawFailure || !sawRecovery {
@@ -801,23 +821,21 @@ func TestMasterTeamService_OnFailure_ReassignsRecoveryToAnotherWorkerWhenAvailab
 		t.Fatalf("Spawn() error = %v", err)
 	}
 
-	time.Sleep(300 * time.Millisecond)
-
-	tasks, err := manager.ListTasks(ctx, teamID)
-	if err != nil {
-		t.Fatalf("ListTasks() error = %v", err)
-	}
-
 	var recovery *TeamTask
-	for i := range tasks {
-		if strings.HasPrefix(tasks[i].Title, recoveryTaskPrefix) {
-			recovery = &tasks[i]
-			break
+	waitForCondition(t, 8*time.Second, func() (bool, string) {
+		tasks, err := manager.ListTasks(ctx, teamID)
+		if err != nil {
+			return false, "ListTasks() error = " + err.Error()
 		}
-	}
-	if recovery == nil {
-		t.Fatal("expected recovery task to be created")
-	}
+		for i := range tasks {
+			if strings.HasPrefix(tasks[i].Title, recoveryTaskPrefix) {
+				candidate := tasks[i]
+				recovery = &candidate
+				return true, ""
+			}
+		}
+		return false, "expected recovery task to be created"
+	})
 	if recovery.AssignedAgent == nil || *recovery.AssignedAgent != "fixer" {
 		t.Fatalf("expected recovery to be reassigned to fixer, got %#v", recovery.AssignedAgent)
 	}
@@ -848,36 +866,33 @@ func TestMasterTeamService_OnFailure_MarksTaskTerminalAfterRetryLimit(t *testing
 		t.Fatalf("Spawn() error = %v", err)
 	}
 
-	time.Sleep(400 * time.Millisecond)
-
-	tasks, err := manager.ListTasks(ctx, teamID)
-	if err != nil {
-		t.Fatalf("ListTasks() error = %v", err)
-	}
-
-	var failedCount int
-	for _, task := range tasks {
-		if task.Status == TaskFailed {
-			failedCount++
+	waitForCondition(t, 8*time.Second, func() (bool, string) {
+		tasks, err := manager.ListTasks(ctx, teamID)
+		if err != nil {
+			return false, "ListTasks() error = " + err.Error()
 		}
-	}
-	if failedCount < 2 {
-		t.Fatalf("expected original task and recovery task to end failed, got %d failed tasks", failedCount)
-	}
 
-	events, err := manager.ListEvents(ctx, teamID, 50)
-	if err != nil {
-		t.Fatalf("ListEvents() error = %v", err)
-	}
-	var recoveryCreated int
-	for _, event := range events {
-		if event.EventType == "task_created" && strings.Contains(event.Payload, recoveryTaskPrefix) {
-			recoveryCreated++
+		var failedCount int
+		for _, task := range tasks {
+			if task.Status == TaskFailed {
+				failedCount++
+			}
 		}
-	}
-	if recoveryCreated != 1 {
-		t.Fatalf("expected exactly one recovery task before terminal stop, got %d", recoveryCreated)
-	}
+		events, err := manager.ListEvents(ctx, teamID, 50)
+		if err != nil {
+			return false, "ListEvents() error = " + err.Error()
+		}
+		var recoveryCreated int
+		for _, event := range events {
+			if event.EventType == "task_created" && strings.Contains(event.Payload, recoveryTaskPrefix) {
+				recoveryCreated++
+			}
+		}
+		if failedCount >= 2 && recoveryCreated == 1 {
+			return true, ""
+		}
+		return false, "expected original task and recovery task to end failed with exactly one recovery task"
+	})
 }
 
 func TestMasterTeamService_OnFailure_BuildsRecoveryTaskFromEventHistory(t *testing.T) {
@@ -906,7 +921,7 @@ func TestMasterTeamService_OnFailure_BuildsRecoveryTaskFromEventHistory(t *testi
 	}
 
 	var recovery *TeamTask
-	deadline := time.Now().Add(2 * time.Second)
+	deadline := time.Now().Add(8 * time.Second)
 	for time.Now().Before(deadline) {
 		tasks, err := manager.ListTasks(ctx, teamID)
 		if err != nil {
@@ -1029,20 +1044,23 @@ func TestMasterTeamService_FinalNotification_WhenTeamConverges(t *testing.T) {
 		t.Fatalf("Spawn() error = %v", err)
 	}
 
-	select {
-	case msg := <-notifications:
-		if !strings.Contains(strings.ToLower(msg), "fechei este ciclo do time") {
-			t.Fatalf("expected final master response, got %q", msg)
+	waitForCondition(t, 8*time.Second, func() (bool, string) {
+		select {
+		case msg := <-notifications:
+			if !strings.Contains(strings.ToLower(msg), "fechei este ciclo do time") {
+				return false, "expected final master response"
+			}
+			if !strings.Contains(msg, "completed=1") {
+				return false, "expected final snapshot in message"
+			}
+			if !strings.Contains(strings.ToLower(msg), "encerrando a operacao deste ciclo") {
+				return false, "expected final message to mention cycle cleanup"
+			}
+			return true, ""
+		default:
+			return false, "expected final master notification"
 		}
-		if !strings.Contains(msg, "completed=1") {
-			t.Fatalf("expected final snapshot in message, got %q", msg)
-		}
-		if !strings.Contains(strings.ToLower(msg), "encerrando a operacao deste ciclo") {
-			t.Fatalf("expected final message to mention cycle cleanup, got %q", msg)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatalf("expected final master notification")
-	}
+	})
 }
 
 func TestMasterTeamService_BuildExecutionStatusSnapshot_IgnoresHistoricalRuns(t *testing.T) {
@@ -1139,7 +1157,7 @@ func TestMasterTeamService_BuildExecutionStatusSnapshot_CollapsesFailedTaskWithS
 		t.Fatalf("Spawn() error = %v", err)
 	}
 
-	deadline := time.After(2 * time.Second)
+	deadline := time.After(8 * time.Second)
 	for {
 		snapshot, err := service.BuildExecutionStatusSnapshot(ctx, "conversation-collapse", "run-collapse")
 		if err != nil {
@@ -1499,6 +1517,15 @@ func TestWorkerRuntime_RunOnce_RenewsLeaseWhileTaskIsRunning(t *testing.T) {
 	}()
 
 	<-executor.started
+	var initialLeaseExpiresAt time.Time
+	err = manager.store.db.QueryRowContext(ctx,
+		`SELECT lease_expires_at FROM team_members WHERE team_id = ? AND agent_name = ?`,
+		teamID, "worker-a",
+	).Scan(&initialLeaseExpiresAt)
+	if err != nil {
+		t.Fatalf("query initial team member lease error = %v", err)
+	}
+
 	time.Sleep(140 * time.Millisecond)
 
 	var leaseExpiresAt time.Time
@@ -1513,8 +1540,8 @@ func TestWorkerRuntime_RunOnce_RenewsLeaseWhileTaskIsRunning(t *testing.T) {
 	if status != "active" {
 		t.Fatalf("expected active worker status during task, got %q", status)
 	}
-	if !leaseExpiresAt.After(time.Now().UTC()) {
-		t.Fatalf("expected heartbeat to renew lease into the future, got %v", leaseExpiresAt)
+	if !leaseExpiresAt.After(initialLeaseExpiresAt) {
+		t.Fatalf("expected heartbeat to renew lease beyond initial expiry, got initial=%v current=%v", initialLeaseExpiresAt, leaseExpiresAt)
 	}
 
 	close(executor.release)

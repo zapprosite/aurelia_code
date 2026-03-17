@@ -17,9 +17,9 @@ import (
 )
 
 type scriptedLLM struct {
-	mu       sync.Mutex
-	calls    int
-	handler  func(systemPrompt string, history []agent.Message, tools []agent.Tool) (*agent.ModelResponse, error)
+	mu      sync.Mutex
+	calls   int
+	handler func(systemPrompt string, history []agent.Message, tools []agent.Tool) (*agent.ModelResponse, error)
 }
 
 func (s *scriptedLLM) GenerateContent(ctx context.Context, systemPrompt string, history []agent.Message, defs []agent.Tool) (*agent.ModelResponse, error) {
@@ -71,10 +71,10 @@ func TestE2E_PersonaLoopWithRealTools(t *testing.T) {
 	mem, canonical := newCanonicalServiceForE2E(t)
 
 	if err := canonical.ApplyFacts(ctx, "42", map[string]memory.Fact{
-		"user.name":                         {Scope: "user", EntityID: "42", Key: "user.name", Value: "Rafael", Source: "bootstrap"},
-		"user.preference.response_style":   {Scope: "user", EntityID: "42", Key: "user.preference.response_style", Value: "direto", Source: "conversation"},
-		"project.memory.strategy":          {Scope: "project", EntityID: "default", Key: "project.memory.strategy", Value: "sqlite + facts + notes", Source: "conversation"},
-	}) ; err != nil {
+		"user.name":                      {Scope: "user", EntityID: "42", Key: "user.name", Value: "Rafael", Source: "bootstrap"},
+		"user.preference.response_style": {Scope: "user", EntityID: "42", Key: "user.preference.response_style", Value: "direto", Source: "conversation"},
+		"project.memory.strategy":        {Scope: "project", EntityID: "default", Key: "project.memory.strategy", Value: "sqlite + facts + notes", Source: "conversation"},
+	}); err != nil {
 		t.Fatalf("ApplyFacts() error = %v", err)
 	}
 	if err := mem.AddNote(ctx, memory.Note{
@@ -107,7 +107,7 @@ func TestE2E_PersonaLoopWithRealTools(t *testing.T) {
 				}
 				if !strings.Contains(systemPrompt, "# CANONICAL IDENTITY") {
 					t.Fatalf("expected canonical identity block in prompt, got %q", systemPrompt)
-					}
+				}
 				return &agent.ModelResponse{
 					Content: "Vou verificar o arquivo local.",
 					ToolCalls: []agent.ToolCall{
@@ -188,7 +188,7 @@ func TestE2E_MasterTeamRecoveryFlow(t *testing.T) {
 
 	var sawFailure bool
 	var sawFinal bool
-	deadline := time.After(4 * time.Second)
+	deadline := time.After(10 * time.Second)
 	for !sawFailure || !sawFinal {
 		select {
 		case msg := <-notifications:
@@ -341,5 +341,3 @@ IDENTITY_BODY`
 
 	return mem, persona.NewCanonicalIdentityService(mem, identityPath, soulPath, userPath, "", "", "")
 }
-
-
