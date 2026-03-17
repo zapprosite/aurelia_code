@@ -9,6 +9,18 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "onboard":
+			if err := runOnboard(os.Stdin, os.Stdout); err != nil {
+				log.Fatalf("Failed to run onboarding: %v", err)
+			}
+			return
+		default:
+			log.Fatalf("Unknown command: %s", os.Args[1])
+		}
+	}
+
 	app, err := bootstrapApp()
 	if err != nil {
 		log.Fatalf("Failed to bootstrap Aurelia: %v", err)
@@ -27,5 +39,3 @@ func waitForShutdownSignal() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
 }
-
-

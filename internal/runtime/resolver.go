@@ -36,6 +36,9 @@ func (r *PathResolver) Root() string { return r.root }
 // Config returns the path to the config/ subdirectory.
 func (r *PathResolver) Config() string { return filepath.Join(r.root, "config") }
 
+// AppConfig returns the path to the main app config JSON file.
+func (r *PathResolver) AppConfig() string { return filepath.Join(r.Config(), "app.json") }
+
 // Data returns the path to the data/ subdirectory.
 func (r *PathResolver) Data() string { return filepath.Join(r.root, "data") }
 
@@ -50,5 +53,3 @@ func (r *PathResolver) Skills() string { return filepath.Join(r.root, "skills") 
 
 // Logs returns the path to the logs/ subdirectory.
 func (r *PathResolver) Logs() string { return filepath.Join(r.root, "logs") }
-
-

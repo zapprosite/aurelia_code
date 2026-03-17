@@ -17,7 +17,7 @@ The repository must not contain:
 
 - API keys
 - bot tokens
-- local `.env` files
+- local `~/.aurelia/config/app.json` files
 - local MCP config with real credentials
 - local databases
 - runtime memory artifacts

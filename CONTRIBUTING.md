@@ -37,7 +37,7 @@ Allowed:
 Forbidden:
 
 - secrets
-- `.env`
+- local `~/.aurelia/config/app.json`
 - local MCP config with real keys
 - local runtime state
 - local databases

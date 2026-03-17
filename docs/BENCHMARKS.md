@@ -27,9 +27,9 @@ Environment:
 - Windows
 - Go `1.25`
 - release build with `-trimpath -ldflags "-s -w"`
-- local `.env` loaded privately for runtime-only dependencies
+- local instance config stored outside the repository
 - benchmark runtime isolated in a temporary `AURELIA_HOME`
-- benchmark DB and MCP config paths redirected to temporary paths
+- benchmark DB and MCP config paths isolated under that temporary instance
 
 Notes:
 
@@ -89,7 +89,7 @@ For reproducibility:
 
 - use the release build command above
 - isolate `AURELIA_HOME` to a temporary directory
-- redirect `DB_PATH` and `MCP_SERVERS_CONFIG_PATH` to temporary paths
+- seed `config/app.json` inside that temporary instance when needed
 - do not publish local credentials, tokens, or private config
 
 ## Pending Expansion

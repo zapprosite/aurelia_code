@@ -30,11 +30,16 @@ type app struct {
 	cronStore     *cron.SQLiteCronStore
 	mcpManager    *mcp.Manager
 	taskStore     *agent.SQLiteTaskStore
-	llmProvider   *llm.KimiProvider
+	llmProvider   closableLLMProvider
 	bot           *telegram.BotController
 	cronScheduler *cron.Scheduler
 	cronCtx       context.Context
 	cronCancel    context.CancelFunc
+}
+
+type closableLLMProvider interface {
+	agent.LLMProvider
+	Close()
 }
 
 func bootstrapApp() (*app, error) {
@@ -74,7 +79,10 @@ func bootstrapApp() (*app, error) {
 		projectPlaybookPath = filepath.Join(cwd, "docs", "PROJECT_PLAYBOOK.md")
 		projectSkillsDir = runtime.ProjectSkills(cwd)
 	}
-	llmProvider := llm.NewKimiProvider(cfg.KimiAPIKey, "k2.5")
+	llmProvider, err := buildLLMProvider(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("initialize llm provider: %w", err)
+	}
 	canonicalService := persona.NewCanonicalIdentityService(
 		mem,
 		filepath.Join(personasDir, "IDENTITY.md"),
@@ -103,7 +111,12 @@ func bootstrapApp() (*app, error) {
 	skillRouter := skill.NewRouter(llmProvider)
 	skillExecutor := skill.NewExecutor(loop)
 	skillInstaller := skill.NewInstaller(resolver.Skills(), projectSkillsDir)
-	transcriber := stt.NewGroqTranscriber(cfg.GroqAPIKey)
+	transcriber, err := buildTranscriber(cfg)
+	if err != nil {
+		_ = cronStore.Close()
+		_ = mem.Close()
+		return nil, fmt.Errorf("initialize transcriber: %w", err)
+	}
 
 	installSkillTool := tools.NewInstallSkillTool(skillInstaller)
 	registry.Register(installSkillTool.Definition(), installSkillTool.Execute)
@@ -158,6 +171,24 @@ func bootstrapApp() (*app, error) {
 		cronCtx:       cronCtx,
 		cronCancel:    cronCancel,
 	}, nil
+}
+
+func buildLLMProvider(cfg *config.AppConfig) (closableLLMProvider, error) {
+	switch cfg.LLMProvider {
+	case "", "kimi":
+		return llm.NewKimiProvider(cfg.KimiAPIKey, "k2.5"), nil
+	default:
+		return nil, fmt.Errorf("unsupported llm provider %q", cfg.LLMProvider)
+	}
+}
+
+func buildTranscriber(cfg *config.AppConfig) (stt.Transcriber, error) {
+	switch cfg.STTProvider {
+	case "", "groq":
+		return stt.NewGroqTranscriber(cfg.GroqAPIKey), nil
+	default:
+		return nil, fmt.Errorf("unsupported stt provider %q", cfg.STTProvider)
+	}
 }
 
 func (a *app) start() {
@@ -240,5 +271,3 @@ func buildCronScheduler(
 	cronCtx, cancel := context.WithCancel(context.Background())
 	return scheduler, cronCtx, cancel, nil
 }
-
-

@@ -13,7 +13,6 @@ import (
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/telegram"
 	"github.com/kocar/aurelia/internal/tools"
-	"github.com/kocar/aurelia/pkg/llm"
 	"gopkg.in/telebot.v3"
 )
 
@@ -66,7 +65,7 @@ func maybeRegisterMCPTools(cfg *config.AppConfig, registry *agent.ToolRegistry) 
 func registerSpawnAgentTool(
 	cfg *config.AppConfig,
 	registry *agent.ToolRegistry,
-	llmProvider *llm.KimiProvider,
+	llmProvider agent.LLMProvider,
 	bot *telegram.BotController,
 	taskStore *agent.SQLiteTaskStore,
 ) error {
@@ -124,5 +123,3 @@ func notifyMasterTeam(bot *telegram.BotController, teamKey, message string) {
 func loggableError(format string, args ...any) error {
 	return fmt.Errorf(format, args...)
 }
-
-

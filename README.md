@@ -146,18 +146,39 @@ Requirements:
 - Kimi API key
 - Groq API key for STT
 
-Example environment:
+Main runtime config lives in `~/.aurelia/config/app.json`.
 
-```env
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token
-TELEGRAM_ALLOWED_USER_IDS=123456789
-KIMI_API_KEY=your-kimi-api-key
-GROQ_API_KEY=your-groq-api-key
-MAX_ITERATIONS=5
-DB_PATH=./data/aurelia.db
-MEMORY_WINDOW_SIZE=20
-MCP_SERVERS_CONFIG_PATH=./mcp_servers.example.json
+Example config:
+
+```json
+{
+  "llm_provider": "kimi",
+  "stt_provider": "groq",
+  "telegram_bot_token": "your-telegram-bot-token",
+  "telegram_allowed_user_ids": [123456789],
+  "kimi_api_key": "your-kimi-api-key",
+  "groq_api_key": "your-groq-api-key",
+  "max_iterations": 500,
+  "db_path": "C:/Users/you/.aurelia/data/aurelia.db",
+  "memory_window_size": 20,
+  "mcp_servers_config_path": "C:/Users/you/.aurelia/config/mcp_servers.json"
+}
 ```
+
+If the file does not exist, Aurelia creates it automatically with defaults on first start.
+
+Interactive onboarding:
+
+```bash
+go run ./cmd/aurelia onboard
+```
+
+The onboarding runs in guided steps:
+
+- select the LLM provider
+- select the STT provider
+- configure Telegram
+- review runtime settings and save
 
 Run:
 

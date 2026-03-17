@@ -71,6 +71,7 @@ Lives outside the repository in a per-user hidden directory.
 Contains:
 
 - local config
+- canonical app config in `config/app.json`
 - SQLite state
 - logs
 - learned notes
@@ -97,6 +98,13 @@ Project-specific rules must not leak into global defaults unless explicitly prom
 - starting and stopping runtimes
 
 It must stay thin.
+
+Runtime configuration is instance-local and file-backed.
+
+Rule:
+
+- app runtime config is loaded from `~/.aurelia/config/app.json`
+- repository-local `.env` files are not part of the supported runtime config model
 
 ### Interface Layer
 

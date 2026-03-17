@@ -12,7 +12,7 @@ const (
 
 	audioNotConfiguredMessage = "⚠️ **Audio indisponivel**\n\n" +
 		"Meu modulo de transcricao nao esta configurado.\n\n" +
-		"Configure a variavel `GROQ_API_KEY` no arquivo `.env`."
+		"Configure `groq_api_key` no arquivo `~/.aurelia/config/app.json`."
 
 	audioProcessingFailureMessage = "❌ **Falha na transcricao**\n\n" +
 		"Nao consegui compreender o audio. Tente falar mais claro ou mais perto do microfone."
@@ -42,5 +42,3 @@ const (
 		"- `USER.md`\n\n" +
 		"para refinar nosso comportamento."
 )
-
-
