@@ -2,6 +2,8 @@
 
 # Aurelia
 
+<img src="assets/aurelia_cover.png" alt="Aurelia cover" width="720" />
+
 **A local-first autonomous coding agent in Go.**
 
 Telegram-native. Tool-driven. SQLite-backed. Built to stay light.
