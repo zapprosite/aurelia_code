@@ -3,6 +3,7 @@
 This directory contains ready-to-customize playbooks for AI agents collaborating on the repository.
 
 ## Available Agents
+<<<<<<< HEAD
 - [Code Reviewer](./code-reviewer.md) — Review code changes for quality, style, and best practices
 - [Bug Fixer](./bug-fixer.md) — Analyze bug reports and error messages
 - [Feature Developer](./feature-developer.md) — Implement new features according to specifications
@@ -17,6 +18,10 @@ This directory contains ready-to-customize playbooks for AI agents collaborating
 - [Devops Specialist](./devops-specialist.md) — Design and maintain CI/CD pipelines
 - [Database Specialist](./database-specialist.md) — Design and optimize database schemas
 - [Mobile Specialist](./mobile-specialist.md) — Develop native and cross-platform mobile applications
+=======
+- [Architect Specialist](./architect-specialist.md) — Design overall system architecture and patterns
+- [Feature Developer](./feature-developer.md) — Implement new features according to specifications
+>>>>>>> template/main
 
 ## How To Use These Playbooks
 1. Pick the agent that matches your task.
