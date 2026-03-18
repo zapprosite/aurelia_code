@@ -1,0 +1,111 @@
+{
+  "version": "1.0.0",
+  "generated": "2026-03-18T20:30:31.462Z",
+  "stack": {
+    "primaryLanguage": "go",
+    "languages": [
+      "go"
+    ],
+    "frameworks": [],
+    "buildTools": [],
+    "testFrameworks": [],
+    "packageManager": null,
+    "isMonorepo": false,
+    "hasDocker": false,
+    "hasCI": true
+  },
+  "structure": {
+    "totalFiles": 190,
+    "rootPath": ".",
+    "topDirectories": [
+      {
+        "name": "assets",
+        "fileCount": 1,
+        "description": "Static assets (images, fonts)"
+      },
+      {
+        "name": "cmd",
+        "fileCount": 8,
+        "description": "Module directory"
+      },
+      {
+        "name": "docs",
+        "fileCount": 7,
+        "description": "Documentation files"
+      },
+      {
+        "name": "e2e",
+        "fileCount": 1,
+        "description": "Module directory"
+      },
+      {
+        "name": "internal",
+        "fileCount": 139,
+        "description": "Module directory"
+      },
+      {
+        "name": "pkg",
+        "fileCount": 27,
+        "description": "Module directory"
+      }
+    ],
+    "languageDistribution": [
+      {
+        "extension": ".go",
+        "count": 175
+      },
+      {
+        "extension": ".md",
+        "count": 10
+      },
+      {
+        "extension": ".json",
+        "count": 2
+      },
+      {
+        "extension": ".sum",
+        "count": 1
+      },
+      {
+        "extension": ".mod",
+        "count": 1
+      },
+      {
+        "extension": ".png",
+        "count": 1
+      }
+    ]
+  },
+  "architecture": {
+    "layers": [],
+    "patterns": [],
+    "entryPoints": [],
+    "mainEntryPoints": [],
+    "moduleExports": []
+  },
+  "symbols": {
+    "classes": [],
+    "interfaces": [],
+    "functions": [],
+    "types": [],
+    "enums": []
+  },
+  "publicAPI": [],
+  "dependencies": {
+    "mostImported": []
+  },
+  "stats": {
+    "totalSymbols": 0,
+    "exportedSymbols": 0,
+    "analysisTimeMs": 12
+  },
+  "keyFiles": [],
+  "navigation": {
+    "tests": "src/**/*.test.ts",
+    "config": [],
+    "types": [],
+    "mainLogic": [
+      "src"
+    ]
+  }
+}

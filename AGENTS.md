@@ -148,3 +148,7 @@ Consistency over cleverness.
 Reliable code over fast guesses.
 
 Always leave the codebase in a better state than you found it.
+## AI Context References
+- Documentation index: `.context/docs/README.md`
+- Agent playbooks: `.context/agents/README.md`
+

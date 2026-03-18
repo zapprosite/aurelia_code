@@ -1,0 +1,20 @@
+project:
+  name: "Aurelia Core Setup"
+  scale: MEDIUM
+  started: "2026-03-18T20:30:43.897Z"
+  current_phase: P
+
+phases:
+  P:
+    status: in_progress
+    started_at: "2026-03-18T20:30:43.897Z"
+  R:
+    status: pending
+  E:
+    status: pending
+  V:
+    status: pending
+  C:
+    status: skipped
+    reason: "Not required for scale MEDIUM"
+
