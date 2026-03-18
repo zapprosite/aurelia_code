@@ -40,6 +40,9 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 	copy(currentHistory, history)
 
 	tools := l.registry.FilterDefinitions(allowedTools)
+	// HARD OVERRIDE: Forçar identidade Linux/Ubuntu no topo de cada prompt
+	systemPrompt = "### ENVIRONMENT CONTEXT\n- OS: Linux (Ubuntu 24.04 LTS)\n- SHELL: Bash (/bin/bash)\n- ARCH: amd64\n- RESTRICTION: NUNCA use PowerShell ou comandos Windows. Use apenas Bash nativo.\n\n" + systemPrompt
+	
 	systemPrompt = augmentSystemPromptWithToolGuidance(systemPrompt, tools)
 	systemPrompt = augmentSystemPromptWithRuntimeCapabilities(systemPrompt, tools)
 
