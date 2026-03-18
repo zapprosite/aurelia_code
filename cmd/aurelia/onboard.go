@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/runtime"
+	"github.com/kocar/aurelia/pkg/llm"
 	"golang.org/x/term"
 )
 
@@ -23,7 +25,10 @@ type onboardStep int
 
 const (
 	stepLLMProvider onboardStep = iota
+	stepOpenAIAuthMode
+	stepOpenAICodexLogin
 	stepLLMKey
+	stepLLMModel
 	stepSTTProvider
 	stepSTTKey
 	stepTelegramToken
@@ -53,13 +58,20 @@ type keyEvent struct {
 }
 
 type onboardingUI struct {
-	cfg           config.EditableConfig
-	step          onboardStep
-	menuIndex     int
-	input         string
-	message       string
-	reviewOptions []string
+	cfg             config.EditableConfig
+	step            onboardStep
+	menuIndex       int
+	input           string
+	message         string
+	modelSource     string
+	allModelOptions []llm.ModelOption
+	modelOptions    []llm.ModelOption
+	modelFilter     string
+	reviewOptions   []string
+	pendingAction   string
 }
+
+var llmModelCatalog = llm.ListModels
 
 func runOnboard(stdin io.Reader, stdout io.Writer) error {
 	resolver, err := runtime.New()
@@ -103,21 +115,33 @@ func runOnboardPrompt(stdin io.Reader, stdout io.Writer, resolver *runtime.PathR
 		return err
 	}
 
-	if err := writef(stdout, "LLM provider [%s]: %s\n", current.LLMProvider, "Kimi"); err != nil {
-		return err
+	current.LLMProvider, _ = promptChoice(reader, stdout, "LLM provider", current.LLMProvider, llmProviderChoices())
+	if current.LLMProvider == "openai" {
+		current.OpenAIAuthMode, _ = promptChoice(reader, stdout, "OpenAI auth mode", current.OpenAIAuthMode, []string{"api_key", "codex"})
 	}
 	if err := writef(stdout, "STT provider [%s]: %s\n\n", current.STTProvider, "Groq"); err != nil {
 		return err
 	}
 
-	current.KimiAPIKey, _ = promptString(reader, stdout, "Kimi API key", current.KimiAPIKey, true)
+	if usesOpenAICodex(*current) {
+		if err := writef(stdout, "OpenAI auth mode: codex CLI (experimental). Starting device auth now.\n\n"); err != nil {
+			return err
+		}
+		if err := runOpenAIDeviceAuthCommand(stdin, stdout); err != nil {
+			return err
+		}
+	} else {
+		currentKey := currentLLMKey(*current)
+		currentKey, _ = promptString(reader, stdout, llmKeyLabel(current.LLMProvider), currentKey, true)
+		setCurrentLLMKey(current, currentKey)
+	}
+	current.LLMModel, _ = promptLLMModel(reader, stdout, current)
 	current.GroqAPIKey, _ = promptString(reader, stdout, "Groq API key", current.GroqAPIKey, true)
 	current.TelegramBotToken, _ = promptString(reader, stdout, "Telegram bot token", current.TelegramBotToken, true)
 	current.TelegramAllowedUserIDs, _ = promptInt64List(reader, stdout, "Telegram allowed user IDs (comma-separated)", current.TelegramAllowedUserIDs)
 	current.MaxIterations, _ = promptInt(reader, stdout, "Max iterations", current.MaxIterations)
 	current.MemoryWindowSize, _ = promptInt(reader, stdout, "Memory window size", current.MemoryWindowSize)
 
-	current.LLMProvider = "kimi"
 	current.STTProvider = "groq"
 
 	if err := config.SaveEditable(resolver, *current); err != nil {
@@ -165,6 +189,23 @@ func runOnboardTUI(stdin *os.File, stdout *os.File, resolver *runtime.PathResolv
 			clearScreen(stdout)
 			return renderSavedSummary(stdout, resolver, &ui.cfg)
 		}
+		if action := ui.consumePendingAction(); action != "" {
+			switch action {
+			case "openai_codex_login":
+				if err := term.Restore(int(stdin.Fd()), oldState); err != nil {
+					return fmt.Errorf("restore terminal mode: %w", err)
+				}
+				clearScreen(stdout)
+				if err := runOpenAIDeviceAuthCommand(stdin, stdout); err != nil {
+					ui.message = err.Error()
+				}
+				oldState, err = term.MakeRaw(int(stdin.Fd()))
+				if err != nil {
+					return fmt.Errorf("re-enable raw terminal mode: %w", err)
+				}
+				reader = bufio.NewReader(stdin)
+			}
+		}
 	}
 }
 
@@ -172,13 +213,23 @@ func newOnboardingUI(cfg config.EditableConfig) *onboardingUI {
 	if cfg.LLMProvider == "" {
 		cfg.LLMProvider = "kimi"
 	}
+	if cfg.LLMModel == "" {
+		cfg.LLMModel = config.DefaultEditableConfig().LLMModel
+	}
+	if cfg.OpenAIAuthMode == "" {
+		cfg.OpenAIAuthMode = "api_key"
+	}
 	if cfg.STTProvider == "" {
 		cfg.STTProvider = "groq"
 	}
+	modelOptions, modelSource := resolveModelOptions(cfg)
 	return &onboardingUI{
-		cfg:           cfg,
-		step:          stepLLMProvider,
-		reviewOptions: []string{"Save config", "Back", "Cancel"},
+		cfg:             cfg,
+		allModelOptions: append([]llm.ModelOption(nil), modelOptions...),
+		modelOptions:    append([]llm.ModelOption(nil), modelOptions...),
+		modelSource:     modelSource,
+		step:            stepLLMProvider,
+		reviewOptions:   []string{"Save config", "Back", "Cancel"},
 	}
 }
 
@@ -187,7 +238,7 @@ func (u *onboardingUI) View(resolver *runtime.PathResolver) string {
 	b.WriteString("\x1b[2J\x1b[H")
 	b.WriteString(renderOnboardingHeader())
 	_, _ = fmt.Fprintf(&b, "Config file: %s\n", resolver.AppConfig())
-	_, _ = fmt.Fprintf(&b, "Step %d/9\n\n", int(u.step)+1)
+	_, _ = fmt.Fprintf(&b, "Step %d/12\n\n", int(u.step)+1)
 	if u.message != "" {
 		b.WriteString(colorize("! "+u.message, colorBlue))
 		b.WriteString("\n\n")
@@ -197,10 +248,34 @@ func (u *onboardingUI) View(resolver *runtime.PathResolver) string {
 	case stepLLMProvider:
 		b.WriteString("LLM Provider\n")
 		b.WriteString("Select the main chat model provider.\n\n")
-		b.WriteString(renderMenu([]string{"Kimi"}, u.menuIndex))
+		b.WriteString(renderMenu(llmProviderLabels(), u.menuIndex))
 		b.WriteString("\nUse ↑/↓ and Enter.\n")
+	case stepOpenAIAuthMode:
+		b.WriteString("OpenAI Auth Mode\n")
+		b.WriteString("Choose whether OpenAI should use an API key or the local Codex CLI.\n\n")
+		b.WriteString(renderMenu([]string{"API key", "Codex CLI (experimental)"}, u.menuIndex))
+		b.WriteString("\nUse arrows and Enter. Use left to go back.\n")
+	case stepOpenAICodexLogin:
+		b.WriteString("OpenAI Codex Login\n")
+		b.WriteString("Launch the Codex device-auth flow now to get the link and verification code.\n\n")
+		b.WriteString(renderMenu([]string{"Launch login now", "Skip for now", "Back"}, u.menuIndex))
+		b.WriteString("\nUse arrows and Enter.\n")
 	case stepLLMKey:
-		b.WriteString(u.renderInputStep("Kimi API key", "Used for the main LLM runtime.", true))
+		b.WriteString(u.renderInputStep(llmKeyLabel(u.cfg.LLMProvider), llmKeyHelp(u.cfg.LLMProvider), true))
+	case stepLLMModel:
+		b.WriteString("LLM Model\n")
+		b.WriteString("Select the model for the chosen provider.\n\n")
+		if usesProviderModelSearch(u.cfg) {
+			_, _ = fmt.Fprintf(&b, "Search: %s\n", u.modelFilter)
+			_, _ = fmt.Fprintf(&b, "Showing %d of %d models\n\n", len(u.modelOptions), len(u.allModelOptions))
+		}
+		b.WriteString(renderModelMenu(u.modelOptions, u.menuIndex))
+		_, _ = fmt.Fprintf(&b, "\nCatalog source: %s\n", u.modelSource)
+		if usesProviderModelSearch(u.cfg) {
+			b.WriteString("\nType to filter by model or provider. Use arrows and Enter. Backspace removes filter. Use left to go back.\n")
+		} else {
+			b.WriteString("\nUse arrows and Enter. Use left to go back.\n")
+		}
 	case stepSTTProvider:
 		b.WriteString("STT Provider\n")
 		b.WriteString("Select the speech-to-text provider.\n\n")
@@ -220,7 +295,15 @@ func (u *onboardingUI) View(resolver *runtime.PathResolver) string {
 		b.WriteString("Review & Save\n")
 		b.WriteString("Check the config before saving.\n\n")
 		_, _ = fmt.Fprintf(&b, "LLM provider: %s\n", strings.ToUpper(u.cfg.LLMProvider))
-		_, _ = fmt.Fprintf(&b, "Kimi API key: %s\n", maskSecret(u.cfg.KimiAPIKey))
+		if u.cfg.LLMProvider == "openai" {
+			_, _ = fmt.Fprintf(&b, "OpenAI auth mode: %s\n", u.cfg.OpenAIAuthMode)
+		}
+		_, _ = fmt.Fprintf(&b, "LLM model: %s\n", u.cfg.LLMModel)
+		if usesOpenAICodex(u.cfg) {
+			_, _ = fmt.Fprintf(&b, "OpenAI Codex login: run `aurelia auth openai`\n")
+		} else {
+			_, _ = fmt.Fprintf(&b, "%s: %s\n", llmKeyLabel(u.cfg.LLMProvider), maskSecret(currentLLMKey(u.cfg)))
+		}
 		_, _ = fmt.Fprintf(&b, "STT provider: %s\n", strings.ToUpper(u.cfg.STTProvider))
 		_, _ = fmt.Fprintf(&b, "Groq API key: %s\n", maskSecret(u.cfg.GroqAPIKey))
 		_, _ = fmt.Fprintf(&b, "Telegram bot token: %s\n", maskSecret(u.cfg.TelegramBotToken))
@@ -255,9 +338,15 @@ func (u *onboardingUI) HandleKey(ev keyEvent) (saved bool, cancelled bool, err e
 
 	switch u.step {
 	case stepLLMProvider:
-		return u.handleMenuKey(ev, []string{"kimi"}, stepLLMKey, stepLLMProvider)
+		return u.handleMenuKey(ev, llmProviderChoices(), nextOnboardStep(u.cfg, stepLLMProvider), stepLLMProvider)
+	case stepOpenAIAuthMode:
+		return u.handleOpenAIAuthModeMenuKey(ev)
+	case stepOpenAICodexLogin:
+		return u.handleOpenAICodexLoginKey(ev)
+	case stepLLMModel:
+		return u.handleModelMenuKey(ev)
 	case stepSTTProvider:
-		return u.handleMenuKey(ev, []string{"groq"}, stepSTTKey, stepLLMKey)
+		return u.handleMenuKey(ev, []string{"groq"}, stepSTTKey, stepLLMModel)
 	case stepReview:
 		return u.handleReviewKey(ev)
 	default:
@@ -272,21 +361,101 @@ func (u *onboardingUI) handleMenuKey(ev keyEvent, values []string, next onboardS
 	case keyDown:
 		u.menuIndex = wrapIndex(u.menuIndex+1, len(values))
 	case keyEnter:
+		targetStep := next
 		switch u.step {
 		case stepLLMProvider:
 			u.cfg.LLMProvider = values[u.menuIndex]
+			targetStep = nextOnboardStep(u.cfg, stepLLMProvider)
 		case stepSTTProvider:
 			u.cfg.STTProvider = values[u.menuIndex]
 		}
-		u.step = next
-		u.input = u.currentInputValue()
-		u.menuIndex = 0
+		u.setStep(targetStep)
 	case keyLeft:
 		if u.step != prev {
-			u.step = prev
-			u.input = u.currentInputValue()
-			u.menuIndex = 0
+			u.setStep(prev)
 		}
+	case keyQuit:
+		return false, true, nil
+	}
+	return false, false, nil
+}
+
+func (u *onboardingUI) handleOpenAIAuthModeMenuKey(ev keyEvent) (bool, bool, error) {
+	options := []string{"api_key", "codex"}
+	switch ev.code {
+	case keyUp:
+		u.menuIndex = wrapIndex(u.menuIndex-1, len(options))
+	case keyDown:
+		u.menuIndex = wrapIndex(u.menuIndex+1, len(options))
+	case keyEnter:
+		u.cfg.OpenAIAuthMode = options[u.menuIndex]
+		u.setStep(nextOnboardStep(u.cfg, stepOpenAIAuthMode))
+	case keyLeft:
+		u.setStep(stepLLMProvider)
+		u.menuIndex = selectedProviderIndex(u.cfg.LLMProvider)
+	case keyQuit:
+		return false, true, nil
+	}
+	return false, false, nil
+}
+
+func (u *onboardingUI) handleOpenAICodexLoginKey(ev keyEvent) (bool, bool, error) {
+	options := []string{"launch", "skip", "back"}
+	switch ev.code {
+	case keyUp:
+		u.menuIndex = wrapIndex(u.menuIndex-1, len(options))
+	case keyDown:
+		u.menuIndex = wrapIndex(u.menuIndex+1, len(options))
+	case keyEnter:
+		switch options[u.menuIndex] {
+		case "launch":
+			u.pendingAction = "openai_codex_login"
+			u.setStep(stepLLMModel)
+		case "skip":
+			u.setStep(stepLLMModel)
+		case "back":
+			u.setStep(stepOpenAIAuthMode)
+			u.menuIndex = 1
+			return false, false, nil
+		}
+	case keyLeft:
+		u.setStep(stepOpenAIAuthMode)
+		u.menuIndex = 1
+	case keyQuit:
+		return false, true, nil
+	}
+	return false, false, nil
+}
+
+func (u *onboardingUI) handleModelMenuKey(ev keyEvent) (bool, bool, error) {
+	if len(u.modelOptions) == 0 {
+		u.refreshModelOptions()
+	}
+
+	switch ev.code {
+	case keyUp:
+		u.menuIndex = wrapIndex(u.menuIndex-1, len(u.modelOptions))
+	case keyDown:
+		u.menuIndex = wrapIndex(u.menuIndex+1, len(u.modelOptions))
+	case keyRune:
+		if usesProviderModelSearch(u.cfg) {
+			u.modelFilter += string(ev.r)
+			u.applyModelFilter()
+		}
+	case keyBackspace:
+		if usesProviderModelSearch(u.cfg) && len(u.modelFilter) > 0 {
+			u.modelFilter = u.modelFilter[:len(u.modelFilter)-1]
+			u.applyModelFilter()
+		}
+	case keyEnter:
+		if len(u.modelOptions) == 0 {
+			u.message = "no models available for the selected provider"
+			return false, false, nil
+		}
+		u.cfg.LLMModel = u.modelOptions[u.menuIndex].ID
+		u.setStep(stepSTTProvider)
+	case keyLeft:
+		u.setStep(previousOnboardStep(u.cfg, stepLLMModel))
 	case keyQuit:
 		return false, true, nil
 	}
@@ -302,16 +471,13 @@ func (u *onboardingUI) handleInputKey(ev keyEvent) (bool, bool, error) {
 			u.input = u.input[:len(u.input)-1]
 		}
 	case keyLeft:
-		u.step = previousStep(u.step)
-		u.input = u.currentInputValue()
+		u.setStep(previousOnboardStep(u.cfg, u.step))
 	case keyEnter:
 		if err := u.commitInput(); err != nil {
 			u.message = err.Error()
 			return false, false, nil
 		}
-		u.step = nextStep(u.step)
-		u.menuIndex = 0
-		u.input = u.currentInputValue()
+		u.setStep(nextOnboardStep(u.cfg, u.step))
 	case keyQuit:
 		return false, true, nil
 	}
@@ -325,15 +491,13 @@ func (u *onboardingUI) handleReviewKey(ev keyEvent) (bool, bool, error) {
 	case keyDown:
 		u.menuIndex = wrapIndex(u.menuIndex+1, len(u.reviewOptions))
 	case keyLeft:
-		u.step = stepRuntimeMemoryWindow
-		u.input = u.currentInputValue()
+		u.setStep(stepRuntimeMemoryWindow)
 	case keyEnter:
 		switch u.menuIndex {
 		case 0:
 			return true, false, nil
 		case 1:
-			u.step = stepRuntimeMemoryWindow
-			u.input = u.currentInputValue()
+			u.setStep(stepRuntimeMemoryWindow)
 		case 2:
 			return false, true, nil
 		}
@@ -346,7 +510,7 @@ func (u *onboardingUI) handleReviewKey(ev keyEvent) (bool, bool, error) {
 func (u *onboardingUI) commitInput() error {
 	switch u.step {
 	case stepLLMKey:
-		u.cfg.KimiAPIKey = strings.TrimSpace(u.input)
+		setCurrentLLMKey(&u.cfg, strings.TrimSpace(u.input))
 	case stepSTTKey:
 		u.cfg.GroqAPIKey = strings.TrimSpace(u.input)
 	case stepTelegramToken:
@@ -376,7 +540,7 @@ func (u *onboardingUI) commitInput() error {
 func (u *onboardingUI) currentInputValue() string {
 	switch u.step {
 	case stepLLMKey:
-		return u.cfg.KimiAPIKey
+		return currentLLMKey(u.cfg)
 	case stepSTTKey:
 		return u.cfg.GroqAPIKey
 	case stepTelegramToken:
@@ -392,18 +556,74 @@ func (u *onboardingUI) currentInputValue() string {
 	}
 }
 
-func nextStep(step onboardStep) onboardStep {
-	if step >= stepReview {
+func nextOnboardStep(cfg config.EditableConfig, step onboardStep) onboardStep {
+	switch step {
+	case stepLLMProvider:
+		if cfg.LLMProvider == "openai" {
+			return stepOpenAIAuthMode
+		}
+		return stepLLMKey
+	case stepOpenAIAuthMode:
+		if usesOpenAICodex(cfg) {
+			return stepOpenAICodexLogin
+		}
+		return stepLLMKey
+	case stepOpenAICodexLogin:
+		return stepLLMModel
+	case stepLLMKey:
+		return stepLLMModel
+	case stepLLMModel:
+		return stepSTTProvider
+	case stepSTTProvider:
+		return stepSTTKey
+	case stepSTTKey:
+		return stepTelegramToken
+	case stepTelegramToken:
+		return stepTelegramUsers
+	case stepTelegramUsers:
+		return stepRuntimeMaxIterations
+	case stepRuntimeMaxIterations:
+		return stepRuntimeMemoryWindow
+	case stepRuntimeMemoryWindow:
+		return stepReview
+	default:
 		return stepReview
 	}
-	return step + 1
 }
 
-func previousStep(step onboardStep) onboardStep {
-	if step <= stepLLMProvider {
+func previousOnboardStep(cfg config.EditableConfig, step onboardStep) onboardStep {
+	switch step {
+	case stepOpenAIAuthMode:
+		return stepLLMProvider
+	case stepOpenAICodexLogin:
+		return stepOpenAIAuthMode
+	case stepLLMKey:
+		if cfg.LLMProvider == "openai" {
+			return stepOpenAIAuthMode
+		}
+		return stepLLMProvider
+	case stepLLMModel:
+		if cfg.LLMProvider == "openai" && usesOpenAICodex(cfg) {
+			return stepOpenAICodexLogin
+		}
+		return stepLLMKey
+	case stepSTTProvider:
+		return stepLLMModel
+	case stepSTTKey:
+		return stepSTTProvider
+	case stepTelegramToken:
+		return stepSTTKey
+	case stepTelegramUsers:
+		return stepTelegramToken
+	case stepRuntimeMaxIterations:
+		return stepTelegramUsers
+	case stepRuntimeMemoryWindow:
+		return stepRuntimeMaxIterations
+	case stepReview:
+		return stepRuntimeMemoryWindow
+	default:
 		return stepLLMProvider
 	}
-	return step - 1
 }
 
 func wrapIndex(index, size int) int {
@@ -433,6 +653,257 @@ func renderMenu(options []string, selected int) string {
 	return b.String()
 }
 
+func selectedProviderIndex(provider string) int {
+	for i, option := range llmProviderChoices() {
+		if option == provider {
+			return i
+		}
+	}
+	return 0
+}
+
+func llmProviderChoices() []string {
+	return []string{"kimi", "anthropic", "google", "kilo", "openrouter", "zai", "alibaba", "openai"}
+}
+
+func llmProviderLabels() []string {
+	return []string{"Kimi", "Anthropic", "Google", "Kilo Code", "OpenRouter", "Z.ai", "Alibaba", "OpenAI"}
+}
+
+func llmKeyLabel(provider string) string {
+	switch provider {
+	case "anthropic":
+		return "Anthropic API key"
+	case "google":
+		return "Google API key"
+	case "kilo":
+		return "Kilo API key"
+	case "openrouter":
+		return "OpenRouter API key"
+	case "zai":
+		return "Z.ai Coding Plan API key"
+	case "alibaba":
+		return "Alibaba Coding Plan API key"
+	case "openai":
+		return "OpenAI API key"
+	default:
+		return "Kimi API key"
+	}
+}
+
+func usesOpenAICodex(cfg config.EditableConfig) bool {
+	return cfg.LLMProvider == "openai" && cfg.OpenAIAuthMode == "codex"
+}
+
+func llmKeyHelp(provider string) string {
+	switch provider {
+	case "anthropic":
+		return "Used for the Anthropic LLM runtime."
+	case "google":
+		return "Used for the Google Gemini LLM runtime."
+	case "kilo":
+		return "Used for the Kilo Gateway LLM runtime."
+	case "openrouter":
+		return "Used for the OpenRouter LLM runtime."
+	case "zai":
+		return "Used for the Z.ai GLM Coding Plan runtime."
+	case "alibaba":
+		return "Used for the Alibaba Coding Plan runtime."
+	case "openai":
+		return "Used for the OpenAI LLM runtime."
+	default:
+		return "Used for the main LLM runtime."
+	}
+}
+
+func currentLLMKey(cfg config.EditableConfig) string {
+	switch cfg.LLMProvider {
+	case "anthropic":
+		return cfg.AnthropicAPIKey
+	case "google":
+		return cfg.GoogleAPIKey
+	case "kilo":
+		return cfg.KiloAPIKey
+	case "openrouter":
+		return cfg.OpenRouterAPIKey
+	case "zai":
+		return cfg.ZAIAPIKey
+	case "alibaba":
+		return cfg.AlibabaAPIKey
+	case "openai":
+		return cfg.OpenAIAPIKey
+	default:
+		return cfg.KimiAPIKey
+	}
+}
+
+func setCurrentLLMKey(cfg *config.EditableConfig, value string) {
+	switch cfg.LLMProvider {
+	case "anthropic":
+		cfg.AnthropicAPIKey = value
+	case "google":
+		cfg.GoogleAPIKey = value
+	case "kilo":
+		cfg.KiloAPIKey = value
+	case "openrouter":
+		cfg.OpenRouterAPIKey = value
+	case "zai":
+		cfg.ZAIAPIKey = value
+	case "alibaba":
+		cfg.AlibabaAPIKey = value
+	case "openai":
+		cfg.OpenAIAPIKey = value
+	default:
+		cfg.KimiAPIKey = value
+	}
+}
+
+func renderModelMenu(options []llm.ModelOption, selected int) string {
+	if len(options) == 0 {
+		return "  No models available.\n"
+	}
+
+	var labels []string
+	for _, option := range options {
+		labels = append(labels, option.Label())
+	}
+	return renderMenu(labels, selected)
+}
+
+func loadModelOptions(cfg config.EditableConfig) []llm.ModelOption {
+	options, _ := llmModelCatalog(context.Background(), cfg.LLMProvider, modelCatalogCredentials(cfg))
+	if len(options) != 0 {
+		return options
+	}
+	return llm.FallbackModels(cfg.LLMProvider)
+}
+
+func resolveModelOptions(cfg config.EditableConfig) ([]llm.ModelOption, string) {
+	options, err := llmModelCatalog(context.Background(), cfg.LLMProvider, modelCatalogCredentials(cfg))
+	if err == nil && len(options) != 0 {
+		return options, "provider catalog"
+	}
+
+	fallback := llm.FallbackModels(cfg.LLMProvider)
+	if len(fallback) != 0 {
+		return fallback, "curated fallback"
+	}
+	return nil, "no catalog available"
+}
+
+func filterModelOptions(cfg config.EditableConfig, options []llm.ModelOption, filter string) []llm.ModelOption {
+	filter = strings.ToLower(strings.TrimSpace(filter))
+	if filter == "" || !usesProviderModelSearch(cfg) {
+		return append([]llm.ModelOption(nil), options...)
+	}
+
+	filtered := make([]llm.ModelOption, 0, len(options))
+	for _, option := range options {
+		if matchesModelFilter(option, filter) {
+			filtered = append(filtered, option)
+		}
+	}
+	return filtered
+}
+
+func matchesModelFilter(option llm.ModelOption, filter string) bool {
+	candidates := []string{
+		strings.ToLower(option.ID),
+		strings.ToLower(option.Name),
+		strings.ToLower(option.Label()),
+		strings.ToLower(openRouterProviderName(option.ID)),
+	}
+	for _, candidate := range candidates {
+		if strings.Contains(candidate, filter) {
+			return true
+		}
+	}
+	return false
+}
+
+func openRouterProviderName(modelID string) string {
+	prefix, _, ok := strings.Cut(modelID, "/")
+	if !ok {
+		return ""
+	}
+	return prefix
+}
+
+func selectedModelIndex(options []llm.ModelOption, current string) int {
+	for i, option := range options {
+		if option.ID == current {
+			return i
+		}
+	}
+	return 0
+}
+
+func modelCatalogCredentials(cfg config.EditableConfig) llm.ModelCatalogCredentials {
+	return llm.ModelCatalogCredentials{
+		AnthropicAPIKey:  cfg.AnthropicAPIKey,
+		GoogleAPIKey:     cfg.GoogleAPIKey,
+		KiloAPIKey:       cfg.KiloAPIKey,
+		KimiAPIKey:       cfg.KimiAPIKey,
+		OpenRouterAPIKey: cfg.OpenRouterAPIKey,
+		ZAIAPIKey:        cfg.ZAIAPIKey,
+		AlibabaAPIKey:    cfg.AlibabaAPIKey,
+		OpenAIAPIKey:     cfg.OpenAIAPIKey,
+		OpenAIAuthMode:   cfg.OpenAIAuthMode,
+	}
+}
+
+func usesProviderModelSearch(cfg config.EditableConfig) bool {
+	switch cfg.LLMProvider {
+	case "openrouter", "kilo":
+		return true
+	default:
+		return false
+	}
+}
+
+func (u *onboardingUI) consumePendingAction() string {
+	action := u.pendingAction
+	u.pendingAction = ""
+	return action
+}
+
+func (u *onboardingUI) refreshModelOptions() {
+	options, source := resolveModelOptions(u.cfg)
+	u.allModelOptions = append([]llm.ModelOption(nil), options...)
+	u.modelSource = source
+	u.applyModelFilter()
+}
+
+func (u *onboardingUI) applyModelFilter() {
+	u.modelOptions = filterModelOptions(u.cfg, u.allModelOptions, u.modelFilter)
+	if len(u.modelOptions) == 0 {
+		u.menuIndex = 0
+		return
+	}
+	if u.menuIndex >= len(u.modelOptions) {
+		u.menuIndex = len(u.modelOptions) - 1
+	}
+	if u.menuIndex < 0 {
+		u.menuIndex = 0
+	}
+}
+
+func (u *onboardingUI) setStep(step onboardStep) {
+	u.step = step
+	u.input = u.currentInputValue()
+	if step == stepLLMModel {
+		u.modelFilter = ""
+		u.refreshModelOptions()
+		u.menuIndex = selectedModelIndex(u.modelOptions, u.cfg.LLMModel)
+		return
+	}
+	u.menuIndex = 0
+}
+
+func runOpenAIDeviceAuthCommand(stdin io.Reader, stdout io.Writer) error {
+	return runCodexLoginCommand(stdin, stdout, "--device-auth")
+}
+
 func promptString(reader *bufio.Reader, stdout io.Writer, label, current string, secret bool) (string, error) {
 	if err := writef(stdout, "%s", label); err != nil {
 		return "", err
@@ -458,6 +929,41 @@ func promptString(reader *bufio.Reader, stdout io.Writer, label, current string,
 		return current, nil
 	}
 	return line, nil
+}
+
+func promptChoice(reader *bufio.Reader, stdout io.Writer, label, current string, options []string) (string, error) {
+	if err := writef(stdout, "%s [%s] (%s): ", label, current, strings.Join(options, "/")); err != nil {
+		return "", err
+	}
+
+	line, err := readLine(reader)
+	if err != nil {
+		return "", err
+	}
+	if line == "" {
+		return current, nil
+	}
+
+	line = strings.ToLower(strings.TrimSpace(line))
+	for _, option := range options {
+		if line == option {
+			return line, nil
+		}
+	}
+	return current, fmt.Errorf("%s must be one of: %s", label, strings.Join(options, ", "))
+}
+
+func promptLLMModel(reader *bufio.Reader, stdout io.Writer, current *config.EditableConfig) (string, error) {
+	options, source := resolveModelOptions(*current)
+	if err := writef(stdout, "LLM model catalog: %s\n", source); err != nil {
+		return "", err
+	}
+	for _, option := range options {
+		if err := writef(stdout, "- %s\n", option.Label()); err != nil {
+			return "", err
+		}
+	}
+	return promptString(reader, stdout, "LLM model", current.LLMModel, false)
 }
 
 func promptInt(reader *bufio.Reader, stdout io.Writer, label string, current int) (int, error) {
@@ -615,8 +1121,22 @@ func renderSavedSummary(stdout io.Writer, resolver *runtime.PathResolver, curren
 	if err := writef(stdout, "LLM provider: %s\n", strings.ToUpper(current.LLMProvider)); err != nil {
 		return err
 	}
-	if err := writef(stdout, "Kimi API key: %s\n", maskSecret(current.KimiAPIKey)); err != nil {
+	if current.LLMProvider == "openai" {
+		if err := writef(stdout, "OpenAI auth mode: %s\n", current.OpenAIAuthMode); err != nil {
+			return err
+		}
+	}
+	if err := writef(stdout, "LLM model: %s\n", current.LLMModel); err != nil {
 		return err
+	}
+	if usesOpenAICodex(*current) {
+		if err := writef(stdout, "OpenAI Codex login: run `aurelia auth openai`\n"); err != nil {
+			return err
+		}
+	} else {
+		if err := writef(stdout, "%s: %s\n", llmKeyLabel(current.LLMProvider), maskSecret(currentLLMKey(*current))); err != nil {
+			return err
+		}
 	}
 	if err := writef(stdout, "STT provider: %s\n", strings.ToUpper(current.STTProvider)); err != nil {
 		return err

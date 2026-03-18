@@ -44,7 +44,7 @@ The project is a modular monolith in Go.
   tools/           [tool definitions, handlers, MCP adapter]
 
 /pkg/
-  llm/             [HTTP providers]
+  llm/             [LLM providers and model catalogs]
   stt/             [speech-to-text]
 ```
 
@@ -104,7 +104,17 @@ Runtime configuration is instance-local and file-backed.
 Rule:
 
 - app runtime config is loaded from `~/.aurelia/config/app.json`
+- LLM selection is persisted as `llm_provider` plus `llm_model`
+- provider-specific auth modes are explicit config fields when needed, such as `openai_auth_mode`
 - repository-local `.env` files are not part of the supported runtime config model
+
+Current auth variants:
+
+- `google`: `api_key`
+- `kilo`: `api_key`
+- `zai`: `coding_plan_api_key`
+- `alibaba`: `coding_plan_api_key`
+- `openai`: `api_key` or experimental local `codex` CLI mode
 
 ### Interface Layer
 

@@ -79,7 +79,7 @@ func bootstrapApp() (*app, error) {
 		projectPlaybookPath = filepath.Join(cwd, "docs", "PROJECT_PLAYBOOK.md")
 		projectSkillsDir = runtime.ProjectSkills(cwd)
 	}
-	llmProvider, err := buildLLMProvider(cfg)
+	llmProvider, err := buildLLMProvider(cfg, resolver)
 	if err != nil {
 		return nil, fmt.Errorf("initialize llm provider: %w", err)
 	}
@@ -173,10 +173,31 @@ func bootstrapApp() (*app, error) {
 	}, nil
 }
 
-func buildLLMProvider(cfg *config.AppConfig) (closableLLMProvider, error) {
+func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (closableLLMProvider, error) {
+	_ = resolver
 	switch cfg.LLMProvider {
+	case "anthropic":
+		return llm.NewAnthropicProvider(cfg.AnthropicAPIKey, cfg.LLMModel), nil
+	case "google":
+		return llm.NewGeminiProvider(context.Background(), cfg.GoogleAPIKey, cfg.LLMModel)
+	case "kilo":
+		return llm.NewKiloProvider(cfg.KiloAPIKey, cfg.LLMModel), nil
+	case "openrouter":
+		return llm.NewOpenRouterProvider(cfg.OpenRouterAPIKey, cfg.LLMModel), nil
+	case "zai":
+		return llm.NewZAIProvider(cfg.ZAIAPIKey, cfg.LLMModel), nil
+	case "alibaba":
+		return llm.NewAlibabaProvider(cfg.AlibabaAPIKey, cfg.LLMModel), nil
+	case "openai":
+		if cfg.OpenAIAuthMode == "codex" {
+			if err := llm.EnsureCodexCLIAvailable(); err != nil {
+				return nil, err
+			}
+			return llm.NewCodexCLIProvider(cfg.LLMModel)
+		}
+		return llm.NewOpenAIProvider(cfg.OpenAIAPIKey, cfg.LLMModel), nil
 	case "", "kimi":
-		return llm.NewKimiProvider(cfg.KimiAPIKey, "k2.5"), nil
+		return llm.NewKimiProvider(cfg.KimiAPIKey, cfg.LLMModel), nil
 	default:
 		return nil, fmt.Errorf("unsupported llm provider %q", cfg.LLMProvider)
 	}

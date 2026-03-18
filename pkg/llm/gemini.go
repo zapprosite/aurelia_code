@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/generative-ai-go/genai"
+	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 
 	"github.com/kocar/aurelia/internal/agent"
@@ -19,6 +20,16 @@ type GeminiProvider struct {
 // NewGeminiProvider creates a new provider
 func NewGeminiProvider(ctx context.Context, apiKey string, modelName string) (*GeminiProvider, error) {
 	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gemini client: %w", err)
+	}
+
+	model := client.GenerativeModel(modelName)
+	return &GeminiProvider{client: client, model: model}, nil
+}
+
+func NewGeminiProviderWithTokenSource(ctx context.Context, tokenSource oauth2.TokenSource, modelName string) (*GeminiProvider, error) {
+	client, err := genai.NewClient(ctx, option.WithTokenSource(tokenSource))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gemini client: %w", err)
 	}
@@ -43,7 +54,7 @@ func (p *GeminiProvider) GenerateContent(ctx context.Context, systemPrompt strin
 		geminiFuncs := make([]*genai.FunctionDeclaration, 0, len(tools))
 		for _, t := range tools {
 			// In a real app we'd convert the JSONSchema to genai.Schema
-			// For simplicity we create a blank schema or mock it here 
+			// For simplicity we create a blank schema or mock it here
 			// Full struct parsing requires mapping `type`, `properties`, etc.
 			geminiFuncs = append(geminiFuncs, &genai.FunctionDeclaration{
 				Name:        t.Name,
@@ -70,7 +81,7 @@ func (p *GeminiProvider) GenerateContent(ctx context.Context, systemPrompt strin
 		var part genai.Part
 		if msg.Role == "tool" {
 			part = genai.FunctionResponse{
-				Name: msg.ToolCallID,
+				Name:     msg.ToolCallID,
 				Response: map[string]any{"result": msg.Content},
 			}
 		} else {
@@ -134,5 +145,3 @@ func (p *GeminiProvider) GenerateContent(ctx context.Context, systemPrompt strin
 
 	return &result, nil
 }
-
-

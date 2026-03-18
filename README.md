@@ -145,7 +145,16 @@ Requirements:
 
 - Go `1.25+`
 - Telegram bot token
-- Kimi API key
+- one LLM provider key:
+  - Kimi API key
+  - Anthropic API key
+- Google API key
+- Kilo API key
+- OpenRouter API key
+- Z.ai Coding Plan API key
+- Alibaba Coding Plan API key
+  - OpenAI API key
+- or a local Codex CLI login for experimental OpenAI Codex mode
 - Groq API key for STT
 
 Main runtime config lives in `~/.aurelia/config/app.json`.
@@ -155,10 +164,19 @@ Example config:
 ```json
 {
   "llm_provider": "kimi",
+  "llm_model": "kimi-k2-thinking",
   "stt_provider": "groq",
   "telegram_bot_token": "your-telegram-bot-token",
   "telegram_allowed_user_ids": [123456789],
+  "anthropic_api_key": "",
+  "google_api_key": "",
+  "kilo_api_key": "",
   "kimi_api_key": "your-kimi-api-key",
+  "openrouter_api_key": "",
+  "zai_api_key": "",
+  "alibaba_api_key": "",
+  "openai_auth_mode": "api_key",
+  "openai_api_key": "",
   "groq_api_key": "your-groq-api-key",
   "max_iterations": 500,
   "db_path": "C:/Users/you/.aurelia/data/aurelia.db",
@@ -177,10 +195,30 @@ go run ./cmd/aurelia onboard
 
 The onboarding runs in guided steps:
 
-- select the LLM provider
+- select the LLM provider (`Kimi`, `Anthropic`, `Google`, `Kilo Code`, `OpenRouter`, `Z.ai`, `Alibaba`, or `OpenAI`)
+- select auth mode when the provider supports multiple paths:
+  - `OpenAI`: `api_key` or `codex`
+- select the LLM model
 - select the STT provider
 - configure Telegram
 - review runtime settings and save
+
+Provider notes:
+
+- `zai` expects a `GLM Coding Plan` key and uses the dedicated coding endpoint
+- `alibaba` expects a Coding Plan key and uses the dedicated coding endpoint
+
+OpenAI Codex login:
+
+```bash
+go run ./cmd/aurelia auth openai
+```
+
+When `llm_provider` is `openai` and `openai_auth_mode` is `codex`, Aurelia uses the local `codex mcp-server` as an experimental runtime backend. This mode requires:
+
+- `codex` installed and available on `PATH`
+- a successful local `codex login`
+- choosing an OpenAI model in onboarding or `app.json`
 
 Run:
 

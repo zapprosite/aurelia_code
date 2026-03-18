@@ -13,16 +13,26 @@ const (
 	defaultMaxIterations    = 500
 	defaultMemoryWindowSize = 20
 	defaultLLMProvider      = "kimi"
+	defaultLLMModel         = "kimi-k2-thinking"
 	defaultSTTProvider      = "groq"
 )
 
 // AppConfig holds all runtime configuration needed for the application.
 type AppConfig struct {
 	LLMProvider            string
+	LLMModel               string
 	STTProvider            string
 	TelegramBotToken       string
 	TelegramAllowedUserIDs []int64
+	AnthropicAPIKey        string
+	GoogleAPIKey           string
+	KiloAPIKey             string
 	KimiAPIKey             string
+	OpenRouterAPIKey       string
+	ZAIAPIKey              string
+	AlibabaAPIKey          string
+	OpenAIAPIKey           string
+	OpenAIAuthMode         string
 	GroqAPIKey             string
 	MaxIterations          int
 	DBPath                 string
@@ -32,10 +42,19 @@ type AppConfig struct {
 
 type fileConfig struct {
 	LLMProvider            string  `json:"llm_provider"`
+	LLMModel               string  `json:"llm_model"`
 	STTProvider            string  `json:"stt_provider"`
 	TelegramBotToken       string  `json:"telegram_bot_token"`
 	TelegramAllowedUserIDs []int64 `json:"telegram_allowed_user_ids"`
+	AnthropicAPIKey        string  `json:"anthropic_api_key"`
+	GoogleAPIKey           string  `json:"google_api_key"`
+	KiloAPIKey             string  `json:"kilo_api_key"`
 	KimiAPIKey             string  `json:"kimi_api_key"`
+	OpenRouterAPIKey       string  `json:"openrouter_api_key"`
+	ZAIAPIKey              string  `json:"zai_api_key"`
+	AlibabaAPIKey          string  `json:"alibaba_api_key"`
+	OpenAIAPIKey           string  `json:"openai_api_key"`
+	OpenAIAuthMode         string  `json:"openai_auth_mode"`
 	GroqAPIKey             string  `json:"groq_api_key"`
 	MaxIterations          int     `json:"max_iterations"`
 	DBPath                 string  `json:"db_path"`
@@ -46,10 +65,19 @@ type fileConfig struct {
 // EditableConfig represents the user-editable portion of the runtime config.
 type EditableConfig struct {
 	LLMProvider            string
+	LLMModel               string
 	STTProvider            string
 	TelegramBotToken       string
 	TelegramAllowedUserIDs []int64
+	AnthropicAPIKey        string
+	GoogleAPIKey           string
+	KiloAPIKey             string
 	KimiAPIKey             string
+	OpenRouterAPIKey       string
+	ZAIAPIKey              string
+	AlibabaAPIKey          string
+	OpenAIAPIKey           string
+	OpenAIAuthMode         string
 	GroqAPIKey             string
 	MaxIterations          int
 	MemoryWindowSize       int
@@ -96,6 +124,8 @@ func Load(r *runtime.PathResolver) (*AppConfig, error) {
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 	return fileConfig{
 		LLMProvider:            defaultLLMProvider,
+		LLMModel:               defaultLLMModelForProvider(defaultLLMProvider),
+		OpenAIAuthMode:         "api_key",
 		STTProvider:            defaultSTTProvider,
 		TelegramAllowedUserIDs: []int64{},
 		MaxIterations:          defaultMaxIterations,
@@ -109,6 +139,8 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 func DefaultEditableConfig() EditableConfig {
 	return EditableConfig{
 		LLMProvider:            defaultLLMProvider,
+		LLMModel:               defaultLLMModelForProvider(defaultLLMProvider),
+		OpenAIAuthMode:         "api_key",
 		STTProvider:            defaultSTTProvider,
 		TelegramAllowedUserIDs: []int64{},
 		MaxIterations:          defaultMaxIterations,
@@ -129,10 +161,19 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 	}
 	return &EditableConfig{
 		LLMProvider:            cfg.LLMProvider,
+		LLMModel:               cfg.LLMModel,
 		STTProvider:            cfg.STTProvider,
 		TelegramBotToken:       cfg.TelegramBotToken,
 		TelegramAllowedUserIDs: append([]int64(nil), cfg.TelegramAllowedUserIDs...),
+		AnthropicAPIKey:        cfg.AnthropicAPIKey,
+		GoogleAPIKey:           cfg.GoogleAPIKey,
+		KiloAPIKey:             cfg.KiloAPIKey,
 		KimiAPIKey:             cfg.KimiAPIKey,
+		OpenRouterAPIKey:       cfg.OpenRouterAPIKey,
+		ZAIAPIKey:              cfg.ZAIAPIKey,
+		AlibabaAPIKey:          cfg.AlibabaAPIKey,
+		OpenAIAPIKey:           cfg.OpenAIAPIKey,
+		OpenAIAuthMode:         cfg.OpenAIAuthMode,
 		GroqAPIKey:             cfg.GroqAPIKey,
 		MaxIterations:          cfg.MaxIterations,
 		MemoryWindowSize:       cfg.MemoryWindowSize,
@@ -143,10 +184,19 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg := normalizeFileConfig(fileConfig{
 		LLMProvider:            editable.LLMProvider,
+		LLMModel:               editable.LLMModel,
 		STTProvider:            editable.STTProvider,
 		TelegramBotToken:       editable.TelegramBotToken,
 		TelegramAllowedUserIDs: append([]int64(nil), editable.TelegramAllowedUserIDs...),
+		AnthropicAPIKey:        editable.AnthropicAPIKey,
+		GoogleAPIKey:           editable.GoogleAPIKey,
+		KiloAPIKey:             editable.KiloAPIKey,
 		KimiAPIKey:             editable.KimiAPIKey,
+		OpenRouterAPIKey:       editable.OpenRouterAPIKey,
+		ZAIAPIKey:              editable.ZAIAPIKey,
+		AlibabaAPIKey:          editable.AlibabaAPIKey,
+		OpenAIAPIKey:           editable.OpenAIAPIKey,
+		OpenAIAuthMode:         editable.OpenAIAuthMode,
 		GroqAPIKey:             editable.GroqAPIKey,
 		MaxIterations:          editable.MaxIterations,
 		MemoryWindowSize:       editable.MemoryWindowSize,
@@ -161,6 +211,12 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	}
 	if cfg.LLMProvider == "" {
 		cfg.LLMProvider = defaults.LLMProvider
+	}
+	if cfg.LLMModel == "" {
+		cfg.LLMModel = defaultLLMModelForProvider(cfg.LLMProvider)
+	}
+	if cfg.OpenAIAuthMode == "" {
+		cfg.OpenAIAuthMode = defaults.OpenAIAuthMode
 	}
 	if cfg.STTProvider == "" {
 		cfg.STTProvider = defaults.STTProvider
@@ -200,10 +256,19 @@ func writeConfigFile(path string, cfg fileConfig) error {
 func toAppConfig(cfg fileConfig) *AppConfig {
 	return &AppConfig{
 		LLMProvider:            cfg.LLMProvider,
+		LLMModel:               cfg.LLMModel,
 		STTProvider:            cfg.STTProvider,
 		TelegramBotToken:       cfg.TelegramBotToken,
 		TelegramAllowedUserIDs: cfg.TelegramAllowedUserIDs,
+		AnthropicAPIKey:        cfg.AnthropicAPIKey,
+		GoogleAPIKey:           cfg.GoogleAPIKey,
+		KiloAPIKey:             cfg.KiloAPIKey,
 		KimiAPIKey:             cfg.KimiAPIKey,
+		OpenRouterAPIKey:       cfg.OpenRouterAPIKey,
+		ZAIAPIKey:              cfg.ZAIAPIKey,
+		AlibabaAPIKey:          cfg.AlibabaAPIKey,
+		OpenAIAPIKey:           cfg.OpenAIAPIKey,
+		OpenAIAuthMode:         cfg.OpenAIAuthMode,
 		GroqAPIKey:             cfg.GroqAPIKey,
 		MaxIterations:          cfg.MaxIterations,
 		DBPath:                 cfg.DBPath,
@@ -215,8 +280,17 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 func sameFileConfig(a, b fileConfig) bool {
 	if a.TelegramBotToken != b.TelegramBotToken ||
 		a.LLMProvider != b.LLMProvider ||
+		a.LLMModel != b.LLMModel ||
 		a.STTProvider != b.STTProvider ||
+		a.AnthropicAPIKey != b.AnthropicAPIKey ||
+		a.GoogleAPIKey != b.GoogleAPIKey ||
+		a.KiloAPIKey != b.KiloAPIKey ||
 		a.KimiAPIKey != b.KimiAPIKey ||
+		a.OpenRouterAPIKey != b.OpenRouterAPIKey ||
+		a.ZAIAPIKey != b.ZAIAPIKey ||
+		a.AlibabaAPIKey != b.AlibabaAPIKey ||
+		a.OpenAIAPIKey != b.OpenAIAPIKey ||
+		a.OpenAIAuthMode != b.OpenAIAuthMode ||
 		a.GroqAPIKey != b.GroqAPIKey ||
 		a.MaxIterations != b.MaxIterations ||
 		a.DBPath != b.DBPath ||
@@ -233,4 +307,25 @@ func sameFileConfig(a, b fileConfig) bool {
 		}
 	}
 	return true
+}
+
+func defaultLLMModelForProvider(provider string) string {
+	switch provider {
+	case "anthropic":
+		return "claude-sonnet-4-6"
+	case "google":
+		return "gemini-2.5-pro"
+	case "kilo":
+		return "gpt-5.4"
+	case "openrouter":
+		return "openrouter/auto"
+	case "zai":
+		return "glm-5"
+	case "alibaba":
+		return "qwen3-coder-plus"
+	case "openai":
+		return "gpt-5.4"
+	default:
+		return defaultLLMModel
+	}
 }
