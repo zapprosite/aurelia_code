@@ -1,7 +1,9 @@
 ---
-description: Auditoria proativa de segurança, segredos e vulnerabilidades.
-id: security-first
+name: security-first
+description: Elite skill for security-first.
 ---
+
+
 
 # 🛡️ Skill: Security-First
 

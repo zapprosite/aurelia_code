@@ -1,3 +1,10 @@
+---
+name: security
+description: Elite skill for security.
+---
+
+
+
 # Security Skill (Elite Level)
 
 ## Objetivo
@@ -21,10 +28,10 @@ Identificar, prevenir e mitigar riscos de segurança em todo o monorepo, garanti
 4. **Remediação**: Documente vulnerabilidades com severidade, impacto e plano de correção seguindo o padrão ADR se necessário.
 
 ## Arquivos de Referência (Manual Técnico)
-- [auth-and-secrets.md](file:///home/will/Remote-control/.agents/skills/security/auth-and-secrets.md): Gestão de credenciais, JWT e auditoria de segredos.
-- [database-and-deps.md](file:///home/will/Remote-control/.agents/skills/security/database-and-deps.md): Zod schemas, ORM security e supply chain.
-- [desktop-security.md](file:///home/will/Remote-control/.agents/skills/security/desktop-security.md): Segurança Electron e isolamento de contexto.
-- [web-security.md](file:///home/will/Remote-control/.agents/skills/security/web-security.md): OWASP Top 10, headers e observabilidade tRPC.
+- [auth-and-secrets.md](file:///home/will/aurelia/.agents/skills/security/auth-and-secrets.md): Gestão de credenciais, JWT e auditoria de segredos.
+- [database-and-deps.md](file:///home/will/aurelia/.agents/skills/security/database-and-deps.md): Zod schemas, ORM security e supply chain.
+- [desktop-security.md](file:///home/will/aurelia/.agents/skills/security/desktop-security.md): Segurança Electron e isolamento de contexto.
+- [web-security.md](file:///home/will/aurelia/.agents/skills/security/web-security.md): OWASP Top 10, headers e observabilidade tRPC.
 
 ## Severidade e Governança
 - **Crítica (Tier C)**: Vazamento de segredos, acesso root ou PII exposta. Exige correção imediata e ADR.

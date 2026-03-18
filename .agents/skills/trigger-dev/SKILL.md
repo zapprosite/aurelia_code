@@ -1,3 +1,10 @@
+---
+name: trigger-dev
+description: Elite skill for trigger-dev.
+---
+
+
+
 # Trigger.dev Skill
 
 ## Objetivo

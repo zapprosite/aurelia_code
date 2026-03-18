@@ -1,7 +1,9 @@
 ---
-description: Força o design e o planejamento antes da execução técnica.
-id: architect-planner
+name: architect-planner
+description: Elite skill for architect-planner.
 ---
+
+
 
 # 🏛️ Skill: Architect-Planner
 

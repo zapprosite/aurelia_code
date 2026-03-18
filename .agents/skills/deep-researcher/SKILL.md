@@ -1,7 +1,9 @@
 ---
-description: Automação de pesquisa profunda via Gemini Web para suporte técnico.
-id: deep-researcher
+name: deep-researcher
+description: Elite skill for deep-researcher.
 ---
+
+
 
 # 🔬 Skill: Deep-Researcher
 

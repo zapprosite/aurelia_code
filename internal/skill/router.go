@@ -65,7 +65,7 @@ Example Output:
 	}
 
 	if err := json.Unmarshal([]byte(raw), &output); err != nil {
-		log.Printf("Router parse error: %v (Raw: %s)", err, raw)
+		log.Printf("Router parse error: %v (Raw output omitted)", err)
 		return "", nil
 	}
 

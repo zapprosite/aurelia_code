@@ -1,3 +1,10 @@
+---
+name: researcher
+description: Elite skill for researcher.
+---
+
+
+
 # Researcher Skill
 
 ## Objetivo

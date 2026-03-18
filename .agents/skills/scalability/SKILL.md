@@ -1,3 +1,10 @@
+---
+name: scalability
+description: Elite skill for scalability.
+---
+
+
+
 # Scalability Skill
 
 ## Objetivo

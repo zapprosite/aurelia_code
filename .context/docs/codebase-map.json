@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generated": "2026-03-18T20:30:31.462Z",
+  "generated": "2026-03-18T21:19:39.136Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -15,7 +15,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 190,
+    "totalFiles": 203,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -30,7 +30,7 @@
       },
       {
         "name": "docs",
-        "fileCount": 7,
+        "fileCount": 16,
         "description": "Documentation files"
       },
       {
@@ -56,7 +56,7 @@
       },
       {
         "extension": ".md",
-        "count": 10
+        "count": 23
       },
       {
         "extension": ".json",
@@ -97,7 +97,7 @@
   "stats": {
     "totalSymbols": 0,
     "exportedSymbols": 0,
-    "analysisTimeMs": 12
+    "analysisTimeMs": 7
   },
   "keyFiles": [],
   "navigation": {

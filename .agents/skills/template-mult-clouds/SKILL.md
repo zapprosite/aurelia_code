@@ -1,7 +1,9 @@
 ---
-description: Automatiza o setup inicial de workspaces multi-agente de elite.
-id: template-mult-clouds
+name: template-mult-clouds
+description: Elite skill for template-mult-clouds.
 ---
+
+
 
 # 🏗️ Skill: template-mult-clouds
 
