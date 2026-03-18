@@ -105,6 +105,13 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 			}
 
 			// Append tool observation
+			// SAFETY: Truncate tool output if it exceeds context limits (approx 8k-10k tokens)
+			const maxToolResultLength = 32768
+			if len(resultStr) > maxToolResultLength {
+				log.Printf("[Warning] Truncating tool output for %s: %d characters reduced to %d", call.Name, len(resultStr), maxToolResultLength)
+				resultStr = resultStr[:maxToolResultLength] + "\n\n... [TRUNCATED: O resultado desta ferramenta excedeu o limite de segurança do contexto. Se precisar de mais detalhes, leia partes específicas do arquivo ou diretório.]"
+			}
+
 			currentHistory = append(currentHistory, Message{
 				Role:       "tool",
 				Content:    resultStr,
