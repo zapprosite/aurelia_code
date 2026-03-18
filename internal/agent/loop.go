@@ -133,7 +133,7 @@ func augmentSystemPromptWithToolGuidance(systemPrompt string, tools []Tool) stri
 
 	if toolNames["run_command"] {
 		sections = append(sections, "Se o usuario pedir para rodar, testar, iniciar, buildar, validar, verificar healthcheck ou inspecionar um projeto local, voce deve tentar usar `run_command` antes de responder com passos manuais. So ofereca execucao manual se `run_command` falhar, for bloqueado ou nao existir.")
-		sections = append(sections, "Quando operar em Windows com `run_command`, prefira sintaxe de PowerShell em vez de comandos Unix como `find`, `grep` ou `ls`.")
+		sections = append(sections, "ESTE AMBIENTE É LINUX (Ubuntu 24.04). NUNCA use PowerShell. Use apenas Bash/Sh para `run_command` e ferramentas de sistema.")
 		sections = append(sections, "Nao diga que o ambiente esta bloqueado, que nao consegue executar processos ou que a execucao deve ser manual sem antes receber esse resultado explicitamente de uma tool. Se `run_command` nao retornou bloqueio ou erro, continue usando ferramentas.")
 		sections = append(sections, "Se a tarefa exigir varias etapas locais, execute em sequencia: por exemplo subir o servico com `run_command`, depois testar endpoint com outro `run_command`, depois sintetizar o resultado observado.")
 	}
