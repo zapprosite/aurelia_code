@@ -1,9 +1,11 @@
 ---
 description: Contrato Global de Autoridade e Governança Multi-Agente.
 use-when: Sempre que houver conflito de decisão ou início de nova tarefa.
+project: Aurelia Elite Edition
+status: Active
 ---
 
-# AGENTS.md — Contrato Global de Autoridade
+# 🛰️ AGENTS.md — Contrato Global de Autoridade
 
 Este repositório opera sob um modelo de **Autoridade Única e Centralizada**.
 

@@ -2,7 +2,7 @@
 
 ## Template 1: Problema técnico confirmado com solução
 
-Olá [Nome],
+Olá {{CUSTOMER_NAME}},
 
 Obrigado por nos contatar. Identificamos o problema que você relatou e já temos a solução.
 
@@ -16,7 +16,7 @@ Qualquer dúvida, estamos à disposição.
 
 ## Template 2: Bug confirmado, sem solução ainda
 
-Olá [Nome],
+Olá {{CUSTOMER_NAME}},
 
 Confirmamos o problema que você relatou. Nossa equipe técnica já está trabalhando na correção.
 
@@ -30,7 +30,7 @@ Vamos te atualizar assim que o problema for resolvido. Obrigado pela paciência.
 
 ## Template 3: Dúvida de uso
 
-Olá [Nome],
+Olá {{CUSTOMER_NAME}},
 
 Boa pergunta. [Resposta direta e objetiva].
 
@@ -44,7 +44,7 @@ Qualquer outra dúvida é só chamar.
 
 ## Template 4: Reclamação / cliente insatisfeito
 
-Olá [Nome],
+Olá {{CUSTOMER_NAME}},
 
 Entendo sua frustração e lamento pela experiência que você teve.
 
@@ -58,7 +58,7 @@ Obrigado por ter nos avisado sobre isso. Esse feedback é importante para contin
 
 ## Template 5: Solicitação de funcionalidade
 
-Olá [Nome],
+Olá {{CUSTOMER_NAME}},
 
 Agradecemos a sugestão! [Valide o uso case se fizer sentido].
 
