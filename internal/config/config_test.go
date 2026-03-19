@@ -36,6 +36,15 @@ func TestLoad_CreatesDefaultAppConfigWhenMissing(t *testing.T) {
 	if cfg.STTProvider != defaultSTTProvider {
 		t.Fatalf("STTProvider = %q, want %q", cfg.STTProvider, defaultSTTProvider)
 	}
+	if cfg.TTSProvider != defaultTTSProvider {
+		t.Fatalf("TTSProvider = %q, want %q", cfg.TTSProvider, defaultTTSProvider)
+	}
+	if cfg.TTSBaseURL != defaultTTSBaseURL {
+		t.Fatalf("TTSBaseURL = %q, want %q", cfg.TTSBaseURL, defaultTTSBaseURL)
+	}
+	if cfg.TTSVoice != defaultTTSVoice {
+		t.Fatalf("TTSVoice = %q, want %q", cfg.TTSVoice, defaultTTSVoice)
+	}
 	if cfg.OpenAIAuthMode != "api_key" {
 		t.Fatalf("OpenAIAuthMode = %q, want %q", cfg.OpenAIAuthMode, "api_key")
 	}
@@ -62,6 +71,12 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 		LLMProvider:            "kimi",
 		LLMModel:               "moonshot-v1-8k",
 		STTProvider:            "groq",
+		TTSProvider:            "openai_compatible",
+		TTSBaseURL:             "http://127.0.0.1:8011",
+		TTSModel:               "chatterbox",
+		TTSVoice:               "Olivia.wav",
+		TTSFormat:              "opus",
+		TTSSpeed:               1.1,
 		TelegramBotToken:       "telegram-token",
 		TelegramAllowedUserIDs: []int64{1, 2, 3},
 		AnthropicAPIKey:        "anthropic-key",
@@ -106,6 +121,15 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 	}
 	if cfg.STTProvider != input.STTProvider {
 		t.Fatalf("STTProvider = %q, want %q", cfg.STTProvider, input.STTProvider)
+	}
+	if cfg.TTSProvider != input.TTSProvider {
+		t.Fatalf("TTSProvider = %q, want %q", cfg.TTSProvider, input.TTSProvider)
+	}
+	if cfg.TTSBaseURL != input.TTSBaseURL {
+		t.Fatalf("TTSBaseURL = %q, want %q", cfg.TTSBaseURL, input.TTSBaseURL)
+	}
+	if cfg.TTSVoice != input.TTSVoice {
+		t.Fatalf("TTSVoice = %q, want %q", cfg.TTSVoice, input.TTSVoice)
 	}
 	if !reflect.DeepEqual(cfg.TelegramAllowedUserIDs, input.TelegramAllowedUserIDs) {
 		t.Fatalf("TelegramAllowedUserIDs = %v, want %v", cfg.TelegramAllowedUserIDs, input.TelegramAllowedUserIDs)
@@ -189,6 +213,9 @@ func TestLoad_NormalizesMissingFieldsWithDefaults(t *testing.T) {
 	}
 	if cfg.STTProvider != defaultSTTProvider {
 		t.Fatalf("STTProvider = %q, want %q", cfg.STTProvider, defaultSTTProvider)
+	}
+	if cfg.TTSProvider != defaultTTSProvider {
+		t.Fatalf("TTSProvider = %q, want %q", cfg.TTSProvider, defaultTTSProvider)
 	}
 	if cfg.MaxIterations != defaultMaxIterations {
 		t.Fatalf("MaxIterations = %d, want %d", cfg.MaxIterations, defaultMaxIterations)

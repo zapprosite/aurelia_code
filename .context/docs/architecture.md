@@ -22,7 +22,7 @@ The deployment model is local-first. State lives under `~/.aurelia/`, the runtim
 - **Gateway & voice services**: `internal/gateway/` and `internal/voice/` handle model routing, budgets, circuit breaking, audio spool processing and transcript mirrors.
 - **State & identity**: `internal/memory/` and `internal/persona/` store durable context and build prompts.
 - **Automation layer**: `internal/cron/`, `internal/skill/`, `internal/tools/`, `internal/mcp/` implement scheduled work, skills, native tools and external MCP tools.
-- **Provider layer**: `pkg/llm/` and `pkg/stt/` adapt third-party model and transcription APIs.
+- **Provider layer**: `pkg/llm/`, `pkg/stt/` and `pkg/tts/` adapt third-party model, transcription and speech APIs.
 
 ## Detected Design Patterns
 
@@ -67,6 +67,7 @@ The deployment model is local-first. State lives under `~/.aurelia/`, the runtim
 - **Telegram Bot API** — primary interaction channel
 - **LLM providers** — Anthropic, Google, Kimi, Kilo, Ollama, OpenAI, OpenRouter, ZAI, Alibaba
 - **Groq** — speech-to-text backend
+- **voice-proxy / Chatterbox TTS** — local text-to-speech backend for Telegram audio replies
 - **Qdrant / Supabase** — optional transcript mirrors and semantic memory targets
 - **MCP servers** — optional local or remote tools loaded from JSON config
 - **systemd** — supported long-running supervision model

@@ -4,12 +4,12 @@ The dominant data path in Aurelia starts with a Telegram update, passes through 
 
 ## Module Dependencies
 
-- `cmd/aurelia` → `internal/runtime`, `internal/config`, `internal/memory`, `internal/persona`, `internal/telegram`, `internal/cron`, `internal/mcp`, `internal/tools`, `pkg/llm`, `pkg/stt`
+- `cmd/aurelia` → `internal/runtime`, `internal/config`, `internal/memory`, `internal/persona`, `internal/telegram`, `internal/cron`, `internal/mcp`, `internal/tools`, `pkg/llm`, `pkg/stt`, `pkg/tts`
 - `internal/telegram` → `internal/memory`, `internal/persona`, `internal/skill`, `gopkg.in/telebot.v3`
 - `internal/agent` → tool registry contracts and LLM provider interfaces
 - `internal/cron` → `internal/agent`, `internal/persona`, persistent SQLite store
 - `internal/mcp` → normalized MCP config and external transport clients
-- `pkg/llm` / `pkg/stt` → third-party provider SDKs and HTTP APIs
+- `pkg/llm` / `pkg/stt` / `pkg/tts` → third-party provider SDKs and HTTP APIs
 
 ## Service Layer
 
@@ -31,7 +31,7 @@ The dominant data path in Aurelia starts with a Telegram update, passes through 
 3. Persona and memory layers assemble the system prompt and contextual history.
 4. [`agent.Loop`](../../internal/agent/loop.go) calls the selected LLM provider with the live tool definitions.
 5. If the model requests tools, the runtime executes handlers from [`internal/tools/`](../../internal/tools) or MCP-provided adapters.
-6. Outputs are formatted through Telegram renderers and sent back to the chat.
+6. Outputs are formatted through Telegram renderers; when `requiresAudio=true`, the controller synthesizes local speech through `voice-proxy` and sends a Telegram voice note instead of plain text.
 7. Messages, notes, facts and archives are stored in SQLite for later retrieval.
 
 Voice path in the current checkout:
@@ -49,6 +49,7 @@ Data moves mostly through direct function calls rather than queues. The main per
 - **Telegram** — inbound updates and outbound messages
 - **LLM APIs / local Ollama** — reasoning and tool-call generation through the internal gateway
 - **Groq STT** — audio transcription
+- **voice-proxy / Chatterbox TTS** — local OpenAI-compatible speech synthesis for Telegram output
 - **Supabase / Qdrant** — optional transcript mirrors for shared audit and semantic retrieval
 - **MCP servers** — optional remote or local tool capabilities
 - **HTTP health consumers** — local monitoring via `/health` and `/ready`

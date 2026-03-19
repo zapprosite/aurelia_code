@@ -1,12 +1,15 @@
 package telegram
 
 import (
+	"context"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
+	"github.com/kocar/aurelia/pkg/tts"
 	"gopkg.in/telebot.v3"
 )
 
@@ -111,9 +114,106 @@ func SendError(bot *telebot.Bot, chat *telebot.Chat, errMsg string) error {
 }
 
 func SendAudio(bot *telebot.Bot, chat *telebot.Chat, text string) error {
-	log.Println("Audio generation required. Simulating edge-tts dump...")
-	log.Println("Edge-TTS binary mockup called. Will fallback to Text output for now.")
-	return SendText(bot, chat, text)
+	return sendAudioWithSender(bot, chat, nil, text)
+}
+
+func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string) error {
+	if synthesizer == nil || !synthesizer.IsAvailable() {
+		log.Println("TTS synthesizer unavailable. Falling back to text output.")
+		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+	}
+
+	speechText := sanitizeTextForSpeech(text)
+	if speechText == "" {
+		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+	}
+
+	audio, err := synthesizer.Synthesize(context.Background(), speechText)
+	if err != nil {
+		log.Printf("TTS synthesis failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+	}
+
+	tmpFile, err := os.CreateTemp(os.TempDir(), "aurelia-tts-*"+audio.Extension)
+	if err != nil {
+		log.Printf("TTS temp file create failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+	}
+	tmpPath := tmpFile.Name()
+	defer func() {
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath)
+	}()
+
+	if _, err := tmpFile.Write(audio.Data); err != nil {
+		log.Printf("TTS temp file write failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+	}
+	if err := tmpFile.Close(); err != nil {
+		log.Printf("TTS temp file close failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+	}
+
+	if audio.AsVoiceNote {
+		voice := &telebot.Voice{
+			File: telebot.FromDisk(tmpPath),
+			MIME: "audio/ogg",
+		}
+		if _, err := sender.Send(chat, voice); err == nil {
+			log.Printf("Telegram voice note sent successfully (%d bytes).", len(audio.Data))
+			return nil
+		} else {
+			log.Printf("Telegram voice send failed (%v). Falling back to text output...", err)
+			return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+		}
+	}
+
+	clip := &telebot.Audio{
+		File:     telebot.FromDisk(tmpPath),
+		MIME:     audio.ContentType,
+		FileName: filepath.Base(tmpPath),
+		Title:    "Aurelia",
+	}
+	if _, err := sender.Send(chat, clip); err != nil {
+		log.Printf("Telegram audio send failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+	}
+	log.Printf("Telegram audio clip sent successfully (%d bytes).", len(audio.Data))
+	return nil
+}
+
+var (
+	markdownLinkPattern = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
+	codeFencePattern    = regexp.MustCompile("(?s)```(.*?)```")
+	multiSpacePattern   = regexp.MustCompile(`\s+`)
+)
+
+func sanitizeTextForSpeech(text string) string {
+	sanitized := strings.TrimSpace(text)
+	if sanitized == "" {
+		return ""
+	}
+	sanitized = codeFencePattern.ReplaceAllString(sanitized, "$1")
+	sanitized = markdownLinkPattern.ReplaceAllString(sanitized, "$1")
+	replacer := strings.NewReplacer(
+		"`", "",
+		"**", "",
+		"__", "",
+		"*", "",
+		"_", "",
+		"#", "",
+		">", "",
+		"|", ", ",
+		"\n", ". ",
+	)
+	sanitized = replacer.Replace(sanitized)
+	sanitized = multiSpacePattern.ReplaceAllString(sanitized, " ")
+	sanitized = strings.TrimSpace(sanitized)
+	runes := []rune(sanitized)
+	if len(runes) > 1200 {
+		sanitized = strings.TrimSpace(string(runes[:1200])) + "."
+	}
+	return sanitized
 }
 
 func sendErrorWithSender(sender messageSender, chat *telebot.Chat, title, errMsg string) error {

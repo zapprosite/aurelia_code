@@ -24,6 +24,7 @@ Key scripts shipped in the repository:
 - [`scripts/update-ollama.sh`](../../scripts/update-ollama.sh) — pulls the active local model kit (`qwen3.5:9b`, `qwen3.5:4b`, `bge-m3`) and keeps `gemma3:27b-it-q4_K_M` as optional laboratory model
 - [`scripts/ollama-local-kit-smoke.sh`](../../scripts/ollama-local-kit-smoke.sh) — validates the local Qwen kit against the Ollama API with `num_ctx=8192`
 - [`aurelia voice enqueue`](../../cmd/aurelia/voice_cli.go) — queues an audio file into the local voice spool for controlled processing
+- local TTS defaults now target `voice-proxy` on `127.0.0.1:8011` with `chatterbox` + `Olivia.wav` in `opus` for Telegram voice replies
 - [`scripts/smoke-test-homelab.sh`](../../scripts/smoke-test-homelab.sh) — smoke guidance for end-to-end validation
 - [`scripts/sync-ai-context.sh`](../../scripts/sync-ai-context.sh) — refreshes `ai-context` state and regenerates `.context/docs/codebase-map.json`
 - [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh) — scaffolds ADR + taskmaster-style continuity artifacts for long slices

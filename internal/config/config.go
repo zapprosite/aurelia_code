@@ -15,6 +15,12 @@ const (
 	defaultLLMProvider          = "kimi"
 	defaultLLMModel             = "kimi-k2-thinking"
 	defaultSTTProvider          = "groq"
+	defaultTTSProvider          = "openai_compatible"
+	defaultTTSBaseURL           = "http://127.0.0.1:8011"
+	defaultTTSModel             = "chatterbox"
+	defaultTTSVoice             = "Olivia.wav"
+	defaultTTSFormat            = "opus"
+	defaultTTSSpeed             = 1.0
 	defaultHeartbeatEnabled     = true
 	defaultHeartbeatIntervalMin = 30
 	defaultVoiceEnabled         = false
@@ -35,6 +41,12 @@ type AppConfig struct {
 	LLMProvider              string
 	LLMModel                 string
 	STTProvider              string
+	TTSProvider              string
+	TTSBaseURL               string
+	TTSModel                 string
+	TTSVoice                 string
+	TTSFormat                string
+	TTSSpeed                 float64
 	TelegramBotToken         string
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
@@ -83,6 +95,12 @@ type fileConfig struct {
 	LLMProvider              string  `json:"llm_provider"`
 	LLMModel                 string  `json:"llm_model"`
 	STTProvider              string  `json:"stt_provider"`
+	TTSProvider              string  `json:"tts_provider"`
+	TTSBaseURL               string  `json:"tts_base_url"`
+	TTSModel                 string  `json:"tts_model"`
+	TTSVoice                 string  `json:"tts_voice"`
+	TTSFormat                string  `json:"tts_format"`
+	TTSSpeed                 float64 `json:"tts_speed"`
 	TelegramBotToken         string  `json:"telegram_bot_token"`
 	TelegramAllowedUserIDs   []int64 `json:"telegram_allowed_user_ids"`
 	AnthropicAPIKey          string  `json:"anthropic_api_key"`
@@ -132,6 +150,12 @@ type EditableConfig struct {
 	LLMProvider              string
 	LLMModel                 string
 	STTProvider              string
+	TTSProvider              string
+	TTSBaseURL               string
+	TTSModel                 string
+	TTSVoice                 string
+	TTSFormat                string
+	TTSSpeed                 float64
 	TelegramBotToken         string
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
@@ -194,6 +218,12 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
 		OpenAIAuthMode:           "api_key",
 		STTProvider:              defaultSTTProvider,
+		TTSProvider:              defaultTTSProvider,
+		TTSBaseURL:               defaultTTSBaseURL,
+		TTSModel:                 defaultTTSModel,
+		TTSVoice:                 defaultTTSVoice,
+		TTSFormat:                defaultTTSFormat,
+		TTSSpeed:                 defaultTTSSpeed,
 		TelegramAllowedUserIDs:   []int64{},
 		MaxIterations:            defaultMaxIterations,
 		DBPath:                   filepath.Join(r.Data(), "aurelia.db"),
@@ -226,6 +256,12 @@ func DefaultEditableConfig() EditableConfig {
 		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
 		OpenAIAuthMode:           "api_key",
 		STTProvider:              defaultSTTProvider,
+		TTSProvider:              defaultTTSProvider,
+		TTSBaseURL:               defaultTTSBaseURL,
+		TTSModel:                 defaultTTSModel,
+		TTSVoice:                 defaultTTSVoice,
+		TTSFormat:                defaultTTSFormat,
+		TTSSpeed:                 defaultTTSSpeed,
 		TelegramAllowedUserIDs:   []int64{},
 		MaxIterations:            defaultMaxIterations,
 		MemoryWindowSize:         defaultMemoryWindowSize,
@@ -277,6 +313,12 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.LLMProvider = editable.LLMProvider
 	cfg.LLMModel = editable.LLMModel
 	cfg.STTProvider = editable.STTProvider
+	cfg.TTSProvider = editable.TTSProvider
+	cfg.TTSBaseURL = editable.TTSBaseURL
+	cfg.TTSModel = editable.TTSModel
+	cfg.TTSVoice = editable.TTSVoice
+	cfg.TTSFormat = editable.TTSFormat
+	cfg.TTSSpeed = editable.TTSSpeed
 	cfg.TelegramBotToken = editable.TelegramBotToken
 	cfg.TelegramAllowedUserIDs = append([]int64(nil), editable.TelegramAllowedUserIDs...)
 	cfg.AnthropicAPIKey = editable.AnthropicAPIKey
@@ -319,6 +361,24 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	}
 	if cfg.STTProvider == "" {
 		cfg.STTProvider = defaults.STTProvider
+	}
+	if cfg.TTSProvider == "" {
+		cfg.TTSProvider = defaults.TTSProvider
+	}
+	if cfg.TTSBaseURL == "" {
+		cfg.TTSBaseURL = defaults.TTSBaseURL
+	}
+	if cfg.TTSModel == "" {
+		cfg.TTSModel = defaults.TTSModel
+	}
+	if cfg.TTSVoice == "" {
+		cfg.TTSVoice = defaults.TTSVoice
+	}
+	if cfg.TTSFormat == "" {
+		cfg.TTSFormat = defaults.TTSFormat
+	}
+	if cfg.TTSSpeed <= 0 {
+		cfg.TTSSpeed = defaults.TTSSpeed
 	}
 	if cfg.MaxIterations <= 0 {
 		cfg.MaxIterations = defaults.MaxIterations
@@ -406,6 +466,12 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		LLMProvider:              cfg.LLMProvider,
 		LLMModel:                 cfg.LLMModel,
 		STTProvider:              cfg.STTProvider,
+		TTSProvider:              cfg.TTSProvider,
+		TTSBaseURL:               cfg.TTSBaseURL,
+		TTSModel:                 cfg.TTSModel,
+		TTSVoice:                 cfg.TTSVoice,
+		TTSFormat:                cfg.TTSFormat,
+		TTSSpeed:                 cfg.TTSSpeed,
 		TelegramBotToken:         cfg.TelegramBotToken,
 		TelegramAllowedUserIDs:   cfg.TelegramAllowedUserIDs,
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
@@ -456,6 +522,12 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.LLMProvider != b.LLMProvider ||
 		a.LLMModel != b.LLMModel ||
 		a.STTProvider != b.STTProvider ||
+		a.TTSProvider != b.TTSProvider ||
+		a.TTSBaseURL != b.TTSBaseURL ||
+		a.TTSModel != b.TTSModel ||
+		a.TTSVoice != b.TTSVoice ||
+		a.TTSFormat != b.TTSFormat ||
+		a.TTSSpeed != b.TTSSpeed ||
 		a.AnthropicAPIKey != b.AnthropicAPIKey ||
 		a.GoogleAPIKey != b.GoogleAPIKey ||
 		a.KiloAPIKey != b.KiloAPIKey ||

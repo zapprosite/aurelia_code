@@ -246,14 +246,14 @@ func (bc *BotController) persistAssistantAnswer(session inputSession, finalAnswe
 
 func (bc *BotController) deliverFinalAnswer(c telebot.Context, finalAnswer string, requiresAudio bool) error {
 	if requiresAudio {
-		return SendAudio(bc.bot, c.Chat(), finalAnswer)
+		return sendAudioWithSender(bc.bot, c.Chat(), bc.tts, finalAnswer)
 	}
 	return SendText(bc.bot, c.Chat(), finalAnswer)
 }
 
 func (bc *BotController) deliverFinalAnswerToChat(chat *telebot.Chat, finalAnswer string, requiresAudio bool) error {
 	if requiresAudio {
-		return SendAudio(bc.bot, chat, finalAnswer)
+		return sendAudioWithSender(bc.bot, chat, bc.tts, finalAnswer)
 	}
 	return SendText(bc.bot, chat, finalAnswer)
 }

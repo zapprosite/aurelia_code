@@ -38,6 +38,7 @@ Estado atual:
 - [x] CLI `aurelia voice enqueue` implementada e testada
 - [x] Capture worker com heartbeat, health e spool integration implementado
 - [x] Mic daemon com wake word implementado
+- [x] TTS local real no Telegram implementado
 - [ ] Desktop click/digitacao seguros implementados
 - [x] Captura de microfone com wake word + VAD implementada
 
