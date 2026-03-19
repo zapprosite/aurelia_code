@@ -1,0 +1,56 @@
+{
+  "adr_id": "ADR-20260319-deploy-gateway-voice",
+  "title": "Deploy Gateway Voice",
+  "status": "in_progress",
+  "phase": "integration",
+  "progress": 18,
+  "goal": "Levar gateway e voice plane para a worktree de deploy e provar o runtime live com health e rotas reais.",
+  "scope": [
+    "integracao em /home/will/aurelia-24x7",
+    "suite completa na worktree de deploy",
+    "reinstalacao do servico live",
+    "validacao de health e status routes"
+  ],
+  "done_definition": [
+    "deploy worktree verde",
+    "servico live ativo com binario novo",
+    "/health, /v1/router/status, /v1/voice/status e /v1/voice/capture/status vivos"
+  ],
+  "next_actions": [
+    "integrar as mudancas na worktree de deploy sem perder drift existente",
+    "buildar e testar na worktree de deploy",
+    "reativar o servico live e validar endpoints"
+  ],
+  "simulation_commands": [
+    "voice capture idle nao dispara job",
+    "voice enqueue manual gera transcript e status routes"
+  ],
+  "test_commands": [
+    "go test ./... -count=1",
+    "./scripts/build.sh",
+    "bash ./scripts/voice-capture-smoke.sh"
+  ],
+  "curl_checks": [
+    "curl -fsS http://127.0.0.1:8484/health",
+    "curl -fsS http://127.0.0.1:8484/v1/router/status",
+    "curl -fsS http://127.0.0.1:8484/v1/voice/status",
+    "curl -fsS http://127.0.0.1:8484/v1/voice/capture/status"
+  ],
+  "fallback_commands": [
+    "voltar ao binario anterior em /usr/local/bin/aurelia",
+    "voice_capture_enabled=false"
+  ],
+  "evidence": [
+    "suite completa verde no repo principal",
+    "voice capture smoke local verde"
+  ],
+  "blockers": [
+    "worktree de deploy com drift proprio nos mesmos arquivos",
+    "servico live atual e systemd de sistema"
+  ],
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "Continue a slice ADR-20260319-deploy-gateway-voice. O repositorio principal esta verde com gateway persistente, voice capture real e smoke local. Proximo passo: integrar na worktree /home/will/aurelia-24x7, rebuildar e validar os endpoints live.",
+    "last_updated": "2026-03-19T19:28:00-03:00"
+  }
+}

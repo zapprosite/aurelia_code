@@ -225,6 +225,12 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.TelegramAllowedUserIDs == nil {
 		cfg.TelegramAllowedUserIDs = defaults.TelegramAllowedUserIDs
 	}
+	if cfg.VoiceReplyUserID == 0 && len(cfg.TelegramAllowedUserIDs) > 0 {
+		cfg.VoiceReplyUserID = cfg.TelegramAllowedUserIDs[0]
+	}
+	if cfg.VoiceReplyChatID == 0 && len(cfg.TelegramAllowedUserIDs) > 0 {
+		cfg.VoiceReplyChatID = cfg.TelegramAllowedUserIDs[0]
+	}
 	if cfg.LLMProvider == "" {
 		cfg.LLMProvider = defaults.LLMProvider
 	}
