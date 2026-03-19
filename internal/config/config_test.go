@@ -39,11 +39,11 @@ func TestLoad_CreatesDefaultAppConfigWhenMissing(t *testing.T) {
 	if cfg.TTSProvider != defaultTTSProvider {
 		t.Fatalf("TTSProvider = %q, want %q", cfg.TTSProvider, defaultTTSProvider)
 	}
-	if cfg.TTSBaseURL != defaultTTSBaseURL {
-		t.Fatalf("TTSBaseURL = %q, want %q", cfg.TTSBaseURL, defaultTTSBaseURL)
+	if cfg.TTSBaseURL != defaultLocalTTSBaseURL {
+		t.Fatalf("TTSBaseURL = %q, want %q", cfg.TTSBaseURL, defaultLocalTTSBaseURL)
 	}
-	if cfg.TTSVoice != defaultTTSVoice {
-		t.Fatalf("TTSVoice = %q, want %q", cfg.TTSVoice, defaultTTSVoice)
+	if cfg.TTSVoice != defaultLocalTTSVoice {
+		t.Fatalf("TTSVoice = %q, want %q", cfg.TTSVoice, defaultLocalTTSVoice)
 	}
 	if cfg.OpenAIAuthMode != "api_key" {
 		t.Fatalf("OpenAIAuthMode = %q, want %q", cfg.OpenAIAuthMode, "api_key")
@@ -81,6 +81,7 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 		TelegramAllowedUserIDs: []int64{1, 2, 3},
 		AnthropicAPIKey:        "anthropic-key",
 		GoogleAPIKey:           "google-key",
+		MiniMaxAPIKey:          "minimax-key",
 		KiloAPIKey:             "kilo-key",
 		KimiAPIKey:             "kimi-key",
 		OpenRouterAPIKey:       "openrouter-key",
@@ -160,6 +161,9 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 	}
 	if cfg.GoogleAPIKey != input.GoogleAPIKey {
 		t.Fatalf("GoogleAPIKey = %q, want %q", cfg.GoogleAPIKey, input.GoogleAPIKey)
+	}
+	if cfg.MiniMaxAPIKey != input.MiniMaxAPIKey {
+		t.Fatalf("MiniMaxAPIKey = %q, want %q", cfg.MiniMaxAPIKey, input.MiniMaxAPIKey)
 	}
 	if cfg.KiloAPIKey != input.KiloAPIKey {
 		t.Fatalf("KiloAPIKey = %q, want %q", cfg.KiloAPIKey, input.KiloAPIKey)
@@ -248,6 +252,7 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 		TelegramAllowedUserIDs: []int64{7, 8},
 		AnthropicAPIKey:        "anthropic-key",
 		GoogleAPIKey:           "google-key",
+		MiniMaxAPIKey:          "minimax-key",
 		KiloAPIKey:             "kilo-key",
 		KimiAPIKey:             "kimi-key",
 		OpenRouterAPIKey:       "openrouter-key",
@@ -279,10 +284,16 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 	if cfg.KiloAPIKey != "kilo-key" {
 		t.Fatalf("KiloAPIKey = %q, want %q", cfg.KiloAPIKey, "kilo-key")
 	}
+	if cfg.MiniMaxAPIKey != "minimax-key" {
+		t.Fatalf("MiniMaxAPIKey = %q, want %q", cfg.MiniMaxAPIKey, "minimax-key")
+	}
 	if cfg.MCPConfigPath != filepath.Join(tmpDir, "config", "mcp_servers.json") {
 		t.Fatalf("MCPConfigPath = %q, want managed default", cfg.MCPConfigPath)
 	}
 	if !reflect.DeepEqual(cfg.TelegramAllowedUserIDs, []int64{7, 8}) {
 		t.Fatalf("TelegramAllowedUserIDs = %v", cfg.TelegramAllowedUserIDs)
+	}
+	if cfg.MiniMaxAPIKey != "minimax-key" {
+		t.Fatalf("MiniMaxAPIKey = %q, want %q", cfg.MiniMaxAPIKey, "minimax-key")
 	}
 }

@@ -1,0 +1,56 @@
+{
+  "adr_id": "ADR-20260319-aurelia-authorized-voice-clone",
+  "title": "Aurelia Authorized Voice Clone",
+  "status": "in_progress",
+  "phase": "handoff_waiting_input",
+  "progress": 25,
+  "goal": "Fechar a voz oficial da Aurelia com amostra local autorizada, smoke real na MiniMax e switch controlado do Telegram TTS.",
+  "scope": [
+    "fonte de voz autorizada",
+    "voice_id canônico da Aurelia",
+    "smoke real MiniMax TTS",
+    "troca segura do runtime de Telegram TTS"
+  ],
+  "done_definition": [
+    "arquivo local autorizado recebido",
+    "MINIMAX_API_KEY configurada",
+    "voice_id validado com minimax-tts-smoke.sh",
+    "Telegram responde com a nova voz",
+    "rollback para voice-proxy documentado e testado"
+  ],
+  "next_actions": [
+    "receber arquivo local autorizado da voz",
+    "configurar MINIMAX_API_KEY",
+    "rodar listagem e smoke reais da MiniMax",
+    "trocar o runtime de TTS apenas depois da validação"
+  ],
+  "simulation_commands": [
+    "bash ./scripts/minimax-voice-list.sh --dry-run",
+    "bash ./scripts/minimax-tts-smoke.sh --voice-id aurelia-ptbr-formal-doce-v1 --dry-run",
+    "bash ./scripts/media-transcript.sh --input /caminho/para/amostra-autorizada.wav --dry-run"
+  ],
+  "test_commands": [
+    "go test ./pkg/tts ./internal/telegram ./internal/config -count=1"
+  ],
+  "curl_checks": [
+    "curl -fsS http://127.0.0.1:8484/health"
+  ],
+  "fallback_commands": [
+    "manter tts_provider=openai_compatible",
+    "restaurar voice-proxy local se o switch falhar"
+  ],
+  "evidence": [
+    "slice base de infraestrutura MiniMax/TTS ja existe em ADR-20260319-aurelia-media-voice",
+    "voz oficial da Aurelia exige amostra autorizada e smoke real"
+  ],
+  "blockers": [
+    "arquivo local autorizado ainda nao entregue",
+    "MINIMAX_API_KEY ainda nao entregue",
+    "voice_id final ainda nao existe"
+  ],
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "A slice ADR-20260319-aurelia-authorized-voice-clone ja esta aberta. Aguarde o audio local autorizado e a MINIMAX_API_KEY, depois rode minimax-voice-list, gere/valide o voice_id e so entao aplique o switch do Telegram TTS com rollback pronto.",
+    "last_updated": "2026-03-19"
+  }
+}

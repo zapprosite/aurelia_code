@@ -82,6 +82,8 @@ func buildTTSSynthesizer(cfg *config.AppConfig) tts.Synthesizer {
 		return nil
 	case "openai_compatible":
 		return tts.NewOpenAICompatibleSynthesizer(cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSVoice, cfg.TTSFormat, cfg.TTSSpeed)
+	case "minimax":
+		return tts.NewMiniMaxSynthesizer(cfg.TTSBaseURL, cfg.MiniMaxAPIKey, cfg.TTSModel, cfg.TTSVoice, cfg.TTSFormat, cfg.TTSSpeed)
 	default:
 		return nil
 	}

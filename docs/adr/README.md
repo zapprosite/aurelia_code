@@ -30,6 +30,8 @@ Este diretório contém o registro histórico de todas as decisões técnicas si
 | [20260319-homelab-tutor](./20260319-homelab-tutor-v2.md) | Homelab Tutor v2 | 2026-03-19 | ✅ Aceito |
 | [20260319-keepassxc](./20260319-keepassxc-cofre-humano.md) | KeePassXC como cofre humano | 2026-03-19 | ✅ Aceito |
 | [20260319-telegram-tts](./20260319-telegram-tts-local.md) | Telegram TTS local via voice-proxy | 2026-03-19 | ✅ Aceito |
+| [20260319-aurelia-media-voice](./ADR-20260319-aurelia-media-voice.md) | Transcript de mídia e voz oficial da Aurelia | 2026-03-19 | 🔵 Em execução |
+| [20260319-aurelia-authorized-voice-clone](./ADR-20260319-aurelia-authorized-voice-clone.md) | Clonagem autorizada da voz oficial da Aurelia | 2026-03-19 | 🔵 Em execução |
 | [20260319-voice-capture](./20260319-voice-capture-plane.md) | Voice capture plane real | 2026-03-19 | 🟡 Proposto |
 | [20260319-voice-capture-runtime](./ADR-20260319-voice-capture-runtime.md) | Voice capture runtime nonstop | 2026-03-19 | 🔵 Em execução |
 | [20260319-state-memory-runtime](./ADR-20260319-state-memory-runtime.md) | State memory runtime nonstop | 2026-03-19 | 🔵 Em execução |

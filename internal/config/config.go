@@ -16,10 +16,13 @@ const (
 	defaultLLMModel             = "kimi-k2-thinking"
 	defaultSTTProvider          = "groq"
 	defaultTTSProvider          = "openai_compatible"
-	defaultTTSBaseURL           = "http://127.0.0.1:8011"
-	defaultTTSModel             = "chatterbox"
-	defaultTTSVoice             = "Olivia.wav"
-	defaultTTSFormat            = "opus"
+	defaultLocalTTSBaseURL      = "http://127.0.0.1:8011"
+	defaultLocalTTSModel        = "chatterbox"
+	defaultLocalTTSVoice        = "Olivia.wav"
+	defaultLocalTTSFormat       = "opus"
+	defaultMiniMaxTTSBaseURL    = "https://api.minimax.io"
+	defaultMiniMaxTTSModel      = "speech-2.8-hd"
+	defaultMiniMaxTTSFormat     = "mp3"
 	defaultTTSSpeed             = 1.0
 	defaultHeartbeatEnabled     = true
 	defaultHeartbeatIntervalMin = 30
@@ -51,6 +54,7 @@ type AppConfig struct {
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
 	GoogleAPIKey             string
+	MiniMaxAPIKey            string
 	KiloAPIKey               string
 	KimiAPIKey               string
 	OpenRouterAPIKey         string
@@ -105,6 +109,7 @@ type fileConfig struct {
 	TelegramAllowedUserIDs   []int64 `json:"telegram_allowed_user_ids"`
 	AnthropicAPIKey          string  `json:"anthropic_api_key"`
 	GoogleAPIKey             string  `json:"google_api_key"`
+	MiniMaxAPIKey            string  `json:"minimax_api_key"`
 	KiloAPIKey               string  `json:"kilo_api_key"`
 	KimiAPIKey               string  `json:"kimi_api_key"`
 	OpenRouterAPIKey         string  `json:"openrouter_api_key"`
@@ -160,6 +165,7 @@ type EditableConfig struct {
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
 	GoogleAPIKey             string
+	MiniMaxAPIKey            string
 	KiloAPIKey               string
 	KimiAPIKey               string
 	OpenRouterAPIKey         string
@@ -219,10 +225,10 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		OpenAIAuthMode:           "api_key",
 		STTProvider:              defaultSTTProvider,
 		TTSProvider:              defaultTTSProvider,
-		TTSBaseURL:               defaultTTSBaseURL,
-		TTSModel:                 defaultTTSModel,
-		TTSVoice:                 defaultTTSVoice,
-		TTSFormat:                defaultTTSFormat,
+		TTSBaseURL:               defaultTTSBaseURLForProvider(defaultTTSProvider),
+		TTSModel:                 defaultTTSModelForProvider(defaultTTSProvider),
+		TTSVoice:                 defaultTTSVoiceForProvider(defaultTTSProvider),
+		TTSFormat:                defaultTTSFormatForProvider(defaultTTSProvider),
 		TTSSpeed:                 defaultTTSSpeed,
 		TelegramAllowedUserIDs:   []int64{},
 		MaxIterations:            defaultMaxIterations,
@@ -257,10 +263,10 @@ func DefaultEditableConfig() EditableConfig {
 		OpenAIAuthMode:           "api_key",
 		STTProvider:              defaultSTTProvider,
 		TTSProvider:              defaultTTSProvider,
-		TTSBaseURL:               defaultTTSBaseURL,
-		TTSModel:                 defaultTTSModel,
-		TTSVoice:                 defaultTTSVoice,
-		TTSFormat:                defaultTTSFormat,
+		TTSBaseURL:               defaultTTSBaseURLForProvider(defaultTTSProvider),
+		TTSModel:                 defaultTTSModelForProvider(defaultTTSProvider),
+		TTSVoice:                 defaultTTSVoiceForProvider(defaultTTSProvider),
+		TTSFormat:                defaultTTSFormatForProvider(defaultTTSProvider),
 		TTSSpeed:                 defaultTTSSpeed,
 		TelegramAllowedUserIDs:   []int64{},
 		MaxIterations:            defaultMaxIterations,
@@ -285,10 +291,17 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		LLMProvider:              cfg.LLMProvider,
 		LLMModel:                 cfg.LLMModel,
 		STTProvider:              cfg.STTProvider,
+		TTSProvider:              cfg.TTSProvider,
+		TTSBaseURL:               cfg.TTSBaseURL,
+		TTSModel:                 cfg.TTSModel,
+		TTSVoice:                 cfg.TTSVoice,
+		TTSFormat:                cfg.TTSFormat,
+		TTSSpeed:                 cfg.TTSSpeed,
 		TelegramBotToken:         cfg.TelegramBotToken,
 		TelegramAllowedUserIDs:   append([]int64(nil), cfg.TelegramAllowedUserIDs...),
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
 		GoogleAPIKey:             cfg.GoogleAPIKey,
+		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
 		KiloAPIKey:               cfg.KiloAPIKey,
 		KimiAPIKey:               cfg.KimiAPIKey,
 		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
@@ -323,6 +336,7 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.TelegramAllowedUserIDs = append([]int64(nil), editable.TelegramAllowedUserIDs...)
 	cfg.AnthropicAPIKey = editable.AnthropicAPIKey
 	cfg.GoogleAPIKey = editable.GoogleAPIKey
+	cfg.MiniMaxAPIKey = editable.MiniMaxAPIKey
 	cfg.KiloAPIKey = editable.KiloAPIKey
 	cfg.KimiAPIKey = editable.KimiAPIKey
 	cfg.OpenRouterAPIKey = editable.OpenRouterAPIKey
@@ -365,17 +379,17 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.TTSProvider == "" {
 		cfg.TTSProvider = defaults.TTSProvider
 	}
-	if cfg.TTSBaseURL == "" {
-		cfg.TTSBaseURL = defaults.TTSBaseURL
+	if cfg.TTSBaseURL == "" || usesLegacyTTSDefaults(cfg.TTSProvider, cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSFormat) {
+		cfg.TTSBaseURL = defaultTTSBaseURLForProvider(cfg.TTSProvider)
 	}
-	if cfg.TTSModel == "" {
-		cfg.TTSModel = defaults.TTSModel
+	if cfg.TTSModel == "" || usesLegacyTTSModel(cfg.TTSProvider, cfg.TTSModel) {
+		cfg.TTSModel = defaultTTSModelForProvider(cfg.TTSProvider)
 	}
-	if cfg.TTSVoice == "" {
-		cfg.TTSVoice = defaults.TTSVoice
+	if cfg.TTSVoice == "" || usesLegacyTTSVoice(cfg.TTSProvider, cfg.TTSVoice) {
+		cfg.TTSVoice = defaultTTSVoiceForProvider(cfg.TTSProvider)
 	}
-	if cfg.TTSFormat == "" {
-		cfg.TTSFormat = defaults.TTSFormat
+	if cfg.TTSFormat == "" || usesLegacyTTSFormat(cfg.TTSProvider, cfg.TTSFormat) {
+		cfg.TTSFormat = defaultTTSFormatForProvider(cfg.TTSProvider)
 	}
 	if cfg.TTSSpeed <= 0 {
 		cfg.TTSSpeed = defaults.TTSSpeed
@@ -476,6 +490,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		TelegramAllowedUserIDs:   cfg.TelegramAllowedUserIDs,
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
 		GoogleAPIKey:             cfg.GoogleAPIKey,
+		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
 		KiloAPIKey:               cfg.KiloAPIKey,
 		KimiAPIKey:               cfg.KimiAPIKey,
 		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
@@ -530,6 +545,7 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.TTSSpeed != b.TTSSpeed ||
 		a.AnthropicAPIKey != b.AnthropicAPIKey ||
 		a.GoogleAPIKey != b.GoogleAPIKey ||
+		a.MiniMaxAPIKey != b.MiniMaxAPIKey ||
 		a.KiloAPIKey != b.KiloAPIKey ||
 		a.KimiAPIKey != b.KimiAPIKey ||
 		a.OpenRouterAPIKey != b.OpenRouterAPIKey ||
@@ -579,6 +595,78 @@ func sameFileConfig(a, b fileConfig) bool {
 		}
 	}
 	return true
+}
+
+func defaultTTSBaseURLForProvider(provider string) string {
+	switch provider {
+	case "minimax":
+		return defaultMiniMaxTTSBaseURL
+	default:
+		return defaultLocalTTSBaseURL
+	}
+}
+
+func defaultTTSModelForProvider(provider string) string {
+	switch provider {
+	case "minimax":
+		return defaultMiniMaxTTSModel
+	default:
+		return defaultLocalTTSModel
+	}
+}
+
+func defaultTTSVoiceForProvider(provider string) string {
+	switch provider {
+	case "minimax":
+		return "aurelia-ptbr-formal-doce-v1"
+	default:
+		return defaultLocalTTSVoice
+	}
+}
+
+func defaultTTSFormatForProvider(provider string) string {
+	switch provider {
+	case "minimax":
+		return defaultMiniMaxTTSFormat
+	default:
+		return defaultLocalTTSFormat
+	}
+}
+
+func usesLegacyTTSDefaults(provider, baseURL, model, format string) bool {
+	switch provider {
+	case "minimax":
+		return baseURL == defaultLocalTTSBaseURL && (model == "" || model == defaultLocalTTSModel) && (format == "" || format == defaultLocalTTSFormat)
+	default:
+		return baseURL == defaultMiniMaxTTSBaseURL && (model == "" || model == defaultMiniMaxTTSModel) && (format == "" || format == defaultMiniMaxTTSFormat)
+	}
+}
+
+func usesLegacyTTSModel(provider, model string) bool {
+	switch provider {
+	case "minimax":
+		return model == defaultLocalTTSModel
+	default:
+		return model == defaultMiniMaxTTSModel
+	}
+}
+
+func usesLegacyTTSVoice(provider, voice string) bool {
+	switch provider {
+	case "minimax":
+		return voice == defaultLocalTTSVoice
+	default:
+		return voice == "aurelia-ptbr-formal-doce-v1"
+	}
+}
+
+func usesLegacyTTSFormat(provider, format string) bool {
+	switch provider {
+	case "minimax":
+		return format == defaultLocalTTSFormat
+	default:
+		return format == defaultMiniMaxTTSFormat
+	}
 }
 
 func defaultLLMModelForProvider(provider string) string {
