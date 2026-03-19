@@ -352,21 +352,21 @@ MIC
 
 ### Agora
 
-1. validar rollout do gateway na worktree de deploy
-2. implementar captura de microfone com wake word + VAD
-3. fechar smoke real do voice path em runtime
+1. fechar `mic daemon` + `wake word` + `VAD`
+2. transformar a captura em voice path real, nao so worker por contrato
+3. persistir `governor/breaker` e fechar `SQLite/Supabase/Qdrant`
 
 ### Depois
 
-1. implementar `aurelia-voice.service` ou separar mic daemon
-2. plugar `openWakeWord + Silero VAD + ring buffer`
-3. fechar E2E de voz com budget e fallback
+1. validar rollout conjunto de gateway + voz na worktree de deploy
+2. subir `aurelia-voice.service` ou worker dedicado
+3. fechar E2E de voz com budget, fallback e health live
 
 ### Por Ultimo
 
-1. fechar E2E completo com Antigravity
-2. refinar extensoes/aceleradores
-3. revisar UX do operador
+1. fechar E2E completo com Antigravity e login guiado seguro
+2. fechar desktop fallback seguro
+3. refinar extensoes/aceleradores e revisar UX do operador
 
 ## Testes Minimos
 

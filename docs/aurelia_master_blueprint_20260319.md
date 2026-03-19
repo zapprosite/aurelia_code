@@ -141,11 +141,12 @@ Human / Telegram / Antigravity / Browser
 
 ## Ordem de execucao
 
-1. gateway rollout em deploy
-2. voice capture live
-3. memory plane real
-4. desktop fallback seguro
-5. rollout final em deploy
+1. voice capture live
+2. memory plane real
+3. gateway + voice rollout em deploy
+4. orchestration/browser E2E
+5. desktop fallback seguro
+6. extensoes opcionais e rollback
 
 ## Gates
 

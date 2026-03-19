@@ -243,14 +243,12 @@ Critério de aceite:
 
 ## Ordem pratica
 
-1. gateway enforcement
-2. response guards
-3. budgets + breaker
-4. voice service
-5. spool + STT fallback
-6. SQLite/Qdrant/Supabase amarrados
-7. desktop fallback seguro
-8. rollout em deploy
+1. fechar voice plane real
+2. fechar estado/memoria reais
+3. levar gateway + voice para deploy
+4. fechar browser/Antigravity E2E
+5. fechar desktop fallback seguro
+6. avaliar extensoes opcionais
 
 ## Fonte de verdade
 
