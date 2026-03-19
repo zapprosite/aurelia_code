@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -12,8 +12,11 @@ import (
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/cron"
+	"github.com/kocar/aurelia/internal/health"
+	"github.com/kocar/aurelia/internal/heartbeat"
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/runtime"
 	"github.com/kocar/aurelia/internal/skill"
@@ -25,16 +28,19 @@ import (
 )
 
 type app struct {
-	resolver      *runtime.PathResolver
-	mem           *memory.MemoryManager
-	cronStore     *cron.SQLiteCronStore
-	mcpManager    *mcp.Manager
-	taskStore     *agent.SQLiteTaskStore
-	llmProvider   closableLLMProvider
-	bot           *telegram.BotController
-	cronScheduler *cron.Scheduler
-	cronCtx       context.Context
-	cronCancel    context.CancelFunc
+	resolver       *runtime.PathResolver
+	instanceLock   *runtime.InstanceLock
+	mem            *memory.MemoryManager
+	cronStore      *cron.SQLiteCronStore
+	mcpManager     *mcp.Manager
+	taskStore      *agent.SQLiteTaskStore
+	llmProvider    closableLLMProvider
+	bot            *telegram.BotController
+	cronScheduler  *cron.Scheduler
+	cronCtx        context.Context
+	cronCancel     context.CancelFunc
+	heartbeat      *heartbeat.HeartbeatService
+	healthServer   *health.Server
 }
 
 type closableLLMProvider interface {
@@ -42,7 +48,9 @@ type closableLLMProvider interface {
 	Close()
 }
 
-func bootstrapApp() (*app, error) {
+func bootstrapApp(args []string) (*app, error) {
+	logger := observability.Logger("cmd.app")
+
 	resolver, err := runtime.New()
 	if err != nil {
 		return nil, fmt.Errorf("resolve instance root: %w", err)
@@ -50,14 +58,20 @@ func bootstrapApp() (*app, error) {
 	if err := runtime.Bootstrap(resolver); err != nil {
 		return nil, fmt.Errorf("bootstrap instance directory: %w", err)
 	}
+	instanceLock, err := runtime.AcquireInstanceLock(resolver, args)
+	if err != nil {
+		return nil, fmt.Errorf("acquire instance lock: %w", err)
+	}
 
 	cfg, err := config.Load(resolver)
 	if err != nil {
+		_ = instanceLock.Release()
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
 	mem, err := memory.NewMemoryManager(cfg.DBPath, cfg.MemoryWindowSize)
 	if err != nil {
+		_ = instanceLock.Release()
 		return nil, fmt.Errorf("initialize memory manager: %w", err)
 	}
 
@@ -67,11 +81,11 @@ func bootstrapApp() (*app, error) {
 	lessonsLearnedPath := filepath.Join(memoryDir, "LESSONS_LEARNED.md")
 	cwd, err := os.Getwd()
 	if err != nil {
-		log.Printf("Warning: failed to resolve working directory for project playbook: %v", err)
+		logger.Warn("failed to resolve working directory for project playbook", slog.Any("err", err))
 		cwd = ""
 	}
 	if err := runtime.BootstrapProject(cwd); err != nil {
-		log.Printf("Warning: failed to bootstrap project-local Aurelia directory: %v", err)
+		logger.Warn("failed to bootstrap project-local Aurelia directory", slog.Any("err", err))
 	}
 	var projectPlaybookPath string
 	var projectSkillsDir string
@@ -81,6 +95,8 @@ func bootstrapApp() (*app, error) {
 	}
 	llmProvider, err := buildLLMProvider(cfg, resolver)
 	if err != nil {
+		_ = instanceLock.Release()
+		_ = mem.Close()
 		return nil, fmt.Errorf("initialize llm provider: %w", err)
 	}
 	canonicalService := persona.NewCanonicalIdentityService(
@@ -96,6 +112,7 @@ func bootstrapApp() (*app, error) {
 
 	cronStore, err := cron.NewSQLiteCronStore(cfg.DBPath)
 	if err != nil {
+		_ = instanceLock.Release()
 		_ = mem.Close()
 		return nil, fmt.Errorf("initialize cron store: %w", err)
 	}
@@ -103,7 +120,7 @@ func bootstrapApp() (*app, error) {
 	registerScheduleTools(registry, cronStore)
 	mcpManager, err := maybeRegisterMCPTools(cfg, registry)
 	if err != nil {
-		log.Printf("Warning: %v", err)
+		logger.Warn("failed to initialize MCP tools", slog.Any("err", err))
 	}
 
 	loop := agent.NewLoop(llmProvider, registry, cfg.MaxIterations)
@@ -113,6 +130,7 @@ func bootstrapApp() (*app, error) {
 	skillInstaller := skill.NewInstaller(resolver.Skills(), projectSkillsDir)
 	transcriber, err := buildTranscriber(cfg)
 	if err != nil {
+		_ = instanceLock.Release()
 		_ = cronStore.Close()
 		_ = mem.Close()
 		return nil, fmt.Errorf("initialize transcriber: %w", err)
@@ -132,6 +150,7 @@ func bootstrapApp() (*app, error) {
 		personasDir,
 	)
 	if err != nil {
+		_ = instanceLock.Release()
 		_ = cronStore.Close()
 		_ = mem.Close()
 		return nil, fmt.Errorf("initialize telegram block: %w", err)
@@ -139,12 +158,14 @@ func bootstrapApp() (*app, error) {
 
 	taskStore, err := agent.NewSQLiteTaskStore(cfg.DBPath + ".teams")
 	if err != nil {
+		_ = instanceLock.Release()
 		_ = cronStore.Close()
 		_ = mem.Close()
 		return nil, fmt.Errorf("initialize team task store: %w", err)
 	}
 
 	if err := registerSpawnAgentTool(cfg, registry, llmProvider, bot, taskStore); err != nil {
+		_ = instanceLock.Release()
 		_ = taskStore.Close()
 		_ = cronStore.Close()
 		_ = mem.Close()
@@ -153,14 +174,27 @@ func bootstrapApp() (*app, error) {
 
 	cronScheduler, cronCtx, cronCancel, err := buildCronScheduler(cronStore, loop, canonicalService, bot)
 	if err != nil {
+		_ = instanceLock.Release()
 		_ = taskStore.Close()
 		_ = cronStore.Close()
 		_ = mem.Close()
 		return nil, fmt.Errorf("initialize cron scheduler: %w", err)
 	}
 
+	// Initialize heartbeat service
+	hbService := heartbeat.NewHeartbeatService(
+		resolver.Root(),
+		cfg.HeartbeatIntervalMinutes,
+		cfg.HeartbeatEnabled,
+		loop,
+	)
+
+	// Initialize health server
+	healthSrv := health.NewServer(8484) // Default port, could be configurable
+
 	return &app{
 		resolver:      resolver,
+		instanceLock:  instanceLock,
 		mem:           mem,
 		cronStore:     cronStore,
 		mcpManager:    mcpManager,
@@ -170,6 +204,8 @@ func bootstrapApp() (*app, error) {
 		cronScheduler: cronScheduler,
 		cronCtx:       cronCtx,
 		cronCancel:    cronCancel,
+		heartbeat:     hbService,
+		healthServer:  healthSrv,
 	}, nil
 }
 
@@ -213,17 +249,38 @@ func buildTranscriber(cfg *config.AppConfig) (stt.Transcriber, error) {
 }
 
 func (a *app) start() {
+	logger := observability.Logger("cmd.app")
+
 	go func() {
 		if err := a.cronScheduler.Start(a.cronCtx); err != nil && err != context.Canceled {
-			log.Printf("Warning: cron scheduler stopped with error: %v", err)
+			logger.Warn("cron scheduler stopped with error", slog.Any("err", err))
 		}
 	}()
+
+	if a.heartbeat != nil {
+		if err := a.heartbeat.Start(); err != nil {
+			logger.Warn("failed to start heartbeat service", slog.Any("err", err))
+		}
+	}
+
+	if a.healthServer != nil {
+		if err := a.healthServer.Start(); err != nil {
+			logger.Warn("failed to start health server", slog.Any("err", err))
+		}
+	}
+
 	go a.bot.Start()
 }
 
 func (a *app) shutdown(ctx context.Context) {
 	if a.cronCancel != nil {
 		a.cronCancel()
+	}
+	if a.heartbeat != nil {
+		a.heartbeat.Stop()
+	}
+	if a.healthServer != nil {
+		_ = a.healthServer.Stop()
 	}
 	if a.bot != nil {
 		a.bot.Stop()
@@ -232,28 +289,35 @@ func (a *app) shutdown(ctx context.Context) {
 }
 
 func (a *app) close() {
+	logger := observability.Logger("cmd.app")
+
 	if a.taskStore != nil {
 		if err := a.taskStore.Close(); err != nil {
-			log.Printf("Warning: failed to close team task store: %v", err)
+			logger.Warn("failed to close team task store", slog.Any("err", err))
 		}
 	}
 	if a.mcpManager != nil {
 		if err := a.mcpManager.Close(); err != nil {
-			log.Printf("Warning: failed to close MCP manager: %v", err)
+			logger.Warn("failed to close MCP manager", slog.Any("err", err))
 		}
 	}
 	if a.cronStore != nil {
 		if err := a.cronStore.Close(); err != nil {
-			log.Printf("Warning: failed to close cron store: %v", err)
+			logger.Warn("failed to close cron store", slog.Any("err", err))
 		}
 	}
 	if a.mem != nil {
 		if err := a.mem.Close(); err != nil {
-			log.Printf("Warning: failed to close memory manager: %v", err)
+			logger.Warn("failed to close memory manager", slog.Any("err", err))
 		}
 	}
 	if a.llmProvider != nil {
 		a.llmProvider.Close()
+	}
+	if a.instanceLock != nil {
+		if err := a.instanceLock.Release(); err != nil {
+			logger.Warn("failed to release instance lock", slog.Any("err", err))
+		}
 	}
 }
 

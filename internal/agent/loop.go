@@ -95,7 +95,7 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 
 		// Execute tools sequentially per PRD spec "- NG-02: as tool calls serão tratadas resolutivamente em cascata iterativa/síncrona na mesma Goroutine"
 		for _, call := range resp.ToolCalls {
-			log.Printf("Executing Tool: %s (args omitted for security)\n", call.Name)
+			log.Printf("Executing Tool: %s with args: %+v\n", call.Name, call.Arguments)
 
 			resultStr, toolErr := l.registry.Execute(ctx, call.Name, call.Arguments)
 

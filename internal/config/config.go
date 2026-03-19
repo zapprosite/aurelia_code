@@ -10,77 +10,85 @@ import (
 )
 
 const (
-	defaultMaxIterations    = 500
-	defaultMemoryWindowSize = 20
-	defaultLLMProvider      = "kimi"
-	defaultLLMModel         = "kimi-k2-thinking"
-	defaultSTTProvider      = "groq"
+	defaultMaxIterations        = 500
+	defaultMemoryWindowSize     = 20
+	defaultLLMProvider          = "kimi"
+	defaultLLMModel             = "kimi-k2-thinking"
+	defaultSTTProvider          = "groq"
+	defaultHeartbeatEnabled     = true
+	defaultHeartbeatIntervalMin = 30
 )
 
 // AppConfig holds all runtime configuration needed for the application.
 type AppConfig struct {
-	LLMProvider            string
-	LLMModel               string
-	STTProvider            string
-	TelegramBotToken       string
-	TelegramAllowedUserIDs []int64
-	AnthropicAPIKey        string
-	GoogleAPIKey           string
-	KiloAPIKey             string
-	KimiAPIKey             string
-	OpenRouterAPIKey       string
-	ZAIAPIKey              string
-	AlibabaAPIKey          string
-	OpenAIAPIKey           string
-	OpenAIAuthMode         string
-	GroqAPIKey             string
-	MaxIterations          int
-	DBPath                 string
-	MemoryWindowSize       int
-	MCPConfigPath          string
+	LLMProvider              string
+	LLMModel                 string
+	STTProvider              string
+	TelegramBotToken         string
+	TelegramAllowedUserIDs   []int64
+	AnthropicAPIKey          string
+	GoogleAPIKey             string
+	KiloAPIKey               string
+	KimiAPIKey               string
+	OpenRouterAPIKey         string
+	ZAIAPIKey                string
+	AlibabaAPIKey            string
+	OpenAIAPIKey             string
+	OpenAIAuthMode           string
+	GroqAPIKey               string
+	MaxIterations            int
+	DBPath                   string
+	MemoryWindowSize         int
+	MCPConfigPath            string
+	HeartbeatEnabled         bool
+	HeartbeatIntervalMinutes int
 }
 
 type fileConfig struct {
-	LLMProvider            string  `json:"llm_provider"`
-	LLMModel               string  `json:"llm_model"`
-	STTProvider            string  `json:"stt_provider"`
-	TelegramBotToken       string  `json:"telegram_bot_token"`
-	TelegramAllowedUserIDs []int64 `json:"telegram_allowed_user_ids"`
-	AnthropicAPIKey        string  `json:"anthropic_api_key"`
-	GoogleAPIKey           string  `json:"google_api_key"`
-	KiloAPIKey             string  `json:"kilo_api_key"`
-	KimiAPIKey             string  `json:"kimi_api_key"`
-	OpenRouterAPIKey       string  `json:"openrouter_api_key"`
-	ZAIAPIKey              string  `json:"zai_api_key"`
-	AlibabaAPIKey          string  `json:"alibaba_api_key"`
-	OpenAIAPIKey           string  `json:"openai_api_key"`
-	OpenAIAuthMode         string  `json:"openai_auth_mode"`
-	GroqAPIKey             string  `json:"groq_api_key"`
-	MaxIterations          int     `json:"max_iterations"`
-	DBPath                 string  `json:"db_path"`
-	MemoryWindowSize       int     `json:"memory_window_size"`
-	MCPConfigPath          string  `json:"mcp_servers_config_path"`
+	LLMProvider              string  `json:"llm_provider"`
+	LLMModel                 string  `json:"llm_model"`
+	STTProvider              string  `json:"stt_provider"`
+	TelegramBotToken         string  `json:"telegram_bot_token"`
+	TelegramAllowedUserIDs   []int64 `json:"telegram_allowed_user_ids"`
+	AnthropicAPIKey          string  `json:"anthropic_api_key"`
+	GoogleAPIKey             string  `json:"google_api_key"`
+	KiloAPIKey               string  `json:"kilo_api_key"`
+	KimiAPIKey               string  `json:"kimi_api_key"`
+	OpenRouterAPIKey         string  `json:"openrouter_api_key"`
+	ZAIAPIKey                string  `json:"zai_api_key"`
+	AlibabaAPIKey            string  `json:"alibaba_api_key"`
+	OpenAIAPIKey             string  `json:"openai_api_key"`
+	OpenAIAuthMode           string  `json:"openai_auth_mode"`
+	GroqAPIKey               string  `json:"groq_api_key"`
+	MaxIterations            int     `json:"max_iterations"`
+	DBPath                   string  `json:"db_path"`
+	MemoryWindowSize         int     `json:"memory_window_size"`
+	MCPConfigPath            string  `json:"mcp_servers_config_path"`
+	HeartbeatEnabled         bool    `json:"heartbeat_enabled"`
+	HeartbeatIntervalMinutes int     `json:"heartbeat_interval_minutes"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
 type EditableConfig struct {
-	LLMProvider            string
-	LLMModel               string
-	STTProvider            string
-	TelegramBotToken       string
-	TelegramAllowedUserIDs []int64
-	AnthropicAPIKey        string
-	GoogleAPIKey           string
-	KiloAPIKey             string
-	KimiAPIKey             string
-	OpenRouterAPIKey       string
-	ZAIAPIKey              string
-	AlibabaAPIKey          string
-	OpenAIAPIKey           string
-	OpenAIAuthMode         string
-	GroqAPIKey             string
-	MaxIterations          int
-	MemoryWindowSize       int
+	LLMProvider              string
+	LLMModel                 string
+	STTProvider              string
+	TelegramBotToken         string
+	TelegramAllowedUserIDs   []int64
+	AnthropicAPIKey          string
+	GoogleAPIKey             string
+	KiloAPIKey               string
+	KimiAPIKey               string
+	OpenRouterAPIKey         string
+	ZAIAPIKey                string
+	AlibabaAPIKey            string
+	OpenAIAPIKey             string
+	OpenAIAuthMode           string
+	GroqAPIKey               string
+	MaxIterations            int
+	MemoryWindowSize         int
+	HeartbeatEnabled         bool
+	HeartbeatIntervalMinutes int
 }
 
 // Load reads the instance-local JSON config, creates it with defaults when
@@ -123,28 +131,32 @@ func Load(r *runtime.PathResolver) (*AppConfig, error) {
 
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 	return fileConfig{
-		LLMProvider:            defaultLLMProvider,
-		LLMModel:               defaultLLMModelForProvider(defaultLLMProvider),
-		OpenAIAuthMode:         "api_key",
-		STTProvider:            defaultSTTProvider,
-		TelegramAllowedUserIDs: []int64{},
-		MaxIterations:          defaultMaxIterations,
-		DBPath:                 filepath.Join(r.Data(), "aurelia.db"),
-		MemoryWindowSize:       defaultMemoryWindowSize,
-		MCPConfigPath:          filepath.Join(r.Config(), "mcp_servers.json"),
+		LLMProvider:              defaultLLMProvider,
+		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
+		OpenAIAuthMode:           "api_key",
+		STTProvider:              defaultSTTProvider,
+		TelegramAllowedUserIDs:   []int64{},
+		MaxIterations:            defaultMaxIterations,
+		DBPath:                   filepath.Join(r.Data(), "aurelia.db"),
+		MemoryWindowSize:         defaultMemoryWindowSize,
+		MCPConfigPath:            filepath.Join(r.Config(), "mcp_servers.json"),
+		HeartbeatEnabled:         defaultHeartbeatEnabled,
+		HeartbeatIntervalMinutes: defaultHeartbeatIntervalMin,
 	}
 }
 
 // DefaultEditableConfig returns the default user-editable configuration values.
 func DefaultEditableConfig() EditableConfig {
 	return EditableConfig{
-		LLMProvider:            defaultLLMProvider,
-		LLMModel:               defaultLLMModelForProvider(defaultLLMProvider),
-		OpenAIAuthMode:         "api_key",
-		STTProvider:            defaultSTTProvider,
-		TelegramAllowedUserIDs: []int64{},
-		MaxIterations:          defaultMaxIterations,
-		MemoryWindowSize:       defaultMemoryWindowSize,
+		LLMProvider:              defaultLLMProvider,
+		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
+		OpenAIAuthMode:           "api_key",
+		STTProvider:              defaultSTTProvider,
+		TelegramAllowedUserIDs:   []int64{},
+		MaxIterations:            defaultMaxIterations,
+		MemoryWindowSize:         defaultMemoryWindowSize,
+		HeartbeatEnabled:         defaultHeartbeatEnabled,
+		HeartbeatIntervalMinutes: defaultHeartbeatIntervalMin,
 	}
 }
 
@@ -160,46 +172,50 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		return nil, err
 	}
 	return &EditableConfig{
-		LLMProvider:            cfg.LLMProvider,
-		LLMModel:               cfg.LLMModel,
-		STTProvider:            cfg.STTProvider,
-		TelegramBotToken:       cfg.TelegramBotToken,
-		TelegramAllowedUserIDs: append([]int64(nil), cfg.TelegramAllowedUserIDs...),
-		AnthropicAPIKey:        cfg.AnthropicAPIKey,
-		GoogleAPIKey:           cfg.GoogleAPIKey,
-		KiloAPIKey:             cfg.KiloAPIKey,
-		KimiAPIKey:             cfg.KimiAPIKey,
-		OpenRouterAPIKey:       cfg.OpenRouterAPIKey,
-		ZAIAPIKey:              cfg.ZAIAPIKey,
-		AlibabaAPIKey:          cfg.AlibabaAPIKey,
-		OpenAIAPIKey:           cfg.OpenAIAPIKey,
-		OpenAIAuthMode:         cfg.OpenAIAuthMode,
-		GroqAPIKey:             cfg.GroqAPIKey,
-		MaxIterations:          cfg.MaxIterations,
-		MemoryWindowSize:       cfg.MemoryWindowSize,
+		LLMProvider:              cfg.LLMProvider,
+		LLMModel:                 cfg.LLMModel,
+		STTProvider:              cfg.STTProvider,
+		TelegramBotToken:         cfg.TelegramBotToken,
+		TelegramAllowedUserIDs:   append([]int64(nil), cfg.TelegramAllowedUserIDs...),
+		AnthropicAPIKey:          cfg.AnthropicAPIKey,
+		GoogleAPIKey:             cfg.GoogleAPIKey,
+		KiloAPIKey:               cfg.KiloAPIKey,
+		KimiAPIKey:               cfg.KimiAPIKey,
+		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
+		ZAIAPIKey:                cfg.ZAIAPIKey,
+		AlibabaAPIKey:            cfg.AlibabaAPIKey,
+		OpenAIAPIKey:             cfg.OpenAIAPIKey,
+		OpenAIAuthMode:           cfg.OpenAIAuthMode,
+		GroqAPIKey:               cfg.GroqAPIKey,
+		MaxIterations:            cfg.MaxIterations,
+		MemoryWindowSize:         cfg.MemoryWindowSize,
+		HeartbeatEnabled:         cfg.HeartbeatEnabled,
+		HeartbeatIntervalMinutes: cfg.HeartbeatIntervalMinutes,
 	}, nil
 }
 
 // SaveEditable updates the user-editable config subset while preserving managed paths.
 func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg := normalizeFileConfig(fileConfig{
-		LLMProvider:            editable.LLMProvider,
-		LLMModel:               editable.LLMModel,
-		STTProvider:            editable.STTProvider,
-		TelegramBotToken:       editable.TelegramBotToken,
-		TelegramAllowedUserIDs: append([]int64(nil), editable.TelegramAllowedUserIDs...),
-		AnthropicAPIKey:        editable.AnthropicAPIKey,
-		GoogleAPIKey:           editable.GoogleAPIKey,
-		KiloAPIKey:             editable.KiloAPIKey,
-		KimiAPIKey:             editable.KimiAPIKey,
-		OpenRouterAPIKey:       editable.OpenRouterAPIKey,
-		ZAIAPIKey:              editable.ZAIAPIKey,
-		AlibabaAPIKey:          editable.AlibabaAPIKey,
-		OpenAIAPIKey:           editable.OpenAIAPIKey,
-		OpenAIAuthMode:         editable.OpenAIAuthMode,
-		GroqAPIKey:             editable.GroqAPIKey,
-		MaxIterations:          editable.MaxIterations,
-		MemoryWindowSize:       editable.MemoryWindowSize,
+		LLMProvider:              editable.LLMProvider,
+		LLMModel:                 editable.LLMModel,
+		STTProvider:              editable.STTProvider,
+		TelegramBotToken:         editable.TelegramBotToken,
+		TelegramAllowedUserIDs:   append([]int64(nil), editable.TelegramAllowedUserIDs...),
+		AnthropicAPIKey:          editable.AnthropicAPIKey,
+		GoogleAPIKey:             editable.GoogleAPIKey,
+		KiloAPIKey:               editable.KiloAPIKey,
+		KimiAPIKey:               editable.KimiAPIKey,
+		OpenRouterAPIKey:         editable.OpenRouterAPIKey,
+		ZAIAPIKey:                editable.ZAIAPIKey,
+		AlibabaAPIKey:            editable.AlibabaAPIKey,
+		OpenAIAPIKey:             editable.OpenAIAPIKey,
+		OpenAIAuthMode:           editable.OpenAIAuthMode,
+		GroqAPIKey:               editable.GroqAPIKey,
+		MaxIterations:            editable.MaxIterations,
+		MemoryWindowSize:         editable.MemoryWindowSize,
+		HeartbeatEnabled:         editable.HeartbeatEnabled,
+		HeartbeatIntervalMinutes: editable.HeartbeatIntervalMinutes,
 	}, r)
 	return writeConfigFile(r.AppConfig(), cfg)
 }
@@ -230,6 +246,9 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.MemoryWindowSize <= 0 {
 		cfg.MemoryWindowSize = defaults.MemoryWindowSize
 	}
+	if cfg.HeartbeatIntervalMinutes <= 0 {
+		cfg.HeartbeatIntervalMinutes = defaults.HeartbeatIntervalMinutes
+	}
 	if cfg.MCPConfigPath == "" {
 		cfg.MCPConfigPath = defaults.MCPConfigPath
 	}
@@ -254,26 +273,32 @@ func writeConfigFile(path string, cfg fileConfig) error {
 }
 
 func toAppConfig(cfg fileConfig) *AppConfig {
+	heartbeatIntervalMin := cfg.HeartbeatIntervalMinutes
+	if heartbeatIntervalMin == 0 {
+		heartbeatIntervalMin = defaultHeartbeatIntervalMin
+	}
 	return &AppConfig{
-		LLMProvider:            cfg.LLMProvider,
-		LLMModel:               cfg.LLMModel,
-		STTProvider:            cfg.STTProvider,
-		TelegramBotToken:       cfg.TelegramBotToken,
-		TelegramAllowedUserIDs: cfg.TelegramAllowedUserIDs,
-		AnthropicAPIKey:        cfg.AnthropicAPIKey,
-		GoogleAPIKey:           cfg.GoogleAPIKey,
-		KiloAPIKey:             cfg.KiloAPIKey,
-		KimiAPIKey:             cfg.KimiAPIKey,
-		OpenRouterAPIKey:       cfg.OpenRouterAPIKey,
-		ZAIAPIKey:              cfg.ZAIAPIKey,
-		AlibabaAPIKey:          cfg.AlibabaAPIKey,
-		OpenAIAPIKey:           cfg.OpenAIAPIKey,
-		OpenAIAuthMode:         cfg.OpenAIAuthMode,
-		GroqAPIKey:             cfg.GroqAPIKey,
-		MaxIterations:          cfg.MaxIterations,
-		DBPath:                 cfg.DBPath,
-		MemoryWindowSize:       cfg.MemoryWindowSize,
-		MCPConfigPath:          cfg.MCPConfigPath,
+		LLMProvider:              cfg.LLMProvider,
+		LLMModel:                 cfg.LLMModel,
+		STTProvider:              cfg.STTProvider,
+		TelegramBotToken:         cfg.TelegramBotToken,
+		TelegramAllowedUserIDs:   cfg.TelegramAllowedUserIDs,
+		AnthropicAPIKey:          cfg.AnthropicAPIKey,
+		GoogleAPIKey:             cfg.GoogleAPIKey,
+		KiloAPIKey:               cfg.KiloAPIKey,
+		KimiAPIKey:               cfg.KimiAPIKey,
+		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
+		ZAIAPIKey:                cfg.ZAIAPIKey,
+		AlibabaAPIKey:            cfg.AlibabaAPIKey,
+		OpenAIAPIKey:             cfg.OpenAIAPIKey,
+		OpenAIAuthMode:           cfg.OpenAIAuthMode,
+		GroqAPIKey:               cfg.GroqAPIKey,
+		MaxIterations:            cfg.MaxIterations,
+		DBPath:                   cfg.DBPath,
+		MemoryWindowSize:         cfg.MemoryWindowSize,
+		MCPConfigPath:            cfg.MCPConfigPath,
+		HeartbeatEnabled:         cfg.HeartbeatEnabled || defaultHeartbeatEnabled,
+		HeartbeatIntervalMinutes: heartbeatIntervalMin,
 	}
 }
 
@@ -295,7 +320,9 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.MaxIterations != b.MaxIterations ||
 		a.DBPath != b.DBPath ||
 		a.MemoryWindowSize != b.MemoryWindowSize ||
-		a.MCPConfigPath != b.MCPConfigPath {
+		a.MCPConfigPath != b.MCPConfigPath ||
+		a.HeartbeatEnabled != b.HeartbeatEnabled ||
+		a.HeartbeatIntervalMinutes != b.HeartbeatIntervalMinutes {
 		return false
 	}
 	if len(a.TelegramAllowedUserIDs) != len(b.TelegramAllowedUserIDs) {
