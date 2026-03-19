@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-19T21:23:43Z",
+  "generated": "2026-03-19T21:33:56Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 472,
+    "totalFiles": 477,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -36,7 +36,7 @@
       },
       {
         "name": ".context",
-        "fileCount": 27,
+        "fileCount": 30,
         "description": "Operational memory, generated docs, and workflow state"
       },
       {
@@ -51,7 +51,7 @@
       },
       {
         "name": "docs",
-        "fileCount": 37,
+        "fileCount": 46,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
@@ -82,7 +82,7 @@
       },
       {
         "extension": ".md",
-        "count": 51
+        "count": 54
       },
       {
         "extension": ".sh",
@@ -102,7 +102,7 @@
       },
       {
         "extension": ".png",
-        "count": 3
+        "count": 2
       }
     ]
   },

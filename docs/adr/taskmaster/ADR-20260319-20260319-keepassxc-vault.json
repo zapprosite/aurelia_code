@@ -1,0 +1,43 @@
+{
+  "adr_id": "ADR-20260319-keepassxc-vault",
+  "title": "20260319-keepassxc-vault",
+  "status": "in_progress",
+  "phase": "verification",
+  "progress": 70,
+  "goal": "Implementar o cofre KeePassXC e sanitizar segredos em texto puro.",
+  "scope": [
+    "install_keepassxc",
+    "create_secure_dir",
+    "manual_vault_setup",
+    "sanitize_txt_files"
+  ],
+  "done_definition": [
+    "KeePassXC instalado",
+    "Diretório ~/.local/share/secrets com permissão 700",
+    "rascunho-s.txt sanitizado (pendente confirmação manual)"
+  ],
+  "next_actions": [
+    "Aguardar setup manual do usuário no KeePassXC (banco e grupos)",
+    "Substituir rascunho-s.txt pela versão sanitizada após confirmação",
+    "Sincronizar contexto final"
+  ],
+  "simulation_commands": [
+    "keepassxc --version",
+    "ls -ld ~/.local/share/secrets/"
+  ],
+  "test_commands": [],
+  "curl_checks": [],
+  "fallback_commands": [],
+  "evidence": [
+    "KeePassXC version 2.7.6 installed",
+    "drwx------ 2 will will 4096 /home/will/.local/share/secrets/"
+  ],
+  "blockers": [
+    "Necessário setup manual inicial pelo usuário (senha mestra)"
+  ],
+  "handoff": {
+    "owner_engine": "Antigravity",
+    "resume_prompt": "Continue a sanitização do rascunho-s.txt após o usuário confirmar o setup do cofre.",
+    "last_updated": "2026-03-19T18:37:00-03:00"
+  }
+}

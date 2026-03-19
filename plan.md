@@ -59,7 +59,7 @@ Documentos que agora governam o plano:
 - [aurelia_general_blueprint_20260319.md](/home/will/aurelia/docs/aurelia_general_blueprint_20260319.md)
 - [jarvis_local_voice_blueprint_20260319.md](/home/will/aurelia/docs/jarvis_local_voice_blueprint_20260319.md)
 - [local_model_kit_blueprint_20260319.md](/home/will/aurelia/docs/local_model_kit_blueprint_20260319.md)
-- [groq_ptbr_audio_blueprint.md](/home/will/aurelia/groq_ptbr_audio_blueprint.md)
+- [groq_ptbr_audio_blueprint_20260319.md](/home/will/aurelia/docs/groq_ptbr_audio_blueprint_20260319.md)
 - [antigravity_gemini_operator_blueprint.md](/home/will/aurelia/docs/antigravity_gemini_operator_blueprint.md)
 - deploy sem Gemini validado em [runtime_without_gemini_blueprint_20260319.md](/home/will/aurelia-24x7/docs/runtime_without_gemini_blueprint_20260319.md)
 
@@ -458,7 +458,7 @@ Se voce mandar executar o proximo corte, a ordem certa agora e:
 - [aurelia_master_blueprint_20260319.md](/home/will/aurelia/docs/aurelia_master_blueprint_20260319.md) consolida arquitetura, rollout e testes de tudo
 - [aurelia_general_blueprint_20260319.md](/home/will/aurelia/docs/aurelia_general_blueprint_20260319.md) consolida o restante em um plano unico
 - [antigravity_gemini_operator_blueprint.md](/home/will/aurelia/docs/antigravity_gemini_operator_blueprint.md) existe e define o contrato do chat leve
-- [groq_ptbr_audio_blueprint.md](/home/will/aurelia/groq_ptbr_audio_blueprint.md) existe e fecha a direcao de STT
+- [groq_ptbr_audio_blueprint_20260319.md](/home/will/aurelia/docs/groq_ptbr_audio_blueprint_20260319.md) existe e fecha a direcao de STT
 - [jarvis_local_voice_blueprint_20260319.md](/home/will/aurelia/docs/jarvis_local_voice_blueprint_20260319.md) existe e fecha o desenho local
 - [gateway_rollout_blueprint_20260319.md](/home/will/aurelia/docs/gateway_rollout_blueprint_20260319.md) existe e fecha o restante do gateway
 - o deploy runtime live foi provado sem `gemini_api` no `/health` na worktree de deploy

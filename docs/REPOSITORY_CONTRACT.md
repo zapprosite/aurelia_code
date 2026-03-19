@@ -70,6 +70,28 @@ Comando canônico:
 - [Aurelia Master Blueprint](./aurelia_master_blueprint_20260319.md)
 - [JARVIS Master Plan](../plan.md)
 
+## Regra de higiene da raiz
+
+A raiz do repositório deve ficar reservada para:
+
+- contratos soberanos e adaptadores (`AGENTS.md`, `CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`)
+- docs de entrada do projeto (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`)
+- plano mestre ativo (`plan.md`)
+- exemplos de bootstrap realmente globais (`mcp_servers.example.json`)
+
+Não devem ficar na raiz:
+
+- blueprints de slice
+- runbooks de smoke
+- guias de feature específicos
+- `implementation_plan.md` e `task.md` de uma slice já encerrada
+
+Destino correto:
+
+- decisão arquitetural: `docs/adr/`
+- blueprint/runbook/guia canônico: `docs/`
+- artefatos de continuidade de slice: `.context/plans/<slice>/`
+
 ## Escopo em que ADR é obrigatório
 
 - arquitetura
