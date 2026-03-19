@@ -106,3 +106,17 @@ Todo incidente relevante deve resultar em um dos seguintes:
 - atualização de runbook existente
 - registro em `.context/workflow/docs/`
 - refinamento de guardrail
+
+## Audio Architecture Extension
+
+Foi criado um blueprint específico para áudio PT-BR com Groq:
+
+- `groq_ptbr_audio_blueprint.md`
+
+Direção arquitetural registrada:
+
+- `Groq` como camada de `speech-to-text`
+- `Supabase` como fonte de verdade de sessões, mensagens e jobs
+- `Qdrant` como memória semântica
+- `LLM local` como cérebro e executor de instruções
+- `TTS PT-BR` como camada separada de saída
