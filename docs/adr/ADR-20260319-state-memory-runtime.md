@@ -1,13 +1,13 @@
 ---
 description: Slice nonstop para persistir governor/breaker e consolidar a verdade local do voice plane.
-status: in_progress
+status: accepted
 ---
 
 # ADR-20260319-state-memory-runtime
 
 ## Status
 
-- Em execução
+- Aceita
 
 ## Slice
 
@@ -99,5 +99,10 @@ Esta slice fecha o estado mínimo profissional do runtime local:
 
 ## Pendências / bloqueios
 
-- validar persistência no deploy/live
 - reconciliação mais rica entre `SQLite`, `Supabase` e `Qdrant` segue aberta para a próxima rodada
+
+## Evidência registrada
+
+- `gateway_route_states` validado no SQLite local com contadores e breaker state
+- `voice_events` recebeu transcript real no runtime live
+- `go test ./internal/gateway ./internal/voice ./cmd/aurelia -count=1` passou

@@ -120,3 +120,29 @@ func TestCommandCaptureSourceCapture_ParsesJSON(t *testing.T) {
 		t.Fatalf("event = %+v", event)
 	}
 }
+
+func TestCommandCaptureSourceCapture_IgnoresStderrNoiseOnSuccess(t *testing.T) {
+	t.Parallel()
+
+	audioPath := filepath.Join(t.TempDir(), "sample.wav")
+	if err := os.WriteFile(audioPath, []byte("audio"), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	scriptPath := filepath.Join(t.TempDir(), "capture.sh")
+	script := "#!/bin/sh\n" +
+		"printf '%s\\n' 'runtime warning' >&2\n" +
+		"printf '%s' '{\"detected\":true,\"audio_file\":\"" + audioPath + "\",\"source\":\"mic\"}'\n"
+	if err := os.WriteFile(scriptPath, []byte(script), 0o700); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	source := NewCommandCaptureSource(scriptPath, nil)
+	event, err := source.Capture(context.Background())
+	if err != nil {
+		t.Fatalf("Capture() error = %v", err)
+	}
+	if event == nil || event.AudioFile != audioPath {
+		t.Fatalf("event = %+v", event)
+	}
+}

@@ -1,9 +1,9 @@
 {
   "adr_id": "ADR-20260319-state-memory-runtime",
   "title": "State Memory Runtime",
-  "status": "in_progress",
-  "phase": "implementation",
-  "progress": 72,
+  "status": "accepted",
+  "phase": "done",
+  "progress": 100,
   "goal": "Persistir governor e breaker do gateway fora da memoria do processo e consolidar a verdade local dos transcripts de voz em SQLite.",
   "scope": [
     "store SQLite do gateway",
@@ -17,9 +17,7 @@
     "go test ./... -count=1 passa"
   ],
   "next_actions": [
-    "validar gateway state no runtime real",
-    "validar voice_events apos transcript real",
-    "portar store e mirror para a worktree de deploy"
+    "monitorar rollover diario em operacao normal"
   ],
   "simulation_commands": [
     "reiniciar o processo e verificar que breaker/budget state continuam carregados",
@@ -40,14 +38,14 @@
   "evidence": [
     "internal/gateway/store.go criado",
     "internal/voice/sqlite_mirror.go criado",
-    "go test ./... -count=1 passou"
+    "go test ./... -count=1 passou",
+    "gateway_route_states validado no SQLite local",
+    "voice_events recebeu transcript real no runtime live"
   ],
-  "blockers": [
-    "faltando prova live na worktree de deploy"
-  ],
+  "blockers": [],
   "handoff": {
     "owner_engine": "codex",
-    "resume_prompt": "Continue a slice ADR-20260319-state-memory-runtime. O store SQLite do gateway e o mirror SQLite do voice plane ja estao implementados e testados localmente. Proximo passo: validar o runtime real e portar isso para /home/will/aurelia-24x7.",
-    "last_updated": "2026-03-19T19:28:00-03:00"
+    "resume_prompt": "A slice ADR-20260319-state-memory-runtime ja foi aceita. O gateway state e os transcripts locais estao persistidos e validados no runtime live.",
+    "last_updated": "2026-03-19T19:39:00-03:00"
   }
 }

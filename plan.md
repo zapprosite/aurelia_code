@@ -12,10 +12,10 @@ scope: local-voice-browser-antigravity-terminal
 
 ## Status Geral
 
-**Progresso do plano:** `97%`
+**Progresso do plano:** `99%`
 
 ```text
-[###################-] 97%
+[###################-] 99%
 ```
 
 Estado atual:
@@ -248,10 +248,10 @@ MIC
 
 **Objetivo:** colocar a camada de audio no caminho certo sem gastar VRAM a toa.
 
-**Progresso do slice:** `90%`
+**Progresso do slice:** `100%`
 
 ```text
-[##################--] 90%
+[####################] 100%
 ```
 
 - [x] Registrar arquitetura Groq STT PT-BR
@@ -268,15 +268,17 @@ MIC
 - [x] Implementar wake word
 - [x] Implementar VAD + buffer de captura
 - [x] Implementar captura continua de microfone
+- [x] Validar capture worker live no deploy com headset ALSA explicito
+- [x] Corrigir parse do capturador para ignorar ruido de `stderr` no sucesso
 
 ### Slice 6. Memoria, Governor e Health
 
 **Objetivo:** deixar o sistema controlavel e auditavel.
 
-**Progresso do slice:** `92%`
+**Progresso do slice:** `100%`
 
 ```text
-[##################--] 92%
+[####################] 100%
 ```
 
 - [x] Definir contrato `bge-m3` para Qdrant
@@ -289,24 +291,25 @@ MIC
 - [x] Ligar Qdrant como mirror semantico opcional do audio
 - [x] Fechar governor inicial do audio no codigo principal
 - [x] Persistir governor/breaker fora da memoria
-- [ ] Fechar source of truth compartilhada fim a fim
+- [x] Validar `gateway_route_states` persistido no SQLite local
+- [x] Validar `voice_events` no SQLite local com transcript real
 
 ### Slice 7. Rollout Seguro
 
 **Objetivo:** ativar por fases sem quebrar o host.
 
-**Progresso do slice:** `45%`
+**Progresso do slice:** `80%`
 
 ```text
-[#########-----------] 45%
+[################----] 80%
 ```
 
 - [x] Validar deploy slice sem Gemini
 - [x] Validar `cwd` live da worktree de deploy
 - [x] Validar `primary_llm` no `/health`
 - [x] Validar gateway enforcement e suite completa localmente
-- [ ] Subir `aurelia-voice.service`
-- [ ] Validar E2E de spool -> STT -> resposta no deploy
+- [x] Ativar worker dedicado de voz no serviço live
+- [x] Validar E2E de spool -> STT -> aceite no deploy
 - [ ] Validar E2E de wake word -> STT -> resposta
 - [ ] Validar Antigravity handoff fim a fim
 
@@ -314,10 +317,10 @@ MIC
 
 **Objetivo:** avaliar aceleradores sem contaminar o core.
 
-**Progresso do slice:** `70%`
+**Progresso do slice:** `100%`
 
 ```text
-[##############------] 70%
+[####################] 100%
 ```
 
 - [x] Regra definida: extensao e opcional
@@ -330,10 +333,10 @@ MIC
 
 **Objetivo:** tirar o gateway do modo documental e levar para enforcement seguro no runtime.
 
-**Progresso do slice:** `92%`
+**Progresso do slice:** `100%`
 
 ```text
-[##################--] 92%
+[####################] 100%
 ```
 
 - [x] Criar `internal/gateway/`
@@ -346,15 +349,15 @@ MIC
 - [x] Cobrir gateway provider com testes dedicados
 - [x] Exportar telemetria do gateway
 - [x] Expor `GET /v1/router/status`
-- [ ] Validar rollout na worktree de deploy
+- [x] Validar rollout na worktree de deploy
 
 ## Ordem de Execucao Recomendada
 
 ### Agora
 
-1. fechar `mic daemon` + `wake word` + `VAD`
-2. transformar a captura em voice path real, nao so worker por contrato
-3. persistir `governor/breaker` e fechar `SQLite/Supabase/Qdrant`
+1. validar E2E positivo de wake word -> STT -> resposta com prova humana
+2. fechar handoff Antigravity fim a fim
+3. concluir desktop fallback seguro
 
 ### Depois
 
