@@ -31,3 +31,18 @@ Esta skill habilita o Aurelia a gerenciar infraestrutura de Homelab diretamente 
 - Para diagnósticos de hardware.
 - Para atualizar modelos de LLM locais.
 - Para gerenciar containers de serviços (CapRover, N8N).
+
+## Escopo correto
+
+Use esta skill para o controle nativo e os comandos do host.
+
+Se a tarefa pedir postura de operação sênior completa, com:
+
+- classificação de saúde
+- prova antes/depois
+- recuperação segura
+- governança de recursos
+
+prefira carregar junto:
+
+- `systems-engineer-homelab`

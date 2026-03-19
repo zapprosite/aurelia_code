@@ -18,6 +18,7 @@ Criar uma base profissional para a Aurelia operar como tutor do homelab com:
 - Fechado o rollout live de gateway + voice em `/home/will/aurelia-24x7`, com `/health`, `/v1/router/status`, `/v1/voice/status` e `/v1/voice/capture/status` respondendo.
 - Corrigido o capture runner para ignorar ruído de `stderr` no sucesso e evitar falso erro de JSON por warnings do `onnxruntime`.
 - Validado no deploy o caminho `spool -> Groq STT -> voice_events`, incluindo transcript aceito com wake phrase em áudio sintético PT-BR.
+- Criada a skill operacional `systems-engineer-homelab` para padronizar monitoramento, recuperação e governança do Home Lab sob postura de engenheiro de sistemas sênior.
 
 ## External Skills Installed
 
