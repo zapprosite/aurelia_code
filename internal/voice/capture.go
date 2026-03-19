@@ -1,6 +1,7 @@
 package voice
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -53,10 +54,17 @@ func (s *CommandCaptureSource) Capture(ctx context.Context) (*CaptureEvent, erro
 
 	cmd := exec.CommandContext(ctx, "/bin/sh", "-c", s.command)
 	cmd.Env = append(os.Environ(), s.env...)
-	output, err := cmd.CombinedOutput()
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	output, err := cmd.Output()
 	trimmed := strings.TrimSpace(string(output))
+	stderrText := strings.TrimSpace(stderr.String())
 	if err != nil {
-		return nil, fmt.Errorf("voice capture command failed: %w: %s", err, trimmed)
+		detail := stderrText
+		if detail == "" {
+			detail = trimmed
+		}
+		return nil, fmt.Errorf("voice capture command failed: %w: %s", err, detail)
 	}
 	if trimmed == "" {
 		return nil, nil

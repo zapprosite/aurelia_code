@@ -1,13 +1,13 @@
 ---
 description: Slice nonstop para portar gateway + voz para a worktree de deploy e provar o runtime live.
-status: in_progress
+status: accepted
 ---
 
 # ADR-20260319-deploy-gateway-voice
 
 ## Status
 
-- Em execução
+- Aceita
 
 ## Slice
 
@@ -94,14 +94,14 @@ O rollout deve ser feito em cima da worktree de deploy existente, sem descartar 
 - restaurar binário/serviço anterior
 - desabilitar capture/voice no config
 
-## Evidência esperada
+## Evidência registrada
 
-- serviço live ativo com o binário novo
-- `/health` sem falso `200 ok`
-- status routes do gateway e voz vivos
-- spool processando transcript real
+- serviço live ativo com o binário novo em `/usr/local/bin/aurelia`
+- `/health` live sem falso `200 ok`
+- `/v1/router/status`, `/v1/voice/status` e `/v1/voice/capture/status` vivos
+- `spool -> Groq STT -> voice_events` validado no deploy
 
 ## Pendências / bloqueios
 
-- a worktree de deploy já tem mudanças locais em arquivos que o rollout também toca
-- a unit de serviço live atual é de sistema, não `systemd --user`
+- o E2E positivo de wake word com prova humana segue aberto em outra slice
+- o handoff fim a fim do Antigravity segue aberto em outra slice

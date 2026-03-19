@@ -1,13 +1,13 @@
 ---
 description: Slice nonstop para integrar captura contínua de microfone ao voice plane já existente.
-status: in_progress
+status: accepted
 ---
 
 # ADR-20260319-voice-capture-runtime
 
 ## Status
 
-- Em execução
+- Aceita
 
 ## Slice
 
@@ -111,13 +111,21 @@ Esse desenho permitiu conectar um capturador real sem reescrever o plano de cont
 1. integrar o capture worker no repositório principal
 2. validar unit + suite
 3. plugar capturador real (`openWakeWord + Silero VAD`) via `voice_capture_command`
-4. só então portar a slice para a worktree de deploy
+4. portar a slice para a worktree de deploy
+5. validar `/v1/voice/capture/status` e `/health` live
 
 ## Rollback
 
 - `voice_capture_enabled=false`
 - manter `voice processor` e `voice enqueue`
 - remover apenas o worker de captura, sem tocar no spool/processador/STT já verdes
+
+## Evidência registrada
+
+- `bash ./scripts/voice-capture-smoke.sh` passou
+- `go test ./... -count=1` passou
+- o serviço live em `/home/will/aurelia-24x7` subiu com o capture worker ativo
+- `voice_capture` ficou saudável no `/health` live após fix do device ALSA explícito
 
 ## Evidência esperada
 
