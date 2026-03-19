@@ -37,6 +37,12 @@ func run(args []string) int {
 			}
 			logger.Error("unknown auth command", slog.String("command", stringsForLog(args[1:])))
 			return 1
+		case "voice":
+			if err := runVoiceCommand(args[2:], os.Stdout); err != nil {
+				logger.Error("failed to run voice command", slog.Any("err", err))
+				return 1
+			}
+			return 0
 		default:
 			logger.Error("unknown command", slog.String("command", args[1]))
 			return 1

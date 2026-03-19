@@ -10,9 +10,19 @@ Atualiza a camada `.context/` do repositório quando houver mudanças estruturai
 ## Quando usar
 
 - Após mudanças relevantes em `cmd/`, `internal/`, `pkg/`, `scripts/` ou `docs/`
+- Ao final de qualquer slice não trivial
+- Antes de handoff entre agentes ou motores
+- Antes de review/merge final
 - Quando o `ai-context` apontar que os docs em `.context/docs/` precisam de revisão
 - Quando `codebase-map.json` estiver desatualizado ou inconsistente com o checkout real
 - Quando for necessário deixar evidência reexecutável de sincronização de contexto
+
+## Quando pode ser dispensada
+
+- typo isolado
+- comentário sem impacto comportamental
+- rename local sem drift estrutural
+- teste muito pequeno sem impacto em código/docs curados
 
 ## Diretivas
 
@@ -31,6 +41,9 @@ Atualiza a camada `.context/` do repositório quando houver mudanças estruturai
    - Confira `./.context/docs/codebase-map.json` para data de geração, contagem de arquivos e diretórios principais.
 5. **Persistência de contexto**:
    - Se a sincronização representar uma mudança operacional importante, registre o resultado em `.context/workflow/docs/`.
+6. **Regra profissional**:
+   - Não trate essa skill como ritual cego em toda microedição.
+   - Trate como obrigatória em slice não trivial, handoff e preparação para merge.
 </directives>
 
 ## Fluxo de Trabalho

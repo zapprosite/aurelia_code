@@ -25,7 +25,7 @@ func (f *fakeTaskExecutor) ExecuteTask(ctx context.Context, task TeamTask) (stri
 func newRuntimeTestManager(t *testing.T) TeamManager {
 	t.Helper()
 
-	store, err := NewSQLiteTaskStore(filepath.Join(t.TempDir(), "runtime.db"))
+	store, err := NewSQLiteTaskStore(":memory:")
 	if err != nil {
 		t.Fatalf("NewSQLiteTaskStore() error = %v", err)
 	}

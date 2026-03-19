@@ -4,17 +4,17 @@ Security in this repository is a mix of runtime constraints and workflow governa
 
 ## Authentication & Authorization
 
-Authentication is provider-specific and configured through [`config.AppConfig`](../../internal/config/config.go). The runtime can authenticate against Telegram, LLM providers, Groq STT and optional MCP servers. Telegram access is constrained by `telegram_allowed_user_ids`, which acts as the primary authorization boundary for chat-driven control.
+Authentication is provider-specific and configured through [`config.AppConfig`](../../internal/config/config.go). The runtime can authenticate against Telegram, remote LLM providers, Groq STT and optional MCP servers. The local Ollama provider is the main exception: it uses the loopback endpoint and does not require an API key. Telegram access is constrained by `telegram_allowed_user_ids`, which acts as the primary authorization boundary for chat-driven control.
 
 OpenAI also supports a separate auth mode field, `openai_auth_mode`, which distinguishes direct API key usage from Codex CLI-based flows.
 
 ## Secrets & Sensitive Data
 
-Sensitive values currently live primarily in the instance-local config file `~/.aurelia/config/app.json`. That includes provider API keys and Telegram credentials. The repository should not contain those values; `gitleaks.yml` exists in CI to help catch accidental commits.
+Sensitive values currently live primarily in the instance-local config file `~/.aurelia/config/app.json`. That includes provider API keys and Telegram credentials when the selected providers require them. The repository should not contain those values; `gitleaks.yml` exists in CI to help catch accidental commits.
 
 Operationally relevant sensitive surfaces include:
 
-- provider API keys in `app.json`
+- provider API keys in `app.json` for remote providers
 - Telegram bot token and allowed user IDs
 - MCP headers and environment variables in `mcp_servers.json`
 - local keyring or desktop secret storage, when used by surrounding tooling

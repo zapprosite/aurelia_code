@@ -21,6 +21,13 @@ type OpenAICompatibleConfig struct {
 	UserAgent  string
 	Headers    map[string]string
 	HTTPClient *http.Client
+	Request    OpenAICompatibleRequestOptions
+}
+
+type OpenAICompatibleRequestOptions struct {
+	MaxTokens   int
+	Temperature *float64
+	ExtraFields map[string]any
 }
 
 // OpenAICompatibleProvider implements agent.LLMProvider for chat-completions APIs
@@ -32,6 +39,7 @@ type OpenAICompatibleProvider struct {
 	model     string
 	userAgent string
 	headers   map[string]string
+	request   OpenAICompatibleRequestOptions
 }
 
 func NewOpenAICompatibleProvider(cfg OpenAICompatibleConfig) *OpenAICompatibleProvider {
@@ -47,6 +55,11 @@ func NewOpenAICompatibleProvider(cfg OpenAICompatibleConfig) *OpenAICompatiblePr
 		model:     cfg.Model,
 		userAgent: cfg.UserAgent,
 		headers:   cloneStringMap(cfg.Headers),
+		request: OpenAICompatibleRequestOptions{
+			MaxTokens:   cfg.Request.MaxTokens,
+			Temperature: cfg.Request.Temperature,
+			ExtraFields: cloneAnyMap(cfg.Request.ExtraFields),
+		},
 	}
 }
 
@@ -58,7 +71,7 @@ func (p *OpenAICompatibleProvider) GenerateContent(
 	history []agent.Message,
 	tools []agent.Tool,
 ) (*agent.ModelResponse, error) {
-	reqBody, err := buildOpenAICompatibleRequest(p.model, systemPrompt, history, tools)
+	reqBody, err := buildOpenAICompatibleRequest(p.model, systemPrompt, history, tools, p.request)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +89,7 @@ func buildOpenAICompatibleRequest(
 	systemPrompt string,
 	history []agent.Message,
 	tools []agent.Tool,
+	opts OpenAICompatibleRequestOptions,
 ) (map[string]any, error) {
 	messages := append([]chatMessage{{
 		Role:    "system",
@@ -85,6 +99,15 @@ func buildOpenAICompatibleRequest(
 	reqBody := map[string]any{
 		"model":    model,
 		"messages": messages,
+	}
+	if opts.MaxTokens > 0 {
+		reqBody["max_tokens"] = opts.MaxTokens
+	}
+	if opts.Temperature != nil {
+		reqBody["temperature"] = *opts.Temperature
+	}
+	for key, value := range opts.ExtraFields {
+		reqBody[key] = value
 	}
 
 	if len(tools) > 0 {
@@ -138,6 +161,17 @@ func cloneStringMap(input map[string]string) map[string]string {
 		return nil
 	}
 	cloned := make(map[string]string, len(input))
+	for key, value := range input {
+		cloned[key] = value
+	}
+	return cloned
+}
+
+func cloneAnyMap(input map[string]any) map[string]any {
+	if len(input) == 0 {
+		return nil
+	}
+	cloned := make(map[string]any, len(input))
 	for key, value := range input {
 		cloned[key] = value
 	}

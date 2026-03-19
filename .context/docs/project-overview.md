@@ -12,15 +12,17 @@ The repository is also an elite multi-agent workspace: `AGENTS.md`, `.agents/rul
 
 - Root: `/home/will/aurelia`
 - Module: `github.com/kocar/aurelia`
-- Languages: Go (`191` files), Shell (`9` files), Markdown (`25` files), JSON (`2` files)
+- Languages: Go (`197` files), Shell (`13` files), Markdown (`37` files), JSON (`2` files)
 - Primary binary entry: [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go)
 - Main wiring path: [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go)
 - Runtime health endpoint: `GET /health` from [`internal/health/server.go`](../../internal/health/server.go)
+- Gateway status endpoint: `GET /v1/router/status`
+- Voice status endpoint: `GET /v1/voice/status`
 - Canonical runtime config: `~/.aurelia/config/app.json`
 
 ## Entry Points
 
-- [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go) — CLI runtime entrypoint for daemon mode, `onboard`, and `auth openai`
+- [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go) — CLI runtime entrypoint for daemon mode, `onboard`, `auth openai`, and `voice enqueue`
 - [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go) — composition root for runtime bootstrap, providers, memory, Telegram, cron, MCP and health server
 - [`cmd/aurelia/onboard.go`](../../cmd/aurelia/onboard.go) — interactive onboarding flow that writes the instance-local config
 - [`scripts/build.sh`](../../scripts/build.sh) — production-oriented build wrapper
@@ -42,7 +44,8 @@ The repository is also an elite multi-agent workspace: `AGENTS.md`, `.agents/rul
 - `internal/agent/` — ReAct loop, task store, team manager, worker orchestration and recovery flows
 - `internal/config/` — runtime config loading and MCP config normalization
 - `internal/cron/` — persistent schedules, scheduler runtime and job delivery
-- `internal/health/` — lightweight HTTP health and readiness server
+- `internal/gateway/` — policy engine, routing dry-run, enforcement, budgets and breakers
+- `internal/health/` — lightweight HTTP health, readiness and internal status routes
 - `internal/mcp/` — MCP manager, connection bootstrap, discovery and transport wrappers
 - `internal/memory/` — SQLite-backed messages, facts, notes and archive
 - `internal/observability/` — structured logging and redaction helpers
@@ -51,12 +54,13 @@ The repository is also an elite multi-agent workspace: `AGENTS.md`, `.agents/rul
 - `internal/skill/` — skill loader, installer, router and executor
 - `internal/telegram/` — input/output adapters and chat command handling
 - `internal/tools/` — tool definitions and handlers exposed to the LLM
+- `internal/voice/` — audio spool, transcript processor and Supabase/Qdrant mirrors
 - `pkg/llm/` — concrete LLM providers and model catalog logic
 - `pkg/stt/` — speech-to-text provider abstraction and Groq implementation
 
 ## Technology Stack Summary
 
-The runtime is a Go `1.25` modular monolith. It persists local state with SQLite, uses `log/slog` for observability, exposes a small HTTP health surface, and relies on Telegram as the main user-facing transport. Optional integrations include multiple LLM providers, Groq STT, Gemini fallback smoke/config support, and MCP servers loaded from JSON config.
+The runtime is a Go `1.25` modular monolith. It persists local state with SQLite, uses `log/slog` for observability, exposes a small HTTP health surface, and relies on Telegram as the main user-facing transport. Optional integrations include multiple remote LLM providers, the local Ollama provider, Groq STT, the internal gateway, transcript mirrors to Supabase/Qdrant, Gemini fallback smoke/config support, and MCP servers loaded from JSON config.
 
 ## Development Tools Overview
 

@@ -9,6 +9,12 @@ The repository uses an explicit governance-first workflow. `AGENTS.md` defines t
 - Avoid direct commits to `main`; the repository governance expects review-driven integration.
 - Deployment-style validation currently exists both as user-service scripts and system-service worktree flows in related worktrees.
 
+Examples of active worktree conventions in this repository family:
+
+- `/home/will/aurelia` → main feature workspace
+- `/home/will/aurelia-24x7` → deploy/runtime validation
+- `/home/will/aurelia-main-merge` → integration/merge workspace
+
 ## Local Development
 
 - Onboard instance-local config:
@@ -42,9 +48,17 @@ go run ./cmd/aurelia
 ```
 
 - Refresh `.context` documentation state:
+  - required for structural slices, handoff and merge prep
+  - optional for trivial typo/comment-only edits
 
 ```bash
 ./scripts/sync-ai-context.sh
+```
+
+- Open a long-running slice with ADR + continuity JSON:
+
+```bash
+./scripts/adr-slice-init.sh <slug> --title "Title"
 ```
 
 - Inspect runtime health:
@@ -61,6 +75,7 @@ Review should focus on runtime safety, regressions and evidence. The local rules
 - worktree isolation for non-trivial changes
 - anti-hallucination: never claim success without logs, tests or direct validation
 - context hygiene: update `.context/` after completing meaningful work
+- ADR discipline: structural slices should be linked to `docs/adr/` and can use `/adr-semparar` when continuity matters
 
 For code changes, reviewers should check startup behavior, lock safety, MCP fallback behavior, tool boundary correctness and tests for new runtime logic.
 

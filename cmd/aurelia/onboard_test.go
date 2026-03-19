@@ -237,6 +237,29 @@ func TestOnboardingUI_KiloKeyInputTargetsKiloSecret(t *testing.T) {
 	}
 }
 
+func TestOnboardingUI_OllamaSkipsAPIKeyStep(t *testing.T) {
+	ui := newOnboardingUI(config.EditableConfig{
+		LLMProvider:            "ollama",
+		LLMModel:               "qwen3.5:9b",
+		MemoryWindowSize:       20,
+		MaxIterations:          500,
+		STTProvider:            "groq",
+		TelegramBotToken:       "token",
+		TelegramAllowedUserIDs: []int64{},
+	})
+
+	ui.step = stepLLMProvider
+	ui.menuIndex = selectedProviderIndex("ollama")
+
+	_, _, err := ui.HandleKey(keyEvent{code: keyEnter})
+	if err != nil {
+		t.Fatalf("HandleKey() error = %v", err)
+	}
+	if ui.step != stepLLMModel {
+		t.Fatalf("step = %v, want %v", ui.step, stepLLMModel)
+	}
+}
+
 func TestOnboardingUI_OpenAICodexSkipsAPIKeyStep(t *testing.T) {
 	ui := newOnboardingUI(config.EditableConfig{
 		LLMProvider:      "openai",

@@ -63,10 +63,52 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 }
 
 func newInputSession(c telebot.Context, text string) inputSession {
-	senderID := fmt.Sprintf("%d", c.Sender().ID)
+	return newInputSessionWithContext(context.Background(), c.Sender().ID, text)
+}
+
+func newInputSessionWithContext(ctx context.Context, senderUserID int64, text string) inputSession {
+	senderID := fmt.Sprintf("%d", senderUserID)
 	convID := senderID
-	ctx := agent.WithRunContext(agent.WithTeamContext(context.Background(), convID, senderID), uuid.NewString())
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx = agent.WithRunContext(agent.WithTeamContext(ctx, convID, senderID), uuid.NewString())
 	return inputSession{senderID: senderID, convID: convID, ctx: ctx, text: text}
+}
+
+func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatID int64, text string, requiresAudio bool) error {
+	if bc == nil || bc.bot == nil {
+		return fmt.Errorf("telegram bot controller is not available")
+	}
+	chat := &telebot.Chat{ID: chatID}
+	session := newInputSessionWithContext(ctx, userID, text)
+	text = strings.ReplaceAll(text, "\x00", "")
+	session.text = text
+
+	if handled, err := bc.handleExternalMemoryCommand(chat, session); handled {
+		return err
+	}
+	if err := bc.persistIncomingContext(session, userID); err != nil {
+		observability.Logger("telegram.pipeline").Warn("failed to persist external input context", slog.Any("err", err))
+	}
+	if delegation := maybeBuildAntigravityDelegationPrompt(session.text); delegation != nil {
+		bc.persistAssistantAnswer(session, delegation.Prompt)
+		return bc.deliverFinalAnswerToChat(chat, delegation.Prompt, false)
+	}
+
+	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
+	if err != nil {
+		_ = SendError(bc.bot, chat, err.Error())
+		return err
+	}
+
+	finalAnswer, err := bc.executeExternalConversation(chat, session, activeSkill, history, systemPrompt, allowedTools)
+	if err != nil {
+		_ = SendError(bc.bot, chat, err.Error())
+		return err
+	}
+	bc.persistAssistantAnswer(session, finalAnswer)
+	return bc.deliverFinalAnswerToChat(chat, finalAnswer, requiresAudio)
 }
 
 func (bc *BotController) handleMemoryCommand(c telebot.Context, session inputSession) (bool, error) {
@@ -83,6 +125,22 @@ func (bc *BotController) handleMemoryCommand(c telebot.Context, session inputSes
 		return true, nil
 	}
 	return true, SendContextText(c, reply)
+}
+
+func (bc *BotController) handleExternalMemoryCommand(chat *telebot.Chat, session inputSession) (bool, error) {
+	if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(session.text)), "/memory") {
+		return false, nil
+	}
+	if bc.canonical == nil {
+		return true, SendText(bc.bot, chat, "Memoria longa indisponivel neste runtime.")
+	}
+
+	reply, err := NewMemoryCommandHandler(bc.canonical).HandleText(context.Background(), session.senderID, session.convID, session.text)
+	if err != nil {
+		_ = SendError(bc.bot, chat, err.Error())
+		return true, err
+	}
+	return true, SendText(bc.bot, chat, reply)
 }
 
 func (bc *BotController) persistIncomingContext(session inputSession, senderUserID int64) error {
@@ -167,6 +225,14 @@ func (bc *BotController) executeConversation(c telebot.Context, session inputSes
 	return finalAnswer, err
 }
 
+func (bc *BotController) executeExternalConversation(chat *telebot.Chat, session inputSession, activeSkill *skill.Skill, history []agent.Message, systemPrompt string, allowedTools []string) (string, error) {
+	stopTyping := startChatActionLoop(bc.bot, chat, telebot.Typing, 4*time.Second)
+	defer stopTyping()
+
+	_, finalAnswer, err := bc.executor.Execute(session.ctx, systemPrompt, activeSkill, history, allowedTools)
+	return finalAnswer, err
+}
+
 func (bc *BotController) persistAssistantAnswer(session inputSession, finalAnswer string) {
 	_ = bc.memory.AddMessage(session.ctx, session.convID, "assistant", finalAnswer)
 	_ = bc.memory.AddArchiveEntry(session.ctx, memory.ArchiveEntry{
@@ -183,4 +249,11 @@ func (bc *BotController) deliverFinalAnswer(c telebot.Context, finalAnswer strin
 		return SendAudio(bc.bot, c.Chat(), finalAnswer)
 	}
 	return SendText(bc.bot, c.Chat(), finalAnswer)
+}
+
+func (bc *BotController) deliverFinalAnswerToChat(chat *telebot.Chat, finalAnswer string, requiresAudio bool) error {
+	if requiresAudio {
+		return SendAudio(bc.bot, chat, finalAnswer)
+	}
+	return SendText(bc.bot, chat, finalAnswer)
 }

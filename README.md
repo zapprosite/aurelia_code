@@ -37,10 +37,29 @@ Invoque especialistas diretamente no seu terminal ou IDE:
 - `/architect` ➡️ Tech Specs e Design de Sistemas.
 - `/dev` ➡️ Implementação e Correções Ágeis.
 - `/qa` ➡️ Testes, Validação e Auditoria.
+- `/adr-semparar` ➡️ Abre uma slice longa com ADR + JSON de continuidade estilo taskmaster.
 - `/sincronizar-ai-context` ➡️ Sincroniza `.context/` e regenera o `codebase-map`.
 - `/sincronizar-tudo` ➡️ Commit semântico e Push Sênior.
 - `/pesquisa-profunda` ➡️ Pesquisa profunda via Gemini Web.
 </commands>
+
+## 📜 2.1 Contrato do Repositório
+
+Antes de executar qualquer slice não trivial, leia nesta ordem:
+
+1. `AGENTS.md`
+2. `CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`
+3. `docs/REPOSITORY_CONTRACT.md`
+4. `docs/adr/README.md`
+5. `plan.md`
+
+Regras fechadas:
+
+- mudança estrutural exige ADR
+- slice longa pode usar `/adr-semparar`
+- `sync-ai-context` é obrigatório em slice não trivial, handoff e merge
+- `main` não recebe commit direto
+- worktree isolada é o padrão para implementação relevante
 
 ## 📁 3. Estratégia de Pastas
 - **`docs/`**: Verdade arquitetural, ADRs e benchmarks.
@@ -82,6 +101,25 @@ go run ./cmd/aurelia onboard
 ./scripts/daemon-status.sh
 ./scripts/daemon-logs.sh
 ```
+
+### 🌿 Convenção de Versionamento Local
+
+- Branches: `feat/`, `fix/`, `research/`
+- Worktrees: use diretórios isolados por objetivo, por exemplo:
+  - `/home/will/aurelia`
+  - `/home/will/aurelia-24x7`
+  - `/home/will/aurelia-main-merge`
+
+Para slices longas:
+
+```bash
+./scripts/adr-slice-init.sh <slug> --title "Title"
+```
+
+Isso gera:
+
+- `docs/adr/ADR-YYYYMMDD-slug.md`
+- `docs/adr/taskmaster/ADR-YYYYMMDD-slug.json`
 
 ### 🛠️ Modo de Debug (Manual)
 Use `./aurelia-elite` em foreground apenas para testes. Recomenda-se parar o daemon antes:

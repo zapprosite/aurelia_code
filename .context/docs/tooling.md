@@ -21,6 +21,9 @@ Key scripts shipped in the repository:
 - [`scripts/daemon-logs.sh`](../../scripts/daemon-logs.sh) — tails daemon logs
 - [`scripts/health-check.sh`](../../scripts/health-check.sh) — homelab/system health snapshot
 - [`scripts/gemini-smoke.sh`](../../scripts/gemini-smoke.sh) — validates the local Gemini API key, lists available models and performs a minimal generate-content check without changing the active provider
+- [`scripts/update-ollama.sh`](../../scripts/update-ollama.sh) — pulls the active local model kit (`qwen3.5:9b`, `qwen3.5:4b`, `bge-m3`) and keeps `gemma3:27b-it-q4_K_M` as optional laboratory model
+- [`scripts/ollama-local-kit-smoke.sh`](../../scripts/ollama-local-kit-smoke.sh) — validates the local Qwen kit against the Ollama API with `num_ctx=8192`
+- [`aurelia voice enqueue`](../../cmd/aurelia/voice_cli.go) — queues an audio file into the local voice spool for controlled processing
 - [`scripts/smoke-test-homelab.sh`](../../scripts/smoke-test-homelab.sh) — smoke guidance for end-to-end validation
 - [`scripts/sync-ai-context.sh`](../../scripts/sync-ai-context.sh) — refreshes `ai-context` state and regenerates `.context/docs/codebase-map.json`
 
