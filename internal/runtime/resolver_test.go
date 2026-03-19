@@ -76,5 +76,3 @@ func TestProjectHelpers(t *testing.T) {
 		t.Fatalf("ProjectSkills() = %q", got)
 	}
 }
-
-

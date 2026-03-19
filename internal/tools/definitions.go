@@ -63,7 +63,7 @@ func WebSearchDefinition() agent.Tool {
 func RunCommandDefinition() agent.Tool {
 	return agent.Tool{
 		Name:        "run_command",
-		Description: "Executa um comando local de forma controlada e retorna stdout, stderr, exit code e timeout em JSON. Em Windows, use sintaxe de PowerShell no comando e prefira informar `workdir` ao operar em outro projeto.",
+		Description: "Executa um comando local (Bash) no Ubuntu 24.04 e retorna stdout, stderr, exit code e timeout em JSON. Use sintaxe nativa Linux; comandos como sudo, systemctl, journalctl, docker, curl e rg sao validos quando o host permitir. Prefira informar `workdir` ao operar em outro projeto.",
 		JSONSchema: objectSchema(
 			map[string]any{
 				"command":         stringProperty(""),
@@ -71,6 +71,63 @@ func RunCommandDefinition() agent.Tool {
 				"timeout_seconds": numberProperty(""),
 			},
 			"command",
+		),
+	}
+}
+
+func DockerControlDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "docker_control",
+		Description: "Controla Docker: listar containers (ps), reiniciar (restart), logs, stats, ou docker-compose up",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"action":    stringProperty("ps, restart, logs, stats, ou compose_up"),
+				"container": stringProperty("Nome ou ID do container (para restart/logs)"),
+				"workdir":   stringProperty("Diretório para docker-compose up"),
+			},
+			"action",
+		),
+	}
+}
+
+func SystemMonitorDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "system_monitor",
+		Description: "Monitora sistema: stats (CPU/RAM), gpu (NVIDIA), process (top 10), network (interfaces e conexões)",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"metric": stringProperty("stats, gpu, process, ou network"),
+			},
+			"metric",
+		),
+	}
+}
+
+func ServiceControlDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "service_control",
+		Description: "Controla serviços systemd: status, restart, stop, start, list, ou logs",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"action":  stringProperty("status, restart, stop, start, list, ou logs"),
+				"service": stringProperty("Nome do serviço (requerido exceto para list)"),
+			},
+			"action",
+		),
+	}
+}
+
+func OllamaControlDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "ollama_control",
+		Description: "Controla Ollama (inferência local): status, list (modelos), pull (baixar modelo), run (inferência)",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"action": stringProperty("status, list, pull, ou run"),
+				"model":  stringProperty("Nome do modelo (para pull/run)"),
+				"prompt": stringProperty("Prompt de entrada (para run)"),
+			},
+			"action",
 		),
 	}
 }
@@ -85,6 +142,10 @@ func RegisterCoreTools(registry *agent.ToolRegistry) {
 	registry.Register(ListDirDefinition(), ListDirHandler)
 	registry.Register(WebSearchDefinition(), WebSearchHandler)
 	registry.Register(RunCommandDefinition(), RunCommandHandler)
+	registry.Register(DockerControlDefinition(), DockerControlHandler)
+	registry.Register(SystemMonitorDefinition(), SystemMonitorHandler)
+	registry.Register(ServiceControlDefinition(), ServiceControlHandler)
+	registry.Register(OllamaControlDefinition(), OllamaControlHandler)
 }
 
 func objectSchema(properties map[string]any, required ...string) map[string]any {
@@ -113,5 +174,3 @@ func numberProperty(description string) map[string]any {
 	}
 	return property
 }
-
-

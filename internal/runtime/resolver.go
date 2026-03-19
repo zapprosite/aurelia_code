@@ -53,3 +53,6 @@ func (r *PathResolver) Skills() string { return filepath.Join(r.root, "skills") 
 
 // Logs returns the path to the logs/ subdirectory.
 func (r *PathResolver) Logs() string { return filepath.Join(r.root, "logs") }
+
+// InstanceLock returns the path to the single-instance lock file.
+func (r *PathResolver) InstanceLock() string { return filepath.Join(r.root, "instance.lock") }
