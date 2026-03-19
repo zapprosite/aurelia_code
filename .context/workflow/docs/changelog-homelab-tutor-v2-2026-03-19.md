@@ -120,3 +120,25 @@ Direção arquitetural registrada:
 - `Qdrant` como memória semântica
 - `LLM local` como cérebro e executor de instruções
 - `TTS PT-BR` como camada separada de saída
+
+## Audio Execution Slice
+
+Primeiro corte executável do blueprint de áudio aplicado no código:
+
+- `internal/telegram/input.go`
+- `internal/telegram/input_audio_test.go`
+- `scripts/groq-stt-curl-smoke.sh`
+- `groq_stt_simulation.md`
+
+O que mudou:
+
+- transcrição de voz agora é persistida na memória local logo após o STT
+- o arquivo arquivado usa `message_type=audio_transcript`
+- o conteúdo salvo registra `provider`, `basename` do arquivo e texto transcrito
+- foi adicionado smoke script de `curl` para validar a Groq com ou sem token
+
+Provas registradas:
+
+- `go test ./internal/telegram ./pkg/stt` passou
+- smoke local sem token imprime o `curl` exato em `dry-run`
+- chamada real com token falso retorna `401 invalid_api_key`, confirmando contrato HTTP

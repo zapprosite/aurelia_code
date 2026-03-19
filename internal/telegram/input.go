@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/observability"
 	"gopkg.in/telebot.v3"
 )
@@ -66,6 +67,7 @@ func (bc *BotController) handleVoice(c telebot.Context) error {
 		}
 		return SendContextText(c, audioProcessingFailureMessage)
 	}
+	bc.persistAudioTranscript(c, filePath, transcribedText)
 	return bc.processInput(c, transcribedText, true)
 }
 
@@ -122,6 +124,47 @@ func (bc *BotController) transcribeAudioFile(filePath string) (string, error) {
 		return "", SendContextTextError(emptyAudioMessage)
 	}
 	return transcribedText, nil
+}
+
+func (bc *BotController) persistAudioTranscript(c telebot.Context, filePath, transcript string) {
+	if bc == nil || bc.memory == nil || c == nil || c.Sender() == nil {
+		return
+	}
+
+	bc.persistAudioTranscriptForSender(c.Sender().ID, filePath, transcript)
+}
+
+func (bc *BotController) persistAudioTranscriptForSender(senderID int64, filePath, transcript string) {
+	if bc == nil || bc.memory == nil {
+		return
+	}
+
+	conversationID := fmt.Sprintf("%d", senderID)
+	ctx := context.Background()
+
+	if err := bc.memory.EnsureConversation(ctx, conversationID, senderID, "groq"); err != nil {
+		observability.Logger("telegram.input").Warn("failed to ensure conversation for audio transcript", slog.Any("err", err))
+		return
+	}
+
+	entry := memory.ArchiveEntry{
+		ConversationID: conversationID,
+		SessionID:      conversationID,
+		Role:           "user",
+		Content:        formatAudioTranscriptArchiveContent(bc.config.STTProvider, filePath, transcript),
+		MessageType:    "audio_transcript",
+	}
+	if err := bc.memory.AddArchiveEntry(ctx, entry); err != nil {
+		observability.Logger("telegram.input").Warn("failed to persist audio transcript", slog.Any("err", err))
+	}
+}
+
+func formatAudioTranscriptArchiveContent(provider, filePath, transcript string) string {
+	provider = strings.TrimSpace(provider)
+	if provider == "" {
+		provider = "unknown"
+	}
+	return fmt.Sprintf("[audio_transcript]\nprovider=%s\nfile=%s\n\n%s", provider, observability.Basename(filePath), strings.TrimSpace(transcript))
 }
 
 type sendContextTextError string
