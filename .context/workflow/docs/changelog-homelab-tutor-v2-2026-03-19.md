@@ -234,30 +234,21 @@ Direcao registrada:
 - `agent-browser` primeiro e `browser-use` como camada avancada
 - rate limits conservadores e governor por recurso
 
-## Gemini Fallback Runtime
+## Runtime Without Gemini
 
-Foi consolidado o papel da Gemini API no runtime da Aurelia:
+O runtime de deploy foi polido para seguir sem Gemini neste slice:
 
-- `scripts/gemini-smoke.sh`
-- `docs/gemini_fallback_runtime_20260319.md`
+- `docs/runtime_without_gemini_blueprint_20260319.md`
 
 Decisao registrada:
 
-- Gemini entra como fallback LLM e pesquisa curta
-- `gemini-2.5-flash` e o default remoto
-- `gemini-2.5-pro` fica para escalonamento manual
-- Groq continua no STT
-- `bge-m3` continua como embedding unico do Qdrant
+- `OpenRouter/Minimax` segue como LLM remoto principal
+- `Groq` segue no STT
+- `google_api_key` sai do caminho ativo
+- o health passa a provar apenas o `primary_llm`
 
-Tambem foi endurecido o health:
+Tambem foi mantido o endurecimento do health:
 
-- checks auxiliares agora podem emitir `warning`
+- checks auxiliares podem emitir `warning`
 - `warning` nao gera falso degradado
 - `error` continua derrubando o `/health`
-
-Observacao adicional validada em `2026-03-19`:
-
-- a oferta estudantil do ecossistema Gemini nao deve ser confundida com aumento automatico da cota da Gemini API
-- o beneficio de estudante agrega mais no `Gemini app`, `NotebookLM`, integracoes Google e armazenamento do plano `Google AI Pro`
-- a Gemini Developer API continua dependente de `project`, `usage tier` e `Cloud Billing`
-- conclusao arquitetural mantida: Gemini segue auxiliar no runtime da Aurelia, nao caminho critico

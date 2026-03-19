@@ -20,7 +20,6 @@ Key scripts shipped in the repository:
 - [`scripts/daemon-status.sh`](../../scripts/daemon-status.sh) — shows service status
 - [`scripts/daemon-logs.sh`](../../scripts/daemon-logs.sh) — tails daemon logs
 - [`scripts/health-check.sh`](../../scripts/health-check.sh) — homelab/system health snapshot
-- [`scripts/gemini-smoke.sh`](../../scripts/gemini-smoke.sh) — validates the local Gemini API key, lists available models and performs a minimal generate-content check without changing the active provider
 - [`scripts/smoke-test-homelab.sh`](../../scripts/smoke-test-homelab.sh) — smoke guidance for end-to-end validation
 - [`scripts/sync-ai-context.sh`](../../scripts/sync-ai-context.sh) — refreshes `ai-context` state and regenerates `.context/docs/codebase-map.json`
 

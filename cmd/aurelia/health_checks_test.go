@@ -1,73 +1,31 @@
 package main
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/kocar/aurelia/internal/config"
 )
 
-func TestBuildGeminiHealthCheck_ConfiguredButNoSmokeIsWarningForNonGoogleProvider(t *testing.T) {
+func TestBuildPrimaryLLMHealthCheck_WarningWhenMissing(t *testing.T) {
 	t.Parallel()
 
-	check := buildGeminiHealthCheck(&config.AppConfig{
-		LLMProvider:  "openrouter",
-		GoogleAPIKey: "secret",
-	}, filepath.Join(t.TempDir(), "missing.json"))
-
-	result := check()
+	result := buildPrimaryLLMHealthCheck(&config.AppConfig{})()
 	if result.Status != "warning" {
 		t.Fatalf("status = %q", result.Status)
 	}
 }
 
-func TestBuildGeminiHealthCheck_MissingKeyIsErrorForGoogleProvider(t *testing.T) {
+func TestBuildPrimaryLLMHealthCheck_OkWhenConfigured(t *testing.T) {
 	t.Parallel()
 
-	check := buildGeminiHealthCheck(&config.AppConfig{
-		LLMProvider: "google",
-	}, "")
-
-	result := check()
-	if result.Status != "error" {
-		t.Fatalf("status = %q", result.Status)
-	}
-}
-
-func TestBuildGeminiHealthCheck_RecentSmokeIsOk(t *testing.T) {
-	t.Parallel()
-
-	path := filepath.Join(t.TempDir(), "gemini_smoke.json")
-	payload := geminiSmokeStatus{
-		Status:    "ok",
-		Model:     "gemini-2.5-flash",
-		CheckedAt: time.Now().Add(-5 * time.Minute),
-	}
-	if err := writeGeminiSmokeFixture(path, payload); err != nil {
-		t.Fatalf("writeGeminiSmokeFixture() error = %v", err)
-	}
-
-	check := buildGeminiHealthCheck(&config.AppConfig{
-		LLMProvider:  "openrouter",
-		GoogleAPIKey: "secret",
-	}, path)
-
-	result := check()
+	result := buildPrimaryLLMHealthCheck(&config.AppConfig{
+		LLMProvider: "openrouter",
+		LLMModel:    "minimax/minimax-m2.7",
+	})()
 	if result.Status != "ok" {
 		t.Fatalf("status = %q", result.Status)
 	}
-}
-
-func writeGeminiSmokeFixture(path string, payload geminiSmokeStatus) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return err
+	if result.Message != "openrouter/minimax/minimax-m2.7" {
+		t.Fatalf("message = %q", result.Message)
 	}
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, 0o600)
 }
