@@ -56,7 +56,7 @@ The repository is also an elite multi-agent workspace: `AGENTS.md`, `.agents/rul
 
 ## Technology Stack Summary
 
-The runtime is a Go `1.25` modular monolith. It persists local state with SQLite, uses `log/slog` for observability, exposes a small HTTP health surface, and relies on Telegram as the main user-facing transport. Optional integrations include multiple LLM providers, Groq STT, and MCP servers loaded from JSON config.
+The runtime is a Go `1.25` modular monolith. It persists local state with SQLite, uses `log/slog` for observability, exposes a small HTTP health surface, and relies on Telegram as the main user-facing transport. Optional integrations include multiple LLM providers, Groq STT, Gemini fallback smoke/config support, and MCP servers loaded from JSON config.
 
 ## Development Tools Overview
 

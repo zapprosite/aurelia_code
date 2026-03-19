@@ -191,6 +191,7 @@ func bootstrapApp(args []string) (*app, error) {
 
 	// Initialize health server
 	healthSrv := health.NewServer(8484) // Default port, could be configurable
+	registerAuxiliaryHealthChecks(healthSrv, cfg, resolver)
 
 	return &app{
 		resolver:      resolver,

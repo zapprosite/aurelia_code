@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-19T05:32:32Z",
+  "generated": "2026-03-19T15:10:27Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,17 +26,17 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 401,
+    "totalFiles": 430,
     "rootPath": ".",
     "topDirectories": [
       {
         "name": ".agents",
-        "fileCount": 89,
+        "fileCount": 94,
         "description": "Governance rules, workflows, and reusable skills"
       },
       {
         "name": ".context",
-        "fileCount": 26,
+        "fileCount": 27,
         "description": "Operational memory, generated docs, and workflow state"
       },
       {
@@ -46,17 +46,17 @@
       },
       {
         "name": "cmd",
-        "fileCount": 8,
+        "fileCount": 10,
         "description": "Application entrypoints and composition root"
       },
       {
         "name": "docs",
-        "fileCount": 18,
+        "fileCount": 22,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
         "name": "internal",
-        "fileCount": 154,
+        "fileCount": 158,
         "description": "Core runtime layers and domain logic"
       },
       {
@@ -66,7 +66,7 @@
       },
       {
         "name": "scripts",
-        "fileCount": 12,
+        "fileCount": 15,
         "description": "Build, daemon, and host operations"
       },
       {
@@ -78,15 +78,15 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 191
+        "count": 197
       },
       {
         "extension": ".md",
-        "count": 25
+        "count": 36
       },
       {
         "extension": ".sh",
-        "count": 10
+        "count": 12
       },
       {
         "extension": ".json",
