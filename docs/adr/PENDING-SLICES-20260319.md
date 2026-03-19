@@ -45,8 +45,36 @@ Este é o backlog oficial das pendências abertas do plano JARVIS/Aurelia.
 As pendências mais críticas hoje são:
 
 1. voice capture real
-2. rollout de gateway/voice no deploy
-3. E2E de Antigravity e desktop fallback seguro
+2. persistência real de estado/governor
+3. rollout de gateway/voice no deploy
+
+## Ordem recomendada agora
+
+1. **Slice 5 — Voice plane real**
+   - fechar `mic daemon`, `wake word`, `VAD + ring buffer`, `captura contínua`
+   - motivo: o capture worker já entrou; agora vale completar o lane de voz antes de expandir superfície
+2. **Slice 6 — Estado e memória reais**
+   - persistir `governor/breaker`
+   - fechar `SQLite/Supabase/Qdrant` como truth flow coerente
+   - motivo: evita levar para deploy um runtime que ainda perde estado importante ao reiniciar
+3. **Slice 7 + Slice 9 — Deploy gateway/voice**
+   - rollout em `/home/will/aurelia-24x7`
+   - `aurelia-voice.service` ou worker dedicado
+   - E2E `spool -> STT -> resposta`
+   - `GET /v1/router/status` live
+   - motivo: gateway e voz já devem subir juntos no ambiente real
+4. **Slice 4 + Slice 2 — Orquestração segura**
+   - handoff Antigravity fim a fim
+   - fluxo de login guiado seguro
+   - motivo: browser/orquestração têm ROI alto e são mais seguros que desktop fallback
+5. **Slice 3 — Desktop fallback seguro**
+   - click seguro
+   - digitação segura
+   - kill-switch e limite de passos
+   - motivo: desktop é o caminho mais frágil; deve entrar por último entre os blocos core
+6. **Slice 8 — Extensões**
+   - mapear, separar core de nice-to-have e definir rollback
+   - motivo: opcional, não deve contaminar o core antes do fechamento do runtime
 
 ## ADRs já abertas para pendências críticas
 
