@@ -8,6 +8,7 @@ import (
 
 type voiceMetrics struct {
 	queueDepth    prometheus.Gauge
+	capture       *prometheus.CounterVec
 	processed     *prometheus.CounterVec
 	dispatches    *prometheus.CounterVec
 	fallbacks     *prometheus.CounterVec
@@ -29,6 +30,12 @@ func defaultVoiceMetrics() *voiceMetrics {
 				Name:      "queue_depth",
 				Help:      "Quantidade de jobs pendentes/processando no spool de voz.",
 			})),
+			capture: mustRegisterVoiceCollector(prometheus.NewCounterVec(prometheus.CounterOpts{
+				Namespace: "aurelia",
+				Subsystem: "voice",
+				Name:      "capture_total",
+				Help:      "Resultados do worker de captura de voz.",
+			}, []string{"result"})),
 			processed: mustRegisterVoiceCollector(prometheus.NewCounterVec(prometheus.CounterOpts{
 				Namespace: "aurelia",
 				Subsystem: "voice",

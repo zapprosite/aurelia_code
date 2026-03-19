@@ -54,7 +54,7 @@ The repository is also an elite multi-agent workspace: `AGENTS.md`, `.agents/rul
 - `internal/skill/` — skill loader, installer, router and executor
 - `internal/telegram/` — input/output adapters and chat command handling
 - `internal/tools/` — tool definitions and handlers exposed to the LLM
-- `internal/voice/` — audio spool, transcript processor and Supabase/Qdrant mirrors
+- `internal/voice/` — audio spool, capture worker, transcript processor and Supabase/Qdrant mirrors
 - `pkg/llm/` — concrete LLM providers and model catalog logic
 - `pkg/stt/` — speech-to-text provider abstraction and Groq implementation
 
