@@ -21,7 +21,7 @@ type HealthStatus struct {
 
 // CheckResult represents the result of a health check
 type CheckResult struct {
-	Status  string `json:"status"` // "ok" or "error"
+	Status  string `json:"status"` // "ok", "warning", or "error"
 	Message string `json:"message,omitempty"`
 }
 
@@ -97,7 +97,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	for name, fn := range checks {
 		result := fn()
 		results[name] = result
-		if result.Status != "ok" {
+		if result.Status == "error" {
 			status = "degraded"
 		}
 	}
