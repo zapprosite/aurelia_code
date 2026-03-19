@@ -42,6 +42,10 @@ O que falta agora é a parte sensível e final:
 
 O vídeo público enviado pelo usuário pode servir para análise de estilo e transcript, mas não será usado como base de clonagem.
 
+Áudio local já entregue pelo usuário:
+
+- `/home/will/aurelia/clone-voz/aurelia.mp3`
+
 ## Decisão
 
 - a voz oficial da Aurelia será criada somente a partir de amostra local autorizada
@@ -111,6 +115,7 @@ O vídeo público enviado pelo usuário pode servir para análise de estilo e tr
 ## Evidência esperada
 
 - prova de que a origem do áudio é local e autorizada
+- arquivo local recebido: `/home/will/aurelia/clone-voz/aurelia.mp3`
 - `voice_id` válido com smoke real MiniMax
 - resposta de voz no Telegram com a nova voz
 - `/health` saudável após a troca
@@ -118,6 +123,5 @@ O vídeo público enviado pelo usuário pode servir para análise de estilo e tr
 
 ## Pendências / bloqueios
 
-- falta o arquivo local autorizado
 - falta `MINIMAX_API_KEY`
 - falta o smoke real do `voice_id` final

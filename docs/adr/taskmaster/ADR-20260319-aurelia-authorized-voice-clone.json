@@ -12,15 +12,15 @@
     "troca segura do runtime de Telegram TTS"
   ],
   "done_definition": [
-    "arquivo local autorizado recebido",
+    "arquivo local autorizado recebido e registrado",
     "MINIMAX_API_KEY configurada",
     "voice_id validado com minimax-tts-smoke.sh",
     "Telegram responde com a nova voz",
     "rollback para voice-proxy documentado e testado"
   ],
   "next_actions": [
-    "receber arquivo local autorizado da voz",
     "configurar MINIMAX_API_KEY",
+    "avaliar /home/will/aurelia/clone-voz/aurelia.mp3 como base autorizada",
     "rodar listagem e smoke reais da MiniMax",
     "trocar o runtime de TTS apenas depois da validação"
   ],
@@ -41,10 +41,10 @@
   ],
   "evidence": [
     "slice base de infraestrutura MiniMax/TTS ja existe em ADR-20260319-aurelia-media-voice",
-    "voz oficial da Aurelia exige amostra autorizada e smoke real"
+    "voz oficial da Aurelia exige amostra autorizada e smoke real",
+    "arquivo local entregue: /home/will/aurelia/clone-voz/aurelia.mp3"
   ],
   "blockers": [
-    "arquivo local autorizado ainda nao entregue",
     "MINIMAX_API_KEY ainda nao entregue",
     "voice_id final ainda nao existe"
   ],
