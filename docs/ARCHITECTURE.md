@@ -74,9 +74,27 @@ Contains:
 - canonical app config in `config/app.json`
 - SQLite state
 - logs
+- instance lock
 - learned notes
 - runtime skills
 - canonical persona files
+
+## Process Lifecycle And Supervision
+
+The supported desktop runtime is a user service managed by `systemd --user`.
+
+Rules:
+
+- the daemon must be installed from `scripts/install-user-daemon.sh`
+- the service must run from the checked-out repository root
+- foreground `go run` is a debug path, not the canonical production path
+- duplicate runtime instances are forbidden
+
+Single-instance enforcement is implemented through a lock file in the instance root:
+
+- `~/.aurelia/instance.lock`
+
+If a second process attempts to start while the lock is held, startup fails with PID and command diagnostics instead of killing the existing process.
 
 ### Target Project
 
@@ -98,6 +116,13 @@ Project-specific rules must not leak into global defaults unless explicitly prom
 - starting and stopping runtimes
 
 It must stay thin.
+
+It is also responsible for:
+
+- bootstrapping instance directories
+- acquiring the single-instance lock
+- configuring structured logging
+- wiring shutdown and release of runtime resources
 
 Runtime configuration is instance-local and file-backed.
 
@@ -226,6 +251,19 @@ That includes:
 - running controlled local commands
 - acting on a canonical project `workdir`
 
+## Observability
+
+Logging now uses `log/slog` as the canonical process logger.
+
+Rules:
+
+- component names must be explicit
+- sensitive values must be redacted or omitted
+- tool execution logs may include tool names and argument keys, but not raw sensitive payloads
+- audio and file logs should use basenames instead of absolute host paths where practical
+
+Legacy `log.Printf` call sites may still exist, but they are bridged into the structured logger at process startup.
+
 ## Architectural Rules
 
 1. Telegram is an interface layer, not a domain layer.
@@ -244,6 +282,8 @@ Implemented in the current codebase:
 - tool-driven ReAct loop
 - Agent Teams orchestration with task graph, mailbox, recovery, and final synthesis
 - SQLite-backed memory and operational persistence
+- single-instance runtime guard with lock file diagnostics
+- structured logging bridge with redaction-oriented call sites
 - Telegram text, markdown, and audio input flow
 - cron scheduling subsystem
 - MCP discovery and registration
@@ -254,7 +294,7 @@ Implemented in the current codebase:
 Known constraints in the current codebase:
 
 - repository naming still reflects the old product identity
-- some documentation is still transitional and overlaps with future canonical docs
+- ai-context regeneration is still an operational dependency outside this repository
 - benchmark evidence for memory and CPU footprint is not yet documented
 - contribution governance and GitHub policy gates are not fully established yet
 
@@ -265,5 +305,4 @@ This file captures architecture and boundaries.
 Implementation conventions belong in `docs/STYLE_GUIDE.md`.
 
 Operational mistakes, traps, and recurring lessons belong in `docs/LEARNINGS.md`.
-
 

@@ -147,5 +147,3 @@ func (p *KimiProvider) doChatCompletionRequest(ctx context.Context, reqBody map[
 	}
 	return respBody, nil
 }
-
-

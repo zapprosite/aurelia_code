@@ -2,10 +2,11 @@ package mcp
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/kocar/aurelia/internal/config"
+	"github.com/kocar/aurelia/internal/observability"
 )
 
 type serverResult struct {
@@ -44,15 +45,16 @@ func (m *Manager) connectEnabledServers(
 	connectTimeout time.Duration,
 	defaultCallTimeout time.Duration,
 ) {
+	logger := observability.Logger("mcp.bootstrap")
 	for result := range connectServers(cfg, servers, workspace, connectTimeout, defaultCallTimeout) {
 		if result.err != nil {
-			log.Printf("[MCP] Failed to connect server %q: %v\n", result.name, result.err)
+			logger.Warn("failed to connect MCP server", slog.String("server", result.name), slog.Any("err", result.err))
 			continue
 		}
 
 		m.servers[result.name] = result.session
 		m.tools = append(m.tools, result.specs...)
-		log.Printf("[MCP] Connected server %q with %d tools\n", result.name, len(result.specs))
+		logger.Info("connected MCP server", slog.String("server", result.name), slog.Int("tool_count", len(result.specs)))
 	}
 }
 
@@ -65,5 +67,3 @@ func enabledMCPServers(servers map[string]config.MCPServerConfig) []config.MCPSe
 	}
 	return enabled
 }
-
-

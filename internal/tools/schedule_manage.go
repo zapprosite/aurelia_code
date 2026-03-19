@@ -156,5 +156,3 @@ func executeScheduleControl(ctx context.Context, service ScheduleController, act
 	}
 	return fmt.Sprintf("Agendamento `%s` executou a acao `%s` com sucesso.", jobID, action), nil
 }
-
-

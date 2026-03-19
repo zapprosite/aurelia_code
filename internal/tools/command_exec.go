@@ -7,7 +7,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/kocar/aurelia/internal/agent"
@@ -16,18 +18,18 @@ import (
 const (
 	defaultCommandTimeout = 120 * time.Second
 	maxCommandTimeout     = 600 * time.Second
-	maxCommandOutputChars = 4000
+	maxCommandOutputChars = 16000 // Increased from 4000 to 16000 per picoclaw pattern
 )
 
-var blockedCommandPatterns = []string{
-	"rm -rf /",
-	"del /f /s /q",
-	"shutdown",
-	"reboot",
-	"mkfs",
-	"diskpart",
-	"git reset --hard",
-	"git clean -fdx",
+// Compiled deny patterns - more efficient than string matching
+var deniedPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`\brm\s+-[rf]{1,2}\b`),
+	regexp.MustCompile(`\bdel\s+/[fq]\b`),
+	regexp.MustCompile(`\brmdir\s+/s\b`),
+	regexp.MustCompile(`\b(format|mkfs)\b\s`),
+	regexp.MustCompile(`\b(shutdown|poweroff|halt)\b`),
+	regexp.MustCompile(`\bdd\s+if=`),
+	regexp.MustCompile(`\bgit\s+(reset|clean)\s+.*--(hard|fdx)`),
 }
 
 type commandResult struct {
@@ -95,19 +97,36 @@ func RunCommandHandler(ctx context.Context, args map[string]interface{}) (string
 		return marshalCommandResult(result), nil
 	}
 
+	// Resolve symlinks immediately before execution (TOCTOU protection)
+	resolvedDir, err := filepath.EvalSymlinks(workdir)
+	if err == nil {
+		workdir = resolvedDir
+	}
+
 	runCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	start := time.Now()
-	cmd := exec.CommandContext(runCtx, "powershell", "-NoProfile", "-Command", command)
+	cmd := exec.CommandContext(runCtx, "sh", "-c", command)
 	cmd.Dir = workdir
+
+	// Set process group for proper cleanup
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	var stdoutBuf bytes.Buffer
 	var stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
 
-	err := cmd.Run()
+	// Panic recovery: prevent tool crashes from killing agent loop
+	defer func() {
+		if r := recover(); r != nil {
+			result.ExitCode = 1
+			result.Stderr = "command execution panic: " + toString(r)
+		}
+	}()
+
+	err = cmd.Run()
 	result.DurationMS = time.Since(start).Milliseconds()
 	result.Stdout = truncateOutput(stdoutBuf.String())
 	result.Stderr = truncateOutput(stderrBuf.String())
@@ -115,6 +134,10 @@ func RunCommandHandler(ctx context.Context, args map[string]interface{}) (string
 	if runCtx.Err() == context.DeadlineExceeded {
 		result.ExitCode = -1
 		result.TimedOut = true
+		// Kill entire process group on timeout
+		if cmd.Process != nil && cmd.Process.Pid > 0 {
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		}
 		if strings.TrimSpace(result.Stderr) == "" {
 			result.Stderr = "process killed by timeout"
 		}
@@ -137,16 +160,23 @@ func RunCommandHandler(ctx context.Context, args map[string]interface{}) (string
 	return marshalCommandResult(result), nil
 }
 
+var dangerousMode = os.Getenv("AURELIA_DANGEROUS_MODE") == "1"
+
 func isBlockedCommand(command string) bool {
 	normalized := strings.ToLower(strings.TrimSpace(command))
-	if normalized == "format" || strings.HasPrefix(normalized, "format ") {
-		return true
-	}
-	for _, pattern := range blockedCommandPatterns {
-		if strings.Contains(normalized, pattern) {
+
+	// Check deny patterns (compiled regex for efficiency)
+	for _, pattern := range deniedPatterns {
+		if pattern.MatchString(normalized) {
 			return true
 		}
 	}
+
+	// Allow sudo only in dangerousMode
+	if !dangerousMode && strings.Contains(normalized, "sudo") {
+		return true
+	}
+
 	return false
 }
 
@@ -183,4 +213,13 @@ func marshalCommandResult(result commandResult) string {
 	return string(payload)
 }
 
-
+func toString(v interface{}) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case error:
+		return val.Error()
+	default:
+		return "unknown panic"
+	}
+}

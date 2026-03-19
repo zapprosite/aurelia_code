@@ -1,10 +1,11 @@
 package telegram
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 
+	"github.com/kocar/aurelia/internal/observability"
 	"gopkg.in/telebot.v3"
 )
 
@@ -25,6 +26,7 @@ func (bc *BotController) handleStart(c telebot.Context) error {
 }
 
 func (bc *BotController) handleBootstrapChoice(choice string) func(telebot.Context) error {
+	logger := observability.Logger("telegram.bootstrap")
 	return func(c telebot.Context) error {
 		_ = bc.bot.Respond(c.Callback(), &telebot.CallbackResponse{})
 
@@ -33,13 +35,13 @@ func (bc *BotController) handleBootstrapChoice(choice string) func(telebot.Conte
 			return SendContextText(c, bootstrapFailureMessage)
 		}
 		if err := writeBootstrapPreset(bc.personasDir, preset); err != nil {
-			log.Printf("Bootstrap error: %v\n", err)
+			logger.Error("failed to write bootstrap preset", slog.Any("err", err))
 			return SendContextText(c, bootstrapFailureMessage)
 		}
 
 		bc.setPendingBootstrap(c.Sender().ID, bootstrapState{Choice: choice})
 		if err := bc.seedBootstrapIdentity(c, preset); err != nil {
-			log.Printf("Bootstrap fact seed warning: %v\n", err)
+			logger.Warn("failed to seed bootstrap identity", slog.Any("err", err))
 		}
 		return SendContextText(c, bootstrapProfileMessage)
 	}

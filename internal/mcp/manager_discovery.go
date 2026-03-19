@@ -147,5 +147,3 @@ func normalizeSchema(inputSchema any) map[string]interface{} {
 
 	return m
 }
-
-

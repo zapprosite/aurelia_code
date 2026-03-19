@@ -1,6 +1,6 @@
 ---
 description: Guia mestre para orquestração e governança no Antigravity IDE.
-last-updated: 2026-03-17
+last-updated: 2026-03-18
 ---
 
 # 🛰️ Guia: Antigravity IDE
@@ -24,6 +24,20 @@ As regras definem os guardrails de operação.
 Skills dão superpoderes aos agentes. Sempre consulte `.agents/skills/` antes de implementar soluções do zero.
 - **Recomendadas**: `Security-First`, `Deep-Researcher`, `Architect-Planner`.
 </tips>
+
+## 🧰 4. Operação local do daemon
+O runtime oficial do Aurelia no desktop deve subir como serviço de usuário, não como processo solto dentro do terminal do Antigravity.
+
+Comandos suportados:
+- `./scripts/install-user-daemon.sh`
+- `./scripts/daemon-status.sh`
+- `./scripts/daemon-logs.sh`
+
+Se o Antigravity reiniciar ou perder conexão:
+- não abra um novo `go run ./cmd/aurelia` por impulso;
+- verifique o `systemd --user`;
+- inspecione `~/.aurelia/logs/daemon.log` e `~/.aurelia/logs/daemon_error.log`;
+- lembre que o Aurelia agora bloqueia instâncias duplicadas via lock em `~/.aurelia/instance.lock`.
 
 ---
 *Dúvidas? Verifique o [AGENTS.md](../AGENTS.md) para a hierarquia de autoridade.*

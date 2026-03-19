@@ -47,5 +47,3 @@ func extractArchiveNote(text, conversationID string) (memory.Note, bool) {
 	note.Source = "archive-reprocess"
 	return note, true
 }
-
-

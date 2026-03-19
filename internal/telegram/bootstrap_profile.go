@@ -52,5 +52,3 @@ func bootstrapFallbackName(user *telebot.User) string {
 	}
 	return fallbackName
 }
-
-

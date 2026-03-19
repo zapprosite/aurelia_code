@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	conversationMeChamoPattern = regexp.MustCompile(`(?i)\bme chamo\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
-	conversationMeuNomePattern = regexp.MustCompile(`(?i)\bmeu nome e\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
-	conversationSouPattern     = regexp.MustCompile(`(?i)\bsou\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
-	conversationSeuNomePattern = regexp.MustCompile(`(?i)\bseu nome e\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
+	conversationMeChamoPattern  = regexp.MustCompile(`(?i)\bme chamo\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
+	conversationMeuNomePattern  = regexp.MustCompile(`(?i)\bmeu nome e\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
+	conversationSouPattern      = regexp.MustCompile(`(?i)\bsou\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
+	conversationSeuNomePattern  = regexp.MustCompile(`(?i)\bseu nome e\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
 	conversationSeuPapelPattern = regexp.MustCompile(`(?i)\bseu papel e\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{0,60})`)
 )
 
@@ -128,5 +128,3 @@ func extractConversationPatternValue(text string, pattern *regexp.Regexp) string
 	}
 	return strings.Join(strings.Fields(value), " ")
 }
-
-

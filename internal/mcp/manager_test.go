@@ -42,7 +42,7 @@ func TestManagerClose(t *testing.T) {
 	m := &Manager{
 		servers: make(map[string]*serverSession),
 	}
-	
+
 	err := m.Close()
 	if err != nil {
 		t.Fatalf("expected nil error, got: %v", err)
@@ -60,5 +60,3 @@ func TestTimeoutFromMS(t *testing.T) {
 		t.Errorf("expected 2s")
 	}
 }
-
-

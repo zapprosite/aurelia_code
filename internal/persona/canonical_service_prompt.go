@@ -3,11 +3,12 @@ package persona
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/observability"
 )
 
 func (s *CanonicalIdentityService) BuildPrompt(ctx context.Context, userID, conversationID string) (string, []string, error) {
@@ -93,13 +94,14 @@ func (s *CanonicalIdentityService) appendRuntimeContext(prompt string) string {
 // and returns a PROJECT CONTEXT markdown block, or an empty string if the path is
 // empty, the file does not exist, or its content is blank.
 func (s *CanonicalIdentityService) buildProjectBlock() string {
+	logger := observability.Logger("persona.prompt")
 	if s.projectPlaybookPath == "" {
 		return ""
 	}
 
 	content, err := readOptionalFile(s.projectPlaybookPath)
 	if err != nil {
-		log.Printf("Warning: failed to read project playbook at %q: %v", s.projectPlaybookPath, err)
+		logger.Warn("failed to read project playbook", slog.String("file", observability.Basename(s.projectPlaybookPath)), slog.Any("err", err))
 	}
 
 	if strings.TrimSpace(content) == "" {
@@ -112,14 +114,15 @@ func (s *CanonicalIdentityService) buildProjectBlock() string {
 // buildOwnerDocsBlock reads optional owner documents and returns an OWNER CONTEXT
 // markdown block, or an empty string if neither file exists or both are empty.
 func (s *CanonicalIdentityService) buildOwnerDocsBlock() string {
+	logger := observability.Logger("persona.prompt")
 	playbookContent, err := readOptionalFile(s.ownerPlaybookPath)
 	if err != nil {
-		log.Printf("Warning: failed to read owner playbook at %q: %v", s.ownerPlaybookPath, err)
+		logger.Warn("failed to read owner playbook", slog.String("file", observability.Basename(s.ownerPlaybookPath)), slog.Any("err", err))
 	}
 
 	lessonsContent, err := readOptionalFile(s.lessonsLearnedPath)
 	if err != nil {
-		log.Printf("Warning: failed to read lessons learned at %q: %v", s.lessonsLearnedPath, err)
+		logger.Warn("failed to read lessons learned", slog.String("file", observability.Basename(s.lessonsLearnedPath)), slog.Any("err", err))
 	}
 
 	if strings.TrimSpace(playbookContent) == "" && strings.TrimSpace(lessonsContent) == "" {
@@ -141,5 +144,3 @@ func (s *CanonicalIdentityService) buildOwnerDocsBlock() string {
 
 	return strings.Join(sections, "\n")
 }
-
-

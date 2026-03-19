@@ -115,7 +115,7 @@ func TestE2E_PersonaLoopWithRealTools(t *testing.T) {
 							ID:   "call-1",
 							Name: "run_command",
 							Arguments: map[string]interface{}{
-								"command": "Get-Content hello.txt",
+								"command": "cat hello.txt",
 								"workdir": workspace,
 							},
 						},
@@ -236,7 +236,7 @@ func TestE2E_CronScheduleLifecycle(t *testing.T) {
 							ID:   "cron-call-1",
 							Name: "run_command",
 							Arguments: map[string]interface{}{
-								"command": "Write-Output 'rotina executada'",
+								"command": "echo 'rotina executada'",
 								"workdir": workspace,
 							},
 						},

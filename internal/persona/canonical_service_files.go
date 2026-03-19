@@ -114,5 +114,3 @@ func stripSoulPreference(content string) string {
 	}
 	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
-
-

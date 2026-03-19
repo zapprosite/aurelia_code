@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/kocar/aurelia/internal/observability"
 )
 
 // Transcriber is the interface for STT engines
@@ -40,7 +42,8 @@ func NewGroqTranscriber(apiKey string) *GroqTranscriber {
 
 // Transcribe converts local audio file to text
 func (t *GroqTranscriber) Transcribe(ctx context.Context, audioFilePath string) (string, error) {
-	log.Printf("Starting Groq transcription for: %s\n", audioFilePath)
+	logger := observability.Logger("stt.groq")
+	logger.Info("starting Groq transcription", slog.String("file", observability.Basename(audioFilePath)))
 
 	audioFile, err := os.Open(audioFilePath)
 	if err != nil {
@@ -104,7 +107,7 @@ func (t *GroqTranscriber) Transcribe(ctx context.Context, audioFilePath string) 
 		return "", fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	log.Printf("Groq transcription completed successfully\n")
+	logger.Info("Groq transcription completed")
 
 	return result.Text, nil
 }

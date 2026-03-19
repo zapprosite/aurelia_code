@@ -73,5 +73,3 @@ func formatMemoryDebugReport(report *persona.LongTermMemoryDebugReport) string {
 
 	return strings.Join(lines, "\n")
 }
-
-

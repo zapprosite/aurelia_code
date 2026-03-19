@@ -119,5 +119,3 @@ func parseTargetChatID(teamKey string, raw any) (int64, error) {
 	}
 	return 0, fmt.Errorf("invalid target_chat_id")
 }
-
-

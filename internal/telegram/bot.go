@@ -2,7 +2,7 @@ package telegram
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -10,6 +10,7 @@ import (
 
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/skill"
 	"github.com/kocar/aurelia/pkg/stt"
@@ -76,7 +77,7 @@ func (bc *BotController) GetBot() *telebot.Bot {
 
 // Start begins Telegram polling.
 func (bc *BotController) Start() {
-	log.Println("Starting Aurelia Telegram Bot...")
+	observability.Logger("telegram.bot").Info("starting Aurelia Telegram bot", slog.Int("allowed_users", len(bc.config.TelegramAllowedUserIDs)))
 	bc.bot.Start()
 }
 
@@ -103,5 +104,3 @@ func (bc *BotController) setupRoutes() {
 	bc.setupBootstrapRoutes()
 	bc.registerContentRoutes()
 }
-
-

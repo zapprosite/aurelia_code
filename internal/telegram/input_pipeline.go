@@ -3,13 +3,14 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/skill"
 	"gopkg.in/telebot.v3"
 )
@@ -24,6 +25,7 @@ type inputSession struct {
 }
 
 func (bc *BotController) processInput(c telebot.Context, text string, requiresAudio bool) error {
+	logger := observability.Logger("telegram.pipeline")
 	text = strings.ReplaceAll(text, "\x00", "")
 
 	if state, ok := bc.popPendingBootstrap(c.Sender().ID); ok {
@@ -36,7 +38,7 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 	}
 
 	if err := bc.persistIncomingContext(session, c.Sender().ID); err != nil {
-		log.Printf("Input persistence warning: %v\n", err)
+		logger.Warn("failed to persist incoming context", slog.Any("err", err))
 	}
 
 	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
@@ -98,10 +100,11 @@ func (bc *BotController) persistIncomingContext(session inputSession, senderUser
 }
 
 func (bc *BotController) prepareExecution(session inputSession) (*skill.Skill, []agent.Message, string, []string, error) {
+	logger := observability.Logger("telegram.pipeline")
 	skills, _ := bc.loader.LoadAll()
 	targetSkill, err := bc.router.Route(session.ctx, session.text, skills)
 	if err != nil {
-		log.Println("Router non-fatal error:", err)
+		logger.Warn("router non-fatal error", slog.Any("err", err))
 	}
 
 	history, err := bc.buildAgentHistory(session)
@@ -130,7 +133,7 @@ func resolveActiveSkill(skills map[string]skill.Skill, targetSkill string) *skil
 	if targetSkill == "" {
 		return nil
 	}
-	log.Printf("Router decided skill: %s\n", targetSkill)
+	observability.Logger("telegram.pipeline").Info("router selected skill", slog.String("skill", targetSkill))
 	s, ok := skills[targetSkill]
 	if !ok {
 		return nil
@@ -145,7 +148,7 @@ func (bc *BotController) resolveExecutionPrompt(session inputSession) (string, [
 
 	prompt, tools, err := bc.canonical.BuildPromptForQuery(session.ctx, session.senderID, session.convID, session.text)
 	if err != nil {
-		log.Printf("Persona files not found or invalid. Using default prompt. Error: %v\n", err)
+		observability.Logger("telegram.pipeline").Warn("falling back to default prompt", slog.Any("err", err))
 		return defaultSystemPrompt, nil
 	}
 	return prompt, tools
@@ -176,5 +179,3 @@ func (bc *BotController) deliverFinalAnswer(c telebot.Context, finalAnswer strin
 	}
 	return SendText(bc.bot, c.Chat(), finalAnswer)
 }
-
-

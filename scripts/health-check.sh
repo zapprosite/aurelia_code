@@ -25,4 +25,4 @@ echo -n "LiteLLM API: " && curl -s http://localhost:4000/health/liveliness || ec
 echo -n "ZFS Pool (tank): " && zpool list -H -o health tank
 
 echo -e "\n${GREEN}=== DB INTEGRITY ===${NC}"
-python3 -c "import sqlite3; conn = sqlite3.connect('/home/will/.aurelia/data/aurelia.db'); print('Aurelia DB Journal Mode:', conn.execute('PRAGMA journal_mode').fetchone()[0])"
+python3 -c "import os, sqlite3; db = os.path.expanduser('~/.aurelia/data/aurelia.db'); conn = sqlite3.connect(db); print('Aurelia DB Journal Mode:', conn.execute('PRAGMA journal_mode').fetchone()[0])"

@@ -37,5 +37,3 @@ func (p *Persona) RenderSystemPrompt(identity CanonicalIdentity, facts []memory.
 
 	return strings.Join(sections, "\n\n")
 }
-
-

@@ -63,5 +63,3 @@ func TestListSchedulesTool_Execute_ReturnsFriendlyEmptyState(t *testing.T) {
 		t.Fatalf("expected empty state in result, got %q", result)
 	}
 }
-
-

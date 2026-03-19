@@ -59,5 +59,3 @@ func (t *InstallSkillTool) Execute(ctx context.Context, args map[string]interfac
 		strings.Join(result.SkillNames, ", "),
 	), nil
 }
-
-

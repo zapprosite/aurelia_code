@@ -130,5 +130,3 @@ func (t *ReadTeamInboxTool) Execute(ctx context.Context, args map[string]interfa
 	}
 	return string(payload), nil
 }
-
-

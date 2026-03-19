@@ -66,5 +66,3 @@ func (realClock) Now() time.Time {
 type SchedulerConfig struct {
 	PollInterval time.Duration
 }
-
-

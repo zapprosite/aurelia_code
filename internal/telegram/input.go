@@ -3,12 +3,13 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/kocar/aurelia/internal/observability"
 	"gopkg.in/telebot.v3"
 )
 
@@ -23,7 +24,7 @@ func (bc *BotController) handleDocument(c telebot.Context) error {
 	}
 
 	if !isSupportedDocument(doc.FileName, doc.MIME) {
-		log.Println("Unsupported document type:", doc.MIME)
+		observability.Logger("telegram.input").Warn("unsupported document type", slog.String("mime", doc.MIME))
 		return SendContextText(c, unsupportedDocumentMessage)
 	}
 
@@ -32,7 +33,7 @@ func (bc *BotController) handleDocument(c telebot.Context) error {
 
 	filePath, err := bc.downloadTelegramFile(&doc.File, doc.FileID+"_"+doc.FileName)
 	if err != nil {
-		log.Println("Failed to download file:", err)
+		observability.Logger("telegram.input").Warn("failed to download file", slog.Any("err", err))
 		return SendContextText(c, downloadFailureMessage)
 	}
 	defer func() { _ = os.Remove(filePath) }()
@@ -52,7 +53,7 @@ func (bc *BotController) handleVoice(c telebot.Context) error {
 
 	filePath, err := bc.downloadTelegramFile(&telebot.File{FileID: fileID}, fileID+"_"+filename)
 	if err != nil {
-		log.Println("Failed to download audio:", err)
+		observability.Logger("telegram.input").Warn("failed to download audio", slog.Any("err", err))
 		return SendContextText(c, downloadFailureMessage)
 	}
 	defer func() { _ = os.Remove(filePath) }()
@@ -106,14 +107,15 @@ func resolveAudioAttachment(c telebot.Context) (string, string, bool) {
 }
 
 func (bc *BotController) transcribeAudioFile(filePath string) (string, error) {
+	logger := observability.Logger("telegram.input")
 	if bc.stt == nil || !bc.stt.IsAvailable() {
 		return "", SendContextTextError(audioNotConfiguredMessage)
 	}
 
-	log.Printf("Enviando audio [%s] para transcricao via Groq API...", filePath)
+	logger.Info("sending audio to transcriber", slog.String("file", observability.Basename(filePath)))
 	transcribedText, err := bc.stt.Transcribe(context.Background(), filePath)
 	if err != nil {
-		log.Printf("Groq STT error: %v\n", err)
+		logger.Warn("transcriber error", slog.Any("err", err))
 		return "", SendContextTextError(audioProcessingFailureMessage)
 	}
 	if strings.TrimSpace(transcribedText) == "" {

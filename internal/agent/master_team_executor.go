@@ -55,5 +55,3 @@ func displayTaskWorkdir(workdir string) string {
 	}
 	return workdir
 }
-
-

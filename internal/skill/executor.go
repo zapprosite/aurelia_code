@@ -26,5 +26,3 @@ func (e *Executor) Execute(ctx context.Context, baseSystemPrompt string, skill *
 
 	return e.loop.Run(ctx, finalSystemPrompt, history, allowedTools)
 }
-
-
