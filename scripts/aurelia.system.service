@@ -10,14 +10,18 @@ User=__AURELIA_USER__
 Group=__AURELIA_GROUP__
 WorkingDirectory=__AURELIA_ROOT__
 Environment=AURELIA_HOME=__AURELIA_HOME__
+Environment=HOME=__AURELIA_USER_HOME__
+Environment=USER=__AURELIA_USER__
+Environment=LOGNAME=__AURELIA_USER__
+ExecStartPre=/usr/bin/mkdir -p __AURELIA_HOME__/logs
 ExecStart=/usr/local/bin/aurelia
 Restart=always
 RestartSec=2
 TimeoutStopSec=30
 KillMode=process
 NoNewPrivileges=true
-StandardOutput=journal
-StandardError=journal
+StandardOutput=append:__AURELIA_HOME__/logs/daemon.log
+StandardError=append:__AURELIA_HOME__/logs/daemon_error.log
 
 [Install]
 WantedBy=multi-user.target

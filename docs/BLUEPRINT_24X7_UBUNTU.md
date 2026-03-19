@@ -136,6 +136,15 @@ Instalação prevista:
 bash ./scripts/install-system-daemon.sh
 ```
 
+Comportamento da migração:
+
+- para e desabilita `systemctl --user aurelia.service`
+- move a unit antiga de usuário para backup
+- instala `/etc/systemd/system/aurelia.service`
+- instala `/usr/local/bin/aurelia`
+- reinicia o serviço de sistema
+- mantém logs em `~/.aurelia/logs/`
+
 ## Validação
 
 ```bash
