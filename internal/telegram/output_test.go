@@ -1,9 +1,11 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"github.com/kocar/aurelia/pkg/tts"
 	"gopkg.in/telebot.v3"
 )
 
@@ -24,6 +26,19 @@ func (s *stubSender) Send(to telebot.Recipient, what interface{}, opts ...interf
 		return nil, s.firstSendErr
 	}
 	return &telebot.Message{}, nil
+}
+
+type stubSynthesizer struct {
+	audio tts.Audio
+	err   error
+}
+
+func (s stubSynthesizer) Synthesize(context.Context, string) (tts.Audio, error) {
+	return s.audio, s.err
+}
+
+func (s stubSynthesizer) IsAvailable() bool {
+	return s.err == nil || len(s.audio.Data) > 0
 }
 
 func TestSendText_SendsTelegramHTML(t *testing.T) {
@@ -142,5 +157,56 @@ func TestSendError_FallsBackToPlainTextWhenHTMLSendFails(t *testing.T) {
 	}
 	if payload != "Erro\n\nmax iterations reached" {
 		t.Fatalf("unexpected fallback payload: %q", payload)
+	}
+}
+
+func TestSendAudio_SendsTelegramVoiceWhenTTSSucceeds(t *testing.T) {
+	sender := &stubSender{}
+	chat := &telebot.Chat{ID: 123}
+
+	err := sendAudioWithSender(sender, chat, stubSynthesizer{
+		audio: tts.Audio{
+			Data:        []byte("voice"),
+			ContentType: "audio/opus",
+			Extension:   ".ogg",
+			AsVoiceNote: true,
+		},
+	}, "## Ola")
+	if err != nil {
+		t.Fatalf("sendAudioWithSender returned error: %v", err)
+	}
+
+	if len(sender.calls) != 1 {
+		t.Fatalf("expected 1 send call, got %d", len(sender.calls))
+	}
+	if _, ok := sender.calls[0].what.(*telebot.Voice); !ok {
+		t.Fatalf("expected telebot.Voice payload, got %T", sender.calls[0].what)
+	}
+}
+
+func TestSendAudio_FallsBackToTextWhenTTSFails(t *testing.T) {
+	sender := &stubSender{}
+	chat := &telebot.Chat{ID: 123}
+
+	err := sendAudioWithSender(sender, chat, stubSynthesizer{err: errors.New("tts down")}, "## Ola")
+	if err != nil {
+		t.Fatalf("sendAudioWithSender returned error: %v", err)
+	}
+
+	if len(sender.calls) != 1 {
+		t.Fatalf("expected 1 send call, got %d", len(sender.calls))
+	}
+	if _, ok := sender.calls[0].what.(string); !ok {
+		t.Fatalf("expected text fallback payload, got %T", sender.calls[0].what)
+	}
+}
+
+func TestSanitizeTextForSpeech_StripsMarkdown(t *testing.T) {
+	got := sanitizeTextForSpeech("## Titulo\n\n- **item** com [link](https://example.com)\n\n`codigo`")
+	if containsSubstring(got, "#") || containsSubstring(got, "**") || containsSubstring(got, "`") {
+		t.Fatalf("unexpected markdown in sanitized text: %q", got)
+	}
+	if !containsSubstring(got, "Titulo") || !containsSubstring(got, "item com link") {
+		t.Fatalf("unexpected sanitized text: %q", got)
 	}
 }

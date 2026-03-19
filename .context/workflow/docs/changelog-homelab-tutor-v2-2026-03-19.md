@@ -701,3 +701,41 @@ Estado honesto:
 - o encaixe no runtime está pronto
 - ainda falta conectar um capturador real com `openWakeWord + Silero`
 - ainda falta portar essa slice para `/home/will/aurelia-24x7`
+
+## Telegram TTS Local
+
+Foi fechado o caminho de saída em áudio no Telegram usando o TTS local já existente no homelab.
+
+Decisão:
+
+- `voice-proxy` em `127.0.0.1:8011`
+- endpoint OpenAI-compatible `/v1/audio/speech`
+- defaults de runtime:
+  - `tts_provider=openai_compatible`
+  - `tts_model=chatterbox`
+  - `tts_voice=Olivia.wav`
+  - `tts_format=opus`
+  - `tts_speed=1.0`
+
+Implementação:
+
+- `pkg/tts/openai_compatible.go`
+- `internal/telegram/output.go`
+- `internal/telegram/bot.go`
+- `internal/telegram/input_pipeline.go`
+- `internal/config/config.go`
+
+Provas:
+
+- `go test ./... -count=1` passou
+- `voice-proxy` respondeu `POST /v1/audio/speech 200`
+- o runtime live processou um `voice_event` com:
+  - `source=telegram-tts-smoke`
+  - `accepted=1`
+  - `requires_tts=1`
+
+Estado:
+
+- entrada por voz no Telegram continua via Groq STT
+- saída por voz no Telegram agora usa TTS local
+- fallback para texto continua ativo se TTS ou envio falharem

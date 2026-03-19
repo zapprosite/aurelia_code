@@ -17,7 +17,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 
 - Root: `/home/will/aurelia`
 - Module: `github.com/kocar/aurelia`
-- Primary languages: Go (`197` files), Shell (`13` files), Markdown (`37` files), JSON (`2` files)
+- Primary languages: Go (`198` files), Shell (`13` files), Markdown (`38` files), JSON (`2` files)
 - Main runtime entrypoint: [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go)
 - Composition root: [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go)
 - Main architectural source: [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)
@@ -31,7 +31,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 - `.context/plans/` — implementation plans e task boards por slice, fora da raiz
 - `cmd/` — entrypoints do binário e onboarding
 - `internal/` — domínio principal, runtime, gateway, voz, ferramentas, Telegram, MCP, cron e memória
-- `pkg/` — provedores LLM e STT reutilizáveis
+- `pkg/` — provedores LLM, STT e TTS reutilizáveis
 - `scripts/` — build, instalação do daemon, health-check e smoke scripts
 - `docs/` — documentação arquitetural e ADRs do produto
 - `e2e/` — testes end-to-end e smoke integration

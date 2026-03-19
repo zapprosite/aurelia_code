@@ -14,6 +14,7 @@ import (
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/skill"
 	"github.com/kocar/aurelia/pkg/stt"
+	"github.com/kocar/aurelia/pkg/tts"
 )
 
 // BotController wires Telegram I/O to the application services.
@@ -25,6 +26,7 @@ type BotController struct {
 	executor         *skill.Executor
 	loader           *skill.Loader
 	stt              stt.Transcriber
+	tts              tts.Synthesizer
 	canonical        *persona.CanonicalIdentityService
 	bootstrapMu      sync.Mutex
 	pendingBootstrap map[int64]bootstrapState
@@ -61,6 +63,7 @@ func NewBotController(
 		executor:         e,
 		loader:           l,
 		stt:              s,
+		tts:              buildTTSSynthesizer(cfg),
 		canonical:        canonical,
 		pendingBootstrap: make(map[int64]bootstrapState),
 		personasDir:      personasDir,
@@ -68,6 +71,20 @@ func NewBotController(
 
 	bc.setupRoutes()
 	return bc, nil
+}
+
+func buildTTSSynthesizer(cfg *config.AppConfig) tts.Synthesizer {
+	if cfg == nil {
+		return nil
+	}
+	switch cfg.TTSProvider {
+	case "", "disabled":
+		return nil
+	case "openai_compatible":
+		return tts.NewOpenAICompatibleSynthesizer(cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSVoice, cfg.TTSFormat, cfg.TTSSpeed)
+	default:
+		return nil
+	}
 }
 
 // GetBot exposes the underlying Telebot instance.
