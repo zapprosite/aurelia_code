@@ -168,3 +168,26 @@ Provas:
 - `GET /openai/v1/models` retornou `HTTP 200`
 - `POST /openai/v1/audio/transcriptions` com WAV mínimo retornou JSON válido
 - `go test ./pkg/stt` passou
+
+## Antigravity Gemini Operator Slice
+
+Foi criada a base para a Aurelia usar o chat do Antigravity como copiloto leve, sem misturar isso com execucao principal:
+
+- `implementation_plan.md`
+- `task.md`
+- `docs/antigravity_gemini_operator_blueprint.md`
+- `docs/PROJECT_PLAYBOOK.md`
+- `.aurelia/skills/antigravity-gemini-operator/SKILL.md`
+- `.aurelia/skills/antigravity-gemini-operator/CHAT_PROMPTS.md`
+- `.aurelia/skills/antigravity-gemini-operator/DECISION_MATRIX.md`
+- `.agents/skills/antigravity-gemini-operator/SKILL.md`
+- `.agents/skills/antigravity-gemini-operator/CHAT_PROMPTS.md`
+- `.agents/skills/antigravity-gemini-operator/DECISION_MATRIX.md`
+
+Direcao registrada:
+
+- o runtime do projeto passa a ter um playbook carregavel por memoria canonica
+- a skill do projeto fica no path real carregado pela Aurelia
+- a skill tambem fica espelhada em `.agents/skills/` para governanca versionada
+- Gemini Flash / Minimax 2.7 no Antigravity vira executor de microtarefas
+- Codex / CLI continua como executor principal, validador e agente de commit
