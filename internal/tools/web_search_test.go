@@ -32,7 +32,7 @@ func TestWebSearchHandler_ValidQuery(t *testing.T) {
 		if query == "" {
 			t.Error("expected query parameter 'q' to be present")
 		}
-		
+
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(mockHTML))
@@ -80,7 +80,7 @@ func TestWebSearchHandler_NetworkError(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-	
+
 	// Get the URL and close the server to simulate network error
 	serverURL := ts.URL + "/?q=%s"
 	ts.Close()
@@ -99,7 +99,7 @@ func TestWebSearchHandler_NetworkError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("handler should not return error, got: %v", err)
 	}
-	
+
 	// Should contain error indication
 	if result == "" {
 		t.Error("expected error message in result, got empty string")
@@ -180,12 +180,12 @@ func TestWebSearchHandler_HTMLParsing(t *testing.T) {
 	if !strings.Contains(result, "The Go Programming Language") {
 		t.Errorf("expected stripped title in result, got %q", result)
 	}
-	
+
 	// Test HTML tag stripping from snippet
 	if !strings.Contains(result, "simple") {
 		t.Errorf("expected snippet with stripped tags, got %q", result)
 	}
-	
+
 	// Test URL decoding from DuckDuckGo redirect
 	if !strings.Contains(result, "golang.org") {
 		t.Errorf("expected decoded URL in result, got %q", result)
@@ -348,7 +348,7 @@ func TestWebSearchHandler_InvalidQuery(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for missing query parameter")
 	}
-	
+
 	if result != "" {
 		t.Errorf("expected empty result on error, got %q", result)
 	}
@@ -365,7 +365,7 @@ func TestWebSearchHandler_InvalidQueryType(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for invalid query type")
 	}
-	
+
 	if result != "" {
 		t.Errorf("expected empty result on error, got %q", result)
 	}
@@ -398,7 +398,7 @@ func TestWebSearchHandler_ContextCancellation(t *testing.T) {
 	if err != nil {
 		t.Logf("Got expected error on cancelled context: %v", err)
 	}
-	
+
 	// Result might contain error message
 	t.Logf("Result with cancelled context: %q", result)
 }

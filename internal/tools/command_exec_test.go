@@ -3,7 +3,6 @@ package tools
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -29,7 +28,7 @@ func TestRunCommandHandler_Success(t *testing.T) {
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand("Write-Output 'ok'", "printf 'ok\\n'"),
+		"command": "echo 'ok'",
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -48,7 +47,7 @@ func TestRunCommandHandler_FailureCapturesStderr(t *testing.T) {
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand("Write-Error 'boom'; exit 3", "echo 'boom' 1>&2; exit 3"),
+		"command": "echo 'boom' >&2; exit 3",
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -67,7 +66,7 @@ func TestRunCommandHandler_Timeout(t *testing.T) {
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command":         platformCommand("Start-Sleep -Seconds 2", "sleep 2"),
+		"command":         "sleep 2",
 		"timeout_seconds": float64(1),
 	})
 	if err != nil {
@@ -88,7 +87,7 @@ func TestRunCommandHandler_UsesWorkdir(t *testing.T) {
 
 	workdir := t.TempDir()
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand("Get-Location | Select-Object -ExpandProperty Path", "pwd"),
+		"command": "pwd",
 		"workdir": workdir,
 	})
 	if err != nil {
@@ -107,7 +106,7 @@ func TestRunCommandHandler_UsesTaskWorkdirFromContext(t *testing.T) {
 	workdir := t.TempDir()
 	ctx := agent.WithWorkdirContext(agent.WithTaskContext(context.Background(), "team-ctx", "task-ctx"), workdir)
 	raw, err := RunCommandHandler(ctx, map[string]interface{}{
-		"command": platformCommand("Get-Location | Select-Object -ExpandProperty Path", "pwd"),
+		"command": "pwd",
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -124,7 +123,7 @@ func TestRunCommandHandler_BlocksTaskCommandWithoutWorkdir(t *testing.T) {
 
 	ctx := agent.WithTaskContext(context.Background(), "team-ctx", "task-ctx")
 	raw, err := RunCommandHandler(ctx, map[string]interface{}{
-		"command": platformCommand("Write-Output 'ok'", "printf 'ok\\n'"),
+		"command": "echo 'ok'",
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -143,7 +142,7 @@ func TestRunCommandHandler_TruncatesLongOutput(t *testing.T) {
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand("[string]::new('a', 12000)", `awk 'BEGIN{for(i=0;i<12000;i++)printf "a"}'`),
+		"command": "python3 -c 'print(\"a\" * 32000)'",
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -181,7 +180,7 @@ func TestRunCommandHandler_AllowsCommandOutsidePreviousAllowlist(t *testing.T) {
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand("Get-Date -Format o", "date -u +%Y-%m-%dT%H:%M:%SZ"),
+		"command": "date -u +%Y-%m-%dT%H:%M:%SZ",
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -199,7 +198,7 @@ func TestRunCommandHandler_BlocksWorkdirOutsideWorkspace(t *testing.T) {
 	workspace := t.TempDir()
 	outside := filepath.Dir(workspace)
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command":        platformCommand("Write-Output 'ok'", "printf 'ok\\n'"),
+		"command":        "echo 'ok'",
 		"workdir":        outside,
 		"workspace_root": workspace,
 	})
@@ -226,10 +225,7 @@ func TestRunCommandHandler_AllowsInvokeRestMethodForLocalhost(t *testing.T) {
 	defer server.Close()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand(
-			"Invoke-RestMethod -Uri '"+server.URL+"' -Method GET | ConvertTo-Json -Compress",
-			curlCommand(server.URL),
-		),
+		"command": "curl -s " + server.URL,
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -248,7 +244,7 @@ func TestRunCommandHandler_AllowsInvokeRestMethodForNonLocalhostSyntax(t *testin
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand(`Write-Output "Invoke-RestMethod -Uri 'https://example.com' -Method GET"`, `printf "curl -s https://example.com\n"`),
+		"command": "echo \"curl -s 'https://example.com'\"",
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -264,7 +260,7 @@ func TestRunCommandHandler_AllowsSafeStartProcessForNodeOrNpm(t *testing.T) {
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand(`Start-Process -FilePath "node" -ArgumentList "--version" -PassThru | Select-Object Id`, `node --version`),
+		"command": `node --version`,
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -280,7 +276,7 @@ func TestRunCommandHandler_AllowsStartProcessSyntaxInYoloMode(t *testing.T) {
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand(`Write-Output 'Start-Process -FilePath "powershell" -ArgumentList "-NoProfile" -PassThru'`, `printf 'nohup sh -lc "echo ok" &\n'`),
+		"command": `echo 'sh -c "ls"'`,
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -296,7 +292,7 @@ func TestRunCommandHandler_AllowsNetstatForLocalDiagnostics(t *testing.T) {
 	t.Parallel()
 
 	raw, err := RunCommandHandler(context.Background(), map[string]interface{}{
-		"command": platformCommand("netstat -an", unixNetstatCommand()),
+		"command": "ip addr",
 	})
 	if err != nil {
 		t.Fatalf("RunCommandHandler() error = %v", err)
@@ -304,7 +300,7 @@ func TestRunCommandHandler_AllowsNetstatForLocalDiagnostics(t *testing.T) {
 
 	result := decodeCommandResult(t, raw)
 	if result.ExitCode != 0 {
-		t.Fatalf("expected netstat command to be allowed, got exit=%d stderr=%q", result.ExitCode, result.Stderr)
+		t.Fatalf("expected ip addr command to be allowed, got exit=%d stderr=%q", result.ExitCode, result.Stderr)
 	}
 }
 
@@ -334,19 +330,4 @@ func normalizePathForTest(path string) string {
 		return filepath.Clean(resolved)
 	}
 	return path
-}
-
-func platformCommand(windows, unix string) string {
-	if runtime.GOOS == "windows" {
-		return windows
-	}
-	return unix
-}
-
-func curlCommand(url string) string {
-	return fmt.Sprintf(`curl -s '%s'`, url)
-}
-
-func unixNetstatCommand() string {
-	return `if command -v netstat >/dev/null 2>&1; then netstat -an; elif command -v ss >/dev/null 2>&1; then ss -an; else printf 'no-netstat\n'; fi`
 }

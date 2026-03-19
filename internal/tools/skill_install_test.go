@@ -67,5 +67,3 @@ func TestInstallSkillTool_Execute_ForwardsProjectScope(t *testing.T) {
 		t.Fatalf("expected project scope, got %q", installer.lastScope)
 	}
 }
-
-

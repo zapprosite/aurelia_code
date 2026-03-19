@@ -78,5 +78,3 @@ func thematicNoteBonus(topic, summary string, tokens []string) int {
 	}
 	return score
 }
-
-

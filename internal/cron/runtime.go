@@ -86,5 +86,3 @@ func (r *NotifyingRuntime) ExecuteJob(ctx context.Context, job CronJob) (string,
 	}
 	return output, err
 }
-
-

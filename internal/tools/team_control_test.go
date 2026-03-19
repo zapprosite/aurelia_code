@@ -91,5 +91,3 @@ func TestTeamStatusTool_Execute_RendersSnapshot(t *testing.T) {
 		t.Fatalf("unexpected status output: %q", got)
 	}
 }
-
-

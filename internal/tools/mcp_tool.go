@@ -22,8 +22,8 @@ func RegisterMCPTools(registry *agent.ToolRegistry, manager *mcp.Manager) {
 		}
 
 		// capture spec by value for closure
-		s := spec 
-		
+		s := spec
+
 		handler := func(ctx context.Context, args map[string]interface{}) (string, error) {
 			result, err := manager.CallTool(ctx, s.ServerName, s.RemoteName, args)
 			if err != nil {
@@ -38,5 +38,3 @@ func RegisterMCPTools(registry *agent.ToolRegistry, manager *mcp.Manager) {
 		registry.Register(tool, handler)
 	}
 }
-
-

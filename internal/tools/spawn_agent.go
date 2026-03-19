@@ -107,5 +107,3 @@ func matchesAny(text string, patterns ...string) bool {
 	}
 	return false
 }
-
-

@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"sort"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/kocar/aurelia/internal/observability"
 )
 
 // Loop executes the ReAct logic
@@ -35,6 +36,10 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 	if _, ok := RunContextFromContext(ctx); !ok {
 		ctx = WithRunContext(ctx, uuid.NewString())
 	}
+	logger := observability.Logger("agent.loop")
+	if runID, ok := RunContextFromContext(ctx); ok {
+		logger = logger.With(slog.String("run_id", runID))
+	}
 
 	currentHistory := make([]Message, len(history))
 	copy(currentHistory, history)
@@ -42,7 +47,7 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 	tools := l.registry.FilterDefinitions(allowedTools)
 	// HARD OVERRIDE: Forçar identidade Linux/Ubuntu no topo de cada prompt
 	systemPrompt = "### ENVIRONMENT CONTEXT\n- OS: Linux (Ubuntu 24.04 LTS)\n- SHELL: Bash (/bin/bash)\n- ARCH: amd64\n- RESTRICTION: NUNCA use PowerShell ou comandos Windows. Use apenas Bash nativo.\n\n" + systemPrompt
-	
+
 	systemPrompt = augmentSystemPromptWithToolGuidance(systemPrompt, tools)
 	systemPrompt = augmentSystemPromptWithRuntimeCapabilities(systemPrompt, tools)
 
@@ -51,16 +56,16 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 	for _, t := range tools {
 		toolNames = append(toolNames, t.Name)
 	}
-	log.Printf("[Diagnostic] Tools passed to LLM Provider: %v", toolNames)
+	logger.Debug("tools passed to LLM provider", slog.Any("tool_names", toolNames))
 
 	iterations := 0
 
 	for l.maxIterations < 0 || iterations < l.maxIterations {
 		iterations++
 		if l.maxIterations < 0 {
-			log.Printf("Agent Loop Iteration: %d/∞\n", iterations)
+			logger.Debug("agent loop iteration", slog.Int("iteration", iterations), slog.String("max_iterations", "unbounded"))
 		} else {
-			log.Printf("Agent Loop Iteration: %d/%d\n", iterations, l.maxIterations)
+			logger.Debug("agent loop iteration", slog.Int("iteration", iterations), slog.Int("max_iterations", l.maxIterations))
 		}
 
 		// Check for context cancellation from the Time Tracker before hitting the LLM
@@ -95,7 +100,7 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 
 		// Execute tools sequentially per PRD spec "- NG-02: as tool calls serão tratadas resolutivamente em cascata iterativa/síncrona na mesma Goroutine"
 		for _, call := range resp.ToolCalls {
-			log.Printf("Executing Tool: %s with args: %+v\n", call.Name, call.Arguments)
+			logger.Info("executing tool", slog.String("tool_name", call.Name), slog.Any("arg_keys", observability.MapKeys(call.Arguments)))
 
 			resultStr, toolErr := l.registry.Execute(ctx, call.Name, call.Arguments)
 
@@ -111,7 +116,7 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 			// SAFETY: Truncate tool output if it exceeds context limits (approx 8k-10k tokens)
 			const maxToolResultLength = 32768
 			if len(resultStr) > maxToolResultLength {
-				log.Printf("[Warning] Truncating tool output for %s: %d characters reduced to %d", call.Name, len(resultStr), maxToolResultLength)
+				logger.Warn("truncating tool output", slog.String("tool_name", call.Name), slog.Int("original_chars", len(resultStr)), slog.Int("max_chars", maxToolResultLength))
 				resultStr = resultStr[:maxToolResultLength] + "\n\n... [TRUNCATED: O resultado desta ferramenta excedeu o limite de segurança do contexto. Se precisar de mais detalhes, leia partes específicas do arquivo ou diretório.]"
 			}
 
@@ -196,5 +201,3 @@ func augmentSystemPromptWithRuntimeCapabilities(systemPrompt string, tools []Too
 	}
 	return base + "\n\n" + strings.Join(lines, "\n")
 }
-
-

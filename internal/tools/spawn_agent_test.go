@@ -187,5 +187,3 @@ func TestSpawnAgentTool_Execute_AppliesReviewerDefaultToolProfile(t *testing.T) 
 		}
 	}
 }
-
-

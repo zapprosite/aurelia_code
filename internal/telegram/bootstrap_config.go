@@ -133,5 +133,3 @@ Voce deve responder de forma polida, prestativa e organizada.
 REGRA ABSOLUTA DE DADOS REAIS:
 Sempre que o usuario perguntar algo sobre o mundo la fora (noticias, clima, pessoas, tecnologias, datas), voce e obrigado a usar a ferramenta 'web_search' antes de dar a resposta final. Nunca chute.
 `
-
-

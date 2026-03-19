@@ -1,111 +1,270 @@
 {
-  "version": "1.0.0",
-  "generated": "2026-03-18T21:19:39.136Z",
+  "version": "1.2.0",
+  "generated": "2026-03-19T05:32:32Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
-      "go"
+      "go",
+      "markdown",
+      "shell",
+      "json"
     ],
-    "frameworks": [],
-    "buildTools": [],
-    "testFrameworks": [],
-    "packageManager": null,
+    "frameworks": [
+      "telebot.v3",
+      "systemd --user"
+    ],
+    "buildTools": [
+      "go",
+      "bash"
+    ],
+    "testFrameworks": [
+      "go test"
+    ],
+    "packageManager": "go modules",
     "isMonorepo": false,
     "hasDocker": false,
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 203,
+    "totalFiles": 401,
     "rootPath": ".",
     "topDirectories": [
       {
-        "name": "assets",
-        "fileCount": 1,
-        "description": "Static assets (images, fonts)"
+        "name": ".agents",
+        "fileCount": 89,
+        "description": "Governance rules, workflows, and reusable skills"
+      },
+      {
+        "name": ".context",
+        "fileCount": 26,
+        "description": "Operational memory, generated docs, and workflow state"
+      },
+      {
+        "name": ".github",
+        "fileCount": 6,
+        "description": "CI workflows and repository automation"
       },
       {
         "name": "cmd",
         "fileCount": 8,
-        "description": "Module directory"
+        "description": "Application entrypoints and composition root"
       },
       {
         "name": "docs",
-        "fileCount": 16,
-        "description": "Documentation files"
-      },
-      {
-        "name": "e2e",
-        "fileCount": 1,
-        "description": "Module directory"
+        "fileCount": 18,
+        "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
         "name": "internal",
-        "fileCount": 139,
-        "description": "Module directory"
+        "fileCount": 154,
+        "description": "Core runtime layers and domain logic"
       },
       {
         "name": "pkg",
         "fileCount": 27,
-        "description": "Module directory"
+        "description": "LLM and STT provider integrations"
+      },
+      {
+        "name": "scripts",
+        "fileCount": 12,
+        "description": "Build, daemon, and host operations"
+      },
+      {
+        "name": "e2e",
+        "fileCount": 2,
+        "description": "End-to-end and smoke tests"
       }
     ],
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 175
+        "count": 191
       },
       {
         "extension": ".md",
-        "count": 23
+        "count": 25
+      },
+      {
+        "extension": ".sh",
+        "count": 10
       },
       {
         "extension": ".json",
         "count": 2
       },
       {
-        "extension": ".sum",
-        "count": 1
+        "extension": ".yml",
+        "count": 0
       },
       {
-        "extension": ".mod",
-        "count": 1
+        "extension": ".yaml",
+        "count": 0
       },
       {
         "extension": ".png",
-        "count": 1
+        "count": 3
       }
     ]
   },
   "architecture": {
-    "layers": [],
-    "patterns": [],
-    "entryPoints": [],
-    "mainEntryPoints": [],
-    "moduleExports": []
+    "layers": [
+      {
+        "name": "cmd/aurelia",
+        "description": "Process bootstrap, CLI commands, app wiring, and runtime startup"
+      },
+      {
+        "name": "internal/runtime",
+        "description": "Instance root resolution, directory bootstrap, project-local paths, and instance locking"
+      },
+      {
+        "name": "internal/agent",
+        "description": "ReAct loop, tool execution, task graph, team orchestration, and recovery"
+      },
+      {
+        "name": "internal/telegram",
+        "description": "Telegram input/output adapters, bootstrap flow, markdown rendering, and conversation pipeline"
+      },
+      {
+        "name": "internal/memory + internal/persona",
+        "description": "Durable memory, facts, notes, archive, and prompt/context composition"
+      },
+      {
+        "name": "internal/mcp + internal/tools",
+        "description": "External MCP integrations and native tool registration"
+      },
+      {
+        "name": "internal/cron + internal/health + internal/heartbeat",
+        "description": "Scheduled execution, HTTP health, and self-monitoring"
+      }
+    ],
+    "patterns": [
+      "modular monolith",
+      "tool-driven ReAct loop",
+      "master-led multi-agent orchestration",
+      "SQLite-backed operational state",
+      "local-first runtime",
+      "single-instance daemon guard"
+    ],
+    "entryPoints": [
+      "cmd/aurelia/main.go",
+      "cmd/aurelia/app.go",
+      "cmd/aurelia/wiring.go",
+      "scripts/build.sh",
+      "scripts/install-user-daemon.sh"
+    ],
+    "mainEntryPoints": [
+      "cmd/aurelia/main.go"
+    ],
+    "moduleExports": [
+      "internal/agent",
+      "internal/runtime",
+      "internal/telegram",
+      "internal/memory",
+      "internal/persona",
+      "pkg/llm",
+      "pkg/stt"
+    ]
   },
   "symbols": {
     "classes": [],
-    "interfaces": [],
-    "functions": [],
-    "types": [],
-    "enums": []
+    "interfaces": [
+      "internal/agent.LLMProvider",
+      "internal/tools.ScheduleCreator",
+      "pkg/stt.Transcriber"
+    ],
+    "functions": [
+      "main.run",
+      "runtime.AcquireInstanceLock",
+      "observability.Configure",
+      "agent.(*Loop).Run"
+    ],
+    "types": [
+      "runtime.PathResolver",
+      "runtime.InstanceLock",
+      "telegram.BotController",
+      "persona.CanonicalIdentityService",
+      "mcp.Manager",
+      "health.Server"
+    ],
+    "enums": [
+      "internal/agent.TaskStatus"
+    ]
   },
-  "publicAPI": [],
+  "publicAPI": [
+    "cmd/aurelia onboard",
+    "cmd/aurelia auth openai",
+    "scripts/build.sh",
+    "scripts/install-user-daemon.sh",
+    "scripts/daemon-status.sh",
+    "scripts/daemon-logs.sh",
+    "GET /health"
+  ],
   "dependencies": {
-    "mostImported": []
+    "mostImported": [
+      "context",
+      "fmt",
+      "log/slog",
+      "gopkg.in/telebot.v3",
+      "modernc.org/sqlite"
+    ]
   },
   "stats": {
-    "totalSymbols": 0,
-    "exportedSymbols": 0,
-    "analysisTimeMs": 7
+    "totalSymbols": null,
+    "exportedSymbols": null,
+    "analysisTimeMs": null
   },
-  "keyFiles": [],
+  "keyFiles": [
+    {
+      "path": "cmd/aurelia/main.go",
+      "role": "CLI entrypoint and process lifecycle"
+    },
+    {
+      "path": "cmd/aurelia/app.go",
+      "role": "Composition root and runtime bootstrap"
+    },
+    {
+      "path": "cmd/aurelia/wiring.go",
+      "role": "Tool registration and team wiring"
+    },
+    {
+      "path": "internal/runtime/instance_lock.go",
+      "role": "Single-instance enforcement"
+    },
+    {
+      "path": "internal/agent/loop.go",
+      "role": "Core ReAct execution loop"
+    },
+    {
+      "path": "internal/health/server.go",
+      "role": "Health and readiness HTTP surface"
+    }
+  ],
   "navigation": {
-    "tests": "src/**/*.test.ts",
-    "config": [],
-    "types": [],
+    "tests": [
+      "cmd/**/*_test.go",
+      "internal/**/*_test.go",
+      "pkg/**/*_test.go",
+      "e2e/**/*.go"
+    ],
+    "config": [
+      "~/.aurelia/config/app.json",
+      "~/.aurelia/config/mcp_servers.json",
+      "mcp_servers.example.json"
+    ],
+    "types": [
+      "internal/agent/provider.go",
+      "internal/runtime/resolver.go",
+      "internal/agent/team_types.go",
+      "internal/config/config.go"
+    ],
     "mainLogic": [
-      "src"
+      "cmd/aurelia",
+      "internal/agent",
+      "internal/runtime",
+      "internal/telegram",
+      "internal/tools",
+      "internal/mcp",
+      "pkg/llm"
     ]
   }
 }

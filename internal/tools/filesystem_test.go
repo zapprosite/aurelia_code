@@ -140,5 +140,3 @@ func TestReadFileHandler_BlocksRelativePathForTaskWithoutWorkdir(t *testing.T) {
 		t.Fatalf("expected workdir error for task-relative read, got %v", err)
 	}
 }
-
-

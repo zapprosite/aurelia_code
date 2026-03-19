@@ -34,5 +34,3 @@ func BootstrapProject(cwd string) error {
 	}
 	return nil
 }
-
-

@@ -63,7 +63,7 @@ func WebSearchDefinition() agent.Tool {
 func RunCommandDefinition() agent.Tool {
 	return agent.Tool{
 		Name:        "run_command",
-		Description: "Executa um comando local (Bash) no Ubuntu 24.04 e retorna stdout, stderr, exit code e timeout em JSON. Use sintaxe nativa Linux; comandos como sudo, systemctl, journalctl, docker, curl e rg sao validos quando o host permitir. Prefira informar `workdir` ao operar em outro projeto.",
+		Description: "Executa um comando local (Bash) de forma controlada no Ubuntu 24.04 e retorna stdout, stderr, exit code e timeout em JSON. Use sintaxe nativa Linux e prefira informar `workdir` ao operar em outro projeto.",
 		JSONSchema: objectSchema(
 			map[string]any{
 				"command":         stringProperty(""),

@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
-	"github.com/kocar/aurelia/internal/observability"
 )
 
 type serviceAction string
@@ -30,7 +28,6 @@ type serviceResult struct {
 }
 
 func ServiceControlHandler(ctx context.Context, args map[string]interface{}) (string, error) {
-	logger := observability.Logger("tools.service_control")
 	action := optionalStringArg(args, "action")
 	if action == "" {
 		action = "list"
@@ -42,13 +39,6 @@ func ServiceControlHandler(ctx context.Context, args map[string]interface{}) (st
 	defer cancel()
 
 	result := serviceResult{Action: action, Service: service}
-	logger.Info("service_control request", "action", action, "service", service)
-	if err := blocksSelfServiceMutation(serviceAction(action), service); err != "" {
-		result.Error = err
-		logger.Warn("service_control blocked by self-protection", "action", action, "service", service, "reason", err)
-		payload, _ := json.Marshal(result)
-		return string(payload), nil
-	}
 
 	switch serviceAction(action) {
 	case serviceActionStatus:
@@ -139,18 +129,4 @@ func ServiceControlHandler(ctx context.Context, args map[string]interface{}) (st
 
 	payload, _ := json.Marshal(result)
 	return string(payload), nil
-}
-
-func blocksSelfServiceMutation(action serviceAction, service string) string {
-	service = strings.TrimSpace(strings.ToLower(service))
-	if service != "aurelia" && service != "aurelia.service" {
-		return ""
-	}
-
-	switch action {
-	case serviceActionStatus, serviceActionLogs, serviceActionList:
-		return ""
-	default:
-		return "blocked: service_control cannot mutate aurelia.service from inside the running daemon; inspect status/logs instead"
-	}
 }

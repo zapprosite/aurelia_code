@@ -37,6 +37,7 @@ Invoque especialistas diretamente no seu terminal ou IDE:
 - `/architect` ➡️ Tech Specs e Design de Sistemas.
 - `/dev` ➡️ Implementação e Correções Ágeis.
 - `/qa` ➡️ Testes, Validação e Auditoria.
+- `/sincronizar-ai-context` ➡️ Sincroniza `.context/` e regenera o `codebase-map`.
 - `/sincronizar-tudo` ➡️ Commit semântico e Push Sênior.
 - `/pesquisa-profunda` ➡️ Pesquisa profunda via Gemini Web.
 </commands>
@@ -49,27 +50,45 @@ Invoque especialistas diretamente no seu terminal ou IDE:
 
 ---
 
-## 🏗️ Technical Overview (Aurelia Core)
+## 🏗️ Visão Geral Técnica (Aurelia Core)
 
-`Aurelia` é um agente de codificação autônomo projetado para rodar localmente com uma pegada operacional mínima e comportamento de runtime explícito.
+O `Aurelia` é um agente de codificação autônomo projetado para rodar localmente com disciplina operacional explícita e alta confiabilidade.
 
-### Lightweight Baseline
-- **Binary size**: `23.22 MB`
-- **Idle working set**: `25.66 MB`
-- **Startup average**: `15.75 ms`
+### 🛡️ Runtime de Produção
+- **Supervisor Oficial**: Gerenciado via `systemd --user` (Independente de root).
+- **Lock de Instância Única**: Mecanismo robusto via `flock` em `~/.aurelia/instance.lock` (Evita duplicidade e corrupção).
+- **Observabilidade**: Logging estruturado com `log/slog`. Logs unificados em `~/.aurelia/logs/daemon.log`.
+- **Configuração**: Gerida centralmente em `~/.aurelia/config/app.json`.
 
-### Setup
-Requisitos: Go `1.25+`, Telegram Token, Provedor de LLM.
+### ⚡ Performance & Pegada
+- **Tamanho do Binário**: ~`23 MB` (Go estático).
+- **Consumo em Idle**: ~`25 MB` RAM.
+- **Startup Latency**: < `20 ms`.
+
+### ⚙️ Setup Operacional
+Requisitos: Go `1.25+`, Token do Telegram, API Key de LLM.
 
 ```bash
-# Onboarding interativo
+# 1. Onboarding e configuração inicial
 go run ./cmd/aurelia onboard
 
-# Iniciar agente
-go run ./cmd/aurelia
+# 2. Build do binário de produção
+./scripts/build.sh
+
+# 3. Instalar e ativar o Daemon de usuário
+./scripts/install-user-daemon.sh
+
+# 4. Monitoramento operacional
+./scripts/daemon-status.sh
+./scripts/daemon-logs.sh
 ```
 
-A configuração principal reside em `~/.aurelia/config/app.json`.
+### 🛠️ Modo de Debug (Manual)
+Use `./aurelia-elite` em foreground apenas para testes. Recomenda-se parar o daemon antes:
+```bash
+systemctl --user stop aurelia.service
+```
+Se uma instância já estiver ativa, o runtime falhará com erro claro e diagnóstico (PID, Comando, Timestamp).
 
 ---
 *Este repositório foi construído para ser o #1 do GitHub em orquestração multi-agente.* 🚀

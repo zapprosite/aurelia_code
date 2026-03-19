@@ -110,5 +110,3 @@ func TestBootstrap_PermissionsUnix(t *testing.T) {
 		}
 	}
 }
-
-

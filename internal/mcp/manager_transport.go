@@ -140,5 +140,3 @@ func (rt *headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	}
 	return base.RoundTrip(clone)
 }
-
-

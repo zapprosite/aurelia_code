@@ -77,5 +77,3 @@ func (p *KimiProvider) ensureToolCallContent(result *agent.ModelResponse) {
 	}
 	result.Content = fmt.Sprintf("Calling tools: %s", strings.Join(callNames, ", "))
 }
-
-

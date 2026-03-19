@@ -88,5 +88,3 @@ func TestReadTeamInboxTool_Execute_ReturnsJSONMessages(t *testing.T) {
 		t.Fatalf("unexpected inbox payload: %#v", messages)
 	}
 }
-
-

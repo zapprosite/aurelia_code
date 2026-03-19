@@ -17,7 +17,7 @@ Instruções para extrair o máximo de performance dos subagentes Claude neste w
 <important>
 ## 🔄 2. Higiene de Contexto (OBRIGATÓRIO)
 Ao finalizar qualquer tarefa, você deve garantir que o `.context/` está sincronizado.
-- **Ação**: Execute o comando de sincronização do MCP `ai-context`.
+- **Ação**: Execute `/sincronizar-ai-context` ou rode `./scripts/sync-ai-context.sh`.
 - **Por que?**: Garante que o próximo agente tenha a memória real do projeto.
 </important>
 

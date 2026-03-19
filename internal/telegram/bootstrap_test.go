@@ -225,7 +225,7 @@ func TestSyncUserPersonaFile(t *testing.T) {
 
 	facts := map[string]memory.Fact{
 		"user.name":                      {Key: "user.name", Value: "Rafael"},
-		"user.preferences.summary":      {Key: "user.preferences.summary", Value: "Prefiro respostas diretas."},
+		"user.preferences.summary":       {Key: "user.preferences.summary", Value: "Prefiro respostas diretas."},
 		"user.preference.response_style": {Key: "user.preference.response_style", Value: "direto"},
 	}
 	if err := syncUserPersonaFile(path, facts); err != nil {
@@ -381,5 +381,3 @@ func TestWriteBootstrapPreset_WritesToDir(t *testing.T) {
 		t.Fatal("SOUL.md must not be written to CWD")
 	}
 }
-
-

@@ -582,5 +582,3 @@ func TestCanonicalIdentityService_BuildPrompt_ProjectPlaybookNotPersistedToMemor
 		}
 	}
 }
-
-

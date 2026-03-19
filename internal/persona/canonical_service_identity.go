@@ -120,5 +120,3 @@ func factSourcePriority(source string) int {
 		return 0
 	}
 }
-
-
