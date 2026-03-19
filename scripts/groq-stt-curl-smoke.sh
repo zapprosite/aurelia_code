@@ -3,6 +3,8 @@ set -euo pipefail
 
 API_BASE="${GROQ_API_BASE:-https://api.groq.com/openai/v1}"
 MODEL="${GROQ_STT_MODEL:-whisper-large-v3-turbo}"
+LANGUAGE="${GROQ_STT_LANGUAGE:-pt}"
+TEMPERATURE="${GROQ_STT_TEMPERATURE:-0}"
 AUDIO_FILE="${1:-}"
 
 usage() {
@@ -17,6 +19,8 @@ Behavior:
 Optional env:
   GROQ_API_BASE   default: https://api.groq.com/openai/v1
   GROQ_STT_MODEL  default: whisper-large-v3-turbo
+  GROQ_STT_LANGUAGE default: pt
+  GROQ_STT_TEMPERATURE default: 0
 EOF
 }
 
@@ -36,6 +40,8 @@ CURL_CMD=(
   -H "Authorization: Bearer ${GROQ_API_KEY:-<YOUR_GROQ_API_KEY>}"
   -F "file=@${AUDIO_FILE}"
   -F "model=${MODEL}"
+  -F "language=${LANGUAGE}"
+  -F "temperature=${TEMPERATURE}"
   -F "response_format=json"
 )
 

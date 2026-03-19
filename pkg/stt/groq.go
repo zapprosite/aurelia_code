@@ -29,6 +29,12 @@ type GroqTranscriber struct {
 	httpClient *http.Client
 }
 
+const (
+	defaultGroqSTTModel       = "whisper-large-v3-turbo"
+	defaultGroqSTTLanguage    = "pt"
+	defaultGroqSTTTemperature = "0"
+)
+
 // NewGroqTranscriber creates a new Groq STT client
 func NewGroqTranscriber(apiKey string) *GroqTranscriber {
 	return &GroqTranscriber{
@@ -64,8 +70,16 @@ func (t *GroqTranscriber) Transcribe(ctx context.Context, audioFilePath string) 
 		return "", fmt.Errorf("failed to copy file content: %w", err)
 	}
 
-	if err := writer.WriteField("model", "whisper-large-v3"); err != nil {
+	if err := writer.WriteField("model", defaultGroqSTTModel); err != nil {
 		return "", fmt.Errorf("failed to write model field: %w", err)
+	}
+
+	if err := writer.WriteField("language", defaultGroqSTTLanguage); err != nil {
+		return "", fmt.Errorf("failed to write language field: %w", err)
+	}
+
+	if err := writer.WriteField("temperature", defaultGroqSTTTemperature); err != nil {
+		return "", fmt.Errorf("failed to write temperature field: %w", err)
 	}
 
 	if err := writer.WriteField("response_format", "json"); err != nil {

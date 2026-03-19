@@ -35,6 +35,8 @@ curl -sS -X POST "https://api.groq.com/openai/v1/audio/transcriptions" \
   -H "Authorization: Bearer $GROQ_API_KEY" \
   -F "file=@/caminho/para/audio.wav" \
   -F "model=whisper-large-v3-turbo" \
+  -F "language=pt" \
+  -F "temperature=0" \
   -F "response_format=json"
 ```
 

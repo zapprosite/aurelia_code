@@ -142,3 +142,29 @@ Provas registradas:
 - `go test ./internal/telegram ./pkg/stt` passou
 - smoke local sem token imprime o `curl` exato em `dry-run`
 - chamada real com token falso retorna `401 invalid_api_key`, confirmando contrato HTTP
+
+## Audio Cost/Quality Optimization
+
+Slice adicional aplicado após ativação real da Groq:
+
+- `pkg/stt/groq.go`
+- `scripts/groq-stt-curl-smoke.sh`
+- `groq_stt_simulation.md`
+
+Decisões executadas:
+
+- troca do modelo padrão para `whisper-large-v3-turbo`
+- envio explícito de `language=pt`
+- envio explícito de `temperature=0`
+
+Motivo:
+
+- reduzir custo por hora de transcrição
+- reduzir latência
+- melhorar previsibilidade para PT-BR
+
+Provas:
+
+- `GET /openai/v1/models` retornou `HTTP 200`
+- `POST /openai/v1/audio/transcriptions` com WAV mínimo retornou JSON válido
+- `go test ./pkg/stt` passou
