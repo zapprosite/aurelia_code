@@ -65,7 +65,9 @@ Regras fechadas:
 - **`docs/`**: Verdade arquitetural, ADRs e benchmarks.
 - **`.agents/`**: Governança local (Rules, Workflows).
 - **`.context/`**: Memória de trabalho e estado (Gerido via MCP).
+- **`.context/plans/`**: Planos e task boards de slices em andamento ou encerradas.
 - **`internal/` / `pkg/`**: Implementação Core em Go.
+- **Raiz**: Apenas contratos, docs de entrada, exemplos globais e o `plan.md`.
 
 ---
 

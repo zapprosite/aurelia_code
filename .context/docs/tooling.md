@@ -26,6 +26,7 @@ Key scripts shipped in the repository:
 - [`aurelia voice enqueue`](../../cmd/aurelia/voice_cli.go) — queues an audio file into the local voice spool for controlled processing
 - [`scripts/smoke-test-homelab.sh`](../../scripts/smoke-test-homelab.sh) — smoke guidance for end-to-end validation
 - [`scripts/sync-ai-context.sh`](../../scripts/sync-ai-context.sh) — refreshes `ai-context` state and regenerates `.context/docs/codebase-map.json`
+- [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh) — scaffolds ADR + taskmaster-style continuity artifacts for long slices
 
 Recommended local loop:
 
@@ -35,6 +36,7 @@ Recommended local loop:
 4. run `./scripts/sync-ai-context.sh`
 5. validate the runtime path you changed
 6. update `.context/` with the evidence
+7. keep slice-local plans in `.context/plans/<slice>/`, not in the repository root
 
 ## IDE / Editor Setup
 

@@ -28,6 +28,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 
 - `.agents/` — autoridade operacional local, regras, workflows e skills do workspace
 - `.context/` — memória operacional, docs sintéticos e estado de workflow
+- `.context/plans/` — implementation plans e task boards por slice, fora da raiz
 - `cmd/` — entrypoints do binário e onboarding
 - `internal/` — domínio principal, runtime, gateway, voz, ferramentas, Telegram, MCP, cron e memória
 - `pkg/` — provedores LLM e STT reutilizáveis
@@ -55,6 +56,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 - ADR obrigatória por slice estrutural: [`docs/adr/README.md`](../../docs/adr/README.md)
 - modo nonstop para slices longas: [`/adr-semparar`](../../.agents/workflows/adr-semparar.md)
 - comando canônico de continuidade: [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh)
+- higiene da raiz: contratos e docs de entrada ficam na raiz; blueprints/ADRs/planos de slice não
 
 ## Related Resources
 

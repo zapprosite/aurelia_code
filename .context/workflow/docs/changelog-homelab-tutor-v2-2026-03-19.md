@@ -621,3 +621,39 @@ Prova:
 
 - `bash -n ./scripts/adr-slice-init.sh` passou
 - `./scripts/adr-slice-init.sh voice-capture-rollout --title "Voice Capture Rollout" --dry-run` gerou paths válidos
+
+## Higiene da Raiz e Migração para ADR
+
+A raiz do repositório foi consolidada para manter apenas contratos, docs de entrada, o plano mestre e exemplos globais.
+
+Movimentos feitos:
+
+- `groq_ptbr_audio_blueprint.md` -> `docs/groq_ptbr_audio_blueprint_20260319.md`
+- `groq_stt_simulation.md` -> `docs/groq_stt_simulation_20260319.md`
+- `homelab_tutor_v2_blueprint.md` -> `docs/homelab_tutor_v2_blueprint_20260319.md`
+- `plan_para_aurelia.md` -> `docs/keepassxc_local_vault_guide_20260319.md`
+- `implementation_plan.md` -> `.context/plans/20260319-antigravity-gemini-operator/implementation_plan.md`
+- `task.md` -> `.context/plans/20260319-antigravity-gemini-operator/task.md`
+
+ADRs promovidas:
+
+- `docs/adr/20260319-root-document-hygiene.md`
+- `docs/adr/20260319-antigravity-copiloto-leve.md`
+- `docs/adr/20260319-groq-stt-ptbr-runtime.md`
+- `docs/adr/20260319-homelab-tutor-v2.md`
+- `docs/adr/20260319-keepassxc-cofre-humano.md`
+
+Regras alinhadas:
+
+- `README.md`
+- `docs/REPOSITORY_CONTRACT.md`
+- `.agents/workflows/planejar.md`
+- `.agents/workflows/handoff-to-claude-implementer.md`
+- `.agents/skills/architect-planner/SKILL.md`
+- `.agents/rules/06-planning-first.md`
+
+Resultado:
+
+- a raiz ficou limpa para documentos soberanos e de entrada
+- decisões permanentes foram promovidas para ADR
+- artefatos de slice passaram a morar em `.context/plans/`

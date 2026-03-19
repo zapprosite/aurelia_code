@@ -32,7 +32,7 @@ O Aurelia opera com dois fluxos de atualização:
 ## 3. Eliminação de placeholders
 
 Placeholder genéricos (ex: `[Nome]`, `TODO`, `TBD`) devem ser substituídos por:
--   **Ações Reais**: Se for um `TODO` técnico, deve ser convertido em uma issue ou documentado no `task.md`.
+-   **Ações Reais**: Se for um `TODO` técnico, deve ser convertido em uma issue, ADR de slice pendente ou documentado em `.context/plans/<slice>/task.md`.
 -   **Tags de Agente**: Usar `{{USER_NAME}}` ou `{{AGENT_NAME}}` para permitir interpolação dinâmica se o bot suportar.
 
 ## 4. Manutenção de Contexto

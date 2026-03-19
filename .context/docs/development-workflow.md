@@ -61,6 +61,10 @@ go run ./cmd/aurelia
 ./scripts/adr-slice-init.sh <slug> --title "Title"
 ```
 
+- Store slice-local plans outside the repository root:
+  - `.context/plans/<slice>/implementation_plan.md`
+  - `.context/plans/<slice>/task.md`
+
 - Inspect runtime health:
 
 ```bash
@@ -76,6 +80,7 @@ Review should focus on runtime safety, regressions and evidence. The local rules
 - anti-hallucination: never claim success without logs, tests or direct validation
 - context hygiene: update `.context/` after completing meaningful work
 - ADR discipline: structural slices should be linked to `docs/adr/` and can use `/adr-semparar` when continuity matters
+- root hygiene: root-level docs should stay limited to contracts, project entry docs, global examples and the active `plan.md`
 
 For code changes, reviewers should check startup behavior, lock safety, MCP fallback behavior, tool boundary correctness and tests for new runtime logic.
 
