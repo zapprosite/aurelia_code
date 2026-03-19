@@ -27,6 +27,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 ## Repository Map
 
 - `.agents/` — autoridade operacional local, regras, workflows e skills do workspace
+- `.agents/skills/aurelia-media-voice/` — transcript de mídia e governança da voz oficial da Aurelia
 - `.context/` — memória operacional, docs sintéticos e estado de workflow
 - `.context/plans/` — implementation plans e task boards por slice, fora da raiz
 - `cmd/` — entrypoints do binário e onboarding
@@ -57,6 +58,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 - modo nonstop para slices longas: [`/adr-semparar`](../../.agents/workflows/adr-semparar.md)
 - comando canônico de continuidade: [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh)
 - higiene da raiz: contratos e docs de entrada ficam na raiz; blueprints/ADRs/planos de slice não
+- política da voz oficial: [`docs/aurelia_voice_profile_20260319.md`](../../docs/aurelia_voice_profile_20260319.md)
 
 ## Related Resources
 

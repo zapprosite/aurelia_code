@@ -23,6 +23,8 @@ Este é o backlog oficial das pendências abertas do plano JARVIS/Aurelia.
 | Slice 3 | digitação segura | desktop fallback | sim | ação reversível validada |
 | Slice 3 | limite de passos | segurança operacional | sim | teste de abort |
 | Slice 4 | handoff de ida e volta com menos retrabalho | orchestration | sim | E2E Antigravity |
+| Slice 10 | voz oficial da Aurelia via MiniMax Audio | audio/voice | sim | smoke TTS + voice_id |
+| Slice 10 | clonagem autorizada da voz a partir de áudio local | audio/voice | sim | consentimento + smoke real |
 | Slice 7 | E2E wake word -> STT -> resposta | deploy/voice | sim | wake real |
 | Slice 7 | Antigravity handoff fim a fim | orchestration | sim | prompt/handoff/resposta |
 
@@ -33,6 +35,8 @@ As pendências mais críticas agora são:
 1. wake word positivo com prova humana no deploy
 2. handoff fim a fim do Antigravity
 3. desktop fallback seguro
+4. voz oficial da Aurelia com voice_id autorizado
+5. clonagem autorizada com arquivo local e rollback pronto
 
 ## Ordem recomendada agora
 
@@ -56,3 +60,5 @@ As pendências mais críticas agora são:
 - [ADR-20260319-state-memory-runtime.md](./ADR-20260319-state-memory-runtime.md) — persistência de gateway state e transcripts locais
 - [ADR-20260319-deploy-gateway-voice.md](./ADR-20260319-deploy-gateway-voice.md) — rollout contínuo em `/home/will/aurelia-24x7`
 - [ADR-20260319-extensions-governance.md](./ADR-20260319-extensions-governance.md) — política final de extensões
+- [ADR-20260319-aurelia-media-voice.md](./ADR-20260319-aurelia-media-voice.md) — transcript de mídia e voz oficial da Aurelia
+- [ADR-20260319-aurelia-authorized-voice-clone.md](./ADR-20260319-aurelia-authorized-voice-clone.md) — execução autorizada da voz oficial

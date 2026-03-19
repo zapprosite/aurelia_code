@@ -69,6 +69,7 @@ Comando canônico:
 - [Pending Slices](./adr/PENDING-SLICES-20260319.md)
 - [Aurelia Master Blueprint](./aurelia_master_blueprint_20260319.md)
 - [JARVIS Master Plan](../plan.md)
+- [Voz Oficial da Aurelia](./aurelia_voice_profile_20260319.md)
 - [.agents/skills/systems-engineer-homelab/SKILL.md](../.agents/skills/systems-engineer-homelab/SKILL.md)
 
 ## Regra de higiene da raiz

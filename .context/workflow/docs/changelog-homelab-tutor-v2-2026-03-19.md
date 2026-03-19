@@ -11,6 +11,15 @@ Criar uma base profissional para a Aurelia operar como tutor do homelab com:
 
 ## Runtime Closure Added Later In The Day
 
+- Aberta e refatorada a slice `ADR-20260319-aurelia-media-voice` para governar transcript de mídia e a voz oficial da Aurelia.
+- Adicionado suporte a `tts_provider=minimax` no runtime, mantendo `voice-proxy` local como fallback até existir `MINIMAX_API_KEY` e `voice_id` autorizado.
+- Criados scripts operacionais:
+  - `scripts/media-transcript.sh`
+  - `scripts/minimax-voice-list.sh`
+  - `scripts/minimax-tts-smoke.sh`
+- Criada a skill `aurelia-media-voice` em `.agents/skills/` para padronizar transcript de links/áudios e a política de voz oficial.
+- Formalizado o perfil vocal da Aurelia em `docs/aurelia_voice_profile_20260319.md`, com regra explícita de não usar áudio público de terceiro como base de clonagem sem autorização.
+
 - Fechado o slice local de captura real de voz com `openWakeWord + VAD` via `scripts/voice-capture-openwakeword.py`, wrapper shell e venv isolado em `~/.aurelia/voice-capture/venv`.
 - Fechado o smoke local de captura sem falso positivo em silêncio com `bash ./scripts/voice-capture-smoke.sh`.
 - Persistido o state do gateway em SQLite (`gateway_route_states`) com rollover diário e persistido o espelho local de transcripts em `voice_events`.
@@ -739,3 +748,5 @@ Estado:
 - entrada por voz no Telegram continua via Groq STT
 - saída por voz no Telegram agora usa TTS local
 - fallback para texto continua ativo se TTS ou envio falharem
+
+- Aberta a slice filha `ADR-20260319-aurelia-authorized-voice-clone` para separar a execucao sensivel da voz oficial da Aurelia da infraestrutura geral de MiniMax/TTS.
