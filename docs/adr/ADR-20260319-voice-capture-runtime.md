@@ -57,7 +57,12 @@ Contrato do capturador externo:
   - `source`
   - `delete_source_after`
 
-Esse desenho permite conectar `openWakeWord + Silero VAD + ring buffer` depois, sem reescrever o plano de controle em Go.
+Esse desenho permitiu conectar um capturador real sem reescrever o plano de controle em Go:
+
+- script `voice-capture-openwakeword.py`
+- wrapper `voice-capture-openwakeword.sh`
+- setup isolado em `~/.aurelia/voice-capture/venv`
+- smoke local de silêncio e smoke real do microfone sem falso disparo
 
 ## Escopo
 
@@ -69,9 +74,6 @@ Esse desenho permite conectar `openWakeWord + Silero VAD + ring buffer` depois, 
 
 ## Fora de escopo
 
-- implementação local de `openWakeWord`
-- implementação local de `Silero VAD`
-- ring buffer real dentro do processo Go
 - deploy em `/home/will/aurelia-24x7`
 - TTS
 
@@ -82,6 +84,10 @@ Esse desenho permite conectar `openWakeWord + Silero VAD + ring buffer` depois, 
 - `internal/voice/metrics.go`
 - `internal/config/config.go`
 - `cmd/aurelia/app.go`
+- `scripts/setup-voice-capture-env.sh`
+- `scripts/voice-capture-openwakeword.sh`
+- `scripts/voice-capture-openwakeword.py`
+- `scripts/voice-capture-smoke.sh`
 - `docs/adr/taskmaster/ADR-20260319-voice-capture-runtime.json`
 
 ## Simulações e smoke previstos
@@ -93,7 +99,9 @@ Esse desenho permite conectar `openWakeWord + Silero VAD + ring buffer` depois, 
   - `go test ./internal/voice ./cmd/aurelia -count=1`
   - `go test ./... -count=1`
 - scripts:
-  - capturador externo futuro via `voice_capture_command`
+  - `bash ./scripts/setup-voice-capture-env.sh`
+  - `bash ./scripts/voice-capture-smoke.sh`
+  - `timeout 15 ./scripts/voice-capture-openwakeword.sh --output-dir /tmp/aurelia-voice-capture-live --debug`
 - fallback:
   - `go run ./cmd/aurelia voice enqueue <arquivo>`
   - `voice_capture_enabled=false`
@@ -102,7 +110,7 @@ Esse desenho permite conectar `openWakeWord + Silero VAD + ring buffer` depois, 
 
 1. integrar o capture worker no repositório principal
 2. validar unit + suite
-3. plugar capturador real (`openWakeWord + Silero`) via `voice_capture_command`
+3. plugar capturador real (`openWakeWord + Silero VAD`) via `voice_capture_command`
 4. só então portar a slice para a worktree de deploy
 
 ## Rollback
@@ -121,5 +129,4 @@ Esse desenho permite conectar `openWakeWord + Silero VAD + ring buffer` depois, 
 
 ## Pendências / bloqueios
 
-- ainda falta o capturador real com `openWakeWord + Silero`
 - ainda falta o rollout da captura na worktree `/home/will/aurelia-24x7`

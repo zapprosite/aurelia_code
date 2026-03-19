@@ -31,6 +31,9 @@ Este diretório contém o registro histórico de todas as decisões técnicas si
 | [20260319-keepassxc](./20260319-keepassxc-cofre-humano.md) | KeePassXC como cofre humano | 2026-03-19 | ✅ Aceito |
 | [20260319-voice-capture](./20260319-voice-capture-plane.md) | Voice capture plane real | 2026-03-19 | 🟡 Proposto |
 | [20260319-voice-capture-runtime](./ADR-20260319-voice-capture-runtime.md) | Voice capture runtime nonstop | 2026-03-19 | 🔵 Em execução |
+| [20260319-state-memory-runtime](./ADR-20260319-state-memory-runtime.md) | State memory runtime nonstop | 2026-03-19 | 🔵 Em execução |
+| [20260319-deploy-gateway-voice](./ADR-20260319-deploy-gateway-voice.md) | Deploy gateway voice nonstop | 2026-03-19 | 🔵 Em execução |
+| [20260319-extensions-governance](./ADR-20260319-extensions-governance.md) | Governança de extensões | 2026-03-19 | ✅ Aceito |
 
 ## Como Criar um ADR
 

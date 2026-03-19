@@ -42,17 +42,17 @@ Este é o backlog oficial das pendências abertas do plano JARVIS/Aurelia.
 
 ## Observação profissional
 
-As pendências mais críticas hoje são:
+As pendências mais críticas agora são:
 
-1. voice capture real
-2. persistência real de estado/governor
-3. rollout de gateway/voice no deploy
+1. rollout de gateway/voice no deploy
+2. validação live de estado persistente
+3. handoff fim a fim do Antigravity
 
 ## Ordem recomendada agora
 
 1. **Slice 5 — Voice plane real**
-   - fechar `mic daemon`, `wake word`, `VAD + ring buffer`, `captura contínua`
-   - motivo: o capture worker já entrou; agora vale completar o lane de voz antes de expandir superfície
+   - localmente o capturador real já fechou; falta levar isso ao deploy
+   - motivo: o lane de voz agora depende mais de rollout do que de código-base
 2. **Slice 6 — Estado e memória reais**
    - persistir `governor/breaker`
    - fechar `SQLite/Supabase/Qdrant` como truth flow coerente
@@ -80,3 +80,6 @@ As pendências mais críticas hoje são:
 
 - [20260319-voice-capture-plane.md](./20260319-voice-capture-plane.md) — cobre o próximo slice real de captura de voz
 - [ADR-20260319-voice-capture-runtime.md](./ADR-20260319-voice-capture-runtime.md) — slice nonstop em execução para integrar o capture worker ao runtime
+- [ADR-20260319-state-memory-runtime.md](./ADR-20260319-state-memory-runtime.md) — persistência de gateway state e transcripts locais
+- [ADR-20260319-deploy-gateway-voice.md](./ADR-20260319-deploy-gateway-voice.md) — rollout contínuo em `/home/will/aurelia-24x7`
+- [ADR-20260319-extensions-governance.md](./ADR-20260319-extensions-governance.md) — política final de extensões

@@ -26,6 +26,7 @@ type laneBudget struct {
 }
 
 type routeState struct {
+	Day               string    `json:"day,omitempty"`
 	Requests          int       `json:"requests"`
 	Failures          int       `json:"failures"`
 	ConsecutiveFails  int       `json:"consecutive_failures"`
@@ -50,6 +51,7 @@ type closableProvider interface {
 type Provider struct {
 	planner *Planner
 	metrics *gatewayMetrics
+	store   StateStore
 
 	localFast         closableProvider
 	localBalanced     closableProvider
@@ -102,9 +104,10 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		})
 	}
 
-	return &Provider{
+	provider := &Provider{
 		planner:           NewPlanner(),
 		metrics:           defaultMetrics(),
+		store:             newSQLiteStateStore(cfg.DBPath),
 		localFast:         localFast,
 		localBalanced:     localBalanced,
 		remoteCheapLong:   remoteCheapLong,
@@ -121,10 +124,17 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 			"research":          {Soft: 40, Hard: 80},
 		},
 		states: make(map[string]*routeState),
-	}, nil
+	}
+	if err := provider.loadState(); err != nil {
+		return nil, err
+	}
+	return provider, nil
 }
 
 func (p *Provider) Close() {
+	if p.store != nil {
+		_ = p.store.Close()
+	}
 	for _, provider := range []closableProvider{
 		p.localFast,
 		p.localBalanced,
@@ -371,15 +381,19 @@ func responseSatisfies(decision DryRunDecision, resp *agent.ModelResponse) bool 
 
 func (p *Provider) markRequest(budgetLane, providerKey, model string) {
 	p.mu.Lock()
+	var toPersist []persistableRouteState
 	defer p.mu.Unlock()
 	state := p.ensureStateLocked(providerKey)
 	state.Requests++
 	state.LastDecisionModel = model
+	toPersist = append(toPersist, persistableRouteState{Key: providerKey, State: *state})
 	if budgetLane != "" {
 		budgetState := p.ensureStateLocked(budgetLane)
 		budgetState.Requests++
 		p.updateBudgetMetricLocked(budgetLane, budgetState.Requests)
+		toPersist = append(toPersist, persistableRouteState{Key: budgetLane, State: *budgetState})
 	}
+	p.persistLocked(toPersist...)
 }
 
 func (p *Provider) markSuccess(providerKey string) {
@@ -390,10 +404,12 @@ func (p *Provider) markSuccess(providerKey string) {
 	state.BreakerState = "closed"
 	state.LastError = ""
 	p.setBreakerMetricLocked(providerKey, state.BreakerState)
+	p.persistLocked(persistableRouteState{Key: providerKey, State: *state})
 }
 
 func (p *Provider) markFailure(budgetLane, providerKey, reason string) {
 	p.mu.Lock()
+	var toPersist []persistableRouteState
 	defer p.mu.Unlock()
 	state := p.ensureStateLocked(providerKey)
 	state.Failures++
@@ -404,10 +420,13 @@ func (p *Provider) markFailure(budgetLane, providerKey, reason string) {
 		state.BreakerOpenUntil = time.Now().Add(breakerCooldown)
 	}
 	p.setBreakerMetricLocked(providerKey, state.BreakerState)
+	toPersist = append(toPersist, persistableRouteState{Key: providerKey, State: *state})
 	if budgetLane != "" {
 		budgetState := p.ensureStateLocked(budgetLane)
 		budgetState.Failures++
+		toPersist = append(toPersist, persistableRouteState{Key: budgetLane, State: *budgetState})
 	}
+	p.persistLocked(toPersist...)
 }
 
 func (p *Provider) breakerOpen(providerKey string) bool {
@@ -420,6 +439,7 @@ func (p *Provider) breakerOpen(providerKey string) bool {
 	if time.Now().After(state.BreakerOpenUntil) {
 		state.BreakerState = "half-open"
 		p.setBreakerMetricLocked(providerKey, state.BreakerState)
+		p.persistLocked(persistableRouteState{Key: providerKey, State: *state})
 		return false
 	}
 	p.setBreakerMetricLocked(providerKey, state.BreakerState)
@@ -446,7 +466,68 @@ func (p *Provider) ensureStateLocked(key string) *routeState {
 		state = &routeState{BreakerState: "closed"}
 		p.states[key] = state
 	}
+	p.rolloverStateLocked(state)
 	return state
+}
+
+func (p *Provider) rolloverStateLocked(state *routeState) {
+	if state == nil {
+		return
+	}
+	today := time.Now().UTC().Format("2006-01-02")
+	if state.Day == today {
+		return
+	}
+	state.Day = today
+	state.Requests = 0
+	state.Failures = 0
+	state.ConsecutiveFails = 0
+	state.BreakerState = "closed"
+	state.BreakerOpenUntil = time.Time{}
+	state.LastError = ""
+}
+
+func (p *Provider) loadState() error {
+	if p == nil || p.store == nil {
+		return nil
+	}
+	states, err := p.store.Load()
+	if err != nil {
+		return err
+	}
+	if len(states) == 0 {
+		return nil
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for key, value := range states {
+		stateCopy := value
+		p.rolloverStateLocked(&stateCopy)
+		if stateCopy.BreakerState == "" {
+			stateCopy.BreakerState = "closed"
+		}
+		p.states[key] = &stateCopy
+		p.setBreakerMetricLocked(key, stateCopy.BreakerState)
+		p.updateBudgetMetricLocked(key, stateCopy.Requests)
+	}
+	return nil
+}
+
+type persistableRouteState struct {
+	Key   string
+	State routeState
+}
+
+func (p *Provider) persistLocked(states ...persistableRouteState) {
+	if p == nil || p.store == nil {
+		return
+	}
+	for _, entry := range states {
+		if entry.Key == "" {
+			continue
+		}
+		_ = p.store.Save(entry.Key, entry.State)
+	}
 }
 
 func (p *Provider) observeResult(decision DryRunDecision, result string, duration time.Duration) {

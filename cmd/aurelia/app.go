@@ -46,11 +46,17 @@ type app struct {
 	healthServer   *health.Server
 	voiceProcessor *voice.Processor
 	voiceCapture   *voice.CaptureWorker
+	voiceMirrorDB  closableVoiceMirror
 }
 
 type closableLLMProvider interface {
 	agent.LLMProvider
 	Close()
+}
+
+type closableVoiceMirror interface {
+	voice.Mirror
+	Close() error
 }
 
 func bootstrapApp(args []string) (*app, error) {
@@ -163,6 +169,7 @@ func bootstrapApp(args []string) (*app, error) {
 
 	var voiceProcessor *voice.Processor
 	var voiceCapture *voice.CaptureWorker
+	var sqliteMirror closableVoiceMirror
 	if cfg.VoiceCaptureEnabled && !cfg.VoiceEnabled {
 		_ = instanceLock.Release()
 		_ = cronStore.Close()
@@ -181,7 +188,9 @@ func bootstrapApp(args []string) (*app, error) {
 		if cfg.STTFallbackCommand != "" {
 			fallback = stt.NewCommandTranscriber(cfg.STTFallbackCommand)
 		}
+		sqliteMirror = voice.NewSQLiteMirror(cfg.DBPath)
 		voiceMirror := voice.NewMultiMirror(
+			sqliteMirror,
 			voice.NewSupabaseMirror(cfg.SupabaseURL, cfg.SupabaseServiceRoleKey, cfg.SupabaseEventsTable),
 			voice.NewQdrantMirror(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel),
 		)
@@ -208,6 +217,9 @@ func bootstrapApp(args []string) (*app, error) {
 				voiceSpool,
 				voice.NewCommandCaptureSource(cfg.VoiceCaptureCommand, map[string]string{
 					"AURELIA_VOICE_WAKE_PHRASE": cfg.VoiceWakePhrase,
+					"AURELIA_VOICE_DROP_PATH":   cfg.VoiceDropPath,
+					"AURELIA_VOICE_USER_ID":     strconv.FormatInt(cfg.VoiceReplyUserID, 10),
+					"AURELIA_VOICE_CHAT_ID":     strconv.FormatInt(cfg.VoiceReplyChatID, 10),
 				}),
 				voice.CaptureConfig{
 					PollInterval:       time.Duration(cfg.VoiceCapturePollMS) * time.Millisecond,
@@ -287,6 +299,7 @@ func bootstrapApp(args []string) (*app, error) {
 		healthServer:   healthSrv,
 		voiceProcessor: voiceProcessor,
 		voiceCapture:   voiceCapture,
+		voiceMirrorDB:  sqliteMirror,
 	}, nil
 }
 
@@ -422,6 +435,11 @@ func (a *app) close() {
 	if a.mem != nil {
 		if err := a.mem.Close(); err != nil {
 			logger.Warn("failed to close memory manager", slog.Any("err", err))
+		}
+	}
+	if a.voiceMirrorDB != nil {
+		if err := a.voiceMirrorDB.Close(); err != nil {
+			logger.Warn("failed to close voice sqlite mirror", slog.Any("err", err))
 		}
 	}
 	if a.llmProvider != nil {
