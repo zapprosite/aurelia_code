@@ -123,6 +123,19 @@ NoNewPrivileges=true
 WantedBy=multi-user.target
 ```
 
+## Scripts desta branch
+
+- `scripts/aurelia.system.service`
+- `scripts/install-system-daemon.sh`
+- `scripts/system-daemon-status.sh`
+- `scripts/system-daemon-logs.sh`
+
+Instalação prevista:
+
+```bash
+bash ./scripts/install-system-daemon.sh
+```
+
 ## Validação
 
 ```bash

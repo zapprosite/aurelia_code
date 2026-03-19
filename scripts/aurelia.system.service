@@ -1,0 +1,23 @@
+[Unit]
+Description=Aurelia Homelab Bot
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=__AURELIA_USER__
+Group=__AURELIA_GROUP__
+WorkingDirectory=__AURELIA_ROOT__
+Environment=AURELIA_HOME=__AURELIA_HOME__
+ExecStart=/usr/local/bin/aurelia
+Restart=always
+RestartSec=2
+TimeoutStopSec=30
+KillMode=process
+NoNewPrivileges=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
