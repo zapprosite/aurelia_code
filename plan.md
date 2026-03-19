@@ -12,10 +12,10 @@ scope: local-desktop-control-browser-use-orchestration
 
 ## Status Geral
 
-**Progresso do plano:** `42%`
+**Progresso do plano:** `58%`
 
 ```text
-[########------------] 42%
+[###########---------] 58%
 ```
 
 Estado atual:
@@ -26,7 +26,7 @@ Estado atual:
 - [x] Blueprint inicial registrado
 - [x] Arquitetura endurecida implementada
 - [x] Instalação validada
-- [ ] Browser-use validado
+- [x] Browser-use validado
 - [ ] Desktop-use validado
 - [ ] Integração com Aurelia validada
 
@@ -41,6 +41,21 @@ Transformar a Aurelia em um agente estilo JARVIS local-first, capaz de:
 - agir com guardrails fortes
 
 Sem virar um agente cego, destrutivo ou exposto.
+
+## Adendo Operacional
+
+Contexto confirmado em `2026-03-19`:
+
+- estamos operando dentro do `Antigravity`
+- o ambiente menciona `subagent preview`
+- podemos considerar extensões que ajudem no `Google Chrome`
+- podemos considerar extensões que ajudem no próprio `Antigravity`
+
+Regra de uso para esse adendo:
+
+- extensão é acelerador opcional
+- extensão não vira dependência central do JARVIS
+- toda extensão proposta deve ter propósito claro, baixo risco e reversão simples
 
 ## Princípios Não Negociáveis
 
@@ -212,15 +227,15 @@ Entregáveis:
 
 **Objetivo:** ter navegação real confiável sem depender de clique por coordenada.
 
-**Progresso do slice:** `40%`
+**Progresso do slice:** `80%`
 
 ```text
-[########------------] 40%
+[################----] 80%
 ```
 
-- [ ] Validar Playwright local
-- [ ] Definir fluxo padrão de navegação
-- [ ] Definir fluxo padrão de screenshot
+- [x] Validar Playwright local
+- [x] Definir fluxo padrão de navegação
+- [x] Definir fluxo padrão de screenshot
 - [ ] Definir fluxo de login guiado
 - [x] Definir política para remote debugging local
 
@@ -315,6 +330,27 @@ Entregáveis:
 - rollout faseado
 - checklist de aceite por fase
 
+### Slice 7. Extensões e Aceleradores
+
+**Objetivo:** avaliar extensões úteis sem acoplar o JARVIS a plugins frágeis.
+
+**Progresso do slice:** `0%`
+
+```text
+[--------------------] 0%
+```
+
+- [ ] Mapear extensões úteis para Chrome
+- [ ] Mapear extensões úteis para Antigravity
+- [ ] Separar “nice to have” de “core”
+- [ ] Definir política de instalação e rollback
+
+Entregáveis:
+
+- shortlist de extensões
+- critérios de aceite
+- política de remoção rápida
+
 ## Ordem de Execução Recomendada
 
 ### Agora
@@ -381,7 +417,11 @@ Entregáveis:
 - [x] Instalados `scrot`, `wmctrl`, `xclip` e `xdotool`
 - [x] Validado `DISPLAY`, enumeração de janelas e screenshot local
 - [x] Ativado Chrome DevTools isolado em `127.0.0.1:9222`
-- [ ] Próximo passo recomendado: Slice 2 com Playwright real
+- [x] Validado bootstrap de Chrome isolado visual e headless
+- [ ] Estabilidade de DevTools ainda insuficiente para navegação contínua
+- [x] Validado Playwright headless com Chrome do sistema em `https://example.com/`
+- [x] Registrado adendo operacional: Antigravity + subagent preview + extensões opcionais
+- [ ] Próximo passo recomendado: click e digitação seguros
 
 ## Task Board
 
@@ -395,8 +435,8 @@ Entregáveis:
 
 ### Next
 
-- [ ] Validar Playwright local com fluxo real
-- [ ] Definir smoke test web
+- [ ] Validar click e digitação seguros
+- [ ] Definir smoke test web de login guiado
 - [ ] Validar click e digitação seguros
 
 ### Later
@@ -431,3 +471,8 @@ Se você mandar executar, eu começo por este corte:
 - `xdotool getactivewindow` respondeu corretamente
 - `scrot` gerou screenshot válido em `/tmp/jarvis-smoke.png`
 - `jarvis-chrome.sh start-local` ativou DevTools em `127.0.0.1:9222` com perfil isolado
+- `jarvis-chrome.sh start-headless` também ativou DevTools em loopback com perfil isolado
+- o processo Chrome isolado não se manteve estável o suficiente para fluxo contínuo de `navigate` via `curl`
+- conclusão operacional: DevTools helper serve como bootstrap complementar, mas o baseline de browser-use deve migrar para Playwright
+- Playwright headless validou `https://example.com/` com título `Example Domain`
+- Playwright gerou screenshot válido em `/tmp/jarvis-playwright-smoke.png`
