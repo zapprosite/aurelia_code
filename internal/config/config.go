@@ -20,6 +20,8 @@ const (
 	defaultVoiceEnabled         = false
 	defaultVoicePollIntervalMS  = 1000
 	defaultVoiceHeartbeatSec    = 45
+	defaultVoiceCapturePollMS   = 1000
+	defaultVoiceCaptureFreshSec = 45
 	defaultVoiceWakePhrase      = "jarvis"
 	defaultGroqSoftCapDaily     = 800
 	defaultGroqHardCapDaily     = 1200
@@ -60,6 +62,11 @@ type AppConfig struct {
 	VoiceHeartbeatFreshSec   int
 	VoicePollIntervalMS      int
 	VoiceWakePhrase          string
+	VoiceCaptureEnabled      bool
+	VoiceCaptureCommand      string
+	VoiceCaptureHeartbeat    string
+	VoiceCaptureFreshSec     int
+	VoiceCapturePollMS       int
 	STTFallbackCommand       string
 	GroqSoftCapDaily         int
 	GroqHardCapDaily         int
@@ -103,6 +110,11 @@ type fileConfig struct {
 	VoiceHeartbeatFreshSec   int     `json:"voice_heartbeat_fresh_seconds"`
 	VoicePollIntervalMS      int     `json:"voice_poll_interval_ms"`
 	VoiceWakePhrase          string  `json:"voice_wake_phrase"`
+	VoiceCaptureEnabled      bool    `json:"voice_capture_enabled"`
+	VoiceCaptureCommand      string  `json:"voice_capture_command"`
+	VoiceCaptureHeartbeat    string  `json:"voice_capture_heartbeat_path"`
+	VoiceCaptureFreshSec     int     `json:"voice_capture_heartbeat_fresh_seconds"`
+	VoiceCapturePollMS       int     `json:"voice_capture_poll_interval_ms"`
 	STTFallbackCommand       string  `json:"stt_fallback_command"`
 	GroqSoftCapDaily         int     `json:"groq_soft_cap_daily"`
 	GroqHardCapDaily         int     `json:"groq_hard_cap_daily"`
@@ -196,6 +208,9 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		VoiceHeartbeatFreshSec:   defaultVoiceHeartbeatSec,
 		VoicePollIntervalMS:      defaultVoicePollIntervalMS,
 		VoiceWakePhrase:          defaultVoiceWakePhrase,
+		VoiceCaptureHeartbeat:    filepath.Join(r.Data(), "voice", "capture-heartbeat.json"),
+		VoiceCaptureFreshSec:     defaultVoiceCaptureFreshSec,
+		VoiceCapturePollMS:       defaultVoiceCapturePollMS,
 		GroqSoftCapDaily:         defaultGroqSoftCapDaily,
 		GroqHardCapDaily:         defaultGroqHardCapDaily,
 		SupabaseEventsTable:      defaultSupabaseEventsTable,
@@ -332,6 +347,15 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.VoiceWakePhrase == "" {
 		cfg.VoiceWakePhrase = defaults.VoiceWakePhrase
 	}
+	if cfg.VoiceCaptureHeartbeat == "" {
+		cfg.VoiceCaptureHeartbeat = defaults.VoiceCaptureHeartbeat
+	}
+	if cfg.VoiceCaptureFreshSec <= 0 {
+		cfg.VoiceCaptureFreshSec = defaults.VoiceCaptureFreshSec
+	}
+	if cfg.VoiceCapturePollMS <= 0 {
+		cfg.VoiceCapturePollMS = defaults.VoiceCapturePollMS
+	}
 	if cfg.GroqSoftCapDaily <= 0 {
 		cfg.GroqSoftCapDaily = defaults.GroqSoftCapDaily
 	}
@@ -403,6 +427,11 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		VoiceHeartbeatFreshSec:   cfg.VoiceHeartbeatFreshSec,
 		VoicePollIntervalMS:      cfg.VoicePollIntervalMS,
 		VoiceWakePhrase:          cfg.VoiceWakePhrase,
+		VoiceCaptureEnabled:      cfg.VoiceCaptureEnabled,
+		VoiceCaptureCommand:      cfg.VoiceCaptureCommand,
+		VoiceCaptureHeartbeat:    cfg.VoiceCaptureHeartbeat,
+		VoiceCaptureFreshSec:     cfg.VoiceCaptureFreshSec,
+		VoiceCapturePollMS:       cfg.VoiceCapturePollMS,
 		STTFallbackCommand:       cfg.STTFallbackCommand,
 		GroqSoftCapDaily:         cfg.GroqSoftCapDaily,
 		GroqHardCapDaily:         cfg.GroqHardCapDaily,
@@ -446,6 +475,11 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.VoiceHeartbeatFreshSec != b.VoiceHeartbeatFreshSec ||
 		a.VoicePollIntervalMS != b.VoicePollIntervalMS ||
 		a.VoiceWakePhrase != b.VoiceWakePhrase ||
+		a.VoiceCaptureEnabled != b.VoiceCaptureEnabled ||
+		a.VoiceCaptureCommand != b.VoiceCaptureCommand ||
+		a.VoiceCaptureHeartbeat != b.VoiceCaptureHeartbeat ||
+		a.VoiceCaptureFreshSec != b.VoiceCaptureFreshSec ||
+		a.VoiceCapturePollMS != b.VoiceCapturePollMS ||
 		a.STTFallbackCommand != b.STTFallbackCommand ||
 		a.GroqSoftCapDaily != b.GroqSoftCapDaily ||
 		a.GroqHardCapDaily != b.GroqHardCapDaily ||

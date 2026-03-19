@@ -51,3 +51,4 @@ As pendências mais críticas hoje são:
 ## ADRs já abertas para pendências críticas
 
 - [20260319-voice-capture-plane.md](./20260319-voice-capture-plane.md) — cobre o próximo slice real de captura de voz
+- [ADR-20260319-voice-capture-runtime.md](./ADR-20260319-voice-capture-runtime.md) — slice nonstop em execução para integrar o capture worker ao runtime

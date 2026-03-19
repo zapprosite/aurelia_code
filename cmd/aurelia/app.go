@@ -45,6 +45,7 @@ type app struct {
 	heartbeat      *heartbeat.HeartbeatService
 	healthServer   *health.Server
 	voiceProcessor *voice.Processor
+	voiceCapture   *voice.CaptureWorker
 }
 
 type closableLLMProvider interface {
@@ -161,6 +162,13 @@ func bootstrapApp(args []string) (*app, error) {
 	}
 
 	var voiceProcessor *voice.Processor
+	var voiceCapture *voice.CaptureWorker
+	if cfg.VoiceCaptureEnabled && !cfg.VoiceEnabled {
+		_ = instanceLock.Release()
+		_ = cronStore.Close()
+		_ = mem.Close()
+		return nil, fmt.Errorf("voice capture requires voice_enabled=true")
+	}
 	if cfg.VoiceEnabled {
 		voiceSpool, err := voice.NewSpool(cfg.VoiceSpoolPath)
 		if err != nil {
@@ -189,6 +197,28 @@ func bootstrapApp(args []string) (*app, error) {
 			PrimaryLabel:       cfg.STTProvider,
 			Mirror:             voiceMirror,
 		})
+		if cfg.VoiceCaptureEnabled {
+			if cfg.VoiceCaptureCommand == "" {
+				_ = instanceLock.Release()
+				_ = cronStore.Close()
+				_ = mem.Close()
+				return nil, fmt.Errorf("voice capture is enabled but voice_capture_command is missing")
+			}
+			voiceCapture = voice.NewCaptureWorker(
+				voiceSpool,
+				voice.NewCommandCaptureSource(cfg.VoiceCaptureCommand, map[string]string{
+					"AURELIA_VOICE_WAKE_PHRASE": cfg.VoiceWakePhrase,
+				}),
+				voice.CaptureConfig{
+					PollInterval:       time.Duration(cfg.VoiceCapturePollMS) * time.Millisecond,
+					HeartbeatPath:      cfg.VoiceCaptureHeartbeat,
+					HeartbeatFreshness: time.Duration(cfg.VoiceCaptureFreshSec) * time.Second,
+					DefaultUserID:      cfg.VoiceReplyUserID,
+					DefaultChatID:      cfg.VoiceReplyChatID,
+					DefaultSource:      "capture",
+				},
+			)
+		}
 	}
 
 	taskStore, err := agent.NewSQLiteTaskStore(cfg.DBPath + ".teams")
@@ -236,6 +266,10 @@ func bootstrapApp(args []string) (*app, error) {
 		healthSrv.RegisterCheck("voice_processor", voiceProcessor.HealthCheck)
 		healthSrv.RegisterRoute("/v1/voice/status", voiceProcessor.StatusHandler())
 	}
+	if voiceCapture != nil {
+		healthSrv.RegisterCheck("voice_capture", voiceCapture.HealthCheck)
+		healthSrv.RegisterRoute("/v1/voice/capture/status", voiceCapture.StatusHandler())
+	}
 
 	return &app{
 		resolver:       resolver,
@@ -252,6 +286,7 @@ func bootstrapApp(args []string) (*app, error) {
 		heartbeat:      hbService,
 		healthServer:   healthSrv,
 		voiceProcessor: voiceProcessor,
+		voiceCapture:   voiceCapture,
 	}, nil
 }
 
@@ -324,6 +359,11 @@ func (a *app) start() {
 			logger.Warn("failed to start voice processor", slog.Any("err", err))
 		}
 	}
+	if a.voiceCapture != nil {
+		if err := a.voiceCapture.Start(); err != nil {
+			logger.Warn("failed to start voice capture worker", slog.Any("err", err))
+		}
+	}
 
 	go a.bot.Start()
 }
@@ -340,6 +380,9 @@ func (a *app) shutdown(ctx context.Context) {
 	}
 	if a.voiceProcessor != nil {
 		a.voiceProcessor.Stop()
+	}
+	if a.voiceCapture != nil {
+		a.voiceCapture.Stop()
 	}
 	if a.bot != nil {
 		a.bot.Stop()

@@ -1,0 +1,60 @@
+{
+  "adr_id": "ADR-20260319-voice-capture-runtime",
+  "title": "Voice Capture Runtime",
+  "status": "in_progress",
+  "phase": "implementation",
+  "progress": 45,
+  "goal": "Integrar captura contínua ao voice plane sem quebrar o spool/processador já existentes, usando contrato externo para wake word e VAD.",
+  "scope": [
+    "config do capture worker",
+    "CommandCaptureSource",
+    "CaptureWorker com heartbeat, health e status",
+    "integração no bootstrap do app",
+    "testes do contrato"
+  ],
+  "done_definition": [
+    "worker inicia e para junto do app",
+    "GET /v1/voice/capture/status responde",
+    "voice_capture aparece no /health",
+    "CaptureOnce enfileira clipe detectado no spool",
+    "suite relevante passa"
+  ],
+  "next_actions": [
+    "plugar script real de wake word e VAD ao campo voice_capture_command",
+    "atualizar plan.md e changelog com o capture worker",
+    "validar status route e health em runtime local",
+    "depois portar a slice para a worktree de deploy"
+  ],
+  "simulation_commands": [
+    "capturador externo retorna stdout vazio e nenhum job é criado",
+    "capturador externo retorna JSON com detected=true e job é enfileirado",
+    "capturador externo falha e voice_capture vai para warning/error"
+  ],
+  "test_commands": [
+    "go test ./internal/voice ./cmd/aurelia -count=1",
+    "go test ./... -count=1"
+  ],
+  "curl_checks": [
+    "curl -fsS http://127.0.0.1:8484/v1/voice/capture/status",
+    "curl -fsS http://127.0.0.1:8484/health"
+  ],
+  "fallback_commands": [
+    "go run ./cmd/aurelia voice enqueue <arquivo>",
+    "voice_capture_enabled=false"
+  ],
+  "evidence": [
+    "CaptureWorker criado em internal/voice/capture.go",
+    "config expandida para voice_capture_*",
+    "health route integrada em cmd/aurelia/app.go",
+    "go test ./... -count=1 passou"
+  ],
+  "blockers": [
+    "capturador real com openWakeWord e Silero ainda não integrado",
+    "slice ainda não portada para /home/will/aurelia-24x7"
+  ],
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "Continue a slice ADR-20260319-voice-capture-runtime. O capture worker comandado por contrato já existe. Próximo passo: conectar um script real de wake word e VAD ao campo voice_capture_command, validar /v1/voice/capture/status e depois portar para a worktree de deploy.",
+    "last_updated": "2026-03-19T18:41:02-03:00"
+  }
+}

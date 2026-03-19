@@ -12,10 +12,10 @@ scope: local-voice-browser-antigravity-terminal
 
 ## Status Geral
 
-**Progresso do plano:** `94%`
+**Progresso do plano:** `96%`
 
 ```text
-[###################-] 94%
+[###################-] 96%
 ```
 
 Estado atual:
@@ -36,6 +36,7 @@ Estado atual:
 - [x] Pipeline de voz com spool, heartbeat, fallback STT e dispatch no runtime implementado
 - [x] Mirrors opcionais de transcript para Supabase + Qdrant implementados
 - [x] CLI `aurelia voice enqueue` implementada e testada
+- [x] Capture worker com heartbeat, health e spool integration implementado
 - [ ] Mic daemon com wake word implementado
 - [ ] Desktop click/digitacao seguros implementados
 - [ ] Captura de microfone com wake word + VAD implementada

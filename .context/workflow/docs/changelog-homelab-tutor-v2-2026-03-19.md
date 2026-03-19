@@ -657,3 +657,36 @@ Resultado:
 - a raiz ficou limpa para documentos soberanos e de entrada
 - decisões permanentes foram promovidas para ADR
 - artefatos de slice passaram a morar em `.context/plans/`
+
+## Slice Nonstop: Voice Capture Runtime
+
+Foi aberta e materializada a slice nonstop:
+
+- `docs/adr/ADR-20260319-voice-capture-runtime.md`
+- `docs/adr/taskmaster/ADR-20260319-voice-capture-runtime.json`
+
+Implementação entregue nesta rodada:
+
+- `internal/voice/capture.go`
+- `internal/voice/capture_test.go`
+- expansão de `internal/config/config.go` para `voice_capture_*`
+- integração do worker no bootstrap em `cmd/aurelia/app.go`
+- health check `voice_capture`
+- route `GET /v1/voice/capture/status`
+
+Decisão técnica:
+
+- o runtime agora aceita um capturador externo por contrato via `voice_capture_command`
+- wake word e VAD reais entram por esse comando, sem reescrever o plano de controle em Go
+- o spool/processador já existente continua sendo o núcleo do voice plane
+
+Provas:
+
+- `go test ./internal/voice ./cmd/aurelia -count=1` passou
+- `go test ./... -count=1` passou
+
+Estado honesto:
+
+- o encaixe no runtime está pronto
+- ainda falta conectar um capturador real com `openWakeWord + Silero`
+- ainda falta portar essa slice para `/home/will/aurelia-24x7`
