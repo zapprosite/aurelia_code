@@ -339,8 +339,8 @@ func checkForResponse(t *testing.T, bot *tg.BotAPI, originalMsgID int, chatID in
 	}
 
 	for _, update := range updates {
-		if update.Message != nil && update.Message.ChatID == chatID &&
-			update.Message.ReplyToMessageID == originalMsgID {
+		if update.Message != nil && update.Message.Chat.ID == chatID &&
+			update.Message.ReplyToMessage != nil && update.Message.ReplyToMessage.MessageID == originalMsgID {
 			return update.Message.Text
 		}
 	}

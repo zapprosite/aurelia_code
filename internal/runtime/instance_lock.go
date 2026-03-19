@@ -26,6 +26,13 @@ type InstanceLock struct {
 // AcquireInstanceLock enforces a single active Aurelia runtime per instance root.
 func AcquireInstanceLock(r *PathResolver, argv []string) (*InstanceLock, error) {
 	lockPath := r.InstanceLock()
+
+	// Try to clear stale lock file before acquiring (handle case where process exited but lock remained)
+	if err := clearStaleLockIfExists(lockPath); err != nil {
+		// Non-fatal: continue and try to acquire; if it fails, the lock holder is active
+		_ = err
+	}
+
 	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return nil, fmt.Errorf("runtime: open instance lock: %w", err)
@@ -34,6 +41,7 @@ func AcquireInstanceLock(r *PathResolver, argv []string) (*InstanceLock, error) 
 	if err := tryFileLock(file); err != nil {
 		meta := readInstanceLockMetadata(file)
 		_ = file.Close()
+
 		if meta.PID != 0 {
 			return nil, fmt.Errorf(
 				"another Aurelia instance is already running (pid=%d, command=%q, started_at=%s, lock=%s)",
@@ -142,4 +150,32 @@ func readInstanceLockMetadata(file *os.File) InstanceLockMetadata {
 		return InstanceLockMetadata{}
 	}
 	return meta
+}
+
+// clearStaleLockIfExists removes the lock file if the process holding it is no longer alive.
+// This handles the case where a daemon exited uncleanly and left the lock file behind.
+func clearStaleLockIfExists(lockPath string) error {
+	file, err := os.OpenFile(lockPath, os.O_RDONLY, 0)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil // No lock file, nothing to clear
+		}
+		return err
+	}
+	defer func() { _ = file.Close() }()
+
+	meta := readInstanceLockMetadata(file)
+	if meta.PID == 0 {
+		// No valid metadata in lock file, safe to remove
+		_ = os.Remove(lockPath)
+		return nil
+	}
+
+	if !isProcessAlive(meta.PID) {
+		// Process no longer exists, remove stale lock
+		return os.Remove(lockPath)
+	}
+
+	// Process is still alive, don't touch the lock
+	return nil
 }
