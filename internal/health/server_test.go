@@ -61,3 +61,33 @@ func TestHandleHealth_ErrorDegrades(t *testing.T) {
 		t.Fatalf("status = %q", payload.Status)
 	}
 }
+
+func TestRegisterRoute_ExposesCustomHandler(t *testing.T) {
+	t.Parallel()
+
+	srv := NewServer(0)
+	srv.RegisterRoute("/v1/router/dry-run", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusAccepted)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	}))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", srv.handleHealth)
+	mux.HandleFunc("/ready", srv.handleReady)
+	srv.mu.RLock()
+	for path, handler := range srv.routes {
+		mux.Handle(path, handler)
+	}
+	srv.mu.RUnlock()
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/router/dry-run", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("status code = %d", rec.Code)
+	}
+	if body := rec.Body.String(); body != `{"status":"ok"}` {
+		t.Fatalf("body = %q", body)
+	}
+}

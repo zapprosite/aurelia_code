@@ -115,7 +115,7 @@ func TestBuildOpenAICompatibleRequest_IncludesTools(t *testing.T) {
 				"command": map[string]interface{}{"type": "string"},
 			},
 		},
-	}})
+	}}, OpenAICompatibleRequestOptions{})
 	if err != nil {
 		t.Fatalf("buildOpenAICompatibleRequest() error = %v", err)
 	}
@@ -125,5 +125,29 @@ func TestBuildOpenAICompatibleRequest_IncludesTools(t *testing.T) {
 	}
 	if _, ok := reqBody["tools"]; !ok {
 		t.Fatal("expected tools in request body")
+	}
+}
+
+func TestBuildOpenAICompatibleRequest_AppliesRequestOptions(t *testing.T) {
+	t.Parallel()
+
+	temp := 0.2
+	reqBody, err := buildOpenAICompatibleRequest("model-x", "system", nil, nil, OpenAICompatibleRequestOptions{
+		MaxTokens:   123,
+		Temperature: &temp,
+		ExtraFields: map[string]any{"think": false},
+	})
+	if err != nil {
+		t.Fatalf("buildOpenAICompatibleRequest() error = %v", err)
+	}
+
+	if got := reqBody["max_tokens"]; got != 123 {
+		t.Fatalf("max_tokens = %v", got)
+	}
+	if got := reqBody["temperature"]; got != temp {
+		t.Fatalf("temperature = %v", got)
+	}
+	if got := reqBody["think"]; got != false {
+		t.Fatalf("think = %v", got)
 	}
 }

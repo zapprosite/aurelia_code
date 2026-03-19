@@ -1,0 +1,43 @@
+---
+description: Adaptador fino da política de modelos, voz e roteamento do runtime.
+---
+
+# 🧠 MODEL.md — Contrato de Modelos
+
+> **IMPORTANTE**: Este arquivo é subordinado a [AGENTS.md](./AGENTS.md). Ele não escolhe governança; ele só resume a política de modelos em vigor.
+
+## Papel
+
+Alinhar qualquer motor, agente ou UI à mesma política de:
+
+- modelos locais
+- modelos remotos
+- STT/TTS
+- budgets e fallback
+
+## Regras fechadas
+
+1. `qwen3.5:9b` é o único modelo local residente do caminho ativo.
+2. `qwen3.5:4b` entra sob demanda, não residente por padrão.
+3. `Groq` fica isolado no lane de áudio/STT.
+4. `OpenRouter` só entra por capacidade explícita.
+5. `Gemini web` não entra no runtime automático.
+6. `gemma3:27b-it-q4_K_M` é laboratório/manual, não default do bot.
+7. Toda mudança de política de modelo exige ADR.
+
+## Fontes canônicas
+
+- [AGENTS.md](./AGENTS.md)
+- [REPOSITORY_CONTRACT.md](./docs/REPOSITORY_CONTRACT.md)
+- [ADR Index](./docs/adr/README.md)
+- [Model Routing Matrix](./docs/model_routing_matrix_20260319.md)
+- [Local Model Kit Blueprint](./docs/local_model_kit_blueprint_20260319.md)
+- [LLM Gateway Blueprint](./docs/llm_gateway_blueprint_20260319.md)
+- [Jarvis Local Voice Blueprint](./docs/jarvis_local_voice_blueprint_20260319.md)
+
+## Operação
+
+- não abrir novo lane de modelo sem ADR
+- não mudar default local sem medir VRAM e rodar smoke
+- não introduzir segundo residente local sem justificativa formal
+- não mudar voz/STT/TTS sem explicitar custo, fallback e impacto no homelab

@@ -17,18 +17,19 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 
 - Root: `/home/will/aurelia`
 - Module: `github.com/kocar/aurelia`
-- Primary languages: Go (`191` files), Shell (`9` files), Markdown (`25` files), JSON (`2` files)
+- Primary languages: Go (`197` files), Shell (`13` files), Markdown (`37` files), JSON (`2` files)
 - Main runtime entrypoint: [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go)
 - Composition root: [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go)
 - Main architectural source: [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)
 - Governance source: [`AGENTS.md`](../../AGENTS.md)
+- Governance contract: [`docs/REPOSITORY_CONTRACT.md`](../../docs/REPOSITORY_CONTRACT.md)
 
 ## Repository Map
 
 - `.agents/` — autoridade operacional local, regras, workflows e skills do workspace
 - `.context/` — memória operacional, docs sintéticos e estado de workflow
 - `cmd/` — entrypoints do binário e onboarding
-- `internal/` — domínio principal, runtime, ferramentas, Telegram, MCP, cron e memória
+- `internal/` — domínio principal, runtime, gateway, voz, ferramentas, Telegram, MCP, cron e memória
 - `pkg/` — provedores LLM e STT reutilizáveis
 - `scripts/` — build, instalação do daemon, health-check e smoke scripts
 - `docs/` — documentação arquitetural e ADRs do produto
@@ -47,6 +48,13 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 | `data-flow.md` | entrada, raciocínio, ferramentas e persistência | `internal/telegram`, `internal/agent`, `internal/memory`, `internal/health` |
 | `security.md` | auth, segredos e guardrails | `internal/config`, `internal/tools`, `AGENTS.md`, CI |
 | `tooling.md` | CLIs, scripts e automação diária | `scripts/`, Go toolchain, systemd, npm/npx MCP |
+
+## Governance Highlights
+
+- adapters finos por motor: [`CLAUDE.md`](../../CLAUDE.md), [`CODEX.md`](../../CODEX.md), [`GEMINI.md`](../../GEMINI.md), [`MODEL.md`](../../MODEL.md)
+- ADR obrigatória por slice estrutural: [`docs/adr/README.md`](../../docs/adr/README.md)
+- modo nonstop para slices longas: [`/adr-semparar`](../../.agents/workflows/adr-semparar.md)
+- comando canônico de continuidade: [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh)
 
 ## Related Resources
 

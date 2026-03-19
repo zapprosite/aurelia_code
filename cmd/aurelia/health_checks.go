@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -21,19 +23,73 @@ type geminiSmokeStatus struct {
 	Error     string    `json:"error,omitempty"`
 }
 
-func registerAuxiliaryHealthChecks(healthSrv *health.Server, cfg *config.AppConfig, resolver *runtime.PathResolver) {
+type primaryLLMDescriber interface {
+	PrimaryLLMDescription() string
+}
+
+type gatewayHealthReporter interface {
+	HealthCheck() health.CheckResult
+}
+
+func registerAuxiliaryHealthChecks(healthSrv *health.Server, cfg *config.AppConfig, resolver *runtime.PathResolver, provider any) {
 	if healthSrv == nil || cfg == nil {
 		return
 	}
 
-	healthSrv.RegisterCheck("primary_llm", func() health.CheckResult {
-		if cfg.LLMProvider == "" {
-			return health.CheckResult{Status: "warning", Message: "llm provider not configured"}
-		}
-		return health.CheckResult{Status: "ok", Message: cfg.LLMProvider + "/" + cfg.LLMModel}
-	})
+	healthSrv.RegisterCheck("primary_llm", buildPrimaryLLMHealthCheck(cfg, provider))
+	if reporter, ok := provider.(gatewayHealthReporter); ok {
+		healthSrv.RegisterCheck("gateway_routing", reporter.HealthCheck)
+	}
 
 	healthSrv.RegisterCheck("gemini_api", buildGeminiHealthCheck(cfg, geminiSmokeStatusPath(resolver)))
+}
+
+func buildPrimaryLLMHealthCheck(cfg *config.AppConfig, provider any) func() health.CheckResult {
+	return func() health.CheckResult {
+		if cfg == nil || cfg.LLMProvider == "" {
+			return health.CheckResult{Status: "warning", Message: "llm provider not configured"}
+		}
+		if describer, ok := provider.(primaryLLMDescriber); ok {
+			return health.CheckResult{Status: "ok", Message: describer.PrimaryLLMDescription()}
+		}
+		if cfg.LLMProvider != "ollama" {
+			return health.CheckResult{Status: "ok", Message: cfg.LLMProvider + "/" + cfg.LLMModel}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1:11434/v1/models", nil)
+		if err != nil {
+			return health.CheckResult{Status: "error", Message: "failed to build ollama health request"}
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return health.CheckResult{Status: "error", Message: "ollama not reachable: " + err.Error()}
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return health.CheckResult{Status: "error", Message: "ollama returned " + resp.Status}
+		}
+
+		var payload struct {
+			Data []struct {
+				ID string `json:"id"`
+			} `json:"data"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+			return health.CheckResult{Status: "error", Message: "failed to decode ollama models response"}
+		}
+
+		for _, model := range payload.Data {
+			if model.ID == cfg.LLMModel {
+				return health.CheckResult{Status: "ok", Message: cfg.LLMProvider + "/" + cfg.LLMModel}
+			}
+		}
+		return health.CheckResult{Status: "error", Message: "configured ollama model not installed: " + cfg.LLMModel}
+	}
 }
 
 func geminiSmokeStatusPath(resolver *runtime.PathResolver) string {

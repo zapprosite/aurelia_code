@@ -15,6 +15,10 @@ const (
 )
 
 func NewOpenRouterProvider(apiKey string, model string) *OpenAICompatibleProvider {
+	return NewOpenRouterProviderWithOptions(apiKey, model, OpenAICompatibleRequestOptions{})
+}
+
+func NewOpenRouterProviderWithOptions(apiKey string, model string, request OpenAICompatibleRequestOptions) *OpenAICompatibleProvider {
 	return NewOpenAICompatibleProvider(OpenAICompatibleConfig{
 		APIKey:    apiKey,
 		BaseURL:   openRouterChatCompletionsURL,
@@ -24,6 +28,7 @@ func NewOpenRouterProvider(apiKey string, model string) *OpenAICompatibleProvide
 			"HTTP-Referer": openRouterReferer,
 			"X-Title":      openRouterTitle,
 		},
+		Request: request,
 	})
 }
 

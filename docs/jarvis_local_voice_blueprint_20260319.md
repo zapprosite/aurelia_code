@@ -63,6 +63,26 @@ MIC
   -> optional PT-BR TTS
 ```
 
+## Estado Implementado Agora
+
+O runtime ja ganhou a primeira fase executavel do voice plane:
+
+- spool local de audio em disco
+- processador de fila com heartbeat e budget diario
+- `Groq STT` como transcritor primario
+- fallback local por comando configuravel
+- gate por wake phrase no transcript
+- dispatch do texto aceito para o mesmo fluxo do Telegram
+- mirrors opcionais para `Supabase` e `Qdrant`
+- `GET /v1/voice/status` no server interno
+- `aurelia voice enqueue <arquivo>` para alimentar o spool
+
+Limite honesto desta fase:
+
+- ainda nao existe captura continua de microfone
+- ainda nao existe `openWakeWord + Silero VAD + ring buffer` rodando live
+- a "wake word" atual entra como gate textual no transcript, nao como detector de audio
+
 ## Escolhas de Stack
 
 ### 1. Wake Word
@@ -104,25 +124,49 @@ Fallback:
 
 Escolha principal:
 
-- `qwen3-coder:30b`
+- `qwen3.5:9b`
+
+Alternativas:
+
+- `qwen3.5:4b` para roteamento curto e fallback de latencia
+- `gemma3:27b-it-q4_K_M` apenas para laboratorio/manual
+- `qwen3-coder:30b` apenas para escalonamento manual
 
 Escolha de operacao:
 
-- quantizacao alvo: `Q4_K_S`
 - concorrencia: `1`
-- contexto operacional inicial: `16K` a `32K`
+- contexto operacional inicial: `8K`
+- `OLLAMA_NUM_PARALLEL=1`
+- `OLLAMA_FLASH_ATTENTION=1`
+- `OLLAMA_KV_CACHE_TYPE=q4_0`
 
 Motivo:
 
-- melhor alinhamento atual com agentic coding, tool use e browser-use
-- mais forte que os modelos menores sem cair na inviabilidade do `480B`
+- suporte real a `tools` no Ollama
+- latencia melhor para o papel de orquestrador local
+- VRAM compativel com browser, desktop e margem operacional
+- mais prudente para `RTX 4090 24 GiB` deixar o contexto inicial curto e estavel
 
 Observacao:
 
-- isto e uma inferencia operacional baseada na sua VRAM livre atual e nos tamanhos comuns de quants GGUF para `Qwen3-Coder-30B`
-- `Q4_K_S` e o teto prudente para BK estavel
-- `Q4_K_M` pode caber, mas fica apertado
-- acima disso voce comeca a roubar margem de navegador, KV cache e recuperacao
+- `qwen3.5:9b` vira o default local e o unico residente por padrao
+- `qwen3.5:4b` fica frio ou aquecido sob demanda, nao residente junto por padrao
+- `gemma3:27b-it-q4_K_M` sai do caminho ativo do bot por deixar folga estreita demais
+- `qwen3-coder:30b` continua forte, mas apertado demais para ficar residente no host
+
+Conta real do host:
+
+- uso base do desktop/lab: ~`4810 MiB`
+- VRAM livre em idle: ~`19238 MiB`
+- `qwen3.5:9b` carregado usa ~`9.2 GiB` de VRAM e deixa ~`10.5 GiB` livres
+- `qwen3.5:9b + qwen3.5:4b` juntos deixam so ~`3.8 GiB` livres
+- um `27B` de ~`17 GiB`, somado ao uso base, deixa folga perto de `2 GiB`
+
+Conclusao:
+
+- `Groq` continua sendo a boa escolha para audio porque tira o STT da GPU local
+- isso nao autoriza dois LLMs locais residentes
+- a regra profissional e `1` modelo residente only
 
 ### 5. Embedding Unico para Qdrant
 
@@ -213,6 +257,32 @@ Esses limites sao mais conservadores que os da Groq e alinhados ao host atual.
 - upload STT sustentado: `4 req/min`
 - duracao maxima por clip: `20s`
 - duracao alvo por clip: `8s-12s`
+
+## Implementacao Fase 1
+
+Arquivos centrais ja entregues:
+
+- [processor.go](/home/will/aurelia/internal/voice/processor.go)
+- [spool.go](/home/will/aurelia/internal/voice/spool.go)
+- [mirror.go](/home/will/aurelia/internal/voice/mirror.go)
+- [metrics.go](/home/will/aurelia/internal/voice/metrics.go)
+- [voice_cli.go](/home/will/aurelia/cmd/aurelia/voice_cli.go)
+- [input_pipeline.go](/home/will/aurelia/internal/telegram/input_pipeline.go)
+
+Comportamento atual:
+
+- jobs de audio entram no spool
+- o processador consome o item mais antigo
+- o transcript e sanitizado
+- segredos incidentais sao redigidos
+- o comando so segue adiante se o transcript comecar com a wake phrase
+- o texto aceito entra no mesmo roteamento do bot
+
+Observabilidade atual:
+
+- `/metrics` exporta metricas do gateway e do loop de voz
+- `GET /v1/voice/status` retorna heartbeat, backlog e caps
+- `voice_processor` entra no `/health`
 
 Justificativa:
 
@@ -317,8 +387,8 @@ Reacoes:
 
 ### Slice 3. Local Brain
 
-- instalar `qwen3-coder:30b`
-- ajustar contexto
+- instalar `qwen3.5:9b`
+- ajustar contexto curto e seguro
 - limitar concorrencia
 
 ### Slice 4. Memory Contract
@@ -345,7 +415,7 @@ O desenho forte em `2026-03-19` para esta maquina e:
 - acordar com wake word local
 - recortar fala com VAD
 - transcrever na Groq
-- pensar com `qwen3-coder:30b`
+- pensar com `qwen3.5:9b`
 - agir com `agent-browser` / `browser-use` / CLI
 - lembrar com `Supabase + Qdrant + bge-m3`
 - proteger tudo com rate limit e degradacao por recurso
@@ -363,7 +433,9 @@ O maior erro seria tentar:
 - Groq Whisper Turbo: https://console.groq.com/docs/model/whisper-large-v3-turbo
 - Groq Speech-to-Text: https://console.groq.com/docs/speech-to-text
 - Groq Spend Limits: https://console.groq.com/docs/spend-limits
-- Qwen3-Coder blog oficial: https://qwenlm.github.io/blog/qwen3-coder/
+- Google Gemma 3: https://blog.google/innovation-and-ai/technology/developers-tools/gemma-3/
+- Ollama `gemma3`: https://ollama.com/library/gemma3
+- Ollama `qwen3.5`: https://ollama.com/library/qwen3.5
 - Ollama `qwen3-coder`: https://ollama.com/library/qwen3-coder
 - BGE-M3 oficial: https://huggingface.co/BAAI/bge-m3
 - Qdrant Embeddings: https://qdrant.tech/documentation/embeddings/

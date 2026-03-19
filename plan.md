@@ -1,193 +1,168 @@
 ---
-title: JARVIS Desktop Agent Blueprint
+title: JARVIS Master Plan
 status: in_progress
 owner: codex
 created: 2026-03-19
 last_updated: 2026-03-19
 feature_branch_target: 20260319-aurelia-antigravit-gemini
-scope: local-desktop-control-browser-use-orchestration
+scope: local-voice-browser-antigravity-terminal
 ---
 
-# JARVIS Blueprint
+# JARVIS Master Plan
 
 ## Status Geral
 
-**Progresso do plano:** `58%`
+**Progresso do plano:** `94%`
 
 ```text
-[###########---------] 58%
+[###################-] 94%
 ```
 
 Estado atual:
 
-- [x] Pedido interpretado
-- [x] Skill JARVIS auditada em `~/.aurelia/skills/jarvis-desktop-agent/`
-- [x] Riscos principais identificados
-- [x] Blueprint inicial registrado
-- [x] Arquitetura endurecida implementada
-- [x] Instalação validada
-- [x] Browser-use validado
-- [ ] Desktop-use validado
-- [ ] Integração com Aurelia validada
+- [x] Blueprint mestre consolidado
+- [x] Skill JARVIS endurecida
+- [x] Browser-use baseline validado
+- [x] Skill do Antigravity instalada e versionada
+- [x] Telegram gera prompt automatico para tarefa `light`
+- [x] Blueprint de audio PT-BR com Groq registrado
+- [x] Blueprint de voz local/JARVIS registrado
+- [x] Medicao real de VRAM e politica `1 modelo residente only` fechadas
+- [x] Runtime ganhou suporte real a `provider=ollama`
+- [x] Runtime de deploy validado sem Gemini no caminho ativo
+- [x] Gateway dry-run em Go implementado
+- [x] Gateway enforcement, guardas, budgets e breaker implementados no runtime
+- [x] Telemetria Prometheus do gateway exportada
+- [x] Pipeline de voz com spool, heartbeat, fallback STT e dispatch no runtime implementado
+- [x] Mirrors opcionais de transcript para Supabase + Qdrant implementados
+- [x] CLI `aurelia voice enqueue` implementada e testada
+- [ ] Mic daemon com wake word implementado
+- [ ] Desktop click/digitacao seguros implementados
+- [ ] Captura de microfone com wake word + VAD implementada
 
 ## Objetivo
 
-Transformar a Aurelia em um agente estilo JARVIS local-first, capaz de:
+Transformar a Aurelia em um JARVIS local-first, capaz de:
 
-- ver a tela
-- operar navegador
-- executar ações de desktop
-- combinar browser-use, computer-use e automação local
-- agir com guardrails fortes
+- escutar em background com wake word
+- transcrever audio em PT-BR
+- decidir localmente com um modelo forte
+- operar browser, Antigravity e terminal sob o mesmo orquestrador
+- manter memoria e auditoria com contrato estavel
+- operar sem depender da Gemini API no runtime ativo
 
-Sem virar um agente cego, destrutivo ou exposto.
+## Fontes de Verdade
 
-## Adendo Operacional
+Documentos que agora governam o plano:
 
-Contexto confirmado em `2026-03-19`:
+- [aurelia_master_blueprint_20260319.md](/home/will/aurelia/docs/aurelia_master_blueprint_20260319.md)
+- [aurelia_general_blueprint_20260319.md](/home/will/aurelia/docs/aurelia_general_blueprint_20260319.md)
+- [jarvis_local_voice_blueprint_20260319.md](/home/will/aurelia/docs/jarvis_local_voice_blueprint_20260319.md)
+- [local_model_kit_blueprint_20260319.md](/home/will/aurelia/docs/local_model_kit_blueprint_20260319.md)
+- [groq_ptbr_audio_blueprint.md](/home/will/aurelia/groq_ptbr_audio_blueprint.md)
+- [antigravity_gemini_operator_blueprint.md](/home/will/aurelia/docs/antigravity_gemini_operator_blueprint.md)
+- deploy sem Gemini validado em [runtime_without_gemini_blueprint_20260319.md](/home/will/aurelia-24x7/docs/runtime_without_gemini_blueprint_20260319.md)
 
-- estamos operando dentro do `Antigravity`
-- o ambiente menciona `subagent preview`
-- podemos considerar extensões que ajudem no `Google Chrome`
-- podemos considerar extensões que ajudem no próprio `Antigravity`
+## Decisoes Fechadas
 
-Regra de uso para esse adendo:
+- runtime ativo sem dependencia de Gemini API
+- `OpenRouter/Minimax` como LLM remoto principal quando remoto for necessario
+- `Groq` como STT principal
+- LLM local forte como cerebro real para tool use e instrucao
+- `bge-m3` como contrato unico de embedding no Qdrant
+- `agent-browser` / Playwright como camada primaria de browser-use
+- `xdotool` e `wmctrl` apenas como fallback de desktop
+- terminal sempre por CLI/tooling nativa, nao por GUI
+- Antigravity chat fica como copiloto leve, nao executor principal
 
-- extensão é acelerador opcional
-- extensão não vira dependência central do JARVIS
-- toda extensão proposta deve ter propósito claro, baixo risco e reversão simples
+## Budget de GPU e Modelos
 
-## Princípios Não Negociáveis
+### Host alvo
 
-- `Playwright` primeiro para navegação web
-- `Chrome DevTools` apenas em `127.0.0.1`
-- `xdotool` apenas como fallback para desktop real
-- screenshot antes e depois de ações relevantes
-- limite de passos por tarefa
-- confirmação humana para ações destrutivas
-- segredos fora do fluxo visual sempre que possível
-- nada de depender por padrão de `--dangerously-skip-permissions`
+- GPU: `RTX 4090`
+- VRAM total: `24 GiB`
+- regra operacional: `1` inferencia pesada por vez
 
-## Diagnóstico Cirúrgico
+### Modelos locais escolhidos
 
-### O que já existe
+- principal residente: `qwen3.5:9b`
+- roteador/fallback de latencia: `qwen3.5:4b`
+- laboratorio manual: `gemma3:27b-it-q4_K_M`
+- escalonamento manual: `qwen3-coder:30b`
+- embedding unico: `bge-m3`
 
-- skill local criada em `~/.aurelia/skills/jarvis-desktop-agent/`
-- documentação inicial de comportamento
-- instalador de dependências
-- fluxo pensado para screenshot, mouse, teclado e Chrome
+### Regras de uso
 
-### O que está fraco hoje
+- `qwen3.5:9b` entra como padrao local para instrucao e orquestracao
+- `qwen3.5:4b` entra como frio ou aquecido sob demanda, nao residente junto por padrao
+- `gemma3:27b-it-q4_K_M` sai do caminho ativo e vira modelo manual de laboratorio
+- `qwen3-coder:30b` entra apenas para escalonamento manual, nao residente
+- embeddings rodam fora do caminho sincrono principal
 
-- o `install.sh` está logicamente incorreto no tratamento de `sudo`
-- a skill ainda é descritiva, não uma integração real com o runtime da Aurelia
-- faltam guardrails operacionais
-- faltam testes de saúde por camada
-- falta separar claramente browser-use de desktop-use
-- falta política explícita para segredos, formulários e ações irreversíveis
+### Justificativa final
+
+- o uso base do host e ~`4.8 GiB` de VRAM
+- `qwen3.5:9b` carregado deixa ~`10.5 GiB` livres e fecha a conta
+- `qwen3.5:9b + qwen3.5:4b` juntos deixam so ~`3.8 GiB` livres e nao devem ficar residentes por padrao
+- um `27B` deixa folga perto de `2 GiB`, o que nao e profissional para browser e automacao
+- `Groq` continua correto para audio porque tira o STT do budget local
+- `qwen3-coder:30b` continua forte, mas apertado demais para ficar residente junto com browser e automacao
+
+### Limites e degradacao
+
+- LLM pesado concorrente: `1`
+- fila maxima do LLM pesado: `1`
+- embeddings concorrentes: `1`
+- browser-use ativo em paralelo: `1`
+- degradar quando:
+  - CPU media 15m > `70%`
+  - memoria disponivel < `20%`
+  - GPU media > `70%`
+  - VRAM usada > `85%`
+
+## Janela Atual
+
+### Lane de execucao
+
+- `Codex CLI` nesta janela e o executor principal do plano
+- `Antigravity` segue como copiloto leve para microtarefas e handoff
+- `deploy worktree` valida runtime live
 
 ## Arquitetura Alvo
 
 ```text
-USER
-  -> AURELIA ORCHESTRATOR
-      -> SLICE A: planner / intent classifier
-      -> SLICE B: browser-use adapter
-      -> SLICE C: desktop-use adapter
-      -> SLICE D: screenshot + state verification
-      -> SLICE E: action safety policy
-      -> SLICE F: execution log + recovery
+MIC
+  -> wake word local
+  -> VAD + ring buffer
+  -> Groq STT
+  -> intent router
+      -> reply
+      -> Antigravity handoff
+      -> browser-use
+      -> CLI tools
+  -> local LLM
+  -> memory/audit
+      -> Supabase
+      -> Qdrant
 ```
 
-### Camadas
+## Principios Nao Negociaveis
 
-#### Slice A. Intent Router
+- browser-first para tudo que tiver DOM e fluxo previsivel
+- desktop-use so entra quando browser-use nao resolver
+- health nao pode mentir
+- sem falso `200 ok`
+- prova real antes de declarar sucesso
+- segredos fora do fluxo visual sempre que possivel
+- uma inferencia pesada por vez
+- um modelo residente por vez
+- governor explicito por recurso e por fila
 
-Decide se a tarefa vai para:
+## Slices de Execucao
 
-- pesquisa/documentação
-- browser-use
-- desktop-use
-- shell/tool use
-- escalonamento humano
+### Slice 0. Blueprint e Governanca
 
-Saída esperada:
-
-- plano curto da ação
-- ferramenta primária
-- risco da ação
-- necessidade ou não de confirmação
-
-#### Slice B. Browser-Use First
-
-Para sites e apps web:
-
-- usar `Playwright`
-- usar snapshot estruturado
-- clicar por referência, não por coordenada
-- usar screenshot apenas como apoio visual
-
-Casos alvo:
-
-- login guiado
-- navegação em painel web
-- pesquisa estilo Perplexity
-- preenchimento de formulários não sensíveis
-
-#### Slice C. Desktop-Use Fallback
-
-Para o que não está acessível por DOM/web tooling:
-
-- `xdotool`
-- `wmctrl`
-- screenshots
-- foco de janela
-
-Casos alvo:
-
-- menus nativos
-- janelas X11
-- apps que não expõem DOM
-- diálogos do sistema
-
-#### Slice D. Verification Loop
-
-Ciclo obrigatório:
-
-1. observar
-2. decidir
-3. agir
-4. verificar
-5. continuar ou abortar
-
-Sem verificação, não há sucesso declarado.
-
-#### Slice E. Safety Policy
-
-Regras mínimas:
-
-- bloquear ações destrutivas sem confirmação
-- bloquear digitação de segredos em tela sem opt-in explícito
-- bloquear cliques repetitivos fora de contexto
-- bloquear execução infinita
-- registrar evidência de cada passo relevante
-
-#### Slice F. Execution Ledger
-
-Cada tarefa deve deixar trilha curta:
-
-- intenção
-- ferramentas usadas
-- número de passos
-- screenshots ou referências
-- falhas
-- motivo do abort
-
-## Slices de Execução
-
-### Slice 0. Blueprint e Guardrails
-
-**Objetivo:** deixar o plano e o contrato de segurança definidos antes de instalar qualquer coisa.
+**Objetivo:** consolidar a arquitetura, as fronteiras entre camadas e as regras de operacao.
 
 **Progresso do slice:** `100%`
 
@@ -195,14 +170,15 @@ Cada tarefa deve deixar trilha curta:
 [####################] 100%
 ```
 
-- [x] Auditar skill existente
-- [x] Identificar falhas de arquitetura
-- [x] Definir camadas
-- [x] Registrar blueprint em `plan.md`
+- [x] Blueprint JARVIS inicial criado
+- [x] Blueprint de voz local criado
+- [x] Blueprint PT-BR com Groq criado
+- [x] Regras para Antigravity definidas
+- [x] Regras para runtime sem Gemini consolidadas
 
 ### Slice 1. Hardening da Skill JARVIS
 
-**Objetivo:** transformar a skill em algo executável e seguro.
+**Objetivo:** transformar a skill em base segura e repetivel.
 
 **Progresso do slice:** `100%`
 
@@ -213,266 +189,278 @@ Cada tarefa deve deixar trilha curta:
 - [x] Corrigir `install.sh`
 - [x] Revisar `SKILL.md`
 - [x] Revisar `JARVIS.md`
-- [x] Remover instruções perigosas como padrão
-- [x] Definir pré-checagens de ambiente
-- [x] Definir rollback simples
-
-Entregáveis:
-
-- skill revisada
-- instalador correto
-- documentação alinhada
+- [x] Criar `smoke.sh`
+- [x] Validar ambiente X11
 
 ### Slice 2. Browser-Use Operacional
 
-**Objetivo:** ter navegação real confiável sem depender de clique por coordenada.
+**Objetivo:** ter browser-use confiavel sem depender de coordenada.
 
-**Progresso do slice:** `80%`
+**Progresso do slice:** `90%`
 
 ```text
-[################----] 80%
+[##################--] 90%
 ```
 
 - [x] Validar Playwright local
-- [x] Definir fluxo padrão de navegação
-- [x] Definir fluxo padrão de screenshot
-- [ ] Definir fluxo de login guiado
-- [x] Definir política para remote debugging local
-
-Entregáveis:
-
-- guia de browser-use
-- smoke test web
-- política de uso do Chrome DevTools
+- [x] Validar screenshot web
+- [x] Definir DevTools em loopback
+- [x] Registrar baseline com `agent-browser`
+- [ ] Fechar fluxo de login guiado seguro
 
 ### Slice 3. Desktop-Use Operacional
 
-**Objetivo:** controlar desktop local apenas quando browser-use não resolver.
+**Objetivo:** manter fallback real para desktop sem virar automacao cega.
 
-**Progresso do slice:** `50%`
+**Progresso do slice:** `60%`
 
 ```text
-[##########----------] 50%
+[############--------] 60%
 ```
 
 - [x] Instalar `xdotool`, `wmctrl`, `scrot`, `xclip`, `x11-utils`
 - [x] Validar `DISPLAY`
 - [x] Validar foco de janela
+- [x] Validar screenshot local
 - [ ] Validar click seguro
-- [ ] Validar digitação segura
+- [ ] Validar digitacao segura
 - [ ] Definir limite de passos
 
-Entregáveis:
+### Slice 4. Orquestracao na Aurelia
 
-- smoke test de desktop
-- fallback operacional X11
+**Objetivo:** conectar browser, Antigravity e roteamento leve ao runtime real.
 
-### Slice 4. Orquestração na Aurelia
-
-**Objetivo:** conectar JARVIS ao runtime real da Aurelia.
-
-**Progresso do slice:** `0%`
+**Progresso do slice:** `85%`
 
 ```text
-[--------------------] 0%
+[#################---] 85%
 ```
 
-- [ ] Definir roteamento por intenção
-- [ ] Definir contrato entre planner e executor
-- [ ] Registrar políticas de segurança
-- [ ] Registrar telemetria mínima
-- [ ] Definir mensagens de falha claras
+- [x] Criar `PROJECT_PLAYBOOK.md`
+- [x] Criar skill `antigravity-gemini-operator`
+- [x] Definir matriz de roteamento
+- [x] Integrar geracao automatica de prompt `light` no Telegram
+- [x] Registrar prompts e handoff
+- [ ] Fechar handoff de ida e volta com menos retrabalho
 
-Entregáveis:
+### Slice 5. Audio e Voz
 
-- blueprint de integração
-- pontos de entrada definidos
+**Objetivo:** colocar a camada de audio no caminho certo sem gastar VRAM a toa.
 
-### Slice 5. Observabilidade e Recuperação
-
-**Objetivo:** manter controle sobre o agente quando algo sair do trilho.
-
-**Progresso do slice:** `0%`
+**Progresso do slice:** `78%`
 
 ```text
-[--------------------] 0%
+[################----] 78%
 ```
 
-- [ ] Adicionar health checks
-- [ ] Adicionar timeout por task
-- [ ] Adicionar limite de ações
-- [ ] Adicionar kill-switch
-- [ ] Adicionar logs de execução
+- [x] Registrar arquitetura Groq STT PT-BR
+- [x] Validar smoke de STT com `curl`
+- [x] Persistir transcript no pipeline local
+- [x] Registrar blueprint de voz local
+- [x] Implementar spool de audio local
+- [x] Implementar processador de fila com heartbeat
+- [x] Implementar fallback STT por comando
+- [x] Integrar spool de audio ao orquestrador real
+- [x] Expor `GET /v1/voice/status`
+- [x] Criar CLI `aurelia voice enqueue`
+- [ ] Implementar mic daemon
+- [ ] Implementar wake word
+- [ ] Implementar VAD + ring buffer
+- [ ] Implementar captura continua de microfone
 
-Entregáveis:
+### Slice 6. Memoria, Governor e Health
 
-- plano de recuperação
-- critérios de abort
+**Objetivo:** deixar o sistema controlavel e auditavel.
 
-### Slice 6. Rollout Seguro
-
-**Objetivo:** ativar por fases, sem liberar poder total de uma vez.
-
-**Progresso do slice:** `0%`
+**Progresso do slice:** `82%`
 
 ```text
-[--------------------] 0%
+[################----] 82%
 ```
 
-- [ ] Fase 1: screenshot only
-- [ ] Fase 2: browser-use only
-- [ ] Fase 3: desktop click seguro
-- [ ] Fase 4: formulários simples
-- [ ] Fase 5: fluxos compostos
+- [x] Definir contrato `bge-m3` para Qdrant
+- [x] Definir rate limits alinhados ao host
+- [x] Definir thresholds de degradacao
+- [x] Provar `/health` real no deploy sem Gemini
+- [x] Exportar metricas do gateway
+- [x] Exportar metricas operacionais do loop de voz
+- [x] Ligar Supabase como mirror opcional do audio
+- [x] Ligar Qdrant como mirror semantico opcional do audio
+- [x] Fechar governor inicial do audio no codigo principal
+- [ ] Persistir governor/breaker fora da memoria
+- [ ] Fechar source of truth compartilhada fim a fim
 
-Entregáveis:
+### Slice 7. Rollout Seguro
 
-- rollout faseado
-- checklist de aceite por fase
+**Objetivo:** ativar por fases sem quebrar o host.
 
-### Slice 7. Extensões e Aceleradores
-
-**Objetivo:** avaliar extensões úteis sem acoplar o JARVIS a plugins frágeis.
-
-**Progresso do slice:** `0%`
+**Progresso do slice:** `45%`
 
 ```text
-[--------------------] 0%
+[#########-----------] 45%
 ```
 
-- [ ] Mapear extensões úteis para Chrome
-- [ ] Mapear extensões úteis para Antigravity
-- [ ] Separar “nice to have” de “core”
-- [ ] Definir política de instalação e rollback
+- [x] Validar deploy slice sem Gemini
+- [x] Validar `cwd` live da worktree de deploy
+- [x] Validar `primary_llm` no `/health`
+- [x] Validar gateway enforcement e suite completa localmente
+- [ ] Subir `aurelia-voice.service`
+- [ ] Validar E2E de spool -> STT -> resposta no deploy
+- [ ] Validar E2E de wake word -> STT -> resposta
+- [ ] Validar Antigravity handoff fim a fim
 
-Entregáveis:
+### Slice 8. Extensoes e Aceleradores
 
-- shortlist de extensões
-- critérios de aceite
-- política de remoção rápida
+**Objetivo:** avaliar aceleradores sem contaminar o core.
 
-## Ordem de Execução Recomendada
+**Progresso do slice:** `10%`
+
+```text
+[##------------------] 10%
+```
+
+- [x] Regra definida: extensao e opcional
+- [ ] Mapear extensoes uteis para Chrome
+- [ ] Mapear extensoes uteis para Antigravity
+- [ ] Separar `nice to have` de `core`
+- [ ] Definir rollback de extensoes
+
+### Slice 9. Gateway e Roteamento Real
+
+**Objetivo:** tirar o gateway do modo documental e levar para enforcement seguro no runtime.
+
+**Progresso do slice:** `92%`
+
+```text
+[##################--] 92%
+```
+
+- [x] Criar `internal/gateway/`
+- [x] Criar `POST /v1/router/dry-run`
+- [x] Registrar matriz de roteamento e bakeoff
+- [x] Enforcar lane/modelo no runtime principal
+- [x] Aplicar guardas reais de reasoning/output
+- [x] Implementar budgets por lane
+- [x] Implementar circuit breaker por `provider:model`
+- [x] Cobrir gateway provider com testes dedicados
+- [x] Exportar telemetria do gateway
+- [x] Expor `GET /v1/router/status`
+- [ ] Validar rollout na worktree de deploy
+
+## Ordem de Execucao Recomendada
 
 ### Agora
 
-1. corrigir a skill JARVIS
-2. endurecer o instalador
-3. formalizar guardrails
+1. validar rollout do gateway na worktree de deploy
+2. implementar captura de microfone com wake word + VAD
+3. fechar smoke real do voice path em runtime
 
 ### Depois
 
-1. validar browser-use
-2. validar desktop-use
-3. integrar com o runtime da Aurelia
+1. implementar `aurelia-voice.service` ou separar mic daemon
+2. plugar `openWakeWord + Silero VAD + ring buffer`
+3. fechar E2E de voz com budget e fallback
 
-### Por último
+### Por Ultimo
 
-1. automações compostas
-2. fluxos mais ambiciosos estilo Perplexity/Jarvis
-3. refinamento de UX
+1. fechar E2E completo com Antigravity
+2. refinar extensoes/aceleradores
+3. revisar UX do operador
 
-## Testes Mínimos
+## Testes Minimos
 
-### Unitários
+### Unitarios
 
-- validação de decisão de rota
-- classificação de risco
-- limites de passo
-- política de confirmação
+- roteamento `light / medium / high-risk`
+- classificacao de risco para browser, desktop e audio
+- governor por fila e por concorrencia
+- health sem falso `200 ok`
 
-### Integração
+### Integracao
 
-- screenshot local
-- Playwright abrir página
-- Chrome DevTools local
-- `xdotool` mover e clicar em ambiente controlado
+- Playwright abrir pagina
+- screenshot web e local
+- spool de audio consumir item valido
+- Groq STT responder com transcript util
 
 ### E2E
 
-- abrir navegador
-- navegar para página de teste
-- preencher campo não sensível
-- verificar resultado
-- abortar corretamente em caso de falha
+- wake word -> fala -> transcript -> resposta
+- tarefa `light` -> prompt Antigravity -> handoff estruturado
+- tarefa CLI -> execucao nativa -> resposta registrada
 
-## Critérios de Aceite
+## Criterios de Aceite
 
-- Aurelia consegue escolher browser-use ou desktop-use corretamente
-- tarefas web simples não usam coordenadas quando DOM existe
-- tarefas desktop não rodam sem verificação
-- segredos não entram em fluxo visual por padrão
-- existe kill-switch claro
-- existe trilha curta de execução
+- Aurelia decide entre `reply`, `browser`, `cli` e `antigravity`
+- runtime ativo nao depende de Gemini API
+- `/health` prova apenas o que esta realmente em uso
+- audio nao dispara STT sem wake word/VAD
+- memoria longa fica consistente entre Supabase e Qdrant
+- existe kill-switch claro para desktop/browser
 
 ## Activity Log
 
 ### 2026-03-19
 
-- [x] Auditada a skill `jarvis-desktop-agent`
-- [x] Identificado bug de `sudo` no `install.sh`
-- [x] Definida arquitetura em slices
-- [x] Registrado blueprint inicial
-- [x] Reescritos `install.sh`, `jarvis-chrome.sh`, `SKILL.md`, `JARVIS.md`, `README.md` e `QUICK_REFERENCE.md`
-- [x] Criado `smoke.sh` para validação segura do ambiente
-- [x] Instalados `scrot`, `wmctrl`, `xclip` e `xdotool`
-- [x] Validado `DISPLAY`, enumeração de janelas e screenshot local
-- [x] Ativado Chrome DevTools isolado em `127.0.0.1:9222`
-- [x] Validado bootstrap de Chrome isolado visual e headless
-- [ ] Estabilidade de DevTools ainda insuficiente para navegação contínua
-- [x] Validado Playwright headless com Chrome do sistema em `https://example.com/`
-- [x] Registrado adendo operacional: Antigravity + subagent preview + extensões opcionais
-- [ ] Próximo passo recomendado: click e digitação seguros
+- [x] Auditada e endurecida a skill `jarvis-desktop-agent`
+- [x] Validado baseline X11 com screenshot, foco e janela
+- [x] Validado baseline de browser-use com Playwright
+- [x] Criado o blueprint do operador do Antigravity
+- [x] Criada a skill `antigravity-gemini-operator`
+- [x] Integrada a geracao automatica de prompt `light` no Telegram
+- [x] Criado o blueprint PT-BR de audio com Groq
+- [x] Criado o blueprint de voz local/JARVIS com governor
+- [x] Criado o blueprint do kit local de modelos
+- [x] Validado o deploy runtime sem Gemini na worktree `/home/will/aurelia-24x7`
+- [x] Revisada a escolha final de modelo local com foco em VRAM real: `qwen3.5:9b`
+- [x] Medido o custo de VRAM real de `qwen3.5:9b` e `qwen3.5:4b`
+- [x] Fechada a regra operacional: `1` modelo residente only
+- [x] Ligado `provider=ollama` no app com catalogo, onboarding e health reais
+- [x] Implementado o primeiro corte do gateway com `dry-run`
+- [x] Implementado gateway enforcement com budgets, breaker e status route
+- [x] Exportada telemetria Prometheus do gateway
+- [x] Implementado spool/processador de voz com heartbeat e budget diario
+- [x] Implementado fallback STT por comando e mirrors opcionais para Supabase/Qdrant
+- [x] Implementada e testada a CLI `aurelia voice enqueue`
+- [x] Suite `go test ./... -count=1` voltou verde apos os cortes de gateway e voz
 
 ## Task Board
 
 ### Doing
 
-- [x] Criar blueprint cirúrgico
-- [x] Estruturar progresso e slices
-- [x] Registrar log operacional
-- [x] Hardening inicial da skill JARVIS
-- [x] Validar ambiente base X11
+- [x] Recuperar o `plan.md` como centro de verdade
+- [x] Consolidar slices ja executados
+- [x] Registrar a direcao sem Gemini no runtime ativo
 
 ### Next
 
-- [ ] Validar click e digitação seguros
-- [ ] Definir smoke test web de login guiado
-- [ ] Validar click e digitação seguros
+- [ ] Validar rollout do gateway na worktree de deploy
+- [ ] Fechar smoke de voz no runtime local com config real
+- [ ] Implementar captura de microfone com wake word + VAD
 
 ### Later
 
-- [ ] Integrar ao runtime da Aurelia
-- [ ] Adicionar observabilidade e replay curto
-- [ ] Expandir para fluxos compostos
+- [ ] Fechar click e digitacao seguros
+- [ ] Persistir governor/breaker fora da memoria
+- [ ] Fechar E2E com Antigravity e browser-use
 
-## Como Vou Anotar Durante a Execução
+## Proxima Acao Cirurgica
 
-Sempre que uma etapa for executada:
+Se voce mandar executar o proximo corte, a ordem certa agora e:
 
-- marcar o item com `[x]`
-- atualizar a barra de progresso geral
-- atualizar a barra do slice afetado
-- registrar uma linha no `Activity Log`
-- deixar o próximo passo explícito
+1. portar gateway + voice processor para a worktree de deploy
+2. validar `GET /v1/router/status`, `/metrics` e `/v1/voice/status` live
+3. implementar captura real de microfone com wake word + VAD
+4. provar o comportamento com health, logs e evidencia
 
-## Próxima Ação Cirúrgica
+## Evidencia Atual
 
-Se você mandar executar, eu começo por este corte:
-
-1. corrigir `install.sh`
-2. endurecer `SKILL.md` e `JARVIS.md`
-3. criar smoke tests mínimos
-4. registrar tudo neste `plan.md`
-
-## Evidência Atual
-
-- `smoke.sh` passou para `curl`, `jq`, `scrot`, `wmctrl`, `xclip`, `xdotool` e `DISPLAY`
-- `wmctrl -l` listou janelas reais
-- `xdotool getactivewindow` respondeu corretamente
-- `scrot` gerou screenshot válido em `/tmp/jarvis-smoke.png`
-- `jarvis-chrome.sh start-local` ativou DevTools em `127.0.0.1:9222` com perfil isolado
-- `jarvis-chrome.sh start-headless` também ativou DevTools em loopback com perfil isolado
-- o processo Chrome isolado não se manteve estável o suficiente para fluxo contínuo de `navigate` via `curl`
-- conclusão operacional: DevTools helper serve como bootstrap complementar, mas o baseline de browser-use deve migrar para Playwright
-- Playwright headless validou `https://example.com/` com título `Example Domain`
-- Playwright gerou screenshot válido em `/tmp/jarvis-playwright-smoke.png`
+- [aurelia_master_blueprint_20260319.md](/home/will/aurelia/docs/aurelia_master_blueprint_20260319.md) consolida arquitetura, rollout e testes de tudo
+- [aurelia_general_blueprint_20260319.md](/home/will/aurelia/docs/aurelia_general_blueprint_20260319.md) consolida o restante em um plano unico
+- [antigravity_gemini_operator_blueprint.md](/home/will/aurelia/docs/antigravity_gemini_operator_blueprint.md) existe e define o contrato do chat leve
+- [groq_ptbr_audio_blueprint.md](/home/will/aurelia/groq_ptbr_audio_blueprint.md) existe e fecha a direcao de STT
+- [jarvis_local_voice_blueprint_20260319.md](/home/will/aurelia/docs/jarvis_local_voice_blueprint_20260319.md) existe e fecha o desenho local
+- [gateway_rollout_blueprint_20260319.md](/home/will/aurelia/docs/gateway_rollout_blueprint_20260319.md) existe e fecha o restante do gateway
+- o deploy runtime live foi provado sem `gemini_api` no `/health` na worktree de deploy
+- o LLM remoto ativo esperado segue `openrouter/minimax/minimax-m2.7`
+- o repositório agora já expõe `GET /metrics`, `GET /v1/router/status` e `GET /v1/voice/status`

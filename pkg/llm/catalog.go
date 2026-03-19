@@ -63,6 +63,12 @@ func ListModels(ctx context.Context, provider string, creds ModelCatalogCredenti
 			return models, nil
 		}
 		return fallbackModels("kilo"), nil
+	case "ollama":
+		models, err := listOllamaModels(ctx, ollamaModelsURL, http.DefaultClient)
+		if err == nil && len(models) != 0 {
+			return models, nil
+		}
+		return fallbackModels("ollama"), nil
 	case "openrouter":
 		return listOpenRouterModels(ctx, creds.OpenRouterAPIKey, openRouterModelsURL, http.DefaultClient)
 	case "zai":
@@ -110,6 +116,14 @@ func fallbackModels(provider string) []ModelOption {
 			{ID: "gemini-2.5-pro", Name: "Gemini 2.5 Pro"},
 			{ID: "grok-4-fast", Name: "Grok 4 Fast"},
 			{ID: "qwen3-coder-plus", Name: "Qwen3 Coder Plus"},
+		}
+	case "ollama":
+		return []ModelOption{
+			{ID: "qwen3.5:9b", Name: "Qwen 3.5 9B"},
+			{ID: "qwen3.5:4b", Name: "Qwen 3.5 4B"},
+			{ID: "qwen3.5:27b-q4_K_M", Name: "Qwen 3.5 27B Q4_K_M"},
+			{ID: "gemma3:27b-it-q4_K_M", Name: "Gemma 3 27B IT Q4_K_M"},
+			{ID: "qwen3-coder:30b", Name: "Qwen3 Coder 30B"},
 		}
 	case "openrouter":
 		return []ModelOption{

@@ -15,10 +15,11 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 ## 2. Hierarquia de Autoridade
 <authority-hierarchy>
 1.  **AGENTS.md** (Este arquivo) — Fonte primária de verdade.
-2.  **PRD.md** — Intenção do projeto e roadmap.
-3.  **.agents/rules/** — Regras operacionais para o Antigravity.
-4.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
-5.  **.context/** — Memória, evidências e estado do projeto.
+2.  **`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`** — Adaptadores finos por motor, sempre subordinados a este contrato.
+3.  **PRD.md** — Intenção do projeto e roadmap.
+4.  **.agents/rules/** — Regras operacionais para o Antigravity.
+5.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
+6.  **.context/** — Memória, evidências e estado do projeto.
 </authority-hierarchy>
 
 ## 3. Papéis dos Agentes
@@ -37,12 +38,28 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 - **Responsabilidade**: Refatorações e correções rápidas.
 </agent-roles>
 
+## 3.1 Adaptadores do Repositório
+
+Os arquivos abaixo existem para alinhar motores e UIs diferentes ao mesmo contrato:
+
+- `CLAUDE.md`
+- `CODEX.md`
+- `GEMINI.md`
+- `MODEL.md`
+
+Regra:
+
+- nenhum desses arquivos pode contradizer `AGENTS.md`
+- todos devem apontar para o mesmo índice de governança e ADR
+- todos devem operar sob o mesmo padrão de documentação por slice
+
 ## 4. Regras Centrais de Operação
 
 <core-rules>
 - **Descoberta Local Primeiro**: Inspecione `AGENTS.md`, `.agents/rules/` e `.context/` antes de agir.
 - **Isolamento de Worktree**: Tarefas não-triviais DEVEM ser feitas em branches/worktrees isoladas.
-- **Higiene de Contexto**: Ao concluir uma tarefa, atualize o `.context/` via MCP `ai-context` para garantir a persistência da memória de trabalho.
+- **ADR por Slice**: Toda mudança estrutural ou slice não-trivial DEVE nascer com ADR em `docs/adr/` ou estar registrada no backlog oficial de slices pendentes.
+- **Higiene de Contexto**: Ao concluir uma mudança estrutural, slice não trivial, handoff relevante ou preparação para merge, atualize o `.context/` via `sync-ai-context` para garantir a persistência da memória de trabalho.
 - **Anti-Alucinação**: Nunca declare sucesso sem prova real (logs, testes, capturas).
 - **Sem Commits Diretos**: Use o workflow de `review-merge` para a branch principal.
 </core-rules>
@@ -57,4 +74,5 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 ## AI Context References
 - Documentation index: `.context/docs/README.md`
 - Agent playbooks: `.context/agents/README.md`
-
+- Governance index: `docs/REPOSITORY_CONTRACT.md`
+- ADR index: `docs/adr/README.md`

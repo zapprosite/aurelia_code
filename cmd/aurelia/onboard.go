@@ -130,7 +130,7 @@ func runOnboardPrompt(stdin io.Reader, stdout io.Writer, resolver *runtime.PathR
 		if err := runOpenAIDeviceAuthCommand(stdin, stdout); err != nil {
 			return err
 		}
-	} else {
+	} else if providerRequiresLLMKey(*current) {
 		currentKey := currentLLMKey(*current)
 		currentKey, _ = promptString(reader, stdout, llmKeyLabel(current.LLMProvider), currentKey, true)
 		setCurrentLLMKey(current, currentKey)
@@ -301,6 +301,8 @@ func (u *onboardingUI) View(resolver *runtime.PathResolver) string {
 		_, _ = fmt.Fprintf(&b, "LLM model: %s\n", u.cfg.LLMModel)
 		if usesOpenAICodex(u.cfg) {
 			_, _ = fmt.Fprintf(&b, "OpenAI Codex login: run `aurelia auth openai`\n")
+		} else if !providerRequiresLLMKey(u.cfg) {
+			_, _ = fmt.Fprintf(&b, "LLM access: local Ollama endpoint (127.0.0.1:11434)\n")
 		} else {
 			_, _ = fmt.Fprintf(&b, "%s: %s\n", llmKeyLabel(u.cfg.LLMProvider), maskSecret(currentLLMKey(u.cfg)))
 		}
@@ -562,6 +564,9 @@ func nextOnboardStep(cfg config.EditableConfig, step onboardStep) onboardStep {
 		if cfg.LLMProvider == "openai" {
 			return stepOpenAIAuthMode
 		}
+		if cfg.LLMProvider == "ollama" {
+			return stepLLMModel
+		}
 		return stepLLMKey
 	case stepOpenAIAuthMode:
 		if usesOpenAICodex(cfg) {
@@ -605,6 +610,9 @@ func previousOnboardStep(cfg config.EditableConfig, step onboardStep) onboardSte
 	case stepLLMModel:
 		if cfg.LLMProvider == "openai" && usesOpenAICodex(cfg) {
 			return stepOpenAICodexLogin
+		}
+		if cfg.LLMProvider == "ollama" {
+			return stepLLMProvider
 		}
 		return stepLLMKey
 	case stepSTTProvider:
@@ -663,11 +671,11 @@ func selectedProviderIndex(provider string) int {
 }
 
 func llmProviderChoices() []string {
-	return []string{"kimi", "anthropic", "google", "kilo", "openrouter", "zai", "alibaba", "openai"}
+	return []string{"kimi", "anthropic", "google", "kilo", "ollama", "openrouter", "zai", "alibaba", "openai"}
 }
 
 func llmProviderLabels() []string {
-	return []string{"Kimi", "Anthropic", "Google", "Kilo Code", "OpenRouter", "Z.ai", "Alibaba", "OpenAI"}
+	return []string{"Kimi", "Anthropic", "Google", "Kilo Code", "Ollama (local)", "OpenRouter", "Z.ai", "Alibaba", "OpenAI"}
 }
 
 func llmKeyLabel(provider string) string {
@@ -678,6 +686,8 @@ func llmKeyLabel(provider string) string {
 		return "Google API key"
 	case "kilo":
 		return "Kilo API key"
+	case "ollama":
+		return "Ollama local runtime"
 	case "openrouter":
 		return "OpenRouter API key"
 	case "zai":
@@ -695,6 +705,13 @@ func usesOpenAICodex(cfg config.EditableConfig) bool {
 	return cfg.LLMProvider == "openai" && cfg.OpenAIAuthMode == "codex"
 }
 
+func providerRequiresLLMKey(cfg config.EditableConfig) bool {
+	if usesOpenAICodex(cfg) {
+		return false
+	}
+	return cfg.LLMProvider != "ollama"
+}
+
 func llmKeyHelp(provider string) string {
 	switch provider {
 	case "anthropic":
@@ -703,6 +720,8 @@ func llmKeyHelp(provider string) string {
 		return "Used for the Google Gemini LLM runtime."
 	case "kilo":
 		return "Used for the Kilo Gateway LLM runtime."
+	case "ollama":
+		return "No API key required. Uses the local Ollama endpoint on 127.0.0.1:11434."
 	case "openrouter":
 		return "Used for the OpenRouter LLM runtime."
 	case "zai":
@@ -724,6 +743,8 @@ func currentLLMKey(cfg config.EditableConfig) string {
 		return cfg.GoogleAPIKey
 	case "kilo":
 		return cfg.KiloAPIKey
+	case "ollama":
+		return ""
 	case "openrouter":
 		return cfg.OpenRouterAPIKey
 	case "zai":
@@ -745,6 +766,8 @@ func setCurrentLLMKey(cfg *config.EditableConfig, value string) {
 		cfg.GoogleAPIKey = value
 	case "kilo":
 		cfg.KiloAPIKey = value
+	case "ollama":
+		return
 	case "openrouter":
 		cfg.OpenRouterAPIKey = value
 	case "zai":
