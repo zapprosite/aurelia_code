@@ -1,0 +1,40 @@
+{
+  "adr_id": "ADR-20260319-extensions-governance",
+  "title": "Extensions Governance",
+  "status": "accepted",
+  "phase": "done",
+  "progress": 100,
+  "goal": "Garantir que extensoes nao entrem como dependencia do core do runtime.",
+  "scope": [
+    "matriz de extensoes",
+    "core vs nice-to-have",
+    "rollback"
+  ],
+  "done_definition": [
+    "documento de matriz criado",
+    "ADR aceita",
+    "plan/backlog atualizados"
+  ],
+  "next_actions": [
+    "avaliar manualmente extensoes so depois do deploy gateway+voice"
+  ],
+  "simulation_commands": [
+    "n/a"
+  ],
+  "test_commands": [
+    "revisao documental"
+  ],
+  "curl_checks": [],
+  "fallback_commands": [
+    "remover extensao do perfil isolado"
+  ],
+  "evidence": [
+    "runtime continua sem dependencia de extensao"
+  ],
+  "blockers": [],
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "Extensions governance ja foi aceita. Nao instale extensoes no core; so reabra esta slice se o deploy gateway+voice estiver verde e houver um caso concreto para um perfil opcional.",
+    "last_updated": "2026-03-19T19:28:00-03:00"
+  }
+}

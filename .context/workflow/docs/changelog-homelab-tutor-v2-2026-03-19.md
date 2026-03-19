@@ -9,6 +9,13 @@ Criar uma base profissional para a Aurelia operar como tutor do homelab com:
 - runbooks executáveis
 - memória operacional
 
+## Runtime Closure Added Later In The Day
+
+- Fechado o slice local de captura real de voz com `openWakeWord + VAD` via `scripts/voice-capture-openwakeword.py`, wrapper shell e venv isolado em `~/.aurelia/voice-capture/venv`.
+- Fechado o smoke local de captura sem falso positivo em silêncio com `bash ./scripts/voice-capture-smoke.sh`.
+- Persistido o state do gateway em SQLite (`gateway_route_states`) com rollover diário e persistido o espelho local de transcripts em `voice_events`.
+- Aceita a ADR de governança de extensões; o core do runtime continua sem dependência de extensões.
+
 ## External Skills Installed
 
 - `incident-response`

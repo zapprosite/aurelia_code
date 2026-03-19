@@ -12,10 +12,10 @@ scope: local-voice-browser-antigravity-terminal
 
 ## Status Geral
 
-**Progresso do plano:** `96%`
+**Progresso do plano:** `97%`
 
 ```text
-[###################-] 96%
+[###################-] 97%
 ```
 
 Estado atual:
@@ -37,9 +37,9 @@ Estado atual:
 - [x] Mirrors opcionais de transcript para Supabase + Qdrant implementados
 - [x] CLI `aurelia voice enqueue` implementada e testada
 - [x] Capture worker com heartbeat, health e spool integration implementado
-- [ ] Mic daemon com wake word implementado
+- [x] Mic daemon com wake word implementado
 - [ ] Desktop click/digitacao seguros implementados
-- [ ] Captura de microfone com wake word + VAD implementada
+- [x] Captura de microfone com wake word + VAD implementada
 
 ## Objetivo
 
@@ -248,10 +248,10 @@ MIC
 
 **Objetivo:** colocar a camada de audio no caminho certo sem gastar VRAM a toa.
 
-**Progresso do slice:** `78%`
+**Progresso do slice:** `90%`
 
 ```text
-[################----] 78%
+[##################--] 90%
 ```
 
 - [x] Registrar arquitetura Groq STT PT-BR
@@ -264,19 +264,19 @@ MIC
 - [x] Integrar spool de audio ao orquestrador real
 - [x] Expor `GET /v1/voice/status`
 - [x] Criar CLI `aurelia voice enqueue`
-- [ ] Implementar mic daemon
-- [ ] Implementar wake word
-- [ ] Implementar VAD + ring buffer
-- [ ] Implementar captura continua de microfone
+- [x] Implementar mic daemon
+- [x] Implementar wake word
+- [x] Implementar VAD + buffer de captura
+- [x] Implementar captura continua de microfone
 
 ### Slice 6. Memoria, Governor e Health
 
 **Objetivo:** deixar o sistema controlavel e auditavel.
 
-**Progresso do slice:** `82%`
+**Progresso do slice:** `92%`
 
 ```text
-[################----] 82%
+[##################--] 92%
 ```
 
 - [x] Definir contrato `bge-m3` para Qdrant
@@ -288,7 +288,7 @@ MIC
 - [x] Ligar Supabase como mirror opcional do audio
 - [x] Ligar Qdrant como mirror semantico opcional do audio
 - [x] Fechar governor inicial do audio no codigo principal
-- [ ] Persistir governor/breaker fora da memoria
+- [x] Persistir governor/breaker fora da memoria
 - [ ] Fechar source of truth compartilhada fim a fim
 
 ### Slice 7. Rollout Seguro
@@ -314,17 +314,17 @@ MIC
 
 **Objetivo:** avaliar aceleradores sem contaminar o core.
 
-**Progresso do slice:** `10%`
+**Progresso do slice:** `70%`
 
 ```text
-[##------------------] 10%
+[##############------] 70%
 ```
 
 - [x] Regra definida: extensao e opcional
-- [ ] Mapear extensoes uteis para Chrome
-- [ ] Mapear extensoes uteis para Antigravity
-- [ ] Separar `nice to have` de `core`
-- [ ] Definir rollback de extensoes
+- [x] Mapear extensoes uteis para Chrome
+- [x] Mapear extensoes uteis para Antigravity
+- [x] Separar `nice to have` de `core`
+- [x] Definir rollback de extensoes
 
 ### Slice 9. Gateway e Roteamento Real
 
@@ -423,6 +423,9 @@ MIC
 - [x] Implementado spool/processador de voz com heartbeat e budget diario
 - [x] Implementado fallback STT por comando e mirrors opcionais para Supabase/Qdrant
 - [x] Implementada e testada a CLI `aurelia voice enqueue`
+- [x] Integrado capturador real `openWakeWord + VAD` ao contrato de captura
+- [x] Smoke local de voz sem falso positivo em silêncio
+- [x] Persistidos gateway breaker/budget state e voice_events em SQLite local
 - [x] Suite `go test ./... -count=1` voltou verde apos os cortes de gateway e voz
 
 ## Task Board

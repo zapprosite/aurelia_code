@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -149,5 +150,36 @@ func TestProviderStatusHandler_ReturnsSnapshot(t *testing.T) {
 	}
 	if payload.Routes["local"].Requests != 2 {
 		t.Fatalf("routes.local.requests = %d", payload.Routes["local"].Requests)
+	}
+}
+
+func TestSQLiteStateStore_PersistsAcrossReload(t *testing.T) {
+	t.Parallel()
+
+	store := newSQLiteStateStore(filepath.Join(t.TempDir(), "gateway.db"))
+	if store == nil {
+		t.Fatal("expected sqlite state store")
+	}
+	defer func() { _ = store.Close() }()
+
+	state := routeState{
+		Requests:          3,
+		Failures:          1,
+		ConsecutiveFails:  1,
+		BreakerState:      "half-open",
+		LastError:         "boom",
+		LastDecisionModel: "qwen3.5:9b",
+	}
+	if err := store.Save("remote_structured", state); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	loaded, err := store.Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	got := loaded["remote_structured"]
+	if got.Requests != 3 || got.Failures != 1 || got.BreakerState != "half-open" {
+		t.Fatalf("loaded state = %+v", got)
 	}
 }
