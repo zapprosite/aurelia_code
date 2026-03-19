@@ -191,3 +191,22 @@ Direcao registrada:
 - a skill tambem fica espelhada em `.agents/skills/` para governanca versionada
 - Gemini Flash / Minimax 2.7 no Antigravity vira executor de microtarefas
 - Codex / CLI continua como executor principal, validador e agente de commit
+
+## Telegram Light Delegation Slice
+
+Foi ligado ao pipeline real do Telegram um atalho para tarefas `light`:
+
+- `internal/telegram/antigravity_prompt.go`
+- `internal/telegram/antigravity_prompt_test.go`
+- `internal/telegram/input_pipeline.go`
+
+Comportamento:
+
+- a entrada do usuario e classificada por heuristica leve
+- se a tarefa for `light`, a Aurelia gera automaticamente um prompt estruturado para o chat do Antigravity
+- a resposta evita passar pelo loop completo quando a melhor acao e delegar pesquisa curta, config pequena ou revisao de diff
+- tarefas com sinais de alto risco continuam fora desse atalho
+
+Prova:
+
+- `go test ./internal/telegram` passou

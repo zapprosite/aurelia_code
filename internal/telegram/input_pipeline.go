@@ -41,6 +41,11 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 		logger.Warn("failed to persist incoming context", slog.Any("err", err))
 	}
 
+	if delegation := maybeBuildAntigravityDelegationPrompt(session.text); delegation != nil {
+		bc.persistAssistantAnswer(session, delegation.Prompt)
+		return bc.deliverFinalAnswer(c, delegation.Prompt, false)
+	}
+
 	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
 	if err != nil {
 		_ = SendError(bc.bot, c.Chat(), err.Error())
