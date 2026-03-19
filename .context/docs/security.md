@@ -1,14 +1,51 @@
-# Security
+# Security & Compliance Notes
 
-Segurança e privacidade são fundamentais para um agente que opera em ambiente local.
+Security in this repository is a mix of runtime constraints and workflow governance. The product runtime is local-first and usually user-scoped, while the repository itself adds operational rules through `AGENTS.md` and `.agents/rules/`.
 
-## Princípios de Segurança
-- **Least Privilege**: O daemon roda como usuário, nunca como root.
-- **Data Redaction**: Logs estruturados expurgam valores sensíveis (API keys, argumentos confidenciais).
-- **Environment Isolation**: Preferência por comandos controlados e caminhos explícitos via `AURELIA_HOME`.
-- **Secret Management**: Chaves de API gerenciadas via `app.json` com permissões 0600.
+## Authentication & Authorization
 
-## Auditoria
-- Revisão proativa de `AGENTS.md` e regras do repositório antes de execuções de risco.
-- Validação de comandos (`run_command`) antes de execução automática quando em níveis de alto risco.
-- Auditoria de `.gitignore` para evitar vazamento de credenciais locais em commits.
+Authentication is provider-specific and configured through [`config.AppConfig`](../../internal/config/config.go). The runtime can authenticate against Telegram, LLM providers, Groq STT and optional MCP servers. Telegram access is constrained by `telegram_allowed_user_ids`, which acts as the primary authorization boundary for chat-driven control.
+
+OpenAI also supports a separate auth mode field, `openai_auth_mode`, which distinguishes direct API key usage from Codex CLI-based flows.
+
+## Secrets & Sensitive Data
+
+Sensitive values currently live primarily in the instance-local config file `~/.aurelia/config/app.json`. That includes provider API keys and Telegram credentials. The repository should not contain those values; `gitleaks.yml` exists in CI to help catch accidental commits.
+
+Operationally relevant sensitive surfaces include:
+
+- provider API keys in `app.json`
+- Telegram bot token and allowed user IDs
+- MCP headers and environment variables in `mcp_servers.json`
+- local keyring or desktop secret storage, when used by surrounding tooling
+
+Logs should go through [`internal/observability/observability.go`](../../internal/observability/observability.go), which provides redaction helpers to reduce accidental leakage.
+
+## Runtime Guardrails
+
+- The daemon is expected to run as the user, not as `root`.
+- The runtime enforces single-instance execution with a lockfile.
+- MCP config is normalized so explicitly disabled servers stay disabled.
+- Tool execution is centralized in `internal/tools`, which is the right place for command and service safety restrictions.
+
+## Compliance & Policies
+
+- `AGENTS.md` defines authority hierarchy and risk tiers.
+- `.agents/rules/03-tiers-autonomy.md` marks network, secrets and deploy actions as high-risk operations.
+- `.github/workflows/gitleaks.yml` and `.github/workflows/govulncheck.yml` provide baseline secret and dependency scanning in CI.
+
+## Incident Response
+
+There is no separate formal incident-response package in the repository today. In practice, response evidence is captured through:
+
+- structured logs under `~/.aurelia/logs/`
+- systemd service status and journal entries
+- workflow notes and changelogs under `.context/workflow/`
+
+For runtime regressions, the expected pattern is diagnose locally, collect proof, apply the minimal fix, and record the outcome in `.context/`.
+
+## Related Resources
+
+- [Architecture Notes](./architecture.md)
+- [Development Workflow](./development-workflow.md)
+- [Workflow changelog](../workflow/docs/changelog-post-reboot-validation-2026-03-19.md)

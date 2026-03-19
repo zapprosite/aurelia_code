@@ -1,26 +1,95 @@
-# Architecture: Aurelia
+# Architecture Notes
 
-Aurelia segue um padrão de **Monolito Modular** em Go, organizado para separação clara de responsabilidades entre interface, domínio e infraestrutura.
+The current Aurelia codebase is a modular Go monolith that runs as a user-scoped autonomous agent. Its architecture centers on a single process that wires together configuration, memory, persona construction, LLM access, tool execution, Telegram I/O, scheduling and optional MCP integrations.
 
-## Estrutura de Pastas
-- `cmd/aurelia/`: Ponto de entrada, composição da aplicação e fiação (wiring) de dependências.
-- `internal/agent/`: Lógica central do loop ReAct, registro de ferramentas e gestão de times.
-- `internal/runtime/`: Resolução de caminhos, bootstrap de diretórios e lock de instância única.
-- `internal/observability/`: Logging estruturado (`slog`), expurgação de dados e métricas.
-- `internal/telegram/`: Adaptadores de entrada e saída para a API do Telegram.
-- `internal/memory/`: Persistência de estado operacional e camadas de memória em SQLite.
-- `internal/persona/`: Gestão de identidade e construção de prompts.
-- `pkg/llm/`: Provedores de modelos de linguagem (Anthropic, Google, OpenAI, etc.).
-- `pkg/stt/`: Serviços de transcrição de áudio (Groq Whisper).
+## System Architecture Overview
 
-## Ciclo de Vida do Processo
-1. **Bootstrap**: Garante que `~/.aurelia/` exista.
-2. **Lock**: Adquire `~/.aurelia/instance.lock` gravando PID, Comando e Timestamp.
-3. **Configure**: Inicializa logging estruturado e bridge de stdlog.
-4. **Wiring**: Instancia componentes e registra ferramentas.
-5. **Run**: Inicia loops de I/O (Telegram) e agendamentos.
-6. **Shutdown**: Captura sinais de interrupção, finaliza processos pendentes e libera o lock.
+At runtime, the process starts from [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go), bootstraps instance paths and config in [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go), registers tools in [`cmd/aurelia/wiring.go`](../../cmd/aurelia/wiring.go), and then starts three main surfaces:
 
-## Gestão de Estado
-- O estado operacional é persistido em bancos SQLite localizados em `~/.aurelia/data/`.
-- Configurações canônicas residem em `~/.aurelia/config/app.json`.
+- the Telegram bot controller
+- the cron scheduler
+- the HTTP health server
+
+The deployment model is local-first. State lives under `~/.aurelia/`, the runtime is expected to be supervised by systemd, and the repository itself carries governance and workflow metadata alongside product code.
+
+## Architectural Layers
+
+- **Entrypoint & wiring**: `cmd/aurelia/` composes the runtime and handles CLI subcommands.
+- **Execution core**: `internal/agent/` owns the ReAct loop, tool contracts, team orchestration and recovery.
+- **Interface layer**: `internal/telegram/` translates Telegram updates into internal messages and renders responses back.
+- **Runtime services**: `internal/runtime/`, `internal/config/`, `internal/observability/`, `internal/health/` handle bootstrap, config, lockfile, logging and health.
+- **State & identity**: `internal/memory/` and `internal/persona/` store durable context and build prompts.
+- **Automation layer**: `internal/cron/`, `internal/skill/`, `internal/tools/`, `internal/mcp/` implement scheduled work, skills, native tools and external MCP tools.
+- **Provider layer**: `pkg/llm/` and `pkg/stt/` adapt third-party model and transcription APIs.
+
+## Detected Design Patterns
+
+| Pattern | Confidence | Locations | Description |
+| --- | --- | --- | --- |
+| Composition Root | High | [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go) | All major runtime dependencies are instantiated in one bootstrap function. |
+| Registry Pattern | High | [`internal/agent/provider.go`](../../internal/agent/provider.go), [`internal/tools/definitions.go`](../../internal/tools/definitions.go) | Tools are registered dynamically and exposed as LLM-callable capabilities. |
+| Adapter Pattern | High | [`internal/telegram/`](../../internal/telegram), [`pkg/llm/`](../../pkg/llm), [`pkg/stt/`](../../pkg/stt) | External APIs are wrapped behind internal interfaces. |
+| Repository / Store Pattern | High | [`internal/memory/`](../../internal/memory), [`internal/cron/store.go`](../../internal/cron/store.go), [`internal/agent/task_store.go`](../../internal/agent/task_store.go) | SQLite-backed stores isolate persistence concerns. |
+| Supervisor / Recovery Pattern | Medium | [`internal/agent/master_team_service_recovery.go`](../../internal/agent/master_team_service_recovery.go), [`internal/runtime/instance_lock.go`](../../internal/runtime/instance_lock.go) | The runtime enforces single-instance execution and supports team recovery. |
+
+## Entry Points
+
+- [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go)
+- [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go)
+- [`cmd/aurelia/wiring.go`](../../cmd/aurelia/wiring.go)
+- [`cmd/aurelia/onboard.go`](../../cmd/aurelia/onboard.go)
+- [`scripts/build.sh`](../../scripts/build.sh)
+- [`scripts/install-user-daemon.sh`](../../scripts/install-user-daemon.sh)
+
+## Public API
+
+| Symbol | Type | Location |
+| --- | --- | --- |
+| `Loop` | struct | [`internal/agent/loop.go`](../../internal/agent/loop.go) |
+| `ToolRegistry` | struct | [`internal/agent/provider.go`](../../internal/agent/provider.go) |
+| `AppConfig` | struct | [`internal/config/config.go`](../../internal/config/config.go) |
+| `EditableConfig` | struct | [`internal/config/config.go`](../../internal/config/config.go) |
+| `PathResolver` | struct | [`internal/runtime/resolver.go`](../../internal/runtime/resolver.go) |
+| `MemoryManager` | struct | [`internal/memory/memory.go`](../../internal/memory/memory.go) |
+| `CanonicalIdentityService` | struct | [`internal/persona/canonical_service.go`](../../internal/persona/canonical_service.go) |
+| `Manager` | struct | [`internal/mcp/manager.go`](../../internal/mcp/manager.go) |
+| `Service` | struct | [`internal/cron/service.go`](../../internal/cron/service.go) |
+| `Server` | struct | [`internal/health/server.go`](../../internal/health/server.go) |
+
+## Internal System Boundaries
+
+`internal/telegram` should stay as an adapter layer, not become the source of truth for orchestration rules. `internal/agent` owns the reasoning loop and team execution. `internal/tools` defines the capabilities surfaced to the LLM, while `internal/mcp` is responsible only for optional external tool transport. `internal/persona` and `internal/memory` own identity and long-term context, not the interface layer.
+
+## External Service Dependencies
+
+- **Telegram Bot API** — primary interaction channel
+- **LLM providers** — Anthropic, Google, Kimi, Kilo, OpenAI, OpenRouter, ZAI, Alibaba
+- **Groq** — speech-to-text backend
+- **MCP servers** — optional local or remote tools loaded from JSON config
+- **systemd** — supported long-running supervision model
+
+## Key Decisions & Trade-offs
+
+The project favors a single deployable process over split microservices. That keeps local operation simple, but it concentrates many responsibilities in the composition root and raises the importance of clear internal boundaries. Optional MCP integration is intentionally non-fatal: if MCP config is missing or disabled, the runtime still boots.
+
+## Risks & Constraints
+
+- The composition root is broad and accumulates boot responsibilities quickly.
+- Many integrations are environment-driven, so config drift can surface at startup.
+- Telegram remains the dominant UX surface; local CLI flows are mostly onboarding and auth support.
+- `.context/docs/codebase-map.json` is currently sparse, so prose docs remain more useful than the machine summary.
+
+## Top Directories Snapshot
+
+- `cmd/` — `8` files
+- `internal/` — `154` files
+- `pkg/` — `27` files
+- `scripts/` — `11` files
+- `docs/` — `18` files
+- `e2e/` — `2` files
+
+## Related Resources
+
+- [Project Overview](./project-overview.md)
+- [Data Flow & Integrations](./data-flow.md)
+- [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)

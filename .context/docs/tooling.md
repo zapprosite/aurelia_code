@@ -1,40 +1,56 @@
-# Tooling
+# Tooling & Productivity Guide
 
-A infraestrutura de desenvolvimento do Aurelia é minimalista e eficiente.
+The day-to-day tooling for this repository is intentionally simple: Go, Bash, systemd, SQLite-backed local state and a small set of operational scripts. Productivity comes more from disciplined workflows than from heavy framework scaffolding.
 
-## Core Stack
-- **Go 1.25+**: Linguagem principal do runtime.
-- **SQLite**: Persistência local (modernc.org/sqlite).
-- **slog**: Logging estruturado nativo de Go.
-- **Systemd**: Gestão de processos (daemon de usuário).
+## Required Tooling
 
-## Ferramentas de Scripting
-- **Bash**: Scripts de build, deploy e monitoramento (`scripts/`).
-- **Sed**: Transformação de templates de unit services.
+- **Go 1.25+** — builds and tests the runtime
+- **Bash** — required for the scripts in [`scripts/`](../../scripts)
+- **systemd user services** — expected supervision path for the long-running daemon
+- **curl / jq** — useful for health checks and JSON inspection
+- **npm / npx** — needed when MCP servers are launched through Node-based commands
+- **GitHub Actions awareness** — contributors should understand the active CI workflows
 
-## Integrações (Externas)
-- **Telegram Bot API**: Interface de usuário.
-- **LLM Providers**: Google Gemini, Anthropic Claude, OpenAI, etc.
-- **Groq API**: Transcrição de áudio via Whisper.
-- **MCP**: Model Context Protocol para suporte a ferramentas externas.
+## Recommended Automation
 
-## MCP Servers Status (Real Estado em 2026-03-18)
+Key scripts shipped in the repository:
 
-**HTTP MCPs — Funcionam sem deps:**
-- `cloudflare-api` ✅ — Requere token CLOUDFLARE_API_TOKEN
-- `cloudflare-observability` ✅ — Requere conta autenticada
-- `cloudflare-radar` ✅ — Public API, sem token obrigatório
+- [`scripts/build.sh`](../../scripts/build.sh) — builds the Linux binary
+- [`scripts/install-user-daemon.sh`](../../scripts/install-user-daemon.sh) — installs and restarts the user daemon
+- [`scripts/daemon-status.sh`](../../scripts/daemon-status.sh) — shows service status
+- [`scripts/daemon-logs.sh`](../../scripts/daemon-logs.sh) — tails daemon logs
+- [`scripts/health-check.sh`](../../scripts/health-check.sh) — homelab/system health snapshot
+- [`scripts/smoke-test-homelab.sh`](../../scripts/smoke-test-homelab.sh) — smoke guidance for end-to-end validation
+- [`scripts/sync-ai-context.sh`](../../scripts/sync-ai-context.sh) — refreshes `ai-context` state and regenerates `.context/docs/codebase-map.json`
 
-**Stdio MCPs — Dependem de npx/binários:**
-- `ai-context` — Requere `@anthropic-ai/ai-context` via npm ou instalado
-- `playwright` — Requere binários Chromium (150MB+)
-- `filesystem` — Requere MCP.js rodando
-- `context7` — Requere biblioteca privada
-- `postgres` — Requere `psql` ou driver native
-- `qdrant` — Requere cliente Qdrant ou curl para :6333
-- `github` — Requere token GITHUB_TOKEN
+Recommended local loop:
 
-**Bootstrap Policy:**
-- Desabilitar MCPs se faltar binário, token ou permissão → daemon continua estável
-- Reabilitar apenas após validar dependência real
-- Logs do daemon em `~/.cache/aurelia/daemon.log`
+1. change code in an isolated branch or worktree
+2. run `go test ./...`
+3. rebuild with `./scripts/build.sh`
+4. run `./scripts/sync-ai-context.sh`
+5. validate the runtime path you changed
+6. update `.context/` with the evidence
+
+## IDE / Editor Setup
+
+At minimum, contributors benefit from:
+
+- Go language support (`gopls`)
+- shell syntax and lint support for Bash scripts
+- quick access to `journalctl`, `systemctl --user` and local health endpoints
+
+The repository does not currently depend on editor-specific config files for correct operation.
+
+## Productivity Tips
+
+- Prefer the repository scripts over ad hoc command sequences when validating service behavior.
+- Use `rg` for fast code and doc discovery across `internal/`, `pkg/` and `.context/`.
+- Treat `.context/` as living operational memory, especially for deployment and reboot investigations.
+- Keep MCP optional in your mental model: if an MCP server is missing, the core runtime should still be understandable and testable.
+- Treat `ai-context` in this repository as two layers: impact detection from the CLI, and curated Markdown docs under `.context/docs/`. The script above is the canonical bridge between them.
+
+## Related Resources
+
+- [Development Workflow](./development-workflow.md)
+- [Testing Strategy](./testing-strategy.md)

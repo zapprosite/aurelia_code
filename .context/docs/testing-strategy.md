@@ -1,17 +1,59 @@
 # Testing Strategy
 
-O Aurelia prioriza testes de unidade e integridade para componentes críticos (lock, memory, agent).
+Quality is maintained through a broad Go test suite, explicit end-to-end coverage for key runtime paths, and CI workflows for linting, vulnerabilities and secret scanning. The test surface is strongest around core runtime modules such as agent orchestration, config normalization, lock behavior, persona assembly, cron and provider adapters.
 
-## Tipos de Teste
-- **Unit Tests**: Testam a lógica isolada de pacotes (`go test ./internal/...`). Foco em transformações de dados e regras de negócio.
-- **Integration Tests**: Validação de interações de subsistemas (ex: lock de instância, persistência SQLite).
-- **Static Analysis**: Uso rigoroso de `go vet`, `gofmt` e linters recomendados para Go.
+## Test Types
 
-## Requisitos de Validação
-- Nenhuma alteração em `internal/runtime` ou `internal/observability` deve ser aceita sem testes automatizados correspondentes.
-- Verificações de `git diff --check` para evitar whitespace e conflitos básicos.
-- Scripts bash devem passar por `bash -n` para verificação de sintaxe.
+- **Unit** — standard Go tests across `cmd/`, `internal/` and `pkg/` using `*_test.go`
+- **Integration** — multi-component tests for cron execution, MCP manager behavior, command execution and Telegram handlers
+- **E2E** — [`e2e/e2e_test.go`](../../e2e/e2e_test.go) covers persona loop, master-team recovery and cron lifecycle
+- **Smoke** — [`e2e/smoke_test.go`](../../e2e/smoke_test.go) exercises homelab-oriented scenarios through Telegram
+- **Static / policy** — CI runs linting, gitleaks and govulncheck
 
-## Ambiente de Teste
-- Testes locais devem ser executáveis sem dependências externas complexas (usando stubs/mocks para APIs de LLM se necessário).
-- O uso de `XDG_CONFIG_HOME` ou mocks do sistema de arquivos é encorajado para testes de runtime.
+## Running Tests
+
+- Run everything:
+
+```bash
+go test ./...
+```
+
+- Focus on end-to-end tests:
+
+```bash
+go test ./e2e -v
+```
+
+- Run smoke guidance script:
+
+```bash
+./scripts/smoke-test-homelab.sh
+```
+
+- Check shell syntax for scripts:
+
+```bash
+bash -n scripts/*.sh
+```
+
+## Quality Gates
+
+- Runtime-critical changes should ship with targeted Go tests.
+- Config and MCP behavior must preserve explicit disabled-state semantics.
+- Changes in lock acquisition, startup, scheduling or tool execution should be validated beyond compile success.
+- CI workflows provide baseline checks for lint, vulnerabilities and leaked secrets before merge.
+
+## Troubleshooting
+
+Some tests depend on environment or external services more than ordinary unit tests:
+
+- Telegram-driven smoke tests need a working bot token and reachable chat context.
+- Provider adapter tests may use stubs, but real-provider validation still depends on external credentials.
+- MCP behavior can vary based on local binaries and environment variables.
+
+When diagnosing failures, distinguish between pure unit regressions and environment-dependent operational failures.
+
+## Related Resources
+
+- [Development Workflow](./development-workflow.md)
+- [Tooling & Productivity Guide](./tooling.md)

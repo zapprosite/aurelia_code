@@ -11,7 +11,7 @@ Este guia ensina como operar e estender o workspace de elite utilizando Workflow
 ## 🛠️ 1. Workflows (Slash Commands)
 Os comandos slash são o ponto de entrada para automações complexas.
 - **Local**: `.agents/workflows/`
-- **Uso**: `/pm`, `/architect`, `/dev`, `/sincronizar-tudo`.
+- **Uso**: `/pm`, `/architect`, `/dev`, `/sincronizar-ai-context`, `/sincronizar-tudo`.
 
 ## 📜 2. Rules (Governança)
 As regras definem os guardrails de operação.

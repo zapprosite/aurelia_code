@@ -37,6 +37,7 @@ Invoque especialistas diretamente no seu terminal ou IDE:
 - `/architect` ➡️ Tech Specs e Design de Sistemas.
 - `/dev` ➡️ Implementação e Correções Ágeis.
 - `/qa` ➡️ Testes, Validação e Auditoria.
+- `/sincronizar-ai-context` ➡️ Sincroniza `.context/` e regenera o `codebase-map`.
 - `/sincronizar-tudo` ➡️ Commit semântico e Push Sênior.
 - `/pesquisa-profunda` ➡️ Pesquisa profunda via Gemini Web.
 </commands>

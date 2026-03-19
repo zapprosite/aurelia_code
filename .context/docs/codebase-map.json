@@ -1,12 +1,13 @@
 {
-  "version": "1.1.0",
-  "generated": "2026-03-18T21:15:00Z",
+  "version": "1.2.0",
+  "generated": "2026-03-19T05:32:32Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
       "go",
       "markdown",
-      "shell"
+      "shell",
+      "json"
     ],
     "frameworks": [
       "telebot.v3",
@@ -25,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 403,
+    "totalFiles": 401,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -35,8 +36,13 @@
       },
       {
         "name": ".context",
-        "fileCount": 43,
+        "fileCount": 26,
         "description": "Operational memory, generated docs, and workflow state"
+      },
+      {
+        "name": ".github",
+        "fileCount": 6,
+        "description": "CI workflows and repository automation"
       },
       {
         "name": "cmd",
@@ -45,12 +51,12 @@
       },
       {
         "name": "docs",
-        "fileCount": 16,
+        "fileCount": 18,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
         "name": "internal",
-        "fileCount": 146,
+        "fileCount": 154,
         "description": "Core runtime layers and domain logic"
       },
       {
@@ -60,30 +66,39 @@
       },
       {
         "name": "scripts",
-        "fileCount": 9,
+        "fileCount": 12,
         "description": "Build, daemon, and host operations"
+      },
+      {
+        "name": "e2e",
+        "fileCount": 2,
+        "description": "End-to-end and smoke tests"
       }
     ],
     "languageDistribution": [
       {
-        "extension": ".md",
-        "count": 194
+        "extension": ".go",
+        "count": 191
       },
       {
-        "extension": ".go",
-        "count": 182
+        "extension": ".md",
+        "count": 25
       },
       {
         "extension": ".sh",
-        "count": 7
+        "count": 10
       },
       {
         "extension": ".json",
-        "count": 4
+        "count": 2
       },
       {
         "extension": ".yml",
-        "count": 4
+        "count": 0
+      },
+      {
+        "extension": ".yaml",
+        "count": 0
       },
       {
         "extension": ".png",
@@ -116,6 +131,10 @@
       {
         "name": "internal/mcp + internal/tools",
         "description": "External MCP integrations and native tool registration"
+      },
+      {
+        "name": "internal/cron + internal/health + internal/heartbeat",
+        "description": "Scheduled execution, HTTP health, and self-monitoring"
       }
     ],
     "patterns": [
@@ -129,6 +148,8 @@
     "entryPoints": [
       "cmd/aurelia/main.go",
       "cmd/aurelia/app.go",
+      "cmd/aurelia/wiring.go",
+      "scripts/build.sh",
       "scripts/install-user-daemon.sh"
     ],
     "mainEntryPoints": [
@@ -138,6 +159,8 @@
       "internal/agent",
       "internal/runtime",
       "internal/telegram",
+      "internal/memory",
+      "internal/persona",
       "pkg/llm",
       "pkg/stt"
     ]
@@ -146,6 +169,7 @@
     "classes": [],
     "interfaces": [
       "internal/agent.LLMProvider",
+      "internal/tools.ScheduleCreator",
       "pkg/stt.Transcriber"
     ],
     "functions": [
@@ -159,9 +183,12 @@
       "runtime.InstanceLock",
       "telegram.BotController",
       "persona.CanonicalIdentityService",
-      "mcp.Manager"
+      "mcp.Manager",
+      "health.Server"
     ],
-    "enums": []
+    "enums": [
+      "internal/agent.TaskStatus"
+    ]
   },
   "publicAPI": [
     "cmd/aurelia onboard",
@@ -169,7 +196,8 @@
     "scripts/build.sh",
     "scripts/install-user-daemon.sh",
     "scripts/daemon-status.sh",
-    "scripts/daemon-logs.sh"
+    "scripts/daemon-logs.sh",
+    "GET /health"
   ],
   "dependencies": {
     "mostImported": [
@@ -195,27 +223,28 @@
       "role": "Composition root and runtime bootstrap"
     },
     {
-      "path": "internal/runtime/instance_lock.go",
-      "role": "Single-instance enforcement"
+      "path": "cmd/aurelia/wiring.go",
+      "role": "Tool registration and team wiring"
     },
     {
-      "path": "internal/observability/observability.go",
-      "role": "Structured logging bootstrap and stdlib bridge"
+      "path": "internal/runtime/instance_lock.go",
+      "role": "Single-instance enforcement"
     },
     {
       "path": "internal/agent/loop.go",
       "role": "Core ReAct execution loop"
     },
     {
-      "path": "internal/telegram/input_pipeline.go",
-      "role": "Telegram conversation ingestion and execution pipeline"
+      "path": "internal/health/server.go",
+      "role": "Health and readiness HTTP surface"
     }
   ],
   "navigation": {
     "tests": [
       "cmd/**/*_test.go",
       "internal/**/*_test.go",
-      "pkg/**/*_test.go"
+      "pkg/**/*_test.go",
+      "e2e/**/*.go"
     ],
     "config": [
       "~/.aurelia/config/app.json",
@@ -225,7 +254,8 @@
     "types": [
       "internal/agent/provider.go",
       "internal/runtime/resolver.go",
-      "internal/agent/team_types.go"
+      "internal/agent/team_types.go",
+      "internal/config/config.go"
     ],
     "mainLogic": [
       "cmd/aurelia",
@@ -233,6 +263,7 @@
       "internal/runtime",
       "internal/telegram",
       "internal/tools",
+      "internal/mcp",
       "pkg/llm"
     ]
   }
