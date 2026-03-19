@@ -210,3 +210,26 @@ Comportamento:
 Prova:
 
 - `go test ./internal/telegram` passou
+
+## JARVIS Local Voice Blueprint
+
+Foi registrado um blueprint direto ao ponto para a Aurelia virar um assistente local de voz, browser-use, Antigravity e terminal:
+
+- `docs/jarvis_local_voice_blueprint_20260319.md`
+
+Baseado em:
+
+- metricas reais de `Grafana/Prometheus`
+- VRAM real da `RTX 4090`
+- limites oficiais atuais da Groq
+- stack local ja presente no host
+
+Direcao registrada:
+
+- `openWakeWord` + `Silero VAD` no CPU
+- `Groq whisper-large-v3-turbo` para STT
+- `qwen3-coder:30b` como cerebro local
+- `bge-m3` como contrato unico de embedding
+- `Supabase + Qdrant` como memoria/persistencia
+- `agent-browser` primeiro e `browser-use` como camada avancada
+- rate limits conservadores e governor por recurso
