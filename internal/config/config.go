@@ -598,7 +598,7 @@ func defaultTTSModelForProvider(provider string) string {
 }
 
 func defaultTTSVoiceForProvider(provider string) string {
-	// All TTS providers use local voice-proxy with Olivia.wav
+	// All TTS providers use local voice-proxy with Aurelia.wav (PT-BR)
 	return defaultLocalTTSVoice
 }
 
@@ -618,7 +618,7 @@ func usesLegacyTTSModel(provider, model string) bool {
 }
 
 func usesLegacyTTSVoice(provider, voice string) bool {
-	// All TTS providers now use local voice-proxy with Olivia.wav, no legacy cloud voices
+	// All TTS providers now use local voice-proxy with Aurelia.wav (PT-BR), no legacy cloud voices
 	return false
 }
 

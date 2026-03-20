@@ -16,7 +16,7 @@ Adotar TTS local no Telegram com os defaults abaixo:
 - provider: `openai_compatible`
 - base URL: `http://127.0.0.1:8011`
 - model: `chatterbox`
-- voice: `Olivia.wav`
+- voice: `Aurelia.wav` (PT-BR, sweet & educated)
 - format: `opus`
 - speed: `1.0`
 
