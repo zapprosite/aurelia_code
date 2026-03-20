@@ -88,6 +88,7 @@ Regra:
   - **Segurança compensatória:** log estruturado, dry-run quando possível, auditoria de segredos pré-push.
 </governance-tiers>
 ## AI Context References
+- **📌 Autoridade e Permissões:** `docs/governance/AURELIA-AUTHORITY-DECLARATION.md` ← LEIA PRIMEIRO
 - Documentation index: `.context/docs/README.md`
 - Agent playbooks: `.context/agents/README.md`
 - Governance index: `docs/REPOSITORY_CONTRACT.md`
