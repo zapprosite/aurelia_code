@@ -1,0 +1,103 @@
+{
+  "adr_id": "ADR-20260319-Polish-Governance-All",
+  "title": "Polish Governance All — Constituição Operacional do Homelab",
+  "status": "proposed",
+  "phase": "planning",
+  "progress": 0,
+  "goal": "Tratar todos os 17 findings da auditoria do homelab com governanca industrial em 6 secoes: dados, secrets, rede, operacoes, observabilidade, compliance.",
+  "scope": [
+    "DATA_GOVERNANCE — schema registry, store selection, data lifecycle, qdrant contract",
+    "SECRETS_GOVERNANCE — vault KeePassXC, shred plaintext, pgpass, secret-audit.sh, rotacao trimestral",
+    "NETWORK_GOVERNANCE — UFW activation, port matrix, tunnel hardening, docker isolation, tailscale ACL",
+    "OPERATIONAL_GOVERNANCE — cron watchdog, backup verification, incident playbook, service map",
+    "OBSERVABILITY_GOVERNANCE — prometheus contract, alert rules, grafana dashboards, log rotation",
+    "COMPLIANCE_MATRIX — mapping a CONTRACT.md, audit schedule, escalation, governance-audit.sh"
+  ],
+  "done_definition": [
+    "Fase 1 CRITICAL: vault criado, plaintext eliminado, postgres password nao visivel em ps aux",
+    "Fase 2 HIGH: app.json.bak* deletados, MCP config refatorado, schema registry escrito, rotation policy documentada",
+    "Fase 3 MEDIUM: health checks no crontab, backup verification, incident playbook, observability contract",
+    "Fase 4 LOW: UFW documentado, compliance matrix, governance-audit.sh rodando"
+  ],
+  "next_actions": [
+    "FASE 1 — CRITICAL (humano): criar vault KeePassXC, migrar credenciais, shred rascunho-s.txt, fix postgres password",
+    "FASE 2 — HIGH: deletar app.json.bak*, refatorar MCP config, escrever schema registry, documentar rotation policy"
+  ],
+  "simulation_commands": [
+    "ps aux | grep -i password | grep -v grep",
+    "sqlite3 ~/.aurelia/data/aurelia.db '.tables'",
+    "sudo ufw status",
+    "curl -s localhost:9090/api/v1/rules | jq '.status'"
+  ],
+  "test_commands": [
+    "bash scripts/secret-audit.sh",
+    "bash scripts/governance-audit.sh",
+    "bash scripts/validate-adr-semparar.sh"
+  ],
+  "curl_checks": [
+    "curl -s localhost:9090/api/v1/rules | jq '.data.groups | length'"
+  ],
+  "fallback_commands": [
+    "crontab -l > /tmp/cron.bak && crontab -r",
+    "sudo ufw disable"
+  ],
+  "evidence": [],
+  "blockers": [
+    "Fase 1 requer acao manual do humano (manuseio de credenciais)",
+    "UFW activation requer aprovacao per GUARDRAILS.md"
+  ],
+  "execution_phases": {
+    "fase_1_critical": {
+      "label": "CRITICAL — Dia 1",
+      "owner": "humano",
+      "items": [
+        "Criar vault KeePassXC em /srv/data/vault/aurelia.kdbx",
+        "Migrar credenciais do Desktop para vault",
+        "shred -u ~/Desktop/rascunho-s.txt",
+        "Fix Postgres CLI password via .pgpass ou env var"
+      ],
+      "status": "pending"
+    },
+    "fase_2_high": {
+      "label": "HIGH — Dias 2-3",
+      "owner": "codex + humano",
+      "items": [
+        "Deletar app.json.bak* com credenciais",
+        "Refatorar MCP config (env var para Cloudflare token)",
+        "Escrever Schema Registry (enumerar DBs primeiro)",
+        "Definir e documentar rotation policy"
+      ],
+      "status": "pending"
+    },
+    "fase_3_medium": {
+      "label": "MEDIUM — Dias 4-7",
+      "owner": "codex",
+      "items": [
+        "Instalar health checks no crontab",
+        "Criar backup verification script",
+        "Escrever incident response playbook",
+        "Documentar Qdrant collection schema",
+        "Definir data lifecycle policy",
+        "Definir observability contract + alert rules"
+      ],
+      "status": "pending"
+    },
+    "fase_4_low": {
+      "label": "LOW + HARDENING — Semana 2",
+      "owner": "codex + humano",
+      "items": [
+        "Cleanup deploy dirs duplicados",
+        "Fix unclean shutdown warnings",
+        "Planejar e documentar UFW activation",
+        "Escrever compliance matrix + audit schedule",
+        "Criar governance-audit.sh"
+      ],
+      "status": "pending"
+    }
+  },
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "ADR Polish-Governance-All proposta com 6 secoes de governanca cobrindo 17 findings. FASE 1 (CRITICAL) requer acao do humano: criar vault KeePassXC, migrar credenciais, shred plaintext, fix postgres password. Apos Fase 1 concluida pelo humano, codex pode avancar Fases 2-4. Consulte execution_phases para status de cada fase.",
+    "last_updated": "2026-03-19T23:00:00-03:00"
+  }
+}
