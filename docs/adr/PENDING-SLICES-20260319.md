@@ -27,6 +27,10 @@ Este é o backlog oficial das pendências abertas do plano JARVIS/Aurelia.
 | Slice 10 | clonagem autorizada da voz a partir de áudio local | audio/voice | sim | consentimento + smoke real |
 | Slice 7 | E2E wake word -> STT -> resposta | deploy/voice | sim | wake real |
 | Slice 7 | Antigravity handoff fim a fim | orchestration | sim | prompt/handoff/resposta |
+| Slice 11 | agent bus com `PostgreSQL` | orchestration/runtime | sim | worker claim + lease |
+| Slice 11 | dashboard de swarm em `Go` | orchestration/ui | sim | thread/task board vivo |
+| Slice 11 | assistance queue para agentes ociosos | orchestration/runtime | sim | idle agent help flow |
+| Slice 11 | memória semântica do swarm em `Qdrant` | memory/rag | sim | thread summary -> vector |
 
 ## Observação profissional
 
@@ -37,6 +41,7 @@ As pendências mais críticas agora são:
 3. desktop fallback seguro
 4. voz oficial da Aurelia com voice_id autorizado
 5. clonagem autorizada com arquivo local e rollback pronto
+6. swarm hierárquico com dashboard e assistência entre agentes
 
 ## Ordem recomendada agora
 
@@ -52,6 +57,12 @@ As pendências mais críticas agora são:
    - digitação segura
    - kill-switch e limite de passos
    - motivo: desktop é o caminho mais frágil; deve entrar por último entre os blocos core
+4. **Slice 11 — Swarm hierárquico da Aurélia**
+   - `agent_bus` em `PostgreSQL`
+   - dashboard leve em `Go`
+   - assistance queue entre agentes ociosos
+   - memória derivada em `Qdrant`
+   - motivo: deve nascer depois do runtime base estar estável, para não espalhar complexidade cedo demais
 
 ## ADRs já abertas para pendências críticas
 

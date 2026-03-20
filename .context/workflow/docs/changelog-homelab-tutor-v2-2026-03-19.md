@@ -752,3 +752,5 @@ Estado:
 - Aberta a slice filha `ADR-20260319-aurelia-authorized-voice-clone` para separar a execucao sensivel da voz oficial da Aurelia da infraestrutura geral de MiniMax/TTS.
 - Registradas fontes abertas de estudo de voz PT-BR em `docs/voice_study_sources_ptbr_20260319.md`, mantendo a regra de que a voz oficial da Aurelia só nasce de amostra local autorizada.
 - Adicionada a lane `tts_provider=gemini` com voz pronta `Sulafat` para uso imediato, mantendo `voice-proxy` como fallback e MiniMax como futuro lane de clonagem autorizada.
+- Pesquisado o estado da arte de enxame de agentes em `2026-03-19` e fechado o desenho oficial: `Aurélia` acima de todos os agentes, `PostgreSQL` como bus operacional, `Qdrant` como memória semântica derivada, dashboard leve em `Go` e `assistance queue` para agentes ociosos.
+- Instaladas as skills `brainstorming` e `multi-agent-brainstorming` para sustentar revisão estruturada do futuro swarm sem cair em brainstorm caótico.

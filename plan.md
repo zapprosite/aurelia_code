@@ -451,6 +451,7 @@ MIC
 - [ ] Fechar click e digitacao seguros
 - [ ] Persistir governor/breaker fora da memoria
 - [ ] Fechar E2E com Antigravity e browser-use
+- [ ] Abrir `Slice 11` do swarm hierárquico com dashboard e assistance queue
 
 ## Proxima Acao Cirurgica
 
