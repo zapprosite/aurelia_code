@@ -7,9 +7,11 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/kocar/aurelia/internal/memory"
 )
 
 const MasterAgentName = "master"
+
 const (
 	TeamStatusActive            = "active"
 	TeamStatusPaused            = "paused"
@@ -21,12 +23,17 @@ const (
 type LeadNotifier func(teamKey string, message string)
 
 type MasterTeamService struct {
+	bus                 *EventBus
 	manager             TeamManager
 	llm                 LLMProvider
 	registry            *ToolRegistry
 	maxIterations       int
 	notifyLead          LeadNotifier
 	maxRecoveryAttempts int
+
+	memoryOS    memory.MemoryOS
+	brain       *SymbolEngine
+	hubInstance *Hub
 
 	mu            sync.Mutex
 	teamByKey     map[string]string
@@ -36,14 +43,7 @@ type MasterTeamService struct {
 	recoveryCount map[string]int
 }
 
-type workerLoopHandle struct {
-	wake   chan struct{}
-	cancel context.CancelFunc
-}
-
-const recoveryTaskPrefix = "recovery:"
-
-func NewMasterTeamService(manager TeamManager, llm LLMProvider, registry *ToolRegistry, maxIterations int, notify LeadNotifier) (*MasterTeamService, error) {
+func NewMasterTeamService(manager TeamManager, llm LLMProvider, registry *ToolRegistry, maxIterations int, notify LeadNotifier, mem memory.MemoryOS) (*MasterTeamService, error) {
 	if manager == nil {
 		return nil, fmt.Errorf("team manager is required")
 	}
@@ -55,12 +55,15 @@ func NewMasterTeamService(manager TeamManager, llm LLMProvider, registry *ToolRe
 	}
 
 	return &MasterTeamService{
+		bus:                 NewEventBus(),
 		manager:             manager,
 		llm:                 llm,
 		registry:            registry,
 		maxIterations:       maxIterations,
 		notifyLead:          notify,
 		maxRecoveryAttempts: 1,
+		memoryOS:            mem,
+		brain:               NewSymbolEngine(),
 		teamByKey:           make(map[string]string),
 		userByKey:           make(map[string]string),
 		memberSeen:          make(map[string]map[string]bool),
@@ -97,6 +100,8 @@ func (s *MasterTeamService) Spawn(ctx context.Context, teamKey, userID, agentNam
 	if parentTeamID, parentTaskID, ok := TaskContextFromContext(ctx); ok && parentTeamID == teamID {
 		dependsOn = []string{parentTaskID}
 	}
+
+	s.bus.Publish(Event{\n		Kind:    EventTaskCreated,\n		Payload: task,\n		TeamID:  teamID,\n		RunID:   task.RunID,\n	})
 	if err := s.manager.CreateTask(ctx, task, dependsOn); err != nil {
 		return "", err
 	}

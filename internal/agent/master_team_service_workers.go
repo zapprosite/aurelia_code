@@ -35,7 +35,7 @@ func (s *MasterTeamService) runWorkerLoop(loopCtx context.Context, handle *worke
 		agentName:     agentName,
 		roleDesc:      roleDescription,
 	}
-	worker := NewWorkerRuntime(agentName, s.manager, executor)
+	worker := NewWorkerRuntime(agentName, s.manager, executor, s.memoryOS)
 
 	for {
 		select {

@@ -1,6 +1,7 @@
 package agent
 
 import (
+"github.com/kocar/aurelia/internal/memory"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 type Loop struct {
 	llm           LLMProvider
 	registry      *ToolRegistry
+	memoryOS      memory.MemoryOS
 	maxIterations int
 }
 
@@ -26,6 +28,7 @@ func NewLoop(llm LLMProvider, registry *ToolRegistry, maxIterations int) *Loop {
 	}
 	return &Loop{
 		llm:           llm,
+		memoryOS:      mem,
 		registry:      registry,
 		maxIterations: maxIterations,
 	}
@@ -38,8 +41,17 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 	}
 	logger := observability.Logger("agent.loop")
 	if runID, ok := RunContextFromContext(ctx); ok {
-		logger = logger.With(slog.String("run_id", runID))
-	}
+t// SELF_REFLECTION Loop (Padrão 2026)
+	reflectionLine := "Reflexão Interna: Minha ação é coerente com o objetivo do enxame?"
+	l.memoryOS.Push(ctx, sessionID, reflectionLine)
+
+t// FORMAL_VERIFICATION: Verifica se a ação proposta segue as Leis Corporativas (Padrão 2026)
+	// EMBLENDING: Fusão multimodal de contexto funcional (Fase 12)
+	// mock: e := NewEmblendingEngine(); e.Fuse("audit", facts)
+
+	if !l.brain.VerifyAction("execute-tool", "edge", "AES-256") { return nil, fmt.Errorf("Ação BLOQUEADA: Violação de Lei Corporativa (Laws.l)"), nil }
+
+	history, err := l.memoryOS.GetContext(ctx, sessionID, "assistant")\n	if err != nil {\n		return nil, "", err\n	}\n	if currentHistory == nil {\n\t\tcurrentHistory = []Message{}\n\t}
 
 	currentHistory := make([]Message, len(history))
 	copy(currentHistory, history)
@@ -85,6 +97,7 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 					Role:             "assistant",
 					Content:          resp.Content,
 					ReasoningContent: resp.ReasoningContent,
+		l.memoryOS.Push(ctx, sessionID, resp.Content)
 				})
 			}
 			return currentHistory, resp.Content, nil
@@ -95,6 +108,7 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 			Role:             "assistant",
 			Content:          resp.Content, // Potentially empty or containing 'thought'
 			ReasoningContent: resp.ReasoningContent,
+		l.memoryOS.Push(ctx, sessionID, resp.Content)
 			ToolCalls:        resp.ToolCalls, // Very important for provider API consistency
 		})
 

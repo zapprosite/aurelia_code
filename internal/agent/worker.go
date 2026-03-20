@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 )
+"github.com/kocar/aurelia/internal/memory"
 
 type TaskExecutor interface {
 	ExecuteTask(ctx context.Context, task TeamTask) (string, error)
@@ -19,7 +20,7 @@ type WorkerRuntime struct {
 	executor  TaskExecutor
 }
 
-func NewWorkerRuntime(agentName string, manager TeamManager, executor TaskExecutor) *WorkerRuntime {
+func NewWorkerRuntime(agentName string, manager TeamManager, executor TaskExecutor, mem memory.MemoryOS) *WorkerRuntime {
 	return &WorkerRuntime{
 		agentName: agentName,
 		manager:   manager,

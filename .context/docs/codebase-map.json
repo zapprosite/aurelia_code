@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-20T04:50:33Z",
+  "generated": "2026-03-20T06:29:22Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 568,
+    "totalFiles": 593,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -51,12 +51,12 @@
       },
       {
         "name": "docs",
-        "fileCount": 97,
+        "fileCount": 103,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
         "name": "internal",
-        "fileCount": 182,
+        "fileCount": 201,
         "description": "Core runtime layers and domain logic"
       },
       {
@@ -66,7 +66,7 @@
       },
       {
         "name": "scripts",
-        "fileCount": 28,
+        "fileCount": 29,
         "description": "Build, daemon, and host operations"
       },
       {
@@ -78,11 +78,11 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 216
+        "count": 232
       },
       {
         "extension": ".md",
-        "count": 92
+        "count": 98
       },
       {
         "extension": ".sh",
@@ -90,7 +90,7 @@
       },
       {
         "extension": ".json",
-        "count": 16
+        "count": 17
       },
       {
         "extension": ".yml",
