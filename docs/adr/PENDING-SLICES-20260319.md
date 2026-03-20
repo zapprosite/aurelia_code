@@ -38,32 +38,42 @@ As pendências mais críticas agora são:
 
 1. wake word positivo com prova humana no deploy
 2. handoff fim a fim do Antigravity
-3. desktop fallback seguro
-4. voz oficial da Aurelia com voice_id autorizado
-5. clonagem autorizada com arquivo local e rollback pronto
-6. swarm hierárquico com dashboard e assistência entre agentes
+3. voz oficial da Aurelia com voz consistente e autorizada
+4. swarm hierárquico com dashboard e assistência entre agentes
+5. desktop fallback seguro
+6. clonagem autorizada com arquivo local e rollback pronto
 
 ## Ordem recomendada agora
 
-1. **Slice 7 — Prova humana do voice plane**
-   - testar wake word positivo até virar resposta real
-   - motivo: o runtime live já está íntegro; falta a prova humana fim a fim
-2. **Slice 4 + Slice 2 — Orquestração segura**
-   - handoff Antigravity fim a fim
-   - fluxo de login guiado seguro
-   - motivo: browser/orquestração têm ROI alto e são mais seguros que desktop fallback
-3. **Slice 3 — Desktop fallback seguro**
-   - click seguro
-   - digitação segura
-   - kill-switch e limite de passos
-   - motivo: desktop é o caminho mais frágil; deve entrar por último entre os blocos core
-4. **Slice 11 — Swarm hierárquico da Aurélia**
-   - `agent_bus` em `PostgreSQL`
-   - dashboard leve em `Go`
-   - assistance queue entre agentes ociosos
-   - memória derivada em `Qdrant`
-   - copiar o contrato útil de `open-agent-supervisor` e `langgraph-supervisor`
-   - motivo: deve nascer depois do runtime base estar estável, para não espalhar complexidade cedo demais
+1. **Onda 1 — Voz e experiência de resposta**
+   - **Slice 7**
+     - validar E2E de wake word -> STT -> resposta
+     - validar prova humana no deploy
+   - **Slice 10**
+     - fechar voz oficial da Aurelia
+     - manter rollback claro para TTS pronto/local
+   - motivo: tudo aqui mexe no mesmo plano de voz, TTS, Telegram e experiência do operador
+2. **Onda 2 — Orquestração segura de browser e Antigravity**
+   - **Slice 4**
+     - handoff Antigravity fim a fim
+     - menos retrabalho entre chat leve e runtime
+   - **Slice 2**
+     - fluxo de login guiado seguro
+   - motivo: browser, Antigravity e roteamento leve compartilham as mesmas fronteiras operacionais
+3. **Onda 3 — Swarm hierárquico da Aurélia**
+   - **Slice 11**
+     - `agent_bus` em `PostgreSQL`
+     - dashboard leve em `Go`
+     - assistance queue entre agentes ociosos
+     - memória derivada em `Qdrant`
+     - copiar o contrato útil de `open-agent-supervisor` e `langgraph-supervisor`
+   - motivo: depende muito mais do runtime, da orquestração e da memória do que do desktop fallback
+4. **Onda 4 — Desktop fallback seguro**
+   - **Slice 3**
+     - click seguro
+     - digitação segura
+     - kill-switch e limite de passos
+   - motivo: desktop é o caminho mais frágil e deve entrar por último entre os blocos core
 
 ## ADRs já abertas para pendências críticas
 

@@ -356,21 +356,28 @@ MIC
 
 ### Agora
 
-1. validar E2E positivo de wake word -> STT -> resposta com prova humana
-2. fechar handoff Antigravity fim a fim
-3. concluir desktop fallback seguro
+1. fechar a **Onda 1 — Voz e experiência de resposta**
+   - validar E2E positivo de wake word -> STT -> resposta com prova humana
+   - fechar a voz oficial da Aurelia com rollback claro
+2. fechar a **Onda 2 — Orquestração segura**
+   - handoff Antigravity fim a fim
+   - login guiado seguro no browser
 
 ### Depois
 
-1. validar rollout conjunto de gateway + voz na worktree de deploy
-2. subir `aurelia-voice.service` ou worker dedicado
+1. abrir a **Onda 3 — Swarm hierárquico**
+   - `agent_bus` em `PostgreSQL`
+   - dashboard leve em `Go`
+   - assistance queue
+   - memória derivada em `Qdrant`
+2. validar rollout conjunto de gateway + voz na worktree de deploy
 3. fechar E2E de voz com budget, fallback e health live
 
 ### Por Ultimo
 
-1. fechar E2E completo com Antigravity e login guiado seguro
-2. fechar desktop fallback seguro
-3. refinar extensoes/aceleradores e revisar UX do operador
+1. fechar a **Onda 4 — Desktop fallback seguro**
+2. refinar extensoes/aceleradores e revisar UX do operador
+3. revisar a integração final entre voz, browser, swarm e dashboard
 
 ## Testes Minimos
 
@@ -442,17 +449,16 @@ MIC
 
 ### Next
 
-- [ ] Validar rollout do gateway na worktree de deploy
-- [ ] Fechar smoke de voz no runtime local com config real
-- [ ] Implementar captura de microfone com wake word + VAD
+- [ ] Fechar Onda 1: prova humana de wake word -> STT -> resposta
+- [ ] Fechar Onda 1: voz oficial da Aurelia com rollback claro
+- [ ] Fechar Onda 2: Antigravity handoff fim a fim e login guiado seguro
 
 ### Later
 
-- [ ] Fechar click e digitacao seguros
-- [ ] Persistir governor/breaker fora da memoria
-- [ ] Fechar E2E com Antigravity e browser-use
-- [ ] Abrir `Slice 11` do swarm hierárquico com dashboard e assistance queue
+- [ ] Abrir Onda 3: `Slice 11` do swarm hierárquico com dashboard e assistance queue
 - [ ] Traduzir o contrato útil de `open-agent-supervisor` e `langgraph-supervisor` para o runtime em `Go`
+- [ ] Fechar click e digitação seguros
+- [ ] Fechar desktop fallback seguro com kill-switch forte
 
 ## Proxima Acao Cirurgica
 
