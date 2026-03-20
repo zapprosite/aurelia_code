@@ -18,7 +18,7 @@ const (
 	defaultTTSProvider          = "openai_compatible"
 	defaultLocalTTSBaseURL = "http://127.0.0.1:8011"
 	defaultLocalTTSModel   = "chatterbox"
-	defaultLocalTTSVoice   = "Olivia.wav"
+	defaultLocalTTSVoice   = "Aurelia.wav" // PT-BR voice via gTTS (sweet, educated)
 	defaultLocalTTSFormat  = "opus"
 	defaultTTSSpeed        = 1.0
 	defaultHeartbeatEnabled     = true
