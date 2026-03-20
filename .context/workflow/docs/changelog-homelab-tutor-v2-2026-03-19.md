@@ -750,3 +750,4 @@ Estado:
 - fallback para texto continua ativo se TTS ou envio falharem
 
 - Aberta a slice filha `ADR-20260319-aurelia-authorized-voice-clone` para separar a execucao sensivel da voz oficial da Aurelia da infraestrutura geral de MiniMax/TTS.
+- Registradas fontes abertas de estudo de voz PT-BR em `docs/voice_study_sources_ptbr_20260319.md`, mantendo a regra de que a voz oficial da Aurelia só nasce de amostra local autorizada.

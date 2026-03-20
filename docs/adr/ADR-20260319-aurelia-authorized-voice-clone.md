@@ -24,6 +24,7 @@ status: in_progress
 - [plan.md](../../plan.md)
 - [ADR-20260319-aurelia-media-voice.md](./ADR-20260319-aurelia-media-voice.md)
 - [Voz Oficial da Aurelia](../aurelia_voice_profile_20260319.md)
+- [Fontes de Estudo PT-BR](../voice_study_sources_ptbr_20260319.md)
 
 ## Contexto
 
@@ -45,6 +46,8 @@ O vídeo público enviado pelo usuário pode servir para análise de estilo e tr
 Áudio local já entregue pelo usuário:
 
 - `/home/will/aurelia/clone-voz/aurelia.mp3`
+
+Fontes abertas de estudo de voz PT-BR foram registradas em `docs/voice_study_sources_ptbr_20260319.md`, mas apenas como referência de estilo e prosódia.
 
 ## Decisão
 
@@ -79,6 +82,7 @@ O vídeo público enviado pelo usuário pode servir para análise de estilo e tr
 - `docs/adr/README.md`
 - `docs/adr/PENDING-SLICES-20260319.md`
 - opcionalmente `docs/aurelia_voice_profile_20260319.md`
+- `docs/voice_study_sources_ptbr_20260319.md`
 - opcionalmente `~/.aurelia/config/app.json` quando houver `MINIMAX_API_KEY`
 
 ## Simulações e smoke previstos

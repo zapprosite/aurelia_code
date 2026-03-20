@@ -42,7 +42,8 @@
   "evidence": [
     "slice base de infraestrutura MiniMax/TTS ja existe em ADR-20260319-aurelia-media-voice",
     "voz oficial da Aurelia exige amostra autorizada e smoke real",
-    "arquivo local entregue: /home/will/aurelia/clone-voz/aurelia.mp3"
+    "arquivo local entregue: /home/will/aurelia/clone-voz/aurelia.mp3",
+    "fontes abertas de estudo PT-BR registradas sem depender de vozes clonadas de terceiros"
   ],
   "blockers": [
     "MINIMAX_API_KEY ainda nao entregue",
