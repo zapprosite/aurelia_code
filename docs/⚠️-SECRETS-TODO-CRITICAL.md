@@ -21,31 +21,6 @@ bash scripts/setup-keepassxc-vault.sh
 
 ---
 
-### 2️⃣ Secret Rotation Policy (Fase 2 — Item 8, HIGH)
-**Por quê:** API keys nunca rotacionadas = risco crescente.
-
-```
-CLOUDFLARE_MCP_TOKEN     → Trimestral (90 dias)
-TELEGRAM_BOT_TOKEN       → Anual (365 dias)
-GOOGLE_API_KEY           → Trimestral (90 dias)
-OPENROUTER_API_KEY       → Mensal (30 dias) — exposto em logs facilmente
-GROQ_API_KEY             → Trimestral (90 dias)
-GITHUB_TOKEN             → Semestral (180 dias)
-QDRANT_API_KEY           → Trimestral (90 dias)
-POSTGRES_PASSWORD        → Anual (365 dias)
-```
-
-**Próximo agendamento:**
-- 🔴 Cloudflare: 2026-06-20 (92 dias)
-- 🔴 OpenRouter: 2026-04-20 (31 dias) ⚠️ PRIMEIRO!
-- 🟡 Google: 2026-06-20
-- 🟡 Groq: 2026-06-20
-- 🟡 Qdrant: 2026-06-20
-
-**Responsável:** codex (automático via cron) OU humano (manual)
-
----
-
 ### 3️⃣ Secret Audit Script (Fase 2 — Item 9, HIGH)
 **Por quê:** Prevenir novo vazamento de credenciais.
 
@@ -125,22 +100,16 @@ EnvironmentFile=%h/.aurelia/config/secrets.env
 
 | # | Task | Prioridade | Esforço | Deadline |
 |---|------|-----------|---------|----------|
-| 1 | Rotar OpenRouter key | 🔴 CRÍTICA | 5 min | **2026-04-20** |
-| 2 | Verificar systemd service | 🔴 CRÍTICA | 5 min | 2026-03-21 |
-| 3 | Setup KeePassXC vault | 🟠 HIGH | 30 min | 2026-03-27 |
-| 4 | Implementar secret-audit.sh | 🟠 HIGH | 15 min | 2026-03-31 |
-| 5 | Agendar rotations | 🟡 MEDIUM | 10 min | 2026-04-01 |
+| 7 | Verificar systemd service | ✅ DONE | 5 min | 2026-03-21 |
+| 1 | Setup KeePassXC vault | 🟠 HIGH | 30 min | 2026-03-27 |
+| 9 | Implementar secret-audit.sh | 🟠 HIGH | 15 min | 2026-03-31 |
 
 ---
 
-## 📞 Lembretes Automáticos
+## 📞 Próximas Ações
 
-Adicione ao seu calendario/alarme:
-```bash
-# 2026-04-20: Rotar OPENROUTER_API_KEY (30 dias)
-# 2026-06-20: Rotar CLOUDFLARE, GOOGLE, GROQ, QDRANT (90 dias)
-# 2026-09-20: Proximo ciclo trimestral
-```
+- 2026-03-27: Setup KeePassXC vault
+- 2026-03-31: Implementar secret-audit.sh
 
 ---
 
