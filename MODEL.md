@@ -18,6 +18,8 @@ Alinhar qualquer motor, agente ou UI à mesma política de:
 
 ## Regras fechadas
 
+### LLMs (Geração de Texto)
+
 1. `qwen3.5:9b` é o único modelo local residente do caminho ativo.
 2. `qwen3.5:4b` entra sob demanda, não residente por padrão.
 3. `Groq` fica isolado no lane de áudio/STT.
@@ -26,8 +28,16 @@ Alinhar qualquer motor, agente ou UI à mesma política de:
 6. `OpenRouter` só entra por capacidade explícita.
 7. `Gemini web` não entra no runtime automático.
 8. `gemma3:27b-it-q4_K_M` é laboratório/manual, não default do bot.
-9. Toda mudança de política de modelo ou voz exige ADR.
-10. Nenhum motor externo pode contornar a política decidida pela Aurélia para o runtime.
+
+### Embedding Models (Busca Semântica)
+
+9. `bge-m3` (384-dim) é o modelo de embedding para code history + memory sync (Qdrant).
+10. Embedding é SEMPRE local (não remoto) — garantir Aurelia trabalhe sem web.
+11. Toda mudança de política de embedding, LLM ou voz exige ADR.
+
+### Restrições Gerais
+
+12. Nenhum motor externo pode contornar a política decidida pela Aurélia para o runtime.
 
 ## Fontes canônicas
 

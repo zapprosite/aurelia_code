@@ -27,6 +27,13 @@ On-demand expertise for AI agents. Skills are task-specific procedures that get 
 | [Api Design](./api-design/SKILL.md) | Design RESTful APIs following best practices | P, R |
 | [Security Audit](./security-audit/SKILL.md) | Security review checklist for code and infrastructure | R, V |
 
+### Project-Specific Skills
+
+| Skill | Description | Phases |
+|-------|-------------|--------|
+| [Governance Polish](./governance-polish/SKILL.md) | ADR-20260319: Execute 4 phases (CRITICAL → HIGH → MEDIUM → LOW) for industrial homelab governance | P, E, V, C |
+| [Memory Sync Vector DB](./memory-sync-vector-db/SKILL.md) | Sync memory (markdown) → Qdrant (embeddings) + Postgres (metadata) for Aurelia bot offline access | E, V |
+
 ## Creating Custom Skills
 
 Create a new skill by adding a directory with a `SKILL.md` file:

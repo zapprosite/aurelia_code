@@ -14,6 +14,7 @@ description: Adaptador de orquestração para o Antigravity IDE (Gemini).
 4. **Padrão**: Utilize estritamente `.agents/rules` e `.agents/workflows`.
 5. **ADR por Slice**: Não orquestre implementação estrutural sem ADR ou backlog de slice oficial.
 6. **Governança Industrial**: Consulte [ADR-20260319-Polish-Governance-All](./docs/adr/ADR-20260319-Polish-Governance-All.md). Coordene handoff: humano → Fase 1 (CRITICAL) → skill `/governance-polish` → Fases 2-4.
+7. **Memory Sync Architecture**: Aurelia bot consulta code history via Qdrant + Postgres (sem web). Skill `/memory-sync-vector-db` + crons automáticos (fiscal). Coordene: quando Aurelia precisa acessar memória, usa busca semântica local.
 </contract>
 
 ## Links obrigatórios
