@@ -20,11 +20,12 @@ Alinhar qualquer motor, agente ou UI à mesma política de:
 1. `qwen3.5:9b` é o único modelo local residente do caminho ativo.
 2. `qwen3.5:4b` entra sob demanda, não residente por padrão.
 3. `Groq` fica isolado no lane de áudio/STT.
-4. `MiniMax Audio` é o lane premium de TTS da voz oficial da Aurelia, com fallback local enquanto não houver `voice_id` autorizado e chave configurada.
-5. `OpenRouter` só entra por capacidade explícita.
-6. `Gemini web` não entra no runtime automático.
-7. `gemma3:27b-it-q4_K_M` é laboratório/manual, não default do bot.
-8. Toda mudança de política de modelo ou voz exige ADR.
+4. `Gemini TTS / Sulafat` é a voz pronta imediata da Aurelia.
+5. `MiniMax Audio` é o lane premium de clonagem autorizada da voz oficial da Aurelia.
+6. `OpenRouter` só entra por capacidade explícita.
+7. `Gemini web` não entra no runtime automático.
+8. `gemma3:27b-it-q4_K_M` é laboratório/manual, não default do bot.
+9. Toda mudança de política de modelo ou voz exige ADR.
 
 ## Fontes canônicas
 
@@ -36,6 +37,7 @@ Alinhar qualquer motor, agente ou UI à mesma política de:
 - [LLM Gateway Blueprint](./docs/llm_gateway_blueprint_20260319.md)
 - [Jarvis Local Voice Blueprint](./docs/jarvis_local_voice_blueprint_20260319.md)
 - [Voz Oficial da Aurelia](./docs/aurelia_voice_profile_20260319.md)
+- [ADR Gemini TTS Ready Voice](./docs/adr/20260319-gemini-tts-ready-voice.md)
 
 ## Operação
 

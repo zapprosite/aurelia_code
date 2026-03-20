@@ -13,8 +13,24 @@ A voz oficial da Aurelia deve obedecer a este perfil:
 ## Decisão operacional
 
 - `Groq` continua apenas no STT
-- `MiniMax Audio` é o lane premium recomendado para a voz oficial da Aurelia
-- o runtime local atual de TTS continua como fallback seguro enquanto nao houver `MINIMAX_API_KEY` e `voice_id` autorizado
+- `Gemini TTS / Sulafat` é a voz pronta recomendada para uso imediato
+- `MiniMax Audio` continua como lane premium de clonagem autorizada no futuro
+- o runtime local atual de TTS continua como fallback seguro
+
+## Voz pronta imediata
+
+Escolha atual:
+
+- provider: `gemini`
+- model: `gemini-2.5-flash-preview-tts`
+- voice: `Sulafat`
+- formato: `wav`
+
+Motivo:
+
+- voz pronta feminina
+- tom `Warm` no catálogo oficial
+- boa aderência ao alvo formal, doce e corporativo
 
 ## Regras para a referência de clonagem
 
