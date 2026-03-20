@@ -9,9 +9,10 @@ description: Adaptador de execução para o Claude Code CLI.
 <contract>
 ## 📜 Regras de Engajamento
 1. **Hierarquia**: Respeite o `PRD.md` e `AGENTS.md` como fontes de verdade.
-2. **Higiene**: Sincronize o contexto via MCP `ai-context` após cada tarefa.
-3. **Isolamento**: Priorize worktrees para implementações não triviais.
-4. **ADR por Slice**: Não implemente mudança estrutural sem ADR ou backlog de slice registrado em `docs/adr/`.
+2. **Autoridade da Aurélia**: Execute sob a direção arquitetural e operacional da Aurélia; não dispute governança com ela.
+3. **Higiene**: Sincronize o contexto via MCP `ai-context` após cada tarefa.
+4. **Isolamento**: Priorize worktrees para implementações não triviais.
+5. **ADR por Slice**: Não implemente mudança estrutural sem ADR ou backlog de slice registrado em `docs/adr/`.
 </contract>
 
 <tips>

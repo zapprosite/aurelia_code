@@ -9,9 +9,10 @@ description: Adaptador de implementação rápida para o Codex CLI.
 <contract>
 ## 🚀 Missão Codex
 1. **Velocidade**: Atue como o braço de execução rápida para refatorações e correções.
-2. **Alinhamento**: Não tome decisões arquiteturais sem consultar o `Architect Specialist`.
-3. **Fronteira**: Mantenha-se dentro da worktree designada.
-4. **ADR por Slice**: Se a mudança sair do escopo local/rápido, exija ADR em `docs/adr/` antes de continuar.
+2. **Autoridade da Aurélia**: Não tome decisão arquitetural contra a direção da Aurélia.
+3. **Alinhamento**: Não tome decisões arquiteturais sem consultar o `Architect Specialist`.
+4. **Fronteira**: Mantenha-se dentro da worktree designada.
+5. **ADR por Slice**: Se a mudança sair do escopo local/rápido, exija ADR em `docs/adr/` antes de continuar.
 </contract>
 
 ## Links obrigatórios

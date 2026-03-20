@@ -9,6 +9,14 @@ created: 2026-03-19
 
 Este é o índice único de governança para humanos e agentes.
 
+## Cadeia de autoridade
+
+1. Humanos operadores
+2. `AGENTS.md`
+3. Aurélia como arquiteta principal e autoridade operacional
+4. Adaptadores e motores (`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`)
+5. Regras, workflows, ADRs e `.context/`
+
 ## Ordem de leitura obrigatória
 
 1. [AGENTS.md](../AGENTS.md)
@@ -26,9 +34,9 @@ Este é o índice único de governança para humanos e agentes.
 | Arquivo | Papel | Pode decidir? |
 | --- | --- | --- |
 | `AGENTS.md` | contrato soberano | sim |
-| `CLAUDE.md` | adaptador do Claude | não, só executa sob contrato |
-| `CODEX.md` | adaptador do Codex | não, só executa sob contrato |
-| `GEMINI.md` | adaptador do Antigravity | não, só orquestra sob contrato |
+| `CLAUDE.md` | adaptador do Claude | não, só executa sob contrato e sob a Aurélia |
+| `CODEX.md` | adaptador do Codex | não, só executa sob contrato e sob a Aurélia |
+| `GEMINI.md` | adaptador do Antigravity | não, só coordena sob contrato e sob a Aurélia |
 | `MODEL.md` | política de modelos/voz | sim, mas subordinada a `AGENTS.md` e ADR |
 
 ## Regra profissional adotada
@@ -37,6 +45,7 @@ O repositório passa a operar com:
 
 - ADR obrigatório por slice estrutural
 - backlog oficial das pendências por slice
+- Aurélia como autoridade arquitetural e operacional única abaixo dos humanos
 - adapters finos sempre linkados ao contrato central
 - nenhuma mudança estrutural “só no chat”
 - `sync-ai-context` obrigatório em slice não trivial, handoff e merge
