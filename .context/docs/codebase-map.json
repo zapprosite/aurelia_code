@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-20T02:59:49Z",
+  "generated": "2026-03-20T04:50:33Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 557,
+    "totalFiles": 568,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -51,7 +51,7 @@
       },
       {
         "name": "docs",
-        "fileCount": 83,
+        "fileCount": 97,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
@@ -61,12 +61,12 @@
       },
       {
         "name": "pkg",
-        "fileCount": 36,
+        "fileCount": 32,
         "description": "LLM and STT provider integrations"
       },
       {
         "name": "scripts",
-        "fileCount": 27,
+        "fileCount": 28,
         "description": "Build, daemon, and host operations"
       },
       {
@@ -78,15 +78,15 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 232
+        "count": 216
       },
       {
         "extension": ".md",
-        "count": 78
+        "count": 92
       },
       {
         "extension": ".sh",
-        "count": 23
+        "count": 24
       },
       {
         "extension": ".json",
