@@ -460,6 +460,15 @@ MIC
 - [ ] Fechar click e digitação seguros
 - [ ] Fechar desktop fallback seguro com kill-switch forte
 
+### ADR Nonstop Coverage
+
+- [x] Slice 2 aberta em `ADR-20260319-browser-safe-login`
+- [x] Slice 4 aberta em `ADR-20260319-antigravity-handoff-e2e`
+- [x] Slice 3 aberta em `ADR-20260319-desktop-safe-fallback`
+- [x] Slice 7 aberta em `ADR-20260319-voice-e2e-proof-live`
+- [x] Slice 10 coberta por `ADR-20260319-aurelia-media-voice` e `ADR-20260319-aurelia-authorized-voice-clone`
+- [x] Slice 11 aberta em `ADR-20260319-hierarchical-agent-bus`
+
 ## Proxima Acao Cirurgica
 
 Se voce mandar executar o proximo corte, a ordem certa agora e:

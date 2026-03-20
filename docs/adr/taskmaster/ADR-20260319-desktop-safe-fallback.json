@@ -1,0 +1,54 @@
+{
+  "adr_id": "ADR-20260319-desktop-safe-fallback",
+  "title": "Desktop Safe Fallback",
+  "status": "in_progress",
+  "phase": "design",
+  "progress": 10,
+  "goal": "Endurecer o desktop fallback com click seguro, digitacao segura, limite de passos e kill-switch explicito.",
+  "scope": [
+    "click seguro",
+    "digitacao segura",
+    "passo maximo",
+    "kill-switch",
+    "screenshot antes/depois"
+  ],
+  "done_definition": [
+    "acao sem foco valido e recusada",
+    "digitacao sem contexto valido e recusada",
+    "limitador de passos aborta execucao",
+    "evidencia visual minima existe"
+  ],
+  "next_actions": [
+    "mapear hooks de screenshot e validacao de foco",
+    "definir politica unica de abort",
+    "provar click e digitacao em alvo reversivel"
+  ],
+  "simulation_commands": [
+    "janela sem foco valido",
+    "click em alvo reversivel com before/after",
+    "digitacao segura com confirmacao de contexto",
+    "execucao abortada por orcamento de passos"
+  ],
+  "test_commands": [
+    "go test ./internal/tools -count=1",
+    "go test ./... -count=1"
+  ],
+  "curl_checks": [
+    "curl -fsS http://127.0.0.1:8484/health"
+  ],
+  "fallback_commands": [
+    "abortar para browser-first",
+    "abortar para CLI-first",
+    "exigir confirmacao humana"
+  ],
+  "evidence": [
+    "ADR aberta",
+    "guardrails de desktop definidos"
+  ],
+  "blockers": [],
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "Continue a slice ADR-20260319-desktop-safe-fallback. Feche click seguro, digitacao segura, step budget e kill-switch com prova reversivel.",
+    "last_updated": "2026-03-19T23:59:00-03:00"
+  }
+}

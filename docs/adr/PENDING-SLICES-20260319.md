@@ -13,6 +13,7 @@ Este é o backlog oficial das pendências abertas do plano JARVIS/Aurelia.
 - toda pendência estrutural daqui exige ADR ao iniciar execução
 - itens menores podem ser fechados direto se não alterarem arquitetura/runtime
 - a fonte primária de status continua em [plan.md](../../plan.md)
+- todas as pendências abaixo agora devem manter também um JSON taskmaster em `docs/adr/taskmaster/`
 
 ## Pendências abertas
 
@@ -77,6 +78,11 @@ As pendências mais críticas agora são:
 
 ## ADRs já abertas para pendências críticas
 
+- [ADR-20260319-browser-safe-login.md](./ADR-20260319-browser-safe-login.md) — login guiado seguro no browser
+- [ADR-20260319-antigravity-handoff-e2e.md](./ADR-20260319-antigravity-handoff-e2e.md) — handoff fim a fim com o Antigravity
+- [ADR-20260319-desktop-safe-fallback.md](./ADR-20260319-desktop-safe-fallback.md) — click/digitação/kill-switch do desktop fallback
+- [ADR-20260319-voice-e2e-proof-live.md](./ADR-20260319-voice-e2e-proof-live.md) — prova live do voice plane
+- [ADR-20260319-hierarchical-agent-bus.md](./ADR-20260319-hierarchical-agent-bus.md) — bus do swarm hierárquico
 - [20260319-voice-capture-plane.md](./20260319-voice-capture-plane.md) — cobre o próximo slice real de captura de voz
 - [ADR-20260319-voice-capture-runtime.md](./ADR-20260319-voice-capture-runtime.md) — slice nonstop em execução para integrar o capture worker ao runtime
 - [ADR-20260319-state-memory-runtime.md](./ADR-20260319-state-memory-runtime.md) — persistência de gateway state e transcripts locais
@@ -84,3 +90,12 @@ As pendências mais críticas agora são:
 - [ADR-20260319-extensions-governance.md](./ADR-20260319-extensions-governance.md) — política final de extensões
 - [ADR-20260319-aurelia-media-voice.md](./ADR-20260319-aurelia-media-voice.md) — transcript de mídia e voz oficial da Aurelia
 - [ADR-20260319-aurelia-authorized-voice-clone.md](./ADR-20260319-aurelia-authorized-voice-clone.md) — execução autorizada da voz oficial
+
+## Estado atual do modo `/adr-semparar`
+
+Todas as pendências estruturais abertas no backlog agora possuem:
+
+- ADR legível em `docs/adr/`
+- JSON taskmaster em `docs/adr/taskmaster/`
+
+Isso permite continuidade entre Codex, Claude e Antigravity sem perder o próximo passo operacional.
