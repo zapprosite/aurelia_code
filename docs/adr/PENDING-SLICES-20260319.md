@@ -62,6 +62,7 @@ As pendências mais críticas agora são:
    - dashboard leve em `Go`
    - assistance queue entre agentes ociosos
    - memória derivada em `Qdrant`
+   - copiar o contrato útil de `open-agent-supervisor` e `langgraph-supervisor`
    - motivo: deve nascer depois do runtime base estar estável, para não espalhar complexidade cedo demais
 
 ## ADRs já abertas para pendências críticas
