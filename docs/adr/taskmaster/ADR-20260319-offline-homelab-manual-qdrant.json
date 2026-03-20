@@ -1,0 +1,56 @@
+{
+  "adr_id": "ADR-20260319-offline-homelab-manual-qdrant",
+  "title": "Manual offline do homelab para recuperação semântica",
+  "status": "proposed",
+  "phase": "discovery",
+  "progress": 10,
+  "goal": "Consolidar um manual offline versionado do homelab, governado para ingestão no Qdrant e consumo por um modelo local 9B sem dependência da web.",
+  "scope": [
+    "Estrutura docs/homelab/manual/ com 7 documentos",
+    "Contrato de ingestão semântica",
+    "Recuperação híbrida Qdrant + SQLite",
+    "Rotina de atualização governada"
+  ],
+  "done_definition": [
+    "Árvore docs/homelab/manual criada com 00-overview até 60-operations-and-rollout",
+    "Cada documento tem frontmatter: título, status, owner, data, tags, criticidade",
+    "Policy definida: só entra no Qdrant documento versionado + aprovado",
+    "Recuperação híbrida: Qdrant + SQLite valida ação antes de executar"
+  ],
+  "next_actions": [
+    "Criar a árvore docs/homelab/manual/ (7 docs)",
+    "Consolidar inventário, serviços e modelos existentes",
+    "Definir validador mínimo de metadados",
+    "Preparar slice de implementação do indexador Qdrant"
+  ],
+  "simulation_commands": [
+    "find docs/homelab/manual -maxdepth 1 -type f | wc -l",
+    "grep -h '^owner:' docs/homelab/manual/*.md"
+  ],
+  "test_commands": [
+    "bash ./scripts/validate-homelab-manual.sh",
+    "go test ./pkg/qdrant ./pkg/semantics -count=1"
+  ],
+  "curl_checks": [
+    "curl -fsS http://127.0.0.1:6333/health",
+    "curl -fsS http://127.0.0.1:6333/collections/homelab_manual"
+  ],
+  "fallback_commands": [
+    "manual como documentação estática (sem ingestão Qdrant)",
+    "SQLite como fonte única de verdade até estabilizar"
+  ],
+  "evidence": [
+    "ADR criada e indexada em docs/adr/README.md",
+    "Backlog oficial aponta para esta slice",
+    "JSON taskmaster criado com progresso rastreável"
+  ],
+  "blockers": [
+    "Estrutura docs/homelab/manual/ ainda não foi criada",
+    "Contrato de ingestão precisa ser validado com o modelo local"
+  ],
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "Crie a árvore docs/homelab/manual/ com 7 documentos (00-overview, 10-inventory, 20-services, 30-models-and-gpu, 40-data-and-memory, 50-runbooks, 60-operations-and-rollout). Cada um com frontmatter: título, status, owner, data, tags, criticidade. Teste com 'find docs/homelab/manual -type f'.",
+    "last_updated": "2026-03-19T23:59:00-03:00"
+  }
+}
