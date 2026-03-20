@@ -22,21 +22,40 @@ bash scripts/setup-keepassxc-vault.sh
 ---
 
 ### 3️⃣ Secret Audit Script (Fase 2 — Item 9, HIGH)
-**Por quê:** Prevenir novo vazamento de credenciais.
+**Status:** ✅ COMPLETED (2026-03-20)
+
+**Implementado:** `scripts/secret-audit.sh` com cobertura completa:
 
 ```bash
-# Implementar:
+# Executar auditoria:
 bash scripts/secret-audit.sh
 
-# Deve detectar:
+# Detecta:
 ✅ Plaintext passwords em logs
 ✅ API keys em codigo fonte
 ✅ Tokens em comments
 ✅ Credenciais em .env non-centralizadas
+✅ Bearer tokens
+✅ AWS keys (AKIA prefix)
+✅ GitHub tokens (ghp_)
+✅ Telegram tokens
+✅ Private keys (RSA/DSA/EC/PGP/OpenSSH)
 ```
 
-**Status:** Scripts existem (verify-backups.sh, health-check.sh), mas secret-audit.sh NÃO.
-**Responsável:** codex (implementar + cron semanal)
+**Features:**
+- Padrão-matching regex com 16+ patterns
+- Git history scanning (`git log -p -S`)
+- Log file scanning (`~/.aurelia/logs/`)
+- Source code scanning (*.go, *.py, *.js, *.ts)
+- .env file detection
+- Color-coded output (RED=critical, YELLOW=warnings, GREEN=pass)
+- Audit logging com timestamp
+- Exit codes: 0=pass, 1=findings
+
+**Próximo:** Adicionar ao crontab semanal
+```bash
+0 6 * * 1 bash ~/aurelia/scripts/secret-audit.sh
+```
 
 ---
 
@@ -98,21 +117,22 @@ EnvironmentFile=%h/.aurelia/config/secrets.env
 
 ## 🎯 Ordem de Execução Recomendada
 
-| # | Task | Prioridade | Esforço | Deadline |
-|---|------|-----------|---------|----------|
-| 7 | Verificar systemd service | ✅ DONE | 5 min | 2026-03-21 |
-| 1 | Setup KeePassXC vault | 🟠 HIGH | 30 min | 2026-03-27 |
-| 9 | Implementar secret-audit.sh | 🟠 HIGH | 15 min | 2026-03-31 |
+| # | Task | Prioridade | Esforço | Deadline | Status |
+|---|------|-----------|---------|----------|--------|
+| 7 | Verificar systemd service | ✅ DONE | 5 min | 2026-03-20 | ✅ Completo |
+| 9 | Implementar secret-audit.sh | ✅ DONE | 15 min | 2026-03-20 | ✅ Completo |
+| 1 | Setup KeePassXC vault | 🟠 HIGH | 30 min | 2026-03-27 | ⏳ Próxima semana |
 
 ---
 
 ## 📞 Próximas Ações
 
-- 2026-03-27: Setup KeePassXC vault
-- 2026-03-31: Implementar secret-audit.sh
+- ✅ 2026-03-20: Item 7 + Item 9 completados
+- ⏳ 2026-03-27: Setup KeePassXC vault (Item 1)
+- 📅 2026-03-27: Agendar secret-audit no cron semanal (`0 6 * * 1`)
 
 ---
 
-**Last Updated:** 2026-03-20
+**Last Updated:** 2026-03-20 (Item 7 + Item 9 completos)
 **Owner:** codex + humano (compartilhado)
 **Authority:** [ADR-20260319-Polish-Governance-All](./adr/ADR-20260319-Polish-Governance-All.md)
