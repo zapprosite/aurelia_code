@@ -99,5 +99,7 @@ Fechar um handoff estruturado com:
 - o handoff de ida agora já nasce com contrato estruturado em JSON
 - o prompt exige resposta final em `approved|revise|blocked`
 - o parser da volta já existe no runtime para consumo futuro
+- o pipeline do Telegram agora já consome o retorno estruturado quando ele é colado no chat
+- a resposta volta formatada como handoff final utilizável pela Aurélia
 - `go test ./internal/telegram ./internal/agent -count=1` passou
 - `go test ./... -count=1` passou

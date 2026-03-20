@@ -761,3 +761,4 @@ Estado:
   - handoff do Antigravity agora já nasce com contrato estruturado de ida e parser de volta
   - browser safe login ganhou política inicial de allowlist, step budget e gate humano em `password`/`two_factor`
   - o agent bus ganhou schema base no `SQLiteTaskStore` com canais, threads, mensagens e assistance queue
+- A slice de handoff do Antigravity avançou mais um corte: o runtime do Telegram agora já reconhece JSON estruturado colado de volta, transforma em resposta operacional e reduz retrabalho no caminho de retorno.
