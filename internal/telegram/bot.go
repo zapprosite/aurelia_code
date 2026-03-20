@@ -80,14 +80,9 @@ func buildTTSSynthesizer(cfg *config.AppConfig) tts.Synthesizer {
 	switch cfg.TTSProvider {
 	case "", "disabled":
 		return nil
-	case "gemini":
-		return tts.NewGeminiSynthesizer(cfg.TTSBaseURL, cfg.GoogleAPIKey, cfg.TTSModel, cfg.TTSVoice)
-	case "openai_compatible":
-		return tts.NewOpenAICompatibleSynthesizer(cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSVoice, cfg.TTSFormat, cfg.TTSSpeed)
-	case "minimax":
-		return tts.NewMiniMaxSynthesizer(cfg.TTSBaseURL, cfg.MiniMaxAPIKey, cfg.TTSModel, cfg.TTSVoice, cfg.TTSFormat, cfg.TTSSpeed)
 	default:
-		return nil
+		// All TTS providers use local voice-proxy (OpenAI-compatible interface)
+		return tts.NewOpenAICompatibleSynthesizer(cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSVoice, cfg.TTSFormat, cfg.TTSSpeed)
 	}
 }
 

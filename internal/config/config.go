@@ -16,18 +16,11 @@ const (
 	defaultLLMModel             = "kimi-k2-thinking"
 	defaultSTTProvider          = "groq"
 	defaultTTSProvider          = "openai_compatible"
-	defaultLocalTTSBaseURL      = "http://127.0.0.1:8011"
-	defaultLocalTTSModel        = "chatterbox"
-	defaultLocalTTSVoice        = "Olivia.wav"
-	defaultLocalTTSFormat       = "opus"
-	defaultGeminiTTSBaseURL     = "https://generativelanguage.googleapis.com"
-	defaultGeminiTTSModel       = "gemini-2.5-flash-preview-tts"
-	defaultGeminiTTSVoice       = "Sulafat"
-	defaultGeminiTTSFormat      = "wav"
-	defaultMiniMaxTTSBaseURL    = "https://api.minimax.io"
-	defaultMiniMaxTTSModel      = "speech-2.8-hd"
-	defaultMiniMaxTTSFormat     = "mp3"
-	defaultTTSSpeed             = 1.0
+	defaultLocalTTSBaseURL = "http://127.0.0.1:8011"
+	defaultLocalTTSModel   = "chatterbox"
+	defaultLocalTTSVoice   = "Olivia.wav"
+	defaultLocalTTSFormat  = "opus"
+	defaultTTSSpeed        = 1.0
 	defaultHeartbeatEnabled     = true
 	defaultHeartbeatIntervalMin = 30
 	defaultVoiceEnabled         = false
@@ -58,7 +51,6 @@ type AppConfig struct {
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
 	GoogleAPIKey             string
-	MiniMaxAPIKey            string
 	KiloAPIKey               string
 	KimiAPIKey               string
 	OpenRouterAPIKey         string
@@ -113,7 +105,6 @@ type fileConfig struct {
 	TelegramAllowedUserIDs   []int64 `json:"telegram_allowed_user_ids"`
 	AnthropicAPIKey          string  `json:"anthropic_api_key"`
 	GoogleAPIKey             string  `json:"google_api_key"`
-	MiniMaxAPIKey            string  `json:"minimax_api_key"`
 	KiloAPIKey               string  `json:"kilo_api_key"`
 	KimiAPIKey               string  `json:"kimi_api_key"`
 	OpenRouterAPIKey         string  `json:"openrouter_api_key"`
@@ -169,7 +160,6 @@ type EditableConfig struct {
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
 	GoogleAPIKey             string
-	MiniMaxAPIKey            string
 	KiloAPIKey               string
 	KimiAPIKey               string
 	OpenRouterAPIKey         string
@@ -305,7 +295,6 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		TelegramAllowedUserIDs:   append([]int64(nil), cfg.TelegramAllowedUserIDs...),
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
 		GoogleAPIKey:             cfg.GoogleAPIKey,
-		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
 		KiloAPIKey:               cfg.KiloAPIKey,
 		KimiAPIKey:               cfg.KimiAPIKey,
 		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
@@ -340,7 +329,6 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.TelegramAllowedUserIDs = append([]int64(nil), editable.TelegramAllowedUserIDs...)
 	cfg.AnthropicAPIKey = editable.AnthropicAPIKey
 	cfg.GoogleAPIKey = editable.GoogleAPIKey
-	cfg.MiniMaxAPIKey = editable.MiniMaxAPIKey
 	cfg.KiloAPIKey = editable.KiloAPIKey
 	cfg.KimiAPIKey = editable.KimiAPIKey
 	cfg.OpenRouterAPIKey = editable.OpenRouterAPIKey
@@ -494,7 +482,6 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		TelegramAllowedUserIDs:   cfg.TelegramAllowedUserIDs,
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
 		GoogleAPIKey:             cfg.GoogleAPIKey,
-		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
 		KiloAPIKey:               cfg.KiloAPIKey,
 		KimiAPIKey:               cfg.KimiAPIKey,
 		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
@@ -549,7 +536,6 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.TTSSpeed != b.TTSSpeed ||
 		a.AnthropicAPIKey != b.AnthropicAPIKey ||
 		a.GoogleAPIKey != b.GoogleAPIKey ||
-		a.MiniMaxAPIKey != b.MiniMaxAPIKey ||
 		a.KiloAPIKey != b.KiloAPIKey ||
 		a.KimiAPIKey != b.KimiAPIKey ||
 		a.OpenRouterAPIKey != b.OpenRouterAPIKey ||
@@ -602,92 +588,43 @@ func sameFileConfig(a, b fileConfig) bool {
 }
 
 func defaultTTSBaseURLForProvider(provider string) string {
-	switch provider {
-	case "gemini":
-		return defaultGeminiTTSBaseURL
-	case "minimax":
-		return defaultMiniMaxTTSBaseURL
-	default:
-		return defaultLocalTTSBaseURL
-	}
+	// All TTS providers use local voice-proxy service
+	return defaultLocalTTSBaseURL
 }
 
 func defaultTTSModelForProvider(provider string) string {
-	switch provider {
-	case "gemini":
-		return defaultGeminiTTSModel
-	case "minimax":
-		return defaultMiniMaxTTSModel
-	default:
-		return defaultLocalTTSModel
-	}
+	// All TTS providers use local voice-proxy service
+	return defaultLocalTTSModel
 }
 
 func defaultTTSVoiceForProvider(provider string) string {
-	switch provider {
-	case "gemini":
-		return defaultGeminiTTSVoice
-	case "minimax":
-		return "aurelia-ptbr-formal-doce-v1"
-	default:
-		return defaultLocalTTSVoice
-	}
+	// All TTS providers use local voice-proxy with Olivia.wav
+	return defaultLocalTTSVoice
 }
 
 func defaultTTSFormatForProvider(provider string) string {
-	switch provider {
-	case "gemini":
-		return defaultGeminiTTSFormat
-	case "minimax":
-		return defaultMiniMaxTTSFormat
-	default:
-		return defaultLocalTTSFormat
-	}
+	// All TTS providers use local voice-proxy with opus format
+	return defaultLocalTTSFormat
 }
 
 func usesLegacyTTSDefaults(provider, baseURL, model, format string) bool {
-	switch provider {
-	case "gemini":
-		return baseURL == defaultLocalTTSBaseURL && (model == "" || model == defaultLocalTTSModel) && (format == "" || format == defaultLocalTTSFormat)
-	case "minimax":
-		return baseURL == defaultLocalTTSBaseURL && (model == "" || model == defaultLocalTTSModel) && (format == "" || format == defaultLocalTTSFormat)
-	default:
-		return (baseURL == defaultMiniMaxTTSBaseURL && (model == "" || model == defaultMiniMaxTTSModel) && (format == "" || format == defaultMiniMaxTTSFormat)) ||
-			(baseURL == defaultGeminiTTSBaseURL && (model == "" || model == defaultGeminiTTSModel) && (format == "" || format == defaultGeminiTTSFormat))
-	}
+	// All TTS providers now use local voice-proxy, no legacy cloud providers
+	return false
 }
 
 func usesLegacyTTSModel(provider, model string) bool {
-	switch provider {
-	case "gemini":
-		return model == defaultLocalTTSModel
-	case "minimax":
-		return model == defaultLocalTTSModel
-	default:
-		return model == defaultMiniMaxTTSModel || model == defaultGeminiTTSModel
-	}
+	// All TTS providers now use local voice-proxy, no legacy cloud models
+	return false
 }
 
 func usesLegacyTTSVoice(provider, voice string) bool {
-	switch provider {
-	case "gemini":
-		return voice == defaultLocalTTSVoice
-	case "minimax":
-		return voice == defaultLocalTTSVoice
-	default:
-		return voice == "aurelia-ptbr-formal-doce-v1" || voice == defaultGeminiTTSVoice
-	}
+	// All TTS providers now use local voice-proxy with Olivia.wav, no legacy cloud voices
+	return false
 }
 
 func usesLegacyTTSFormat(provider, format string) bool {
-	switch provider {
-	case "gemini":
-		return format == defaultLocalTTSFormat
-	case "minimax":
-		return format == defaultLocalTTSFormat
-	default:
-		return format == defaultMiniMaxTTSFormat || format == defaultGeminiTTSFormat
-	}
+	// All TTS providers now use local voice-proxy with opus format, no legacy cloud formats
+	return false
 }
 
 func defaultLLMModelForProvider(provider string) string {
