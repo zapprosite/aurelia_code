@@ -12,6 +12,6 @@ Passos:
 5.  **Adaptadores**: Criar arquivos finos `CLAUDE.md`, `GEMINI.md` e `CODEX.md`.
 6.  **Regras**: Estabelecer as regras em `.agent/rules/`.
 7.  **Skill Local**: Criar a skill do projeto em `.agent/skills/template-mult-clouds/`.
-8.  **PRD**: Inicializar o `PRD.md` na raiz.
+8.  **Plan**: Consultar `plan.md` e `AGENTS.md` para direcionamento.
 9.  **Docs Context**: Criar documentação técnica em `.context/docs`.
 10. **Resumo**: Gerar relatório final de inicialização.
