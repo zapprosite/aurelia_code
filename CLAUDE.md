@@ -10,7 +10,7 @@ description: Adaptador de execução para o Claude Code CLI.
 ## 📜 Regras de Engajamento
 1. **Hierarquia**: Respeite `AGENTS.md` (soberano), `REPOSITORY_CONTRACT.md` (governança) e `docs/adr/` (decisões estruturais) como fontes de verdade.
 2. **Autoridade da Aurélia**: Execute sob a direção arquitetural e operacional da Aurélia; não dispute governança com ela.
-3. **Higiene**: Sincronize o contexto via MCP `ai-context` após cada tarefa (obrigatório ao fechar slice).
+3. **Higiene**: Sincronize o contexto via `/sincronizar-tudo` ou `bash scripts/sync-ai-context.sh` após cada tarefa (obrigatório ao fechar slice).
 4. **Isolamento**: Priorize worktrees para implementações não triviais.
 5. **ADR por Slice**: Não implemente mudança estrutural sem ADR ou backlog de slice registrado em `docs/adr/`. Use `bash scripts/validate-adr-semparar.sh` para validar conformidade.
 </contract>
@@ -24,10 +24,11 @@ Para slices não-triviais (mudanças arquiteturais, integração multi-agente):
 2. **Preencher**: ADR + JSON taskmaster com contexto, decision, smoke tests
 3. **Validar**: `bash scripts/validate-adr-semparar.sh` (deve passar)
 4. **Executar**: Em worktree isolada com handoff estruturado
-5. **Fechar**: Atualize JSON com evidência, rode `bash scripts/sync-ai-context.sh`
+5. **Fechar**: Atualize JSON com evidência, rode `/sincronizar-tudo` (ou `bash scripts/sync-ai-context.sh`)
 6. **Commitar**: Com referência a sync e validação
 
 Documentação: `.agents/workflows/adr-semparar-governance.md`
+Skill: [sync-ai-context](./.agents/skills/sync-ai-context/SKILL.md)
 </workflow>
 
 <tips>
