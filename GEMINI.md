@@ -13,6 +13,7 @@ description: Adaptador de orquestração para o Antigravity IDE (Gemini).
 3. **Língua**: Mantenha a documentação e planos em **Português (BR)**.
 4. **Padrão**: Utilize estritamente `.agents/rules` e `.agents/workflows`.
 5. **ADR por Slice**: Não orquestre implementação estrutural sem ADR ou backlog de slice oficial.
+6. **Governança Industrial**: Consulte [ADR-20260319-Polish-Governance-All](./docs/adr/ADR-20260319-Polish-Governance-All.md). Coordene handoff: humano → Fase 1 (CRITICAL) → skill `/governance-polish` → Fases 2-4.
 </contract>
 
 ## Links obrigatórios

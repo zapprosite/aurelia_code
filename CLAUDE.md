@@ -13,6 +13,7 @@ description: Adaptador de execução para o Claude Code CLI.
 3. **Higiene**: Sincronize o contexto via `/sincronizar-tudo` ou `bash scripts/sync-ai-context.sh` após cada tarefa (obrigatório ao fechar slice).
 4. **Isolamento**: Priorize worktrees para implementações não triviais.
 5. **ADR por Slice**: Não implemente mudança estrutural sem ADR ou backlog de slice registrado em `docs/adr/`. Use `bash scripts/validate-adr-semparar.sh` para validar conformidade.
+6. **Governança Industrial**: Consulte [ADR-20260319-Polish-Governance-All](./docs/adr/ADR-20260319-Polish-Governance-All.md) para secrets, dados, rede, ops, observabilidade. Use skill `/governance-polish` para automatizar fases.
 </contract>
 
 <workflow>
