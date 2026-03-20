@@ -74,3 +74,4 @@ specs/
 # Local planning workspace
 .planning/
 aurelia-elite
+~/.aurelia/config/secrets.env
