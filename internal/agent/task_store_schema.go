@@ -70,6 +70,48 @@ func (s *SQLiteTaskStore) initialize() error {
 		payload TEXT NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
+
+	CREATE TABLE IF NOT EXISTS swarm_channels (
+		id TEXT PRIMARY KEY,
+		team_id TEXT NOT NULL,
+		name TEXT NOT NULL,
+		kind TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS swarm_threads (
+		id TEXT PRIMARY KEY,
+		team_id TEXT NOT NULL,
+		channel_id TEXT NOT NULL,
+		title TEXT NOT NULL,
+		status TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS swarm_thread_messages (
+		id TEXT PRIMARY KEY,
+		team_id TEXT NOT NULL,
+		thread_id TEXT NOT NULL,
+		channel_id TEXT NOT NULL,
+		sender_agent TEXT NOT NULL,
+		kind TEXT NOT NULL,
+		body TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		consumed_at DATETIME
+	);
+
+	CREATE TABLE IF NOT EXISTS assistance_tasks (
+		id TEXT PRIMARY KEY,
+		team_id TEXT NOT NULL,
+		thread_id TEXT,
+		owner_agent TEXT NOT NULL,
+		helper_agent TEXT,
+		title TEXT NOT NULL,
+		body TEXT NOT NULL,
+		status TEXT NOT NULL,
+		lease_until DATETIME,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
 	`
 
 	if _, err := s.db.Exec(query); err != nil {

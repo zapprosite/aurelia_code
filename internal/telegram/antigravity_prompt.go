@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -14,8 +15,28 @@ const (
 )
 
 type antigravityDelegation struct {
-	Kind   antigravityTaskKind
-	Prompt string
+	Kind    antigravityTaskKind
+	Prompt  string
+	Request antigravityHandoffRequest
+}
+
+type antigravityHandoffRequest struct {
+	Version      string              `json:"version"`
+	Kind         antigravityTaskKind `json:"kind"`
+	Workspace    string              `json:"workspace"`
+	TaskClass    string              `json:"task_class"`
+	UserText     string              `json:"user_text"`
+	Constraints  []string            `json:"constraints"`
+	Deliverables []string            `json:"deliverables"`
+}
+
+type antigravityHandoffResult struct {
+	Status       string   `json:"status"`
+	Summary      string   `json:"summary"`
+	ProposedDiff string   `json:"proposed_diff,omitempty"`
+	Commands     []string `json:"commands,omitempty"`
+	Validation   []string `json:"validation,omitempty"`
+	ResidualRisk string   `json:"residual_risk"`
 }
 
 var antigravityHighRiskTerms = []string{
@@ -95,9 +116,11 @@ func maybeBuildAntigravityDelegationPrompt(text string) *antigravityDelegation {
 		return nil
 	}
 
+	req := buildAntigravityHandoffRequest(kind, text)
 	return &antigravityDelegation{
-		Kind:   kind,
-		Prompt: buildAntigravityPrompt(kind, text),
+		Kind:    kind,
+		Prompt:  buildAntigravityPrompt(req),
+		Request: req,
 	}
 }
 
@@ -126,9 +149,31 @@ func classifyAntigravityTaskKind(text string) antigravityTaskKind {
 	return ""
 }
 
-func buildAntigravityPrompt(kind antigravityTaskKind, userText string) string {
-	extra := promptBodyForKind(kind)
-	return fmt.Sprintf("Classifiquei esta tarefa como `light` para o chat do Antigravity.\n\n```text\nVoce esta no chat leve do Antigravity para o workspace /home/will/aurelia.\n\nTarefa:\n- %s\n\nRestricoes:\n- nao tocar em secrets\n- nao fazer deploy\n- nao declarar sucesso sem prova\n- manter a mudanca pequena e reversivel\n\nEntregue:\n- diff proposto ou passos exatos\n- comandos de validacao\n- risco residual em uma linha\n\n%s\n```\n", strings.TrimSpace(userText), extra)
+func buildAntigravityHandoffRequest(kind antigravityTaskKind, userText string) antigravityHandoffRequest {
+	return antigravityHandoffRequest{
+		Version:   "2026-03-19",
+		Kind:      kind,
+		Workspace: "/home/will/aurelia",
+		TaskClass: "light",
+		UserText:  strings.TrimSpace(userText),
+		Constraints: []string{
+			"nao tocar em secrets",
+			"nao fazer deploy",
+			"nao declarar sucesso sem prova",
+			"manter a mudanca pequena e reversivel",
+		},
+		Deliverables: []string{
+			"diff proposto ou passos exatos",
+			"comandos de validacao",
+			"risco residual em uma linha",
+		},
+	}
+}
+
+func buildAntigravityPrompt(req antigravityHandoffRequest) string {
+	extra := promptBodyForKind(req.Kind)
+	requestJSON, _ := json.MarshalIndent(req, "", "  ")
+	return fmt.Sprintf("Classifiquei esta tarefa como `light` para o chat do Antigravity.\n\n```text\nVoce esta no chat leve do Antigravity para o workspace /home/will/aurelia.\n\nHandoff request:\n%s\n\n%s\n\nResposta obrigatoria em JSON:\n{\n  \"status\": \"approved|revise|blocked\",\n  \"summary\": \"\",\n  \"proposed_diff\": \"\",\n  \"commands\": [\"\"],\n  \"validation\": [\"\"],\n  \"residual_risk\": \"\"\n}\n```\n", string(requestJSON), extra)
 }
 
 func promptBodyForKind(kind antigravityTaskKind) string {
@@ -142,4 +187,27 @@ func promptBodyForKind(kind antigravityTaskKind) string {
 	default:
 		return ""
 	}
+}
+
+func parseAntigravityHandoffResult(text string) (*antigravityHandoffResult, error) {
+	trimmed := strings.TrimSpace(text)
+	if trimmed == "" {
+		return nil, fmt.Errorf("empty handoff result")
+	}
+	var result antigravityHandoffResult
+	if err := json.Unmarshal([]byte(trimmed), &result); err != nil {
+		return nil, fmt.Errorf("decode handoff result: %w", err)
+	}
+	switch result.Status {
+	case "approved", "revise", "blocked":
+	default:
+		return nil, fmt.Errorf("invalid handoff status %q", result.Status)
+	}
+	if strings.TrimSpace(result.Summary) == "" {
+		return nil, fmt.Errorf("handoff summary is required")
+	}
+	if strings.TrimSpace(result.ResidualRisk) == "" {
+		return nil, fmt.Errorf("handoff residual risk is required")
+	}
+	return &result, nil
 }

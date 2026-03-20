@@ -62,6 +62,8 @@ Implementar um `guided login flow` com contrato explícito:
 
 ## Arquivos afetados
 
+- `internal/agent/browser_login_policy.go`
+- `internal/agent/browser_login_policy_test.go`
 - `internal/agent/`
 - `internal/tools/`
 - `internal/telegram/`
@@ -106,3 +108,11 @@ Implementar um `guided login flow` com contrato explícito:
 ## Pendências / bloqueios
 
 - falta definir o shape final do contrato de pausa/retomada entre browser e operador
+
+## Progresso registrado
+
+- política de login guiado criada com:
+  - allowlist de host
+  - step budget
+  - gate humano obrigatório em `password` e `two_factor`
+- `go test ./internal/agent -count=1` passou

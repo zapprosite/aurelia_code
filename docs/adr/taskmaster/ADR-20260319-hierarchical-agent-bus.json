@@ -3,7 +3,7 @@
   "title": "Hierarchical Agent Bus",
   "status": "proposed",
   "phase": "discovery",
-  "progress": 5,
+  "progress": 25,
   "goal": "Implementar o bus hierarquico da Aurelia em PostgreSQL com memoria derivada em Qdrant, assistance queue e dashboard leve em Go.",
   "scope": [
     "schema PostgreSQL",
@@ -20,9 +20,9 @@
     "dashboard mostra agentes, tarefas e presenca"
   ],
   "next_actions": [
-    "definir schema minimo do bus",
-    "traduzir handoff e forward_message do LangGraph para Go",
-    "escolher primeira entrega entre queue core e dashboard"
+    "traduzir o schema SQLite atual para o desenho PostgreSQL final",
+    "ligar assistance queue ao TeamManager sem quebrar o runtime atual",
+    "traduzir handoff e forward_message do LangGraph para Go"
   ],
   "simulation_commands": [
     "duas workers competem por task e so uma vence o lease",
@@ -46,7 +46,10 @@
   "evidence": [
     "ADR aberta",
     "blueprint oficial do swarm criado",
-    "repositorio LangGraph de referencia escolhido"
+    "repositorio LangGraph de referencia escolhido",
+    "schema base do bus entrou no SQLiteTaskStore",
+    "helpers iniciais de assistance queue foram criados",
+    "go test ./internal/agent -count=1 passou"
   ],
   "blockers": [],
   "handoff": {

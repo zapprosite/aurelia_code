@@ -757,3 +757,7 @@ Estado:
 - Escolhida uma linha de aceleração oficial via LangGraph: usar `langchain-ai/open-agent-supervisor` e `langchain-ai/langgraph-supervisor` como referência para copiar contrato de handoff, registro de agentes, histórico e supervisor, mas reimplementar o runtime final em `Go`.
 - Reorganizada a ordem das pendências em ondas que combinam entre si: `voz`, `orquestração`, `swarm` e só depois `desktop fallback`, reduzindo troca de contexto e risco de implementação fora de ordem.
 - O workflow `/adr-semparar` foi aplicado a todas as slices estruturais ainda pendentes: login seguro, handoff Antigravity, prova live de voz, desktop fallback e agent bus do swarm agora já possuem ADR + JSON taskmaster próprios.
+- Entrou o primeiro corte compartilhado de execução para as slices pendentes:
+  - handoff do Antigravity agora já nasce com contrato estruturado de ida e parser de volta
+  - browser safe login ganhou política inicial de allowlist, step budget e gate humano em `password`/`two_factor`
+  - o agent bus ganhou schema base no `SQLiteTaskStore` com canais, threads, mensagens e assistance queue

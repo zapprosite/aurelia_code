@@ -3,7 +3,7 @@
   "title": "Browser Safe Login",
   "status": "in_progress",
   "phase": "design",
-  "progress": 10,
+  "progress": 35,
   "goal": "Fechar um fluxo de login guiado seguro para browser-use sem vazar segredo, sem automacao cega e com handoff humano claro nas etapas sensiveis.",
   "scope": [
     "allowlist de dominio",
@@ -19,8 +19,8 @@
     "browser smoke continua verde"
   ],
   "next_actions": [
-    "definir shape do state machine de login guiado",
-    "mapear pontos de hook entre browser e operador",
+    "ligar a politica de login guiado ao runtime browser",
+    "mapear os hooks de pausa/retomada no operador",
     "escrever smoke browser para dominio permitido e bloqueado"
   ],
   "simulation_commands": [
@@ -44,7 +44,8 @@
   "evidence": [
     "ADR aberta",
     "contrato de login guiado definido",
-    "smoke browser previsto"
+    "browser login policy criada com allowlist e gate humano",
+    "go test ./internal/agent -count=1 passou"
   ],
   "blockers": [],
   "handoff": {
