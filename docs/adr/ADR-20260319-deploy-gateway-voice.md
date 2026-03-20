@@ -7,7 +7,7 @@ status: accepted
 
 ## Status
 
-- Aceita
+- Aceito
 
 ## Slice
 

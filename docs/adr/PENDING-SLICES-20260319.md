@@ -32,6 +32,7 @@ Este é o backlog oficial das pendências abertas do plano JARVIS/Aurelia.
 | Slice 11 | dashboard de swarm em `Go` | orchestration/ui | sim | thread/task board vivo |
 | Slice 11 | assistance queue para agentes ociosos | orchestration/runtime | sim | idle agent help flow |
 | Slice 11 | memória semântica do swarm em `Qdrant` | memory/rag | sim | thread summary -> vector |
+| Slice 12 | manual offline do homelab para `Qdrant` e modelo `9B` sem web | memory/rag/docs | sim | consulta semântica + checagem em SQLite |
 
 ## Observação profissional
 
@@ -90,6 +91,7 @@ As pendências mais críticas agora são:
 - [ADR-20260319-extensions-governance.md](./ADR-20260319-extensions-governance.md) — política final de extensões
 - [ADR-20260319-aurelia-media-voice.md](./ADR-20260319-aurelia-media-voice.md) — transcript de mídia e voz oficial da Aurelia
 - [ADR-20260319-aurelia-authorized-voice-clone.md](./ADR-20260319-aurelia-authorized-voice-clone.md) — execução autorizada da voz oficial
+- [ADR-20260319-offline-homelab-manual-qdrant.md](./ADR-20260319-offline-homelab-manual-qdrant.md) — manual offline do homelab para recuperação semântica do runtime local
 
 ## Estado atual do modo `/adr-semparar`
 

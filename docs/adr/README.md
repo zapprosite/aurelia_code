@@ -10,6 +10,7 @@ Este diretório contém o registro histórico de todas as decisões técnicas si
 
 - A autoridade primária continua em [AGENTS.md](../../AGENTS.md)
 - O índice de governança está em [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- **🎯 MAP OPERACIONAL (Novo):** [TASKMASTER-INDEX.md](./TASKMASTER-INDEX.md) — Visão única de todas as 12 slices nonstop, organizada por onda e prioridade
 - O template oficial por slice está em [TEMPLATE-SLICE.md](./TEMPLATE-SLICE.md)
 - O template nonstop por slice está em [TEMPLATE-NONSTOP-SLICE.md](./TEMPLATE-NONSTOP-SLICE.md)
 - O backlog oficial de pendências está em [PENDING-SLICES-20260319.md](./PENDING-SLICES-20260319.md)
@@ -46,6 +47,7 @@ Este diretório contém o registro histórico de todas as decisões técnicas si
 | [20260319-state-memory-runtime](./ADR-20260319-state-memory-runtime.md) | State memory runtime nonstop | 2026-03-19 | 🔵 Em execução |
 | [20260319-deploy-gateway-voice](./ADR-20260319-deploy-gateway-voice.md) | Deploy gateway voice nonstop | 2026-03-19 | 🔵 Em execução |
 | [20260319-extensions-governance](./ADR-20260319-extensions-governance.md) | Governança de extensões | 2026-03-19 | ✅ Aceito |
+| [20260319-offline-homelab-manual-qdrant](./ADR-20260319-offline-homelab-manual-qdrant.md) | Manual offline do homelab para recuperação semântica | 2026-03-19 | 🟡 Proposto |
 
 ## Como Criar um ADR
 
