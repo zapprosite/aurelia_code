@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 
 	"github.com/kocar/aurelia/internal/agent"
+	"github.com/kocar/aurelia/internal/observability"
 )
 
 // Router handles intent classification to pick a specific skill
@@ -22,6 +23,7 @@ func NewRouter(llm agent.LLMProvider) *Router {
 
 // Route identifies if any given skill is suitable for the user prompt
 func (r *Router) Route(ctx context.Context, prompt string, availableSkills map[string]Skill) (string, error) {
+	logger := observability.Logger("skill.router")
 	if len(availableSkills) == 0 {
 		return "", nil // no skills to pick
 	}
@@ -49,7 +51,7 @@ Example Output:
 	// Request from LLM without tools just as a fast classifier (Passo Zero)
 	resp, err := r.llm.GenerateContent(ctx, systemPrompt, history, nil)
 	if err != nil {
-		log.Printf("Router error: %v", err)
+		logger.Warn("router provider error", slog.Any("err", err))
 		return "", nil // Fallback gracefully to null intent
 	}
 
@@ -65,7 +67,7 @@ Example Output:
 	}
 
 	if err := json.Unmarshal([]byte(raw), &output); err != nil {
-		log.Printf("Router parse error: %v (Raw: %s)", err, raw)
+		logger.Warn("router parse error", slog.Any("err", err))
 		return "", nil
 	}
 
@@ -80,5 +82,3 @@ Example Output:
 
 	return "", nil
 }
-
-

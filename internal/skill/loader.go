@@ -109,7 +109,7 @@ func parseFrontmatter(data []byte) (Metadata, string, error) {
 			if err != nil {
 				return meta, content, fmt.Errorf("invalid yaml: %w", err)
 			}
-			
+
 			// If meta.Name is not provided, it's structurally bad
 			if meta.Name == "" {
 				return meta, content, fmt.Errorf("missing name in frontmatter")

@@ -15,7 +15,6 @@ const (
 
 func NewOpenAIProvider(apiKey string, model string) *OpenAICompatibleProvider {
 	return NewOpenAICompatibleProvider(OpenAICompatibleConfig{
-		Provider:  "openai",
 		APIKey:    apiKey,
 		BaseURL:   openAIChatCompletionsURL,
 		Model:     model,
@@ -55,9 +54,8 @@ func listOpenAIModels(ctx context.Context, apiKey string, baseURL string, client
 			continue
 		}
 		models = append(models, ModelOption{
-			ID:                 model.ID,
-			Name:               model.ID,
-			SupportsImageInput: looksLikeOpenAIVisionModel(model.ID),
+			ID:   model.ID,
+			Name: model.ID,
 		})
 	}
 	return models, nil
@@ -65,20 +63,6 @@ func listOpenAIModels(ctx context.Context, apiKey string, baseURL string, client
 
 func looksLikeOpenAIChatModel(modelID string) bool {
 	prefixes := []string{"gpt-", "o", "chatgpt-", "codex-", "gpt-oss-"}
-	for _, prefix := range prefixes {
-		if strings.HasPrefix(modelID, prefix) {
-			return true
-		}
-	}
-	return false
-}
-
-func looksLikeOpenAIVisionModel(modelID string) bool {
-	modelID = strings.ToLower(modelID)
-	if strings.Contains(modelID, "audio") || strings.Contains(modelID, "codex") {
-		return false
-	}
-	prefixes := []string{"gpt-", "o", "chatgpt-"}
 	for _, prefix := range prefixes {
 		if strings.HasPrefix(modelID, prefix) {
 			return true

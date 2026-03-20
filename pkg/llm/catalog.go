@@ -14,32 +14,15 @@ import (
 
 // ModelOption is a selectable model entry for onboarding and config UIs.
 type ModelOption struct {
-	ID                 string
-	Name               string
-	SupportsImageInput bool
-	SupportsTools      bool
-	IsFree             bool
+	ID   string
+	Name string
 }
 
 func (m ModelOption) Label() string {
-	badges := make([]string, 0, 3)
-	if m.SupportsImageInput {
-		badges = append(badges, "vision")
-	}
-	if m.SupportsTools {
-		badges = append(badges, "tools")
-	}
-	if m.IsFree {
-		badges = append(badges, "free")
-	}
-	suffix := ""
-	if len(badges) != 0 {
-		suffix = " [" + strings.Join(badges, ", ") + "]"
-	}
 	if m.Name == "" || m.Name == m.ID {
-		return m.ID + suffix
+		return m.ID
 	}
-	return fmt.Sprintf("%s (%s)%s", m.Name, m.ID, suffix)
+	return fmt.Sprintf("%s (%s)", m.Name, m.ID)
 }
 
 // ModelCatalogCredentials carries provider-specific credentials used by model catalogs.
@@ -80,6 +63,12 @@ func ListModels(ctx context.Context, provider string, creds ModelCatalogCredenti
 			return models, nil
 		}
 		return fallbackModels("kilo"), nil
+	case "ollama":
+		models, err := listOllamaModels(ctx, ollamaModelsURL, http.DefaultClient)
+		if err == nil && len(models) != 0 {
+			return models, nil
+		}
+		return fallbackModels("ollama"), nil
 	case "openrouter":
 		return listOpenRouterModels(ctx, creds.OpenRouterAPIKey, openRouterModelsURL, http.DefaultClient)
 	case "zai":
@@ -110,62 +99,67 @@ func fallbackModels(provider string) []ModelOption {
 	switch provider {
 	case "anthropic":
 		return []ModelOption{
-			{ID: "claude-sonnet-4-6", Name: "Claude Sonnet 4.6", SupportsImageInput: true},
-			{ID: "claude-opus-4-6", Name: "Claude Opus 4.6", SupportsImageInput: true},
-			{ID: "claude-haiku-4-5", Name: "Claude Haiku 4.5", SupportsImageInput: true},
+			{ID: "claude-sonnet-4-6", Name: "Claude Sonnet 4.6"},
+			{ID: "claude-opus-4-6", Name: "Claude Opus 4.6"},
+			{ID: "claude-haiku-4-5", Name: "Claude Haiku 4.5"},
 		}
 	case "google":
 		return []ModelOption{
-			{ID: "gemini-2.5-pro", Name: "Gemini 2.5 Pro", SupportsImageInput: true},
-			{ID: "gemini-2.5-flash", Name: "Gemini 2.5 Flash", SupportsImageInput: true},
-			{ID: "gemini-2.5-flash-lite", Name: "Gemini 2.5 Flash-Lite", SupportsImageInput: true},
+			{ID: "gemini-2.5-pro", Name: "Gemini 2.5 Pro"},
+			{ID: "gemini-2.5-flash", Name: "Gemini 2.5 Flash"},
+			{ID: "gemini-2.5-flash-lite", Name: "Gemini 2.5 Flash-Lite"},
 		}
 	case "kilo":
 		return []ModelOption{
-			{ID: "openai/gpt-5.4", Name: "OpenAI: GPT-5.4", SupportsImageInput: true},
-			{ID: "anthropic/claude-sonnet-4.6", Name: "Anthropic: Claude Sonnet 4.6", SupportsImageInput: true},
-			{ID: "google/gemini-3.1-pro-preview", Name: "Google: Gemini 3.1 Pro Preview", SupportsImageInput: true},
-			{ID: "z-ai/glm-4.6v", Name: "Z.ai: GLM 4.6V", SupportsImageInput: true},
-			{ID: "z-ai/glm-5-turbo", Name: "Z.ai: GLM 5 Turbo"},
+			{ID: "gpt-5.4", Name: "GPT-5.4"},
+			{ID: "claude-sonnet-4-6", Name: "Claude Sonnet 4.6"},
+			{ID: "gemini-2.5-pro", Name: "Gemini 2.5 Pro"},
+			{ID: "grok-4-fast", Name: "Grok 4 Fast"},
+			{ID: "qwen3-coder-plus", Name: "Qwen3 Coder Plus"},
+		}
+	case "ollama":
+		return []ModelOption{
+			{ID: "qwen3.5:9b", Name: "Qwen 3.5 9B"},
+			{ID: "qwen3.5:4b", Name: "Qwen 3.5 4B"},
+			{ID: "qwen3.5:27b-q4_K_M", Name: "Qwen 3.5 27B Q4_K_M"},
+			{ID: "gemma3:27b-it-q4_K_M", Name: "Gemma 3 27B IT Q4_K_M"},
+			{ID: "qwen3-coder:30b", Name: "Qwen3 Coder 30B"},
 		}
 	case "openrouter":
 		return []ModelOption{
 			{ID: "openrouter/auto", Name: "OpenRouter Auto"},
-			{ID: "openrouter/free", Name: "OpenRouter Free Router", IsFree: true},
+			{ID: "openrouter/free", Name: "OpenRouter Free Router"},
 		}
 	case "zai":
 		return []ModelOption{
 			{ID: "glm-5", Name: "GLM-5"},
 			{ID: "glm-4.7", Name: "GLM-4.7"},
-			{ID: "glm-4.6v", Name: "GLM-4.6V", SupportsImageInput: true},
 			{ID: "glm-4.5-air", Name: "GLM-4.5 Air"},
 		}
 	case "alibaba":
 		return []ModelOption{
 			{ID: "qwen3-coder-plus", Name: "Qwen3 Coder Plus"},
 			{ID: "qwen3-coder-next", Name: "Qwen3 Coder Next"},
-			{ID: "qwen-vl-max", Name: "Qwen VL Max", SupportsImageInput: true},
 			{ID: "qwen3.5-plus", Name: "Qwen3.5 Plus"},
 		}
 	case "openai":
 		return []ModelOption{
-			{ID: "gpt-5.4", Name: "GPT-5.4", SupportsImageInput: true, SupportsTools: true},
-			{ID: "gpt-5-mini", Name: "GPT-5 mini", SupportsImageInput: true, SupportsTools: true},
-			{ID: "o4-mini", Name: "o4-mini", SupportsImageInput: true, SupportsTools: true},
+			{ID: "gpt-5.4", Name: "GPT-5.4"},
+			{ID: "gpt-5-mini", Name: "GPT-5 mini"},
+			{ID: "o4-mini", Name: "o4-mini"},
 		}
 	case "openai_codex":
 		return []ModelOption{
-			{ID: "gpt-5.4", Name: "GPT-5.4", SupportsImageInput: true, SupportsTools: true},
-			{ID: "gpt-5-mini", Name: "GPT-5 mini", SupportsImageInput: true, SupportsTools: true},
+			{ID: "gpt-5.4", Name: "GPT-5.4"},
+			{ID: "gpt-5-mini", Name: "GPT-5 mini"},
 			{ID: "gpt-5.2-codex", Name: "GPT-5.2-Codex"},
-			{ID: "o4-mini", Name: "o4-mini", SupportsImageInput: true, SupportsTools: true},
+			{ID: "o4-mini", Name: "o4-mini"},
 		}
 	case "", "kimi":
 		return []ModelOption{
 			{ID: "kimi-k2-thinking", Name: "Kimi K2 Thinking"},
 			{ID: "kimi-k2-thinking-turbo", Name: "Kimi K2 Thinking Turbo"},
 			{ID: "k2.5", Name: "Kimi K2.5"},
-			{ID: "moonshot-v1-vision", Name: "Moonshot Vision", SupportsImageInput: true},
 			{ID: "moonshot-v1-8k", Name: "Moonshot v1 8K"},
 			{ID: "moonshot-v1-32k", Name: "Moonshot v1 32K"},
 			{ID: "moonshot-v1-128k", Name: "Moonshot v1 128K"},
@@ -186,9 +180,8 @@ func listAnthropicModels(ctx context.Context, apiKey string, opts ...option.Requ
 	for pager.Next() {
 		model := pager.Current()
 		models = append(models, ModelOption{
-			ID:                 model.ID,
-			Name:               model.DisplayName,
-			SupportsImageInput: true,
+			ID:   model.ID,
+			Name: model.DisplayName,
 		})
 	}
 	if err := pager.Err(); err != nil {
@@ -231,9 +224,8 @@ func listGoogleModels(ctx context.Context, apiKey string, baseURL string, client
 			continue
 		}
 		models = append(models, ModelOption{
-			ID:                 id,
-			Name:               model.DisplayName,
-			SupportsImageInput: true,
+			ID:   id,
+			Name: model.DisplayName,
 		})
 	}
 	sort.SliceStable(models, func(i, j int) bool {

@@ -66,7 +66,6 @@ func TestOpenAICompatibleProvider_GenerateContent(t *testing.T) {
 	defer server.Close()
 
 	provider := NewOpenAICompatibleProvider(OpenAICompatibleConfig{
-		Provider:  "openai",
 		APIKey:    "secret",
 		BaseURL:   server.URL,
 		Model:     "model-x",
@@ -116,7 +115,7 @@ func TestBuildOpenAICompatibleRequest_IncludesTools(t *testing.T) {
 				"command": map[string]interface{}{"type": "string"},
 			},
 		},
-	}})
+	}}, OpenAICompatibleRequestOptions{})
 	if err != nil {
 		t.Fatalf("buildOpenAICompatibleRequest() error = %v", err)
 	}
@@ -129,64 +128,26 @@ func TestBuildOpenAICompatibleRequest_IncludesTools(t *testing.T) {
 	}
 }
 
-func TestBuildOpenAICompatibleRequest_IncludesImageParts(t *testing.T) {
+func TestBuildOpenAICompatibleRequest_AppliesRequestOptions(t *testing.T) {
 	t.Parallel()
 
-	reqBody, err := buildOpenAICompatibleRequest("model-x", "system", []agent.Message{
-		{
-			Role:    "user",
-			Content: "describe",
-			Parts: []agent.ContentPart{
-				{Type: agent.ContentPartText, Text: "describe"},
-				{Type: agent.ContentPartImage, MIMEType: "image/jpeg", Data: []byte("jpg-bytes")},
-			},
-		},
-	}, nil)
+	temp := 0.2
+	reqBody, err := buildOpenAICompatibleRequest("model-x", "system", nil, nil, OpenAICompatibleRequestOptions{
+		MaxTokens:   123,
+		Temperature: &temp,
+		ExtraFields: map[string]any{"think": false},
+	})
 	if err != nil {
 		t.Fatalf("buildOpenAICompatibleRequest() error = %v", err)
 	}
 
-	messages, ok := reqBody["messages"].([]map[string]any)
-	if !ok {
-		t.Fatalf("messages type = %T", reqBody["messages"])
+	if got := reqBody["max_tokens"]; got != 123 {
+		t.Fatalf("max_tokens = %v", got)
 	}
-	content, ok := messages[1]["content"].([]map[string]any)
-	if !ok {
-		t.Fatalf("content type = %T", messages[1]["content"])
+	if got := reqBody["temperature"]; got != temp {
+		t.Fatalf("temperature = %v", got)
 	}
-	if content[1]["type"] != "image_url" {
-		t.Fatalf("image content type = %v", content[1]["type"])
-	}
-}
-
-func TestOpenAICompatibleProvider_GenerateContent_MapsVision404ToNaturalFallback(t *testing.T) {
-	t.Parallel()
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte(`{"error":{"message":"No endpoints found that support image input","code":404}}`))
-	}))
-	defer server.Close()
-
-	provider := NewOpenAICompatibleProvider(OpenAICompatibleConfig{
-		Provider: "kilo",
-		APIKey:   "secret",
-		BaseURL:  server.URL,
-		Model:    "glm-5-turbo",
-	})
-
-	_, err := provider.GenerateContent(context.Background(), "system", []agent.Message{{
-		Role:    "user",
-		Content: "analise",
-		Parts: []agent.ContentPart{
-			{Type: agent.ContentPartText, Text: "analise"},
-			{Type: agent.ContentPartImage, MIMEType: "image/jpeg", Data: []byte("jpg-bytes")},
-		},
-	}}, nil)
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	if _, ok := err.(VisionUnsupportedError); !ok {
-		t.Fatalf("error type = %T", err)
+	if got := reqBody["think"]; got != false {
+		t.Fatalf("think = %v", got)
 	}
 }

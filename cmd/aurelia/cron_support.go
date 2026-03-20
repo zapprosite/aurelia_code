@@ -27,5 +27,3 @@ func loadCronPromptConfig(canonicalPromptLoader interface {
 	}
 	return "Voce e o agente pessoal Aurelia. Execute a tarefa agendada com precisao e retorne um resumo objetivo do resultado.", []string{"web_search", "read_file", "write_file", "list_dir", "run_command"}
 }
-
-

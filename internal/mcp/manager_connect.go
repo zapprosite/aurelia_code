@@ -76,5 +76,3 @@ func newServerSession(
 		callTimeout: callTimeout,
 	}
 }
-
-

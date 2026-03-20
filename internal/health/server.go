@@ -13,9 +13,9 @@ import (
 
 // HealthStatus represents the current health status of the system
 type HealthStatus struct {
-	Status    string    `json:"status"`
-	Timestamp time.Time `json:"timestamp"`
-	Uptime    string    `json:"uptime"`
+	Status    string                 `json:"status"`
+	Timestamp time.Time              `json:"timestamp"`
+	Uptime    string                 `json:"uptime"`
 	Checks    map[string]CheckResult `json:"checks"`
 }
 
@@ -27,12 +27,13 @@ type CheckResult struct {
 
 // Server provides HTTP health endpoints
 type Server struct {
-	port        int
-	logger      *slog.Logger
-	startTime   time.Time
-	mu          sync.RWMutex
-	checks      map[string]func() CheckResult
-	server      *http.Server
+	port      int
+	logger    *slog.Logger
+	startTime time.Time
+	mu        sync.RWMutex
+	checks    map[string]func() CheckResult
+	routes    map[string]http.Handler
+	server    *http.Server
 }
 
 // NewServer creates a new health server
@@ -42,6 +43,7 @@ func NewServer(port int) *Server {
 		logger:    observability.Logger("health"),
 		startTime: time.Now(),
 		checks:    make(map[string]func() CheckResult),
+		routes:    make(map[string]http.Handler),
 	}
 }
 
@@ -52,11 +54,27 @@ func (s *Server) RegisterCheck(name string, fn func() CheckResult) {
 	s.checks[name] = fn
 }
 
+// RegisterRoute registers an additional HTTP route on the internal server.
+func (s *Server) RegisterRoute(path string, handler http.Handler) {
+	if path == "" || handler == nil {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.routes[path] = handler
+}
+
 // Start starts the health server
 func (s *Server) Start() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", s.handleHealth)
 	mux.HandleFunc("/ready", s.handleReady)
+
+	s.mu.RLock()
+	for path, handler := range s.routes {
+		mux.Handle(path, handler)
+	}
+	s.mu.RUnlock()
 
 	s.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", s.port),

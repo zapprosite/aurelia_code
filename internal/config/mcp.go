@@ -40,30 +40,79 @@ func LoadMCPConfig(path string) (*MCPToolsConfig, error) {
 		return nil, err
 	}
 
-	var cfg MCPToolsConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
+	type rawServerConfig struct {
+		Name       string            `json:"name"`
+		Enabled    *bool             `json:"enabled"`
+		Command    string            `json:"command"`
+		Args       []string          `json:"args"`
+		Env        map[string]string `json:"env"`
+		WorkingDir string            `json:"workingDir"`
+		Transport  string            `json:"transport"`
+		Endpoint   string            `json:"endpoint"`
+		Headers    map[string]string `json:"headers"`
+		TimeoutMS  int               `json:"timeoutMs"`
+		AllowTools []string          `json:"allowTools"`
+	}
+	type rawToolsConfig struct {
+		Enabled          *bool                      `json:"enabled"`
+		ClientName       string                     `json:"clientName"`
+		ClientVersion    string                     `json:"clientVersion"`
+		ConnectTimeoutMS int                        `json:"connectTimeoutMs"`
+		CallTimeoutMS    int                        `json:"callTimeoutMs"`
+		Headers          map[string]string          `json:"headers"`
+		Servers          map[string]rawServerConfig `json:"mcpServers"`
+	}
+
+	var raw rawToolsConfig
+	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, err
 	}
 
-	// By default, if the file exists and is parsed, we could assume it's enabled 
-	// unless explicitly structured differently. For now, let's assume if there are servers, it's enabled.
-	if len(cfg.Servers) > 0 {
-		cfg.Enabled = true
+	cfg := &MCPToolsConfig{
+		ClientName:       raw.ClientName,
+		ClientVersion:    raw.ClientVersion,
+		ConnectTimeoutMS: raw.ConnectTimeoutMS,
+		CallTimeoutMS:    raw.CallTimeoutMS,
+		Headers:          raw.Headers,
+		Servers:          make(map[string]MCPServerConfig, len(raw.Servers)),
+	}
+	if raw.Enabled != nil {
+		cfg.Enabled = *raw.Enabled
 	}
 
-	// Assign names to servers from map keys if not set
-	for name, srv := range cfg.Servers {
+	enabledServerCount := 0
+	for name, rawSrv := range raw.Servers {
+		srv := MCPServerConfig{
+			Name:       rawSrv.Name,
+			Command:    rawSrv.Command,
+			Args:       rawSrv.Args,
+			Env:        rawSrv.Env,
+			WorkingDir: rawSrv.WorkingDir,
+			Transport:  rawSrv.Transport,
+			Endpoint:   rawSrv.Endpoint,
+			Headers:    rawSrv.Headers,
+			TimeoutMS:  rawSrv.TimeoutMS,
+			AllowTools: rawSrv.AllowTools,
+		}
 		if srv.Name == "" {
 			srv.Name = name
 		}
-		// Default transport to stdio if command exists
 		if srv.Transport == "" && srv.Command != "" {
 			srv.Transport = "stdio"
 		}
-		// Let's assume servers listed are enabled by default
-		srv.Enabled = true
+		if rawSrv.Enabled != nil {
+			srv.Enabled = *rawSrv.Enabled
+		} else {
+			srv.Enabled = true
+		}
+		if srv.Enabled {
+			enabledServerCount++
+		}
 		cfg.Servers[name] = srv
 	}
+	if raw.Enabled == nil && enabledServerCount > 0 {
+		cfg.Enabled = true
+	}
 
-	return &cfg, nil
+	return cfg, nil
 }

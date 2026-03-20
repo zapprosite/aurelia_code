@@ -126,5 +126,3 @@ func (bc *BotController) completeBootstrapProfile(c telebot.Context, state boots
 
 	return SendContextText(c, bootstrapSuccessMessage)
 }
-
-

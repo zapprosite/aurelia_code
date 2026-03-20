@@ -62,7 +62,7 @@ IDENTITY_BODY`
 
 func TestLoadPersona_MissingFiles(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create only one file to force error
 	identityPath := filepath.Join(tempDir, "IDENTITY.md")
 	_ = os.WriteFile(identityPath, []byte("test"), 0644)
@@ -161,9 +161,9 @@ Fuso horario: America/Sao_Paulo`
 
 func TestPersonaRenderSystemPrompt_UsesResolvedIdentity(t *testing.T) {
 	persona := &Persona{
-		Config: Config{Name: "Lex", Role: "Team Lead"},
+		Config:       Config{Name: "Lex", Role: "Team Lead"},
 		SystemPrompt: "# CANONICAL IDENTITY\nNome canonico do agente: Lex\nPapel canonico do agente: Team Lead\nNome canonico do usuario: nao definido\n\nIDENTITY_BODY\n\nSOUL_BODY\n\n# User\nNome: Nao definido",
-		PromptBody: "IDENTITY_BODY\n\nSOUL_BODY\n\n# User\nNome: Nao definido",
+		PromptBody:   "IDENTITY_BODY\n\nSOUL_BODY\n\n# User\nNome: Nao definido",
 		CanonicalIdentity: CanonicalIdentity{
 			AgentName: "Lex",
 			AgentRole: "Team Lead",
@@ -231,5 +231,3 @@ func TestPersonaRenderSystemPrompt_IncludesLongTermNotes(t *testing.T) {
 		t.Fatalf("expected memory note, got %q", got)
 	}
 }
-
-

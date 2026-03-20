@@ -123,5 +123,3 @@ func extractBalancedJSONObject(text string) (string, bool) {
 
 	return "", false
 }
-
-

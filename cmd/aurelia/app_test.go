@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kocar/aurelia/internal/config"
+	"github.com/kocar/aurelia/internal/gateway"
 	"github.com/kocar/aurelia/pkg/llm"
 )
 
@@ -85,6 +86,23 @@ func TestBuildLLMProvider_Kilo(t *testing.T) {
 	}
 }
 
+func TestBuildLLMProvider_Ollama(t *testing.T) {
+	cfg := &config.AppConfig{
+		LLMProvider: "ollama",
+		LLMModel:    "qwen3.5:9b",
+	}
+
+	provider, err := buildLLMProvider(cfg, nil)
+	if err != nil {
+		t.Fatalf("buildLLMProvider() error = %v", err)
+	}
+	defer provider.Close()
+
+	if _, ok := provider.(*llm.OpenAICompatibleProvider); !ok {
+		t.Fatalf("provider type = %T, want *llm.OpenAICompatibleProvider", provider)
+	}
+}
+
 func TestBuildLLMProvider_OpenRouter(t *testing.T) {
 	cfg := &config.AppConfig{
 		LLMProvider:      "openrouter",
@@ -98,8 +116,8 @@ func TestBuildLLMProvider_OpenRouter(t *testing.T) {
 	}
 	defer provider.Close()
 
-	if _, ok := provider.(*llm.OpenAICompatibleProvider); !ok {
-		t.Fatalf("provider type = %T, want *llm.OpenAICompatibleProvider", provider)
+	if _, ok := provider.(*gateway.Provider); !ok {
+		t.Fatalf("provider type = %T, want *gateway.Provider", provider)
 	}
 }
 

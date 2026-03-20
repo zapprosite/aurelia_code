@@ -106,5 +106,3 @@ func resolvePath(ctx context.Context, pathVal string, args map[string]interface{
 
 	return filepath.Clean(filepath.Join(workdir, pathVal)), nil
 }
-
-

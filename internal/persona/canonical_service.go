@@ -19,15 +19,15 @@ type CanonicalMemoryStore interface {
 
 // CanonicalIdentityService centralizes canonical fact precedence, file sync and prompt building.
 type CanonicalIdentityService struct {
-	memory               CanonicalMemoryStore
-	identityPath         string
-	soulPath             string
-	userPath             string
-	ownerPlaybookPath    string
-	lessonsLearnedPath   string
-	projectPlaybookPath  string
-	now                  func() time.Time
-	location             *time.Location
+	memory              CanonicalMemoryStore
+	identityPath        string
+	soulPath            string
+	userPath            string
+	ownerPlaybookPath   string
+	lessonsLearnedPath  string
+	projectPlaybookPath string
+	now                 func() time.Time
+	location            *time.Location
 }
 
 type ScoredFact struct {
@@ -65,5 +65,3 @@ func NewCanonicalIdentityService(
 		location:            time.Local,
 	}
 }
-
-

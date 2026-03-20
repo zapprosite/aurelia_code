@@ -81,5 +81,3 @@ func TestRegisterMCPToolsAdapterHandler(t *testing.T) {
 		t.Errorf("wrong mapping for server/remote name")
 	}
 }
-
-

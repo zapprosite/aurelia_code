@@ -17,6 +17,17 @@ const (
 	defaultSTTProvider          = "groq"
 	defaultHeartbeatEnabled     = true
 	defaultHeartbeatIntervalMin = 30
+	defaultVoiceEnabled         = false
+	defaultVoicePollIntervalMS  = 1000
+	defaultVoiceHeartbeatSec    = 45
+	defaultVoiceCapturePollMS   = 1000
+	defaultVoiceCaptureFreshSec = 45
+	defaultVoiceWakePhrase      = "jarvis"
+	defaultGroqSoftCapDaily     = 800
+	defaultGroqHardCapDaily     = 1200
+	defaultSupabaseEventsTable  = "aurelia_voice_events"
+	defaultQdrantCollection     = "conversation_memory"
+	defaultQdrantEmbeddingModel = "bge-m3"
 )
 
 // AppConfig holds all runtime configuration needed for the application.
@@ -42,6 +53,30 @@ type AppConfig struct {
 	MCPConfigPath            string
 	HeartbeatEnabled         bool
 	HeartbeatIntervalMinutes int
+	VoiceEnabled             bool
+	VoiceReplyUserID         int64
+	VoiceReplyChatID         int64
+	VoiceSpoolPath           string
+	VoiceDropPath            string
+	VoiceHeartbeatPath       string
+	VoiceHeartbeatFreshSec   int
+	VoicePollIntervalMS      int
+	VoiceWakePhrase          string
+	VoiceCaptureEnabled      bool
+	VoiceCaptureCommand      string
+	VoiceCaptureHeartbeat    string
+	VoiceCaptureFreshSec     int
+	VoiceCapturePollMS       int
+	STTFallbackCommand       string
+	GroqSoftCapDaily         int
+	GroqHardCapDaily         int
+	SupabaseURL              string
+	SupabaseServiceRoleKey   string
+	SupabaseEventsTable      string
+	QdrantURL                string
+	QdrantAPIKey             string
+	QdrantCollection         string
+	QdrantEmbeddingModel     string
 }
 
 type fileConfig struct {
@@ -66,6 +101,30 @@ type fileConfig struct {
 	MCPConfigPath            string  `json:"mcp_servers_config_path"`
 	HeartbeatEnabled         bool    `json:"heartbeat_enabled"`
 	HeartbeatIntervalMinutes int     `json:"heartbeat_interval_minutes"`
+	VoiceEnabled             bool    `json:"voice_enabled"`
+	VoiceReplyUserID         int64   `json:"voice_reply_user_id"`
+	VoiceReplyChatID         int64   `json:"voice_reply_chat_id"`
+	VoiceSpoolPath           string  `json:"voice_spool_path"`
+	VoiceDropPath            string  `json:"voice_drop_path"`
+	VoiceHeartbeatPath       string  `json:"voice_heartbeat_path"`
+	VoiceHeartbeatFreshSec   int     `json:"voice_heartbeat_fresh_seconds"`
+	VoicePollIntervalMS      int     `json:"voice_poll_interval_ms"`
+	VoiceWakePhrase          string  `json:"voice_wake_phrase"`
+	VoiceCaptureEnabled      bool    `json:"voice_capture_enabled"`
+	VoiceCaptureCommand      string  `json:"voice_capture_command"`
+	VoiceCaptureHeartbeat    string  `json:"voice_capture_heartbeat_path"`
+	VoiceCaptureFreshSec     int     `json:"voice_capture_heartbeat_fresh_seconds"`
+	VoiceCapturePollMS       int     `json:"voice_capture_poll_interval_ms"`
+	STTFallbackCommand       string  `json:"stt_fallback_command"`
+	GroqSoftCapDaily         int     `json:"groq_soft_cap_daily"`
+	GroqHardCapDaily         int     `json:"groq_hard_cap_daily"`
+	SupabaseURL              string  `json:"supabase_url"`
+	SupabaseServiceRoleKey   string  `json:"supabase_service_role_key"`
+	SupabaseEventsTable      string  `json:"supabase_events_table"`
+	QdrantURL                string  `json:"qdrant_url"`
+	QdrantAPIKey             string  `json:"qdrant_api_key"`
+	QdrantCollection         string  `json:"qdrant_collection"`
+	QdrantEmbeddingModel     string  `json:"qdrant_embedding_model"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
@@ -142,6 +201,21 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		MCPConfigPath:            filepath.Join(r.Config(), "mcp_servers.json"),
 		HeartbeatEnabled:         defaultHeartbeatEnabled,
 		HeartbeatIntervalMinutes: defaultHeartbeatIntervalMin,
+		VoiceEnabled:             defaultVoiceEnabled,
+		VoiceSpoolPath:           filepath.Join(r.Data(), "voice", "spool"),
+		VoiceDropPath:            filepath.Join(r.Data(), "voice", "drop"),
+		VoiceHeartbeatPath:       filepath.Join(r.Data(), "voice", "heartbeat.json"),
+		VoiceHeartbeatFreshSec:   defaultVoiceHeartbeatSec,
+		VoicePollIntervalMS:      defaultVoicePollIntervalMS,
+		VoiceWakePhrase:          defaultVoiceWakePhrase,
+		VoiceCaptureHeartbeat:    filepath.Join(r.Data(), "voice", "capture-heartbeat.json"),
+		VoiceCaptureFreshSec:     defaultVoiceCaptureFreshSec,
+		VoiceCapturePollMS:       defaultVoiceCapturePollMS,
+		GroqSoftCapDaily:         defaultGroqSoftCapDaily,
+		GroqHardCapDaily:         defaultGroqHardCapDaily,
+		SupabaseEventsTable:      defaultSupabaseEventsTable,
+		QdrantCollection:         defaultQdrantCollection,
+		QdrantEmbeddingModel:     defaultQdrantEmbeddingModel,
 	}
 }
 
@@ -196,27 +270,30 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 
 // SaveEditable updates the user-editable config subset while preserving managed paths.
 func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
-	cfg := normalizeFileConfig(fileConfig{
-		LLMProvider:              editable.LLMProvider,
-		LLMModel:                 editable.LLMModel,
-		STTProvider:              editable.STTProvider,
-		TelegramBotToken:         editable.TelegramBotToken,
-		TelegramAllowedUserIDs:   append([]int64(nil), editable.TelegramAllowedUserIDs...),
-		AnthropicAPIKey:          editable.AnthropicAPIKey,
-		GoogleAPIKey:             editable.GoogleAPIKey,
-		KiloAPIKey:               editable.KiloAPIKey,
-		KimiAPIKey:               editable.KimiAPIKey,
-		OpenRouterAPIKey:         editable.OpenRouterAPIKey,
-		ZAIAPIKey:                editable.ZAIAPIKey,
-		AlibabaAPIKey:            editable.AlibabaAPIKey,
-		OpenAIAPIKey:             editable.OpenAIAPIKey,
-		OpenAIAuthMode:           editable.OpenAIAuthMode,
-		GroqAPIKey:               editable.GroqAPIKey,
-		MaxIterations:            editable.MaxIterations,
-		MemoryWindowSize:         editable.MemoryWindowSize,
-		HeartbeatEnabled:         editable.HeartbeatEnabled,
-		HeartbeatIntervalMinutes: editable.HeartbeatIntervalMinutes,
-	}, r)
+	cfg := defaultFileConfig(r)
+	if data, err := os.ReadFile(r.AppConfig()); err == nil && len(data) != 0 {
+		_ = json.Unmarshal(data, &cfg)
+	}
+	cfg.LLMProvider = editable.LLMProvider
+	cfg.LLMModel = editable.LLMModel
+	cfg.STTProvider = editable.STTProvider
+	cfg.TelegramBotToken = editable.TelegramBotToken
+	cfg.TelegramAllowedUserIDs = append([]int64(nil), editable.TelegramAllowedUserIDs...)
+	cfg.AnthropicAPIKey = editable.AnthropicAPIKey
+	cfg.GoogleAPIKey = editable.GoogleAPIKey
+	cfg.KiloAPIKey = editable.KiloAPIKey
+	cfg.KimiAPIKey = editable.KimiAPIKey
+	cfg.OpenRouterAPIKey = editable.OpenRouterAPIKey
+	cfg.ZAIAPIKey = editable.ZAIAPIKey
+	cfg.AlibabaAPIKey = editable.AlibabaAPIKey
+	cfg.OpenAIAPIKey = editable.OpenAIAPIKey
+	cfg.OpenAIAuthMode = editable.OpenAIAuthMode
+	cfg.GroqAPIKey = editable.GroqAPIKey
+	cfg.MaxIterations = editable.MaxIterations
+	cfg.MemoryWindowSize = editable.MemoryWindowSize
+	cfg.HeartbeatEnabled = editable.HeartbeatEnabled
+	cfg.HeartbeatIntervalMinutes = editable.HeartbeatIntervalMinutes
+	cfg = normalizeFileConfig(cfg, r)
 	return writeConfigFile(r.AppConfig(), cfg)
 }
 
@@ -257,6 +334,48 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	}
 	if cfg.MCPConfigPath == "" {
 		cfg.MCPConfigPath = defaults.MCPConfigPath
+	}
+	if cfg.VoiceSpoolPath == "" {
+		cfg.VoiceSpoolPath = defaults.VoiceSpoolPath
+	}
+	if cfg.VoiceDropPath == "" {
+		cfg.VoiceDropPath = defaults.VoiceDropPath
+	}
+	if cfg.VoiceHeartbeatPath == "" {
+		cfg.VoiceHeartbeatPath = defaults.VoiceHeartbeatPath
+	}
+	if cfg.VoiceHeartbeatFreshSec <= 0 {
+		cfg.VoiceHeartbeatFreshSec = defaults.VoiceHeartbeatFreshSec
+	}
+	if cfg.VoicePollIntervalMS <= 0 {
+		cfg.VoicePollIntervalMS = defaults.VoicePollIntervalMS
+	}
+	if cfg.VoiceWakePhrase == "" {
+		cfg.VoiceWakePhrase = defaults.VoiceWakePhrase
+	}
+	if cfg.VoiceCaptureHeartbeat == "" {
+		cfg.VoiceCaptureHeartbeat = defaults.VoiceCaptureHeartbeat
+	}
+	if cfg.VoiceCaptureFreshSec <= 0 {
+		cfg.VoiceCaptureFreshSec = defaults.VoiceCaptureFreshSec
+	}
+	if cfg.VoiceCapturePollMS <= 0 {
+		cfg.VoiceCapturePollMS = defaults.VoiceCapturePollMS
+	}
+	if cfg.GroqSoftCapDaily <= 0 {
+		cfg.GroqSoftCapDaily = defaults.GroqSoftCapDaily
+	}
+	if cfg.GroqHardCapDaily <= 0 {
+		cfg.GroqHardCapDaily = defaults.GroqHardCapDaily
+	}
+	if cfg.SupabaseEventsTable == "" {
+		cfg.SupabaseEventsTable = defaults.SupabaseEventsTable
+	}
+	if cfg.QdrantCollection == "" {
+		cfg.QdrantCollection = defaults.QdrantCollection
+	}
+	if cfg.QdrantEmbeddingModel == "" {
+		cfg.QdrantEmbeddingModel = defaults.QdrantEmbeddingModel
 	}
 	return cfg
 }
@@ -305,6 +424,30 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		MCPConfigPath:            cfg.MCPConfigPath,
 		HeartbeatEnabled:         cfg.HeartbeatEnabled || defaultHeartbeatEnabled,
 		HeartbeatIntervalMinutes: heartbeatIntervalMin,
+		VoiceEnabled:             cfg.VoiceEnabled,
+		VoiceReplyUserID:         cfg.VoiceReplyUserID,
+		VoiceReplyChatID:         cfg.VoiceReplyChatID,
+		VoiceSpoolPath:           cfg.VoiceSpoolPath,
+		VoiceDropPath:            cfg.VoiceDropPath,
+		VoiceHeartbeatPath:       cfg.VoiceHeartbeatPath,
+		VoiceHeartbeatFreshSec:   cfg.VoiceHeartbeatFreshSec,
+		VoicePollIntervalMS:      cfg.VoicePollIntervalMS,
+		VoiceWakePhrase:          cfg.VoiceWakePhrase,
+		VoiceCaptureEnabled:      cfg.VoiceCaptureEnabled,
+		VoiceCaptureCommand:      cfg.VoiceCaptureCommand,
+		VoiceCaptureHeartbeat:    cfg.VoiceCaptureHeartbeat,
+		VoiceCaptureFreshSec:     cfg.VoiceCaptureFreshSec,
+		VoiceCapturePollMS:       cfg.VoiceCapturePollMS,
+		STTFallbackCommand:       cfg.STTFallbackCommand,
+		GroqSoftCapDaily:         cfg.GroqSoftCapDaily,
+		GroqHardCapDaily:         cfg.GroqHardCapDaily,
+		SupabaseURL:              cfg.SupabaseURL,
+		SupabaseServiceRoleKey:   cfg.SupabaseServiceRoleKey,
+		SupabaseEventsTable:      cfg.SupabaseEventsTable,
+		QdrantURL:                cfg.QdrantURL,
+		QdrantAPIKey:             cfg.QdrantAPIKey,
+		QdrantCollection:         cfg.QdrantCollection,
+		QdrantEmbeddingModel:     cfg.QdrantEmbeddingModel,
 	}
 }
 
@@ -328,7 +471,31 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.MemoryWindowSize != b.MemoryWindowSize ||
 		a.MCPConfigPath != b.MCPConfigPath ||
 		a.HeartbeatEnabled != b.HeartbeatEnabled ||
-		a.HeartbeatIntervalMinutes != b.HeartbeatIntervalMinutes {
+		a.HeartbeatIntervalMinutes != b.HeartbeatIntervalMinutes ||
+		a.VoiceEnabled != b.VoiceEnabled ||
+		a.VoiceReplyUserID != b.VoiceReplyUserID ||
+		a.VoiceReplyChatID != b.VoiceReplyChatID ||
+		a.VoiceSpoolPath != b.VoiceSpoolPath ||
+		a.VoiceDropPath != b.VoiceDropPath ||
+		a.VoiceHeartbeatPath != b.VoiceHeartbeatPath ||
+		a.VoiceHeartbeatFreshSec != b.VoiceHeartbeatFreshSec ||
+		a.VoicePollIntervalMS != b.VoicePollIntervalMS ||
+		a.VoiceWakePhrase != b.VoiceWakePhrase ||
+		a.VoiceCaptureEnabled != b.VoiceCaptureEnabled ||
+		a.VoiceCaptureCommand != b.VoiceCaptureCommand ||
+		a.VoiceCaptureHeartbeat != b.VoiceCaptureHeartbeat ||
+		a.VoiceCaptureFreshSec != b.VoiceCaptureFreshSec ||
+		a.VoiceCapturePollMS != b.VoiceCapturePollMS ||
+		a.STTFallbackCommand != b.STTFallbackCommand ||
+		a.GroqSoftCapDaily != b.GroqSoftCapDaily ||
+		a.GroqHardCapDaily != b.GroqHardCapDaily ||
+		a.SupabaseURL != b.SupabaseURL ||
+		a.SupabaseServiceRoleKey != b.SupabaseServiceRoleKey ||
+		a.SupabaseEventsTable != b.SupabaseEventsTable ||
+		a.QdrantURL != b.QdrantURL ||
+		a.QdrantAPIKey != b.QdrantAPIKey ||
+		a.QdrantCollection != b.QdrantCollection ||
+		a.QdrantEmbeddingModel != b.QdrantEmbeddingModel {
 		return false
 	}
 	if len(a.TelegramAllowedUserIDs) != len(b.TelegramAllowedUserIDs) {
@@ -350,6 +517,8 @@ func defaultLLMModelForProvider(provider string) string {
 		return "gemini-2.5-pro"
 	case "kilo":
 		return "gpt-5.4"
+	case "ollama":
+		return "qwen3.5:9b"
 	case "openrouter":
 		return "openrouter/auto"
 	case "zai":

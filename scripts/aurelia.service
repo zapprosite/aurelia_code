@@ -4,13 +4,12 @@ After=network.target
 
 [Service]
 Type=simple
-User=will
-WorkingDirectory=/home/will/aurelia
-ExecStart=/home/will/aurelia/aurelia-elite
+Environment=AURELIA_HOME=%h/.aurelia
+WorkingDirectory=__AURELIA_ROOT__
+ExecStartPre=/bin/sh -c 'mkdir -p %h/.aurelia/logs && chmod 0755 %h/.aurelia/logs'
+ExecStart=__AURELIA_ROOT__/aurelia-elite
 Restart=always
 RestartSec=5
-StandardOutput=append:/home/will/.aurelia/logs/daemon.log
-StandardError=append:/home/will/.aurelia/logs/daemon_error.log
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

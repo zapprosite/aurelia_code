@@ -157,5 +157,3 @@ func buildLongTermMemoryBlock(facts []memory.Fact, notes []memory.Note) string {
 
 	return strings.Join(lines, "\n")
 }
-
-

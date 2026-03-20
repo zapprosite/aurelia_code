@@ -10,18 +10,6 @@ echo "🔬 SMOKE TEST — Aurelia Homelab Integration"
 echo "============================================="
 echo ""
 
-have_cmd() {
-  command -v "$1" >/dev/null 2>&1
-}
-
-docker_ready() {
-  have_cmd docker && docker info >/dev/null 2>&1
-}
-
-warn_unavailable() {
-  echo "   ⚠️  $1 indisponível neste ambiente"
-}
-
 # ============================================================================
 # 1. HEALTH CHECK FULL
 # ============================================================================
@@ -30,13 +18,9 @@ echo "   Testando: saúde completa do homelab"
 echo ""
 
 # Containers running
-if docker_ready; then
-  CONTAINER_COUNT=$(docker ps -q | wc -l)
-  echo "   📦 Containers: $CONTAINER_COUNT ativos"
-  [ "$CONTAINER_COUNT" -ge 15 ] && echo "      ✅ OK (>15)" || echo "      ⚠️  Poucos containers"
-else
-  warn_unavailable "Docker"
-fi
+CONTAINER_COUNT=$(docker ps -q | wc -l)
+echo "   📦 Containers: $CONTAINER_COUNT ativos"
+[ "$CONTAINER_COUNT" -ge 15 ] && echo "      ✅ OK (>15)" || echo "      ⚠️  Poucos containers"
 
 # GPU VRAM
 FREE_VRAM=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1)
@@ -49,12 +33,8 @@ else
 fi
 
 # ZFS Pool
-if have_cmd zpool; then
-  POOL_STATUS=$(zpool status tank 2>/dev/null | grep "state:" | head -1 || true)
-  echo "   📦 ZFS: ${POOL_STATUS:-indisponível}"
-else
-  warn_unavailable "ZFS pool status"
-fi
+POOL_STATUS=$(zpool status tank 2>/dev/null | grep "state:" | head -1)
+echo "   📦 ZFS: $POOL_STATUS"
 
 # Network Tunnel
 TUNNEL_RESPONSE=$(curl -s -m 2 https://n8n.zappro.site/health 2>/dev/null || echo "TIMEOUT")
@@ -76,29 +56,25 @@ echo "   Testando: diagnóstico inteligente de container"
 echo ""
 
 CONTAINER_NAME="n8n"
-if docker_ready; then
-  CONTAINER_STATUS=$(docker ps --format '{{.Names}}\t{{.Status}}' | awk -v name="$CONTAINER_NAME" '$1 == name {print $2}' | head -1)
-  echo "   📦 Container '$CONTAINER_NAME': ${CONTAINER_STATUS:-não encontrado}"
+CONTAINER_STATUS=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $7}' | head -1)
+echo "   📦 Container '$CONTAINER_NAME': $CONTAINER_STATUS"
 
-  if [ "$CONTAINER_STATUS" = "Up" ]; then
-    CONTAINER_ID=$(docker ps --format '{{.ID}}\t{{.Names}}' | awk -v name="$CONTAINER_NAME" '$2 == name {print $1}' | head -1)
+if [ "$CONTAINER_STATUS" = "Up" ]; then
+  CONTAINER_ID=$(docker ps | grep "$CONTAINER_NAME" | awk '{print $1}' | head -1)
 
-    # RAM usage
-    RAM=$(docker stats --no-stream "$CONTAINER_ID" 2>/dev/null | tail -1 | awk '{print $7}')
-    echo "   💾 RAM: ${RAM:-n/d}"
+  # RAM usage
+  RAM=$(docker stats --no-stream "$CONTAINER_ID" 2>/dev/null | tail -1 | awk '{print $7}')
+  echo "   💾 RAM: $RAM"
 
-    # Logs
-    RECENT_LOGS=$(docker logs "$CONTAINER_ID" --tail 5 2>/dev/null | grep -i "error\|warn" | wc -l || true)
-    if [ "$RECENT_LOGS" -gt 0 ]; then
-      echo "   ⚠️  Logs: $RECENT_LOGS avisos/erros nos últimos logs"
-    else
-      echo "   ✅ Logs: OK"
-    fi
+  # Logs
+  RECENT_LOGS=$(docker logs "$CONTAINER_ID" --tail 5 2>/dev/null | grep -i "error\|warn" | wc -l)
+  if [ "$RECENT_LOGS" -gt 0 ]; then
+    echo "   ⚠️  Logs: $RECENT_LOGS avisos/erros nos últimos logs"
   else
-    echo "   ❌ Container parado"
+    echo "   ✅ Logs: OK"
   fi
 else
-  warn_unavailable "Docker"
+  echo "   ❌ Container parado"
 fi
 
 echo ""
@@ -116,14 +92,10 @@ echo ""
 VOICE_CONTAINERS=("speaches" "chatterbox" "voice-proxy")
 VOICE_VRAM=0
 for container in "${VOICE_CONTAINERS[@]}"; do
-  if docker_ready; then
-    if docker ps --format "{{.Names}}" | grep -q "$container"; then
-      echo "   🎵 Voice component: $container ✅"
-    else
-      echo "   🎵 Voice component: $container ❌"
-    fi
+  if docker ps --format "{{.Names}}" | grep -q "$container"; then
+    echo "   🎵 Voice component: $container ✅"
   else
-    echo "   🎵 Voice component: $container ⚠️"
+    echo "   🎵 Voice component: $container ❌"
   fi
 done
 
@@ -156,7 +128,7 @@ echo "   Testando: automação segura com confirmação"
 echo ""
 
 # Validate ZFS snapshot capability
-if have_cmd zfs && zfs list tank > /dev/null 2>&1; then
+if zfs list tank > /dev/null 2>&1; then
   SNAPSHOT_NAME="tank@smoke-test-$(date +%s)"
   echo "   📸 ZFS Snapshot (DRY RUN)"
   echo "      Would create: $SNAPSHOT_NAME"
@@ -205,14 +177,10 @@ fi
 echo ""
 echo "   Step 2: Check backends"
 for backend in speaches chatterbox-tts voice-proxy; do
-  if docker_ready; then
-    if docker ps --format "{{.Names}}" | grep -q "$backend"; then
-      echo "      ✅ $backend rodando"
-    else
-      echo "      ❌ $backend parado"
-    fi
+  if docker ps --format "{{.Names}}" | grep -q "$backend"; then
+    echo "      ✅ $backend rodando"
   else
-    echo "      ⚠️  $backend não verificável"
+    echo "      ❌ $backend parado"
   fi
 done
 
@@ -247,13 +215,9 @@ else
 fi
 
 # Snapshots
-if have_cmd zfs; then
-  SNAPSHOT_COUNT=$(zfs list -H -t snapshot 2>/dev/null | wc -l || true)
-  echo "   📸 Snapshots ZFS: ${SNAPSHOT_COUNT:-0}"
-  [ "${SNAPSHOT_COUNT:-0}" -gt 0 ] && echo "      ✅ OK" || echo "      ⚠️  Sem snapshots"
-else
-  warn_unavailable "ZFS snapshots"
-fi
+SNAPSHOT_COUNT=$(zfs list -H -t snapshot 2>/dev/null | wc -l)
+echo "   📸 Snapshots ZFS: $SNAPSHOT_COUNT"
+[ "$SNAPSHOT_COUNT" -gt 0 ] && echo "      ✅ OK" || echo "      ⚠️  Sem snapshots"
 
 # Espaço de backup
 BACKUP_SPACE=$(df /srv/backups 2>/dev/null | tail -1 | awk '{print $4}')

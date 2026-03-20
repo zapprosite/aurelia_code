@@ -45,7 +45,7 @@ func TestMemoryCommandHandler_HandleText_Debug(t *testing.T) {
 			Tokens: []string{"memoria", "memory", "minimalista", "minimalism"},
 			SelectedFacts: []persona.ScoredFact{
 				{
-					Fact: memory.Fact{Key: "project.memory.strategy", Value: "sqlite + facts + notes"},
+					Fact:  memory.Fact{Key: "project.memory.strategy", Value: "sqlite + facts + notes"},
 					Score: 17,
 				},
 			},
@@ -131,6 +131,3 @@ func TestMemoryCommandHandler_HandleText_PropagatesServiceError(t *testing.T) {
 		t.Fatalf("expected error %v, got %v", expectedErr, err)
 	}
 }
-
-
-

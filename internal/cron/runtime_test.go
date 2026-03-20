@@ -142,5 +142,3 @@ func TestCronRuntime_ExecuteJob_RebuildsPromptPerExecution(t *testing.T) {
 		t.Fatalf("expected prompt builder to run twice, got %d", buildCount)
 	}
 }
-
-

@@ -126,5 +126,3 @@ func TestCreateScheduleTool_Execute_ErrorsWithoutTeamContext(t *testing.T) {
 		t.Fatalf("expected missing context error")
 	}
 }
-
-

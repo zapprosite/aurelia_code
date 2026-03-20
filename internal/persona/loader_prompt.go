@@ -33,11 +33,7 @@ func (p *Persona) RenderSystemPrompt(identity CanonicalIdentity, facts []memory.
 	if memoryBlock := buildLongTermMemoryBlock(facts, notes); memoryBlock != "" {
 		sections = append(sections, memoryBlock)
 	}
-	if homelabBlock := strings.TrimSpace(SeniorArchitectPrompt()); homelabBlock != "" {
-		sections = append(sections, homelabBlock)
-	}
 	sections = append(sections, strings.TrimSpace(p.PromptBody))
 
 	return strings.Join(sections, "\n\n")
 }
-

@@ -94,5 +94,3 @@ func TestDeleteScheduleTool_Execute(t *testing.T) {
 		t.Fatalf("expected non-empty result")
 	}
 }
-
-

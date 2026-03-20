@@ -10,9 +10,9 @@ The repository is also an elite multi-agent workspace: `AGENTS.md`, `.agents/rul
 
 ## Quick Facts
 
-- Root: `/home/will/aurelia-24x7`
+- Root: `/home/will/aurelia`
 - Module: `github.com/kocar/aurelia`
-- Languages: Go, Shell, Markdown, JSON
+- Languages: Go (`197` files), Shell (`13` files), Markdown (`37` files), JSON (`2` files)
 - Primary binary entry: [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go)
 - Main wiring path: [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go)
 - Runtime health endpoint: `GET /health` from [`internal/health/server.go`](../../internal/health/server.go)
@@ -56,11 +56,11 @@ The repository is also an elite multi-agent workspace: `AGENTS.md`, `.agents/rul
 
 ## Technology Stack Summary
 
-The runtime is a Go `1.25` modular monolith. It persists local state with SQLite, uses `log/slog` for observability, exposes a small HTTP health surface, and relies on Telegram as the main user-facing transport. Optional integrations include multiple LLM providers, Groq STT, and MCP servers loaded from JSON config.
+The runtime is a Go `1.25` modular monolith. It persists local state with SQLite, uses `log/slog` for observability, exposes a small HTTP health surface, and relies on Telegram as the main user-facing transport. Optional integrations include multiple remote LLM providers, the local Ollama provider, Groq STT, Gemini fallback smoke/config support, and MCP servers loaded from JSON config.
 
 ## Development Tools Overview
 
-Daily work happens with the Go toolchain, Bash scripts in `scripts/`, systemd services for daemonized execution, and GitHub Actions for CI enforcement. The repository also carries its own governance layer in `.agents/` and `.context/`.
+Daily work happens with the Go toolchain, Bash scripts in `scripts/`, systemd user services for daemonized execution, and GitHub Actions for CI enforcement. The repository also carries its own governance layer in `.agents/` and `.context/`.
 
 ## Getting Started Checklist
 
@@ -68,7 +68,7 @@ Daily work happens with the Go toolchain, Bash scripts in `scripts/`, systemd se
 2. Run onboarding with `go run ./cmd/aurelia onboard`.
 3. Build the binary with `./scripts/build.sh`.
 4. Run the test suite with `go test ./...`.
-5. Validate the daemon path you changed with the appropriate `systemd` unit.
+5. Install the user daemon with `./scripts/install-user-daemon.sh` when validating the long-running runtime path.
 6. Confirm operational health with `curl -fsS http://127.0.0.1:8484/health`.
 
 ## Related Resources

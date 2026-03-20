@@ -151,5 +151,3 @@ func (t *TeamStatusTool) Execute(ctx context.Context, args map[string]interface{
 		snapshot.TotalTasks,
 	), nil
 }
-
-

@@ -3,81 +3,19 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"log"
-	"mime"
+	"log/slog"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
-	"github.com/kocar/aurelia/internal/agent"
+	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/observability"
 	"gopkg.in/telebot.v3"
 )
 
 func (bc *BotController) handleText(c telebot.Context) error {
-	return bc.processInput(c, c.Text(), nil, false)
-}
-
-func (bc *BotController) handlePhoto(c telebot.Context) error {
-	photo := c.Message().Photo
-	if photo == nil {
-		return nil
-	}
-
-	if c.Message().AlbumID != "" {
-		return bc.handlePhotoAlbum(c, photo)
-	}
-
-	return bc.processPhotoInput(c, strings.TrimSpace(c.Message().Caption), []albumPhoto{{
-		messageID: c.Message().ID,
-		photo:     *photo,
-	}})
-}
-
-func (bc *BotController) handlePhotoAlbum(c telebot.Context, photo *telebot.Photo) error {
-	albumID := c.Message().AlbumID
-	isOwner := bc.storeAlbumPhoto(albumID, c.Message().ID, strings.TrimSpace(c.Message().Caption), *photo)
-	if !isOwner {
-		return nil
-	}
-
-	time.Sleep(900 * time.Millisecond)
-
-	caption, photos, ok := bc.flushAlbumPhotos(albumID)
-	if !ok {
-		return nil
-	}
-	return bc.processPhotoInput(c, caption, photos)
-}
-
-func (bc *BotController) processPhotoInput(c telebot.Context, caption string, photos []albumPhoto) error {
-	if len(photos) == 0 {
-		return nil
-	}
-
-	stopTyping := startChatActionLoop(bc.bot, c.Chat(), telebot.UploadingPhoto, 4*time.Second)
-	defer stopTyping()
-
-	text := caption
-	if text == "" {
-		if len(photos) > 1 {
-			text = "Analise estas imagens."
-		} else {
-			text = "Analise esta imagem."
-		}
-	}
-	parts := make([]agent.ContentPart, 0, len(photos)+1)
-	parts = append(parts, agent.ContentPart{Type: agent.ContentPartText, Text: text})
-	for _, item := range photos {
-		part, err := bc.downloadPhotoPart(item.photo)
-		if err != nil {
-			log.Println("Failed to process photo:", err)
-			return SendContextText(c, downloadFailureMessage)
-		}
-		parts = append(parts, part)
-	}
-	return bc.processInput(c, text, parts, false)
+	return bc.processInput(c, c.Text(), false)
 }
 
 func (bc *BotController) handleDocument(c telebot.Context) error {
@@ -86,12 +24,8 @@ func (bc *BotController) handleDocument(c telebot.Context) error {
 		return nil
 	}
 
-	if isSupportedImageDocument(doc.FileName, doc.MIME) {
-		return bc.handleImageDocument(c, doc)
-	}
-
 	if !isSupportedDocument(doc.FileName, doc.MIME) {
-		log.Println("Unsupported document type:", doc.MIME)
+		observability.Logger("telegram.input").Warn("unsupported document type", slog.String("mime", doc.MIME))
 		return SendContextText(c, unsupportedDocumentMessage)
 	}
 
@@ -100,42 +34,13 @@ func (bc *BotController) handleDocument(c telebot.Context) error {
 
 	filePath, err := bc.downloadTelegramFile(&doc.File, doc.FileID+"_"+doc.FileName)
 	if err != nil {
-		log.Println("Failed to download file:", err)
+		observability.Logger("telegram.input").Warn("failed to download file", slog.Any("err", err))
 		return SendContextText(c, downloadFailureMessage)
 	}
 	defer func() { _ = os.Remove(filePath) }()
 
 	finalInput := buildDocumentInput(c.Message().Caption, doc.FileName, doc.MIME, filePath)
-	return bc.processInput(c, finalInput, nil, false)
-}
-
-func (bc *BotController) handleImageDocument(c telebot.Context, doc *telebot.Document) error {
-	stopTyping := startChatActionLoop(bc.bot, c.Chat(), telebot.UploadingPhoto, 4*time.Second)
-	defer stopTyping()
-
-	filePath, err := bc.downloadTelegramFile(&doc.File, doc.FileID+"_"+doc.FileName)
-	if err != nil {
-		log.Println("Failed to download image document:", err)
-		return SendContextText(c, downloadFailureMessage)
-	}
-	defer func() { _ = os.Remove(filePath) }()
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		log.Println("Failed to read image document:", err)
-		return SendContextText(c, downloadFailureMessage)
-	}
-
-	text := strings.TrimSpace(c.Message().Caption)
-	if text == "" {
-		text = "Analise esta imagem."
-	}
-
-	parts := []agent.ContentPart{
-		{Type: agent.ContentPartText, Text: text},
-		{Type: agent.ContentPartImage, MIMEType: detectImageMIMEType(doc.FileName, doc.MIME), Data: data},
-	}
-	return bc.processInput(c, text, parts, false)
+	return bc.processInput(c, finalInput, false)
 }
 
 func (bc *BotController) handleVoice(c telebot.Context) error {
@@ -149,7 +54,7 @@ func (bc *BotController) handleVoice(c telebot.Context) error {
 
 	filePath, err := bc.downloadTelegramFile(&telebot.File{FileID: fileID}, fileID+"_"+filename)
 	if err != nil {
-		log.Println("Failed to download audio:", err)
+		observability.Logger("telegram.input").Warn("failed to download audio", slog.Any("err", err))
 		return SendContextText(c, downloadFailureMessage)
 	}
 	defer func() { _ = os.Remove(filePath) }()
@@ -162,19 +67,12 @@ func (bc *BotController) handleVoice(c telebot.Context) error {
 		}
 		return SendContextText(c, audioProcessingFailureMessage)
 	}
-	return bc.processInput(c, transcribedText, nil, true)
+	bc.persistAudioTranscript(c, filePath, transcribedText)
+	return bc.processInput(c, transcribedText, true)
 }
 
 func isSupportedDocument(filename, mimeType string) bool {
 	return strings.HasSuffix(filename, ".md") || mimeType == "application/pdf"
-}
-
-func isSupportedImageDocument(filename, mimeType string) bool {
-	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(mimeType)), "image/") {
-		return true
-	}
-	guessed := mime.TypeByExtension(strings.ToLower(filepath.Ext(filename)))
-	return strings.HasPrefix(guessed, "image/")
 }
 
 func (bc *BotController) downloadTelegramFile(file *telebot.File, filename string) (string, error) {
@@ -199,63 +97,6 @@ func buildDocumentInput(caption, filename, mimeType, filePath string) string {
 	return fmt.Sprintf("%s\n\n[Analise o anexo %s]:\n%s", caption, filename, extractedText)
 }
 
-func detectImageMIMEType(filename, mimeType string) string {
-	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(mimeType)), "image/") {
-		return mimeType
-	}
-	if guessed := mime.TypeByExtension(strings.ToLower(filepath.Ext(filename))); strings.HasPrefix(guessed, "image/") {
-		return guessed
-	}
-	return "image/jpeg"
-}
-
-func (bc *BotController) downloadPhotoPart(photo telebot.Photo) (agent.ContentPart, error) {
-	filePath, err := bc.downloadTelegramFile(&photo.File, photo.FileID+"_photo.jpg")
-	if err != nil {
-		return agent.ContentPart{}, err
-	}
-	defer func() { _ = os.Remove(filePath) }()
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return agent.ContentPart{}, err
-	}
-	return agent.ContentPart{Type: agent.ContentPartImage, MIMEType: "image/jpeg", Data: data}, nil
-}
-
-func (bc *BotController) storeAlbumPhoto(albumID string, messageID int, caption string, photo telebot.Photo) bool {
-	bc.albumMu.Lock()
-	defer bc.albumMu.Unlock()
-
-	album, ok := bc.pendingAlbums[albumID]
-	if !ok {
-		album = &pendingAlbum{ownerMessageID: messageID}
-		bc.pendingAlbums[albumID] = album
-	}
-	if caption != "" && album.caption == "" {
-		album.caption = caption
-	}
-	album.photos = append(album.photos, albumPhoto{messageID: messageID, photo: photo})
-	return album.ownerMessageID == messageID
-}
-
-func (bc *BotController) flushAlbumPhotos(albumID string) (string, []albumPhoto, bool) {
-	bc.albumMu.Lock()
-	defer bc.albumMu.Unlock()
-
-	album, ok := bc.pendingAlbums[albumID]
-	if !ok {
-		return "", nil, false
-	}
-	delete(bc.pendingAlbums, albumID)
-
-	photos := append([]albumPhoto(nil), album.photos...)
-	sort.SliceStable(photos, func(i, j int) bool {
-		return photos[i].messageID < photos[j].messageID
-	})
-	return album.caption, photos, true
-}
-
 func resolveAudioAttachment(c telebot.Context) (string, string, bool) {
 	switch {
 	case c.Message().Voice != nil:
@@ -268,20 +109,62 @@ func resolveAudioAttachment(c telebot.Context) (string, string, bool) {
 }
 
 func (bc *BotController) transcribeAudioFile(filePath string) (string, error) {
+	logger := observability.Logger("telegram.input")
 	if bc.stt == nil || !bc.stt.IsAvailable() {
 		return "", SendContextTextError(audioNotConfiguredMessage)
 	}
 
-	log.Printf("Enviando audio [%s] para transcricao via Groq API...", filePath)
+	logger.Info("sending audio to transcriber", slog.String("file", observability.Basename(filePath)))
 	transcribedText, err := bc.stt.Transcribe(context.Background(), filePath)
 	if err != nil {
-		log.Printf("Groq STT error: %v\n", err)
+		logger.Warn("transcriber error", slog.Any("err", err))
 		return "", SendContextTextError(audioProcessingFailureMessage)
 	}
 	if strings.TrimSpace(transcribedText) == "" {
 		return "", SendContextTextError(emptyAudioMessage)
 	}
 	return transcribedText, nil
+}
+
+func (bc *BotController) persistAudioTranscript(c telebot.Context, filePath, transcript string) {
+	if bc == nil || bc.memory == nil || c == nil || c.Sender() == nil {
+		return
+	}
+
+	bc.persistAudioTranscriptForSender(c.Sender().ID, filePath, transcript)
+}
+
+func (bc *BotController) persistAudioTranscriptForSender(senderID int64, filePath, transcript string) {
+	if bc == nil || bc.memory == nil {
+		return
+	}
+
+	conversationID := fmt.Sprintf("%d", senderID)
+	ctx := context.Background()
+
+	if err := bc.memory.EnsureConversation(ctx, conversationID, senderID, "groq"); err != nil {
+		observability.Logger("telegram.input").Warn("failed to ensure conversation for audio transcript", slog.Any("err", err))
+		return
+	}
+
+	entry := memory.ArchiveEntry{
+		ConversationID: conversationID,
+		SessionID:      conversationID,
+		Role:           "user",
+		Content:        formatAudioTranscriptArchiveContent(bc.config.STTProvider, filePath, transcript),
+		MessageType:    "audio_transcript",
+	}
+	if err := bc.memory.AddArchiveEntry(ctx, entry); err != nil {
+		observability.Logger("telegram.input").Warn("failed to persist audio transcript", slog.Any("err", err))
+	}
+}
+
+func formatAudioTranscriptArchiveContent(provider, filePath, transcript string) string {
+	provider = strings.TrimSpace(provider)
+	if provider == "" {
+		provider = "unknown"
+	}
+	return fmt.Sprintf("[audio_transcript]\nprovider=%s\nfile=%s\n\n%s", provider, observability.Basename(filePath), strings.TrimSpace(transcript))
 }
 
 type sendContextTextError string

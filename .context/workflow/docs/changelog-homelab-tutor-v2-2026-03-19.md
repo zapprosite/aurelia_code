@@ -223,6 +223,7 @@ Prova:
 Foi registrado um blueprint direto ao ponto para a Aurelia virar um assistente local de voz, browser-use, Antigravity e terminal:
 
 - `docs/jarvis_local_voice_blueprint_20260319.md`
+- `docs/local_model_kit_blueprint_20260319.md`
 
 Baseado em:
 
@@ -235,27 +236,63 @@ Direcao registrada:
 
 - `openWakeWord` + `Silero VAD` no CPU
 - `Groq whisper-large-v3-turbo` para STT
-- `qwen3-coder:30b` como cerebro local
+- `gemma3:27b-it-q4_K_M` como cerebro local padrao
+- `qwen3.5:27b-q4_K_M` como alternativa tecnica
+- `qwen3-coder:30b` apenas para escalonamento manual
 - `bge-m3` como contrato unico de embedding
 - `Supabase + Qdrant` como memoria/persistencia
 - `agent-browser` primeiro e `browser-use` como camada avancada
 - rate limits conservadores e governor por recurso
 
-## Runtime Without Gemini
+Tambem foi registrado o papel do segredo local da Hugging Face:
 
-O runtime de deploy foi polido para seguir sem Gemini neste slice:
+- `~/.aurelia/config/secrets.env`
+- `HF_TOKEN=...`
 
-- `docs/runtime_without_gemini_blueprint_20260319.md`
+Uso:
+
+- contingencia para downloads/autenticacao de artefatos HF
+- fora do repo e fora do `app.json`
+
+Execucao aplicada em `2026-03-19`:
+
+- `scripts/update-ollama.sh` foi corrigido para o kit novo
+- `scripts/ollama-local-kit-smoke.sh` foi criado para validar o modelo principal
+- `ollama list` passou a mostrar:
+  - `gemma3:27b-it-q4_K_M`
+  - `gemma3:12b`
+  - `bge-m3:latest`
+- smoke real do `gemma3:27b-it-q4_K_M` com `ctx=8192` retornou `OK`
+- o runtime passou a aceitar `llm_provider=ollama`
+- o catalogo local passou a listar modelos do endpoint `v1/models`
+- o onboarding passou a tratar `ollama` sem API key
+- o `primary_llm` do `/health` passou a validar endpoint local + modelo instalado quando `provider=ollama`
+- `go test ./... -count=1` passou depois desse slice
+
+## Gemini Fallback Runtime
+
+Foi consolidado o papel da Gemini API no runtime da Aurelia:
+
+- `scripts/gemini-smoke.sh`
+- `docs/gemini_fallback_runtime_20260319.md`
 
 Decisao registrada:
 
-- `OpenRouter/Minimax` segue como LLM remoto principal
-- `Groq` segue no STT
-- `google_api_key` sai do caminho ativo
-- o health passa a provar apenas o `primary_llm`
+- Gemini entra como fallback LLM e pesquisa curta
+- `gemini-2.5-flash` e o default remoto
+- `gemini-2.5-pro` fica para escalonamento manual
+- Groq continua no STT
+- `bge-m3` continua como embedding unico do Qdrant
 
-Tambem foi mantido o endurecimento do health:
+Tambem foi endurecido o health:
 
-- checks auxiliares podem emitir `warning`
+- checks auxiliares agora podem emitir `warning`
 - `warning` nao gera falso degradado
 - `error` continua derrubando o `/health`
+
+Observacao adicional validada em `2026-03-19`:
+
+- a oferta estudantil do ecossistema Gemini nao deve ser confundida com aumento automatico da cota da Gemini API
+- o beneficio de estudante agrega mais no `Gemini app`, `NotebookLM`, integracoes Google e armazenamento do plano `Google AI Pro`
+- a Gemini Developer API continua dependente de `project`, `usage tier` e `Cloud Billing`
+- conclusao arquitetural mantida: Gemini segue auxiliar no runtime da Aurelia, nao caminho critico

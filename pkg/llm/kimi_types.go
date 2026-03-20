@@ -4,7 +4,7 @@ import "encoding/json"
 
 type chatMessage struct {
 	Role             string         `json:"role"`
-	Content          any            `json:"content"`
+	Content          string         `json:"content"`
 	ReasoningContent string         `json:"reasoning_content,omitempty"`
 	ToolCalls        []chatToolCall `json:"tool_calls,omitempty"`
 	ToolCallID       string         `json:"tool_call_id,omitempty"`

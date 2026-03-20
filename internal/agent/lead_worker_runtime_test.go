@@ -410,19 +410,13 @@ func TestMasterTeamService_Spawn_FromTaskContextCreatesDependentSubtask(t *testi
 		t.Fatalf("CompleteTask(parent) error = %v", err)
 	}
 
-	waitForCondition(t, 2*time.Second, func() (bool, string) {
-		task, err := manager.GetTask(ctx, teamID, childTaskID)
-		if err != nil {
-			return false, "GetTask(child after parent done) returned error"
-		}
-		if task == nil {
-			return false, "expected dependent child task to exist"
-		}
-		if task.Status == TaskBlocked {
-			return false, "expected dependent child task to unlock after parent completion"
-		}
-		return true, ""
-	})
+	childTask, err := manager.ClaimNextTask(ctx, teamID, "child-worker")
+	if err != nil {
+		t.Fatalf("ClaimNextTask(child after parent done) error = %v", err)
+	}
+	if childTask == nil || childTask.ID != childTaskID {
+		t.Fatalf("expected dependent child task to unlock after parent completion, got %#v", childTask)
+	}
 }
 
 func TestMasterTeamService_ReusesPersistentWorkerLoopPerAgent(t *testing.T) {

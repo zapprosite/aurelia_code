@@ -167,5 +167,3 @@ func rankFacts(facts []memory.Fact, tokens []string, limit int) []ScoredFact {
 	}
 	return append([]ScoredFact(nil), scored[:limit]...)
 }
-
-

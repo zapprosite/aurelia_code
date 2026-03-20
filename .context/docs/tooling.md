@@ -6,7 +6,7 @@ The day-to-day tooling for this repository is intentionally simple: Go, Bash, sy
 
 - **Go 1.25+** — builds and tests the runtime
 - **Bash** — required for the scripts in [`scripts/`](../../scripts)
-- **systemd** — expected supervision path for the long-running daemon
+- **systemd user services** — expected supervision path for the long-running daemon
 - **curl / jq** — useful for health checks and JSON inspection
 - **npm / npx** — needed when MCP servers are launched through Node-based commands
 - **GitHub Actions awareness** — contributors should understand the active CI workflows
@@ -20,6 +20,9 @@ Key scripts shipped in the repository:
 - [`scripts/daemon-status.sh`](../../scripts/daemon-status.sh) — shows service status
 - [`scripts/daemon-logs.sh`](../../scripts/daemon-logs.sh) — tails daemon logs
 - [`scripts/health-check.sh`](../../scripts/health-check.sh) — homelab/system health snapshot
+- [`scripts/gemini-smoke.sh`](../../scripts/gemini-smoke.sh) — validates the local Gemini API key, lists available models and performs a minimal generate-content check without changing the active provider
+- [`scripts/update-ollama.sh`](../../scripts/update-ollama.sh) — pulls the active local model kit (`gemma3:27b-it-q4_K_M`, `gemma3:12b`, `bge-m3`) and prints the recommended Ollama runtime policy
+- [`scripts/ollama-local-kit-smoke.sh`](../../scripts/ollama-local-kit-smoke.sh) — validates the local Gemma kit against the Ollama API with `num_ctx=8192`
 - [`scripts/smoke-test-homelab.sh`](../../scripts/smoke-test-homelab.sh) — smoke guidance for end-to-end validation
 - [`scripts/sync-ai-context.sh`](../../scripts/sync-ai-context.sh) — refreshes `ai-context` state and regenerates `.context/docs/codebase-map.json`
 
@@ -38,7 +41,7 @@ At minimum, contributors benefit from:
 
 - Go language support (`gopls`)
 - shell syntax and lint support for Bash scripts
-- quick access to `journalctl`, `systemctl` and local health endpoints
+- quick access to `journalctl`, `systemctl --user` and local health endpoints
 
 The repository does not currently depend on editor-specific config files for correct operation.
 
