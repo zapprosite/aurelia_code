@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-20T00:59:31Z",
+  "generated": "2026-03-20T01:10:03Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 521,
+    "totalFiles": 523,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -51,7 +51,7 @@
       },
       {
         "name": "docs",
-        "fileCount": 64,
+        "fileCount": 66,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
@@ -82,7 +82,7 @@
       },
       {
         "extension": ".md",
-        "count": 66
+        "count": 68
       },
       {
         "extension": ".sh",
