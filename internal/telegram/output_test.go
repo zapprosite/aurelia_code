@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/kocar/aurelia/pkg/tts"
@@ -111,7 +112,7 @@ func TestSendError_SendsFormattedHTML(t *testing.T) {
 	sender := &stubSender{}
 	chat := &telebot.Chat{ID: 123}
 
-	if err := sendErrorWithSender(sender, chat, "Erro", "max iterations reached"); err != nil {
+	if err := sendErrorWithSender(sender, chat, "Erro", sanitizeUserVisibleErrorMessage("provider error: empty guarded content for openrouter:deepseek/deepseek-v3.2")); err != nil {
 		t.Fatalf("sendErrorWithSender returned error: %v", err)
 	}
 
@@ -126,8 +127,11 @@ func TestSendError_SendsFormattedHTML(t *testing.T) {
 	if !containsSubstring(text, "<b>Erro</b>") {
 		t.Fatalf("expected bold html title, got: %s", text)
 	}
-	if !containsSubstring(text, "max iterations reached") {
+	if !containsSubstring(text, "falha temporaria do runtime") {
 		t.Fatalf("expected error body in payload, got: %s", text)
+	}
+	if containsSubstring(strings.ToLower(text), "deepseek") {
+		t.Fatalf("expected provider/model details to be hidden, got: %s", text)
 	}
 
 	options, ok := sender.calls[0].opts[0].(*telebot.SendOptions)
@@ -143,7 +147,7 @@ func TestSendError_FallsBackToPlainTextWhenHTMLSendFails(t *testing.T) {
 	sender := &stubSender{firstSendErr: errors.New("bad html")}
 	chat := &telebot.Chat{ID: 123}
 
-	if err := sendErrorWithSender(sender, chat, "Erro", "max iterations reached"); err != nil {
+	if err := sendErrorWithSender(sender, chat, "Erro", sanitizeUserVisibleErrorMessage("provider error: route breaker open for openrouter:deepseek/deepseek-v3.2")); err != nil {
 		t.Fatalf("sendErrorWithSender returned error: %v", err)
 	}
 
@@ -155,7 +159,7 @@ func TestSendError_FallsBackToPlainTextWhenHTMLSendFails(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected plain text fallback payload, got %T", sender.calls[1].what)
 	}
-	if payload != "Erro\n\nmax iterations reached" {
+	if payload != "Erro\n\nNao consegui concluir isso agora por uma falha temporaria do runtime. Tente novamente em alguns segundos." {
 		t.Fatalf("unexpected fallback payload: %q", payload)
 	}
 }
@@ -208,5 +212,19 @@ func TestSanitizeTextForSpeech_StripsMarkdown(t *testing.T) {
 	}
 	if !containsSubstring(got, "Titulo") || !containsSubstring(got, "item com link") {
 		t.Fatalf("unexpected sanitized text: %q", got)
+	}
+}
+
+func TestSanitizeAssistantOutputForUser_BlocksInternalLeak(t *testing.T) {
+	got := sanitizeAssistantOutputForUser("provider error: empty guarded content for openrouter:deepseek/deepseek-v3.2")
+	if got != genericResponseGuardMessage {
+		t.Fatalf("unexpected sanitized output: %q", got)
+	}
+}
+
+func TestSanitizeAssistantOutputForUser_LeavesNormalAnswer(t *testing.T) {
+	got := sanitizeAssistantOutputForUser("Sistema estavel. Docker, GPU e disco estao saudaveis.")
+	if got != "Sistema estavel. Docker, GPU e disco estao saudaveis." {
+		t.Fatalf("unexpected sanitized output: %q", got)
 	}
 }

@@ -54,10 +54,12 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 
 	finalAnswer, err := bc.executeConversation(c, session, activeSkill, history, systemPrompt, allowedTools)
 	if err != nil {
+		logger.Error("conversation execution failed", slog.Any("err", err))
 		_ = SendError(bc.bot, c.Chat(), err.Error())
 		return nil
 	}
 
+	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
 	bc.persistAssistantAnswer(session, finalAnswer)
 	return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
 }
@@ -104,9 +106,11 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 
 	finalAnswer, err := bc.executeExternalConversation(chat, session, activeSkill, history, systemPrompt, allowedTools)
 	if err != nil {
+		observability.Logger("telegram.pipeline").Error("external conversation execution failed", slog.Any("err", err))
 		_ = SendError(bc.bot, chat, err.Error())
 		return err
 	}
+	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
 	bc.persistAssistantAnswer(session, finalAnswer)
 	return bc.deliverFinalAnswerToChat(chat, finalAnswer, requiresAudio)
 }
