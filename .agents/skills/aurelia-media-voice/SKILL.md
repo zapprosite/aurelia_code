@@ -22,7 +22,8 @@ Padronizar duas tarefas recorrentes:
 ## Contrato
 
 - `Groq` continua sendo o lane de STT
-- `MiniMax Audio` entra como lane premium de TTS/voz oficial
+- `Kokoro (Kodoro) Local GPU` é o motor principal e padrão de TTS 2026
+- `MiniMax Audio` permanece como fallback premium de nuvem
 - link publico de terceiro pode ser usado para transcript e estudo de estilo
 - link publico de terceiro **nao** deve ser usado como base de clonagem sem autorizacao explicita
 - a clonagem oficial da Aurelia exige amostra autorizada/licenciada
