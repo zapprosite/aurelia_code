@@ -20,6 +20,10 @@ const (
 	defaultLocalTTSModel        = "chatterbox"
 	defaultLocalTTSVoice        = "Olivia.wav"
 	defaultLocalTTSFormat       = "opus"
+	defaultGeminiTTSBaseURL     = "https://generativelanguage.googleapis.com"
+	defaultGeminiTTSModel       = "gemini-2.5-flash-preview-tts"
+	defaultGeminiTTSVoice       = "Sulafat"
+	defaultGeminiTTSFormat      = "wav"
 	defaultMiniMaxTTSBaseURL    = "https://api.minimax.io"
 	defaultMiniMaxTTSModel      = "speech-2.8-hd"
 	defaultMiniMaxTTSFormat     = "mp3"
@@ -599,6 +603,8 @@ func sameFileConfig(a, b fileConfig) bool {
 
 func defaultTTSBaseURLForProvider(provider string) string {
 	switch provider {
+	case "gemini":
+		return defaultGeminiTTSBaseURL
 	case "minimax":
 		return defaultMiniMaxTTSBaseURL
 	default:
@@ -608,6 +614,8 @@ func defaultTTSBaseURLForProvider(provider string) string {
 
 func defaultTTSModelForProvider(provider string) string {
 	switch provider {
+	case "gemini":
+		return defaultGeminiTTSModel
 	case "minimax":
 		return defaultMiniMaxTTSModel
 	default:
@@ -617,6 +625,8 @@ func defaultTTSModelForProvider(provider string) string {
 
 func defaultTTSVoiceForProvider(provider string) string {
 	switch provider {
+	case "gemini":
+		return defaultGeminiTTSVoice
 	case "minimax":
 		return "aurelia-ptbr-formal-doce-v1"
 	default:
@@ -626,6 +636,8 @@ func defaultTTSVoiceForProvider(provider string) string {
 
 func defaultTTSFormatForProvider(provider string) string {
 	switch provider {
+	case "gemini":
+		return defaultGeminiTTSFormat
 	case "minimax":
 		return defaultMiniMaxTTSFormat
 	default:
@@ -635,37 +647,46 @@ func defaultTTSFormatForProvider(provider string) string {
 
 func usesLegacyTTSDefaults(provider, baseURL, model, format string) bool {
 	switch provider {
+	case "gemini":
+		return baseURL == defaultLocalTTSBaseURL && (model == "" || model == defaultLocalTTSModel) && (format == "" || format == defaultLocalTTSFormat)
 	case "minimax":
 		return baseURL == defaultLocalTTSBaseURL && (model == "" || model == defaultLocalTTSModel) && (format == "" || format == defaultLocalTTSFormat)
 	default:
-		return baseURL == defaultMiniMaxTTSBaseURL && (model == "" || model == defaultMiniMaxTTSModel) && (format == "" || format == defaultMiniMaxTTSFormat)
+		return (baseURL == defaultMiniMaxTTSBaseURL && (model == "" || model == defaultMiniMaxTTSModel) && (format == "" || format == defaultMiniMaxTTSFormat)) ||
+			(baseURL == defaultGeminiTTSBaseURL && (model == "" || model == defaultGeminiTTSModel) && (format == "" || format == defaultGeminiTTSFormat))
 	}
 }
 
 func usesLegacyTTSModel(provider, model string) bool {
 	switch provider {
+	case "gemini":
+		return model == defaultLocalTTSModel
 	case "minimax":
 		return model == defaultLocalTTSModel
 	default:
-		return model == defaultMiniMaxTTSModel
+		return model == defaultMiniMaxTTSModel || model == defaultGeminiTTSModel
 	}
 }
 
 func usesLegacyTTSVoice(provider, voice string) bool {
 	switch provider {
+	case "gemini":
+		return voice == defaultLocalTTSVoice
 	case "minimax":
 		return voice == defaultLocalTTSVoice
 	default:
-		return voice == "aurelia-ptbr-formal-doce-v1"
+		return voice == "aurelia-ptbr-formal-doce-v1" || voice == defaultGeminiTTSVoice
 	}
 }
 
 func usesLegacyTTSFormat(provider, format string) bool {
 	switch provider {
+	case "gemini":
+		return format == defaultLocalTTSFormat
 	case "minimax":
 		return format == defaultLocalTTSFormat
 	default:
-		return format == defaultMiniMaxTTSFormat
+		return format == defaultMiniMaxTTSFormat || format == defaultGeminiTTSFormat
 	}
 }
 
