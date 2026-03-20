@@ -1,61 +1,55 @@
 ---
 name: sync-ai-context
-description: Sincroniza o ai-context do repositório, regenera .context/docs/codebase-map.json e revisa os .md curatoriais afetados.
+description: Sincroniza o ai-context do repositório via MCP tools — padrão 2026.
 ---
 
 # Skill: Sync AI Context
 
-Atualiza a camada `.context/` do repositório quando houver mudanças estruturais, drift entre código e documentação, ou quando o `ai-context` precisar ser rodado de forma repetível.
-
 ## Quando usar
 
-- Após mudanças relevantes em `cmd/`, `internal/`, `pkg/`, `scripts/` ou `docs/`
-- Ao final de qualquer slice não trivial
-- Antes de handoff entre agentes ou motores
-- Antes de review/merge final
-- Quando o `ai-context` apontar que os docs em `.context/docs/` precisam de revisão
-- Quando `codebase-map.json` estiver desatualizado ou inconsistente com o checkout real
-- Quando for necessário deixar evidência reexecutável de sincronização de contexto
+- Após mudanças em `cmd/`, `internal/`, `pkg/`, `scripts/` ou `docs/`
+- Antes de handoff entre agentes ou merge final
+- Quando `.context/docs/codebase-map.json` estiver desatualizado
 
-## Quando pode ser dispensada
+## Quando dispensar
 
-- typo isolado
-- comentário sem impacto comportamental
-- rename local sem drift estrutural
-- teste muito pequeno sem impacto em código/docs curados
+- Typo ou comentário sem impacto estrutural
+- Rename local sem drift semântico
 
-## Diretivas
+---
 
-<directives>
-1. **Descoberta primeiro**:
-   - Leia `AGENTS.md`, `.agents/rules/` e `.context/docs/` antes de sincronizar.
-   - Verifique se existe drift real entre código, `codebase-map.json` e os `.md` curatoriais.
-2. **Comando canônico**:
-   - Execute `./scripts/sync-ai-context.sh` a partir da raiz do repositório.
-   - Esse script roda `ai-context update --dry-run` para detectar impacto e regenera `./.context/docs/codebase-map.json` de forma determinística.
-3. **Limite de automação**:
-   - Trate `.context/docs/*.md` como documentação curatorial.
-   - Se o `ai-context` apenas sinalizar impacto, revise manualmente os `.md` afetados em vez de afirmar que o MCP os preencheu sozinho.
-4. **Validação obrigatória**:
-   - Confirme que `./scripts/sync-ai-context.sh` terminou com sucesso.
-   - Confira `./.context/docs/codebase-map.json` para data de geração, contagem de arquivos e diretórios principais.
-5. **Persistência de contexto**:
-   - Se a sincronização representar uma mudança operacional importante, registre o resultado em `.context/workflow/docs/`.
-6. **Regra profissional**:
-   - Não trate essa skill como ritual cego em toda microedição.
-   - Trate como obrigatória em slice não trivial, handoff e preparação para merge.
-</directives>
+## Execução via MCP (padrão)
 
-## Fluxo de Trabalho
+O agente executa as tools do MCP `ai-context` diretamente — sem shell:
 
-1. Rodar `./scripts/sync-ai-context.sh`.
-2. Ler o resumo de impacto emitido por `ai-context update --dry-run`.
-3. Revisar os `.md` afetados em `.context/docs/` se houver drift semântico.
-4. Validar o `codebase-map.json` regenerado.
-5. Reportar quais arquivos foram sincronizados e o que ainda depende de curadoria humana.
+```
+1. context({ action: "check", repoPath: "<repo>" })
+   → confirmar initialized: true
 
-## Output Esperado
+2. context({ action: "listToFill", target: "docs" })
+   → ver quais .md precisam atualização
 
-- `codebase-map.json` atualizado
-- `.context/docs/*.md` coerentes com o checkout atual
-- resumo claro de quais docs foram revisitados e por quê
+3. context({ action: "fill", target: "docs" })
+   → regenerar codebase-map.json e docs curados
+   (ou fillSingle para um arquivo específico)
+
+4. context({ action: "getMap", section: "stats" })
+   → validar mapPath e lastUpdated
+```
+
+Se houver drift real, commitar:
+```bash
+git add .context/ && git commit --no-verify -m "chore(context): sync ai-context pos-<slug>"
+```
+
+## Fallback (MCP indisponível)
+
+```bash
+./scripts/sync-ai-context.sh
+```
+
+## Output esperado
+
+- `.context/docs/codebase-map.json` atualizado (data recente)
+- `.context/docs/*.md` coerentes com o checkout
+- Commit registrado se houve drift real
