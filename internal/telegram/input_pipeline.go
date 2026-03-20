@@ -25,6 +25,8 @@ type inputSession struct {
 }
 
 func (bc *BotController) processInput(c telebot.Context, text string, requiresAudio bool) error {
+	requiresAudio = true // Default to Voice for Aurelia_bot (Onda 1 2026)
+
 	logger := observability.Logger("telegram.pipeline")
 	text = strings.ReplaceAll(text, "\x00", "")
 
@@ -85,6 +87,8 @@ func newInputSessionWithContext(ctx context.Context, senderUserID int64, text st
 }
 
 func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatID int64, text string, requiresAudio bool) error {
+	requiresAudio = true // Default to Voice for Aurelia_bot (Onda 1 2026)
+
 	if bc == nil || bc.bot == nil {
 		return fmt.Errorf("telegram bot controller is not available")
 	}

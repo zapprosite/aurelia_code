@@ -1,0 +1,13 @@
+{
+  "slice": "voice-tts-pt-br-pro",
+  "status": "executing",
+  "current_step": "Integrating Kokoro with Telegram bot",
+  "next_commands": [
+    "go test ./internal/voice/...",
+    "scripts/smoke-voice-kokoro.go"
+  ],
+  "dependencies": [
+    "ADR-20260320-voice-tts-pt-br-pro.md"
+  ],
+  "evidence": []
+}

@@ -77,11 +77,18 @@ func buildTTSSynthesizer(cfg *config.AppConfig) tts.Synthesizer {
 	if cfg == nil {
 		return nil
 	}
-	switch cfg.TTSProvider {
-	case "", "disabled":
-		return nil
+	case "", "disabled", "kokoro", "kodoro":
+		// Kokoro-FastAPI (Kodoro) é a voz padrão profissional local em 2026
+		baseURL := cfg.TTSBaseURL
+		if baseURL == "" {
+			baseURL = "http://localhost:8888" // Padrão Homelab GPU
+		}
+		voice := cfg.TTSVoice
+		if voice == "" {
+			voice = "pf_dora" // Voz feminina PT-BR profissional
+		}
+		return tts.NewOpenAICompatibleSynthesizer(baseURL, "kokoro", voice, "mp3", 1.0)
 	default:
-		// All TTS providers use local voice-proxy (OpenAI-compatible interface)
 		return tts.NewOpenAICompatibleSynthesizer(cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSVoice, cfg.TTSFormat, cfg.TTSSpeed)
 	}
 }
