@@ -53,6 +53,15 @@ Antes de executar qualquer slice não trivial, leia nesta ordem:
 4. `docs/adr/README.md`
 5. `plan.md`
 
+## 🔧 2.2 ADRs Críticas em Andamento (Governança Industrial)
+
+| ADR | Status | Fases | Executor | Comando |
+|---|---|---|---|---|
+| [ADR-20260319-Polish-Governance-All](./docs/adr/ADR-20260319-Polish-Governance-All.md) | 🟡 Proposto | 4 (CRITICAL → HIGH → MEDIUM → LOW) | humano + codex | `/governance-polish` |
+
+**Fase 1 (CRITICAL — Humano):** Criar vault KeePassXC em `/srv/data/vault/aurelia.kdbx`, migrar credenciais, shred plaintext, fix postgres password.
+**Fases 2-4 (Codex):** Scripts, esquemas, audits, compliance. Usar `/governance-polish --phase 2` (após Fase 1).
+
 Regras fechadas:
 
 - mudança estrutural exige ADR

@@ -13,6 +13,7 @@ description: Adaptador de implementação rápida para o Codex CLI.
 3. **Alinhamento**: Não tome decisões arquiteturais sem consultar o `Architect Specialist`.
 4. **Fronteira**: Mantenha-se dentro da worktree designada.
 5. **ADR por Slice**: Se a mudança sair do escopo local/rápido, exija ADR em `docs/adr/` antes de continuar.
+6. **Governança Industrial**: Consulte [ADR-20260319-Polish-Governance-All](./docs/adr/ADR-20260319-Polish-Governance-All.md). Fases 2-4 usam skill `/governance-polish --phase 2` (após humano concluir Fase 1).
 </contract>
 
 ## Links obrigatórios
