@@ -3,7 +3,7 @@
   "title": "Antigravity Handoff E2E",
   "status": "in_progress",
   "phase": "design",
-  "progress": 40,
+  "progress": 75,
   "goal": "Fechar o ciclo completo de handoff entre Aurelia e Antigravity com ida estruturada, volta estruturada e sem retrabalho.",
   "scope": [
     "payload de ida",
@@ -19,9 +19,9 @@
     "E2E real e provado"
   ],
   "next_actions": [
-    "consumir structured return no runtime quando o fluxo real estiver ligado",
-    "fixar o caso real de smoke humano no cockpit do Antigravity",
-    "reduzir retrabalho no caminho de volta"
+    "fazer smoke humano no cockpit do Antigravity colando JSON de volta no Telegram",
+    "validar um caso real approved e um revise",
+    "fechar a slice como accepted apos prova humana"
   ],
   "simulation_commands": [
     "tarefa light vira handoff estruturado",
@@ -45,6 +45,7 @@
     "payload minimo definido",
     "prompt agora exige JSON approved/revise/blocked",
     "parser do retorno estruturado criado",
+    "runtime do Telegram agora consome a volta estruturada e formata a resposta final",
     "go test ./internal/telegram ./internal/agent -count=1 passou",
     "go test ./... -count=1 passou"
   ],

@@ -41,6 +41,12 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 		logger.Warn("failed to persist incoming context", slog.Any("err", err))
 	}
 
+	if handoffResult := maybeParseAntigravityHandoffResult(session.text); handoffResult != nil {
+		finalAnswer := formatAntigravityHandoffResult(handoffResult)
+		bc.persistAssistantAnswer(session, finalAnswer)
+		return bc.deliverFinalAnswer(c, finalAnswer, false)
+	}
+
 	if delegation := maybeBuildAntigravityDelegationPrompt(session.text); delegation != nil {
 		bc.persistAssistantAnswer(session, delegation.Prompt)
 		return bc.deliverFinalAnswer(c, delegation.Prompt, false)
@@ -92,6 +98,11 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 	}
 	if err := bc.persistIncomingContext(session, userID); err != nil {
 		observability.Logger("telegram.pipeline").Warn("failed to persist external input context", slog.Any("err", err))
+	}
+	if handoffResult := maybeParseAntigravityHandoffResult(session.text); handoffResult != nil {
+		finalAnswer := formatAntigravityHandoffResult(handoffResult)
+		bc.persistAssistantAnswer(session, finalAnswer)
+		return bc.deliverFinalAnswerToChat(chat, finalAnswer, false)
 	}
 	if delegation := maybeBuildAntigravityDelegationPrompt(session.text); delegation != nil {
 		bc.persistAssistantAnswer(session, delegation.Prompt)

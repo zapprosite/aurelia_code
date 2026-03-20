@@ -190,7 +190,7 @@ func promptBodyForKind(kind antigravityTaskKind) string {
 }
 
 func parseAntigravityHandoffResult(text string) (*antigravityHandoffResult, error) {
-	trimmed := strings.TrimSpace(text)
+	trimmed := extractJSONPayload(strings.TrimSpace(text))
 	if trimmed == "" {
 		return nil, fmt.Errorf("empty handoff result")
 	}
@@ -210,4 +210,81 @@ func parseAntigravityHandoffResult(text string) (*antigravityHandoffResult, erro
 		return nil, fmt.Errorf("handoff residual risk is required")
 	}
 	return &result, nil
+}
+
+func maybeParseAntigravityHandoffResult(text string) *antigravityHandoffResult {
+	result, err := parseAntigravityHandoffResult(text)
+	if err != nil {
+		return nil
+	}
+	return result
+}
+
+func formatAntigravityHandoffResult(result *antigravityHandoffResult) string {
+	if result == nil {
+		return ""
+	}
+	var b strings.Builder
+	switch result.Status {
+	case "approved":
+		b.WriteString("Handoff do Antigravity: aprovado.\n\n")
+	case "revise":
+		b.WriteString("Handoff do Antigravity: precisa de revisao.\n\n")
+	case "blocked":
+		b.WriteString("Handoff do Antigravity: bloqueado.\n\n")
+	}
+	b.WriteString(result.Summary)
+	if len(result.Commands) > 0 {
+		b.WriteString("\n\nComandos sugeridos:\n")
+		for _, cmd := range result.Commands {
+			cmd = strings.TrimSpace(cmd)
+			if cmd == "" {
+				continue
+			}
+			b.WriteString("- `")
+			b.WriteString(cmd)
+			b.WriteString("`\n")
+		}
+	}
+	if len(result.Validation) > 0 {
+		b.WriteString("\nValidacao minima:\n")
+		for _, item := range result.Validation {
+			item = strings.TrimSpace(item)
+			if item == "" {
+				continue
+			}
+			b.WriteString("- ")
+			b.WriteString(item)
+			b.WriteString("\n")
+		}
+	}
+	if strings.TrimSpace(result.ProposedDiff) != "" {
+		b.WriteString("\nDiff proposto:\n```diff\n")
+		b.WriteString(strings.TrimSpace(result.ProposedDiff))
+		b.WriteString("\n```")
+	}
+	if strings.TrimSpace(result.ResidualRisk) != "" {
+		b.WriteString("\n\nRisco residual: ")
+		b.WriteString(strings.TrimSpace(result.ResidualRisk))
+	}
+	return strings.TrimSpace(b.String())
+}
+
+func extractJSONPayload(text string) string {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return ""
+	}
+	if strings.HasPrefix(text, "```") {
+		lines := strings.Split(text, "\n")
+		if len(lines) >= 3 && strings.HasPrefix(lines[0], "```") && strings.TrimSpace(lines[len(lines)-1]) == "```" {
+			return strings.TrimSpace(strings.Join(lines[1:len(lines)-1], "\n"))
+		}
+	}
+	start := strings.Index(text, "{")
+	end := strings.LastIndex(text, "}")
+	if start >= 0 && end > start {
+		return strings.TrimSpace(text[start : end+1])
+	}
+	return text
 }
