@@ -9,8 +9,8 @@ last-updated: 2026-03-17
 O sistema segue o modelo **BMAD (Business, Model, Architect, Developer)** orquestrado por agentes:
 
 <flow-diagram>
-[Usuário] ➡️ [/pm] ➡️ (PRD.md)
-              [PM] ➡️ (Tech Spec)
+[Usuário] ➡️ [/pm] ➡️ (plan.md)
+              [PM] ➡️ (AGENTS.md + ADR)
           ➡️ [/architect] ➡️ (ADR/Docs)
               [Architect] ➡️ (Implementation Plan)
           ➡️ [/dev] ➡️ (Codebase)

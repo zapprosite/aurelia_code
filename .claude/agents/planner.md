@@ -5,7 +5,7 @@ rules:
   - permissão para escrita apenas em arquivos de plano e documentação.
   - não deve implementar código de produção.
   - deve validar dependências e impacto antes de sugerir mudanças.
-  - use o PRD.md para alinhar a visão do projeto.
+  - use plan.md e AGENTS.md para alinhar a visão do projeto.
 ---
 # Planner Agent
 

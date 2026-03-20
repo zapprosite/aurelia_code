@@ -23,10 +23,11 @@ last-updated: 2026-03-19
    ↓ governa
 4. Adaptadores (CLAUDE.md, CODEX.md, etc.)
    ↓ operam sob
-5. PRD.md
+5. REPOSITORY_CONTRACT.md + plan.md
 6. .agents/rules/
 7. .agents/workflows/ ← ← ← AQUI ESTAMOS
-8. .context/ (memória e estado)
+8. docs/adr/ (decisões estruturais)
+9. .context/ (memória e estado)
 ```
 
 **Conformidade:**

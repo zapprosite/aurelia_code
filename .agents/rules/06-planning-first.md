@@ -10,5 +10,5 @@ Nenhum código significativo deve ser escrito sem um plano aprovado.
 <directives>
 1. **Atitude**: Crie sempre `.context/plans/<slice>/implementation_plan.md` para tarefas complexas.
 2. **Impacto**: Avalie efeitos colaterais em arquivos de configuração e infraestrutura.
-3. **Aprovação**: Busque feedback do usuário ou valide contra o `PRD.md` antes de iniciar a "escrita pesada".
+3. **Aprovação**: Busque feedback do usuário ou valide contra `plan.md` e `AGENTS.md` antes de iniciar a "escrita pesada".
 </directives>

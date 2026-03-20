@@ -18,10 +18,12 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 2.  **AGENTS.md** (Este arquivo) — Fonte primária de verdade.
 3.  **Aurélia** — Autoridade arquitetural e operacional soberana do sistema, abaixo apenas dos humanos.
 4.  **`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`** — Adaptadores finos por motor, sempre subordinados a este contrato e à autoridade da Aurélia.
-5.  **PRD.md** — Intenção do projeto e roadmap.
-6.  **.agents/rules/** — Regras operacionais para o Antigravity.
-7.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
-8.  **.context/** — Memória, evidências e estado do projeto.
+5.  **REPOSITORY_CONTRACT.md** — Índice de governança e cadeia de autoridade.
+6.  **plan.md** — Plano mestre e roadmap do projeto.
+7.  **.agents/rules/** — Regras operacionais para o Antigravity.
+8.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
+9.  **docs/adr/** — Decisões arquiteturais estruturadas por slice.
+10. **.context/** — Memória, evidências e estado do projeto.
 </authority-hierarchy>
 
 ## 3. Papéis dos Agentes
