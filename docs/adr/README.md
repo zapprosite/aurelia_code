@@ -30,7 +30,6 @@ Este diretório contém o registro histórico de todas as decisões técnicas si
 | [20260319-groq-stt](./20260319-groq-stt-ptbr-runtime.md) | Groq STT PT-BR no runtime | 2026-03-19 | ✅ Aceito |
 | [20260319-homelab-tutor](./20260319-homelab-tutor-v2.md) | Homelab Tutor v2 | 2026-03-19 | ✅ Aceito |
 | [20260319-keepassxc](./20260319-keepassxc-cofre-humano.md) | KeePassXC como cofre humano | 2026-03-19 | ✅ Aceito |
-| [20260319-gemini-tts-ready-voice](./20260319-gemini-tts-ready-voice.md) | Voz pronta da Aurelia via Gemini TTS | 2026-03-19 | ✅ Aceito |
 | [20260319-aurelia-authority](./20260319-aurelia-authority-model.md) | Aurélia como autoridade arquitetural e operacional | 2026-03-19 | ✅ Aceito |
 | [20260319-hierarchical-agent-swarm](./20260319-hierarchical-agent-swarm.md) | Swarm hierárquico da Aurélia com Postgres + Qdrant | 2026-03-19 | ✅ Aceito |
 | [20260319-langgraph-swarm-acceleration](./20260319-langgraph-swarm-acceleration.md) | Acelerar o swarm com referência oficial do LangGraph | 2026-03-19 | ✅ Aceito |
