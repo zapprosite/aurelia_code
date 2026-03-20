@@ -110,7 +110,7 @@ func SendDocument(bot *telebot.Bot, chat *telebot.Chat, filename, content string
 }
 
 func SendError(bot *telebot.Bot, chat *telebot.Chat, errMsg string) error {
-	return sendErrorWithSender(bot, chat, "Erro", errMsg)
+	return sendErrorWithSender(bot, chat, "Erro", sanitizeUserVisibleErrorMessage(errMsg))
 }
 
 func SendAudio(bot *telebot.Bot, chat *telebot.Chat, text string) error {
