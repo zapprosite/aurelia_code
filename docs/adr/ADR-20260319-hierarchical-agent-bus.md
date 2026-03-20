@@ -61,6 +61,9 @@ Implementar a `Slice 11` com:
 
 ## Arquivos afetados
 
+- `internal/agent/task_store_swarm.go`
+- `internal/agent/task_store_swarm_test.go`
+- `internal/agent/task_store_schema.go`
 - `internal/agent/`
 - `internal/tools/`
 - `cmd/aurelia/`
@@ -105,3 +108,14 @@ Implementar a `Slice 11` com:
 ## Pendências / bloqueios
 
 - depende da definição final do schema PostgreSQL e da política de autoridade por agente
+
+## Progresso registrado
+
+- schema base do bus já entrou no `SQLiteTaskStore` para acelerar a tradução futura para `PostgreSQL`
+- bases adicionadas:
+  - `swarm_channels`
+  - `swarm_threads`
+  - `swarm_thread_messages`
+  - `assistance_tasks`
+- helpers iniciais de canal, thread, mensagens e claim de assistência já existem
+- `go test ./internal/agent -count=1` passou

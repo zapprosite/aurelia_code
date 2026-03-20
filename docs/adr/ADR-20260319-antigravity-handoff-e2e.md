@@ -53,6 +53,7 @@ Fechar um handoff estruturado com:
 ## Arquivos afetados
 
 - `internal/telegram/antigravity_prompt.go`
+- `internal/telegram/antigravity_prompt_test.go`
 - `internal/telegram/input_pipeline.go`
 - `docs/antigravity_gemini_operator_blueprint.md`
 - `docs/adr/taskmaster/ADR-20260319-antigravity-handoff-e2e.json`
@@ -92,3 +93,11 @@ Fechar um handoff estruturado com:
 ## Pendências / bloqueios
 
 - ainda falta prova humana fim a fim com um caso real no cockpit do Antigravity
+
+## Progresso registrado
+
+- o handoff de ida agora já nasce com contrato estruturado em JSON
+- o prompt exige resposta final em `approved|revise|blocked`
+- o parser da volta já existe no runtime para consumo futuro
+- `go test ./internal/telegram ./internal/agent -count=1` passou
+- `go test ./... -count=1` passou
