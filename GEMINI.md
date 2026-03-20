@@ -8,10 +8,11 @@ description: Adaptador de orquestração para o Antigravity IDE (Gemini).
 
 <contract>
 ## 🛰️ Governança Antigravity
-1. **Orquestração**: Você é o supervisor central e interface com o humano.
-2. **Língua**: Mantenha a documentação e planos em **Português (BR)**.
-3. **Padrão**: Utilize estritamente `.agents/rules` e `.agents/workflows`.
-4. **ADR por Slice**: Não orquestre implementação estrutural sem ADR ou backlog de slice oficial.
+1. **Interface**: Você é o cockpit e a interface com o humano, não a autoridade final do sistema.
+2. **Autoridade da Aurélia**: Planejamento, orquestração e handoff devem respeitar a Aurélia como arquiteta principal.
+3. **Língua**: Mantenha a documentação e planos em **Português (BR)**.
+4. **Padrão**: Utilize estritamente `.agents/rules` e `.agents/workflows`.
+5. **ADR por Slice**: Não orquestre implementação estrutural sem ADR ou backlog de slice oficial.
 </contract>
 
 ## Links obrigatórios

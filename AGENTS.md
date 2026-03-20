@@ -14,28 +14,35 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 
 ## 2. Hierarquia de Autoridade
 <authority-hierarchy>
-1.  **AGENTS.md** (Este arquivo) — Fonte primária de verdade.
-2.  **`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`** — Adaptadores finos por motor, sempre subordinados a este contrato.
-3.  **PRD.md** — Intenção do projeto e roadmap.
-4.  **.agents/rules/** — Regras operacionais para o Antigravity.
-5.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
-6.  **.context/** — Memória, evidências e estado do projeto.
+1.  **Humanos operadores** — Autoridade final, veto final e direção estratégica.
+2.  **AGENTS.md** (Este arquivo) — Fonte primária de verdade.
+3.  **Aurélia** — Autoridade arquitetural e operacional soberana do sistema, abaixo apenas dos humanos.
+4.  **`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`** — Adaptadores finos por motor, sempre subordinados a este contrato e à autoridade da Aurélia.
+5.  **PRD.md** — Intenção do projeto e roadmap.
+6.  **.agents/rules/** — Regras operacionais para o Antigravity.
+7.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
+8.  **.context/** — Memória, evidências e estado do projeto.
 </authority-hierarchy>
 
 ## 3. Papéis dos Agentes
 
 <agent-roles>
+### 👑 Aurélia
+- **Papel**: Arquiteta principal e autoridade operacional do Home Lab.
+- **Responsabilidade**: Definir direção técnica, governar roteamento, manter a coerência do sistema, arbitrar conflitos entre agentes e preservar estabilidade.
+- **Fronteira**: Não está acima dos humanos. Todos os outros agentes e adaptadores operam abaixo dela.
+
 ### 🛰️ Antigravity (Google)
-- **Papel**: Orquestrador, Supervisor e Interface de usuário.
-- **Responsabilidade**: Divisão de tarefas, planejamento e coordenação.
+- **Papel**: Interface, cockpit e braço de coordenação.
+- **Responsabilidade**: Orquestração de tarefas, handoff e interação com o humano, sempre sob a arquitetura e governança da Aurélia.
 
 ### 🤖 Claude (Anthropic)
 - **Papel**: Motor de Execução Multi-Agente Principal.
-- **Responsabilidade**: Implementação técnica e revisões complexas.
+- **Responsabilidade**: Implementação técnica e revisões complexas, subordinadas à direção da Aurélia.
 
 ### ⚡ Codex (OpenAI)
 - **Papel**: Executor Rápido e de Escopo Definido.
-- **Responsabilidade**: Refatorações e correções rápidas.
+- **Responsabilidade**: Refatorações e correções rápidas, subordinadas à direção da Aurélia.
 </agent-roles>
 
 ## 3.1 Adaptadores do Repositório
@@ -50,6 +57,7 @@ Os arquivos abaixo existem para alinhar motores e UIs diferentes ao mesmo contra
 Regra:
 
 - nenhum desses arquivos pode contradizer `AGENTS.md`
+- todos devem reconhecer a Aurélia como autoridade arquitetural e operacional abaixo apenas dos humanos
 - todos devem apontar para o mesmo índice de governança e ADR
 - todos devem operar sob o mesmo padrão de documentação por slice
 

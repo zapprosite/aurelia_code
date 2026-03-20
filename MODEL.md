@@ -14,6 +14,7 @@ Alinhar qualquer motor, agente ou UI à mesma política de:
 - modelos remotos
 - STT/TTS
 - budgets e fallback
+- decisão final de lane sob a arquitetura da Aurélia
 
 ## Regras fechadas
 
@@ -26,6 +27,7 @@ Alinhar qualquer motor, agente ou UI à mesma política de:
 7. `Gemini web` não entra no runtime automático.
 8. `gemma3:27b-it-q4_K_M` é laboratório/manual, não default do bot.
 9. Toda mudança de política de modelo ou voz exige ADR.
+10. Nenhum motor externo pode contornar a política decidida pela Aurélia para o runtime.
 
 ## Fontes canônicas
 
