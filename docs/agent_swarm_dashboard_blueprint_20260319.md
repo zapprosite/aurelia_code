@@ -26,6 +26,27 @@ Frameworks externos entram como referência de desenho, não como coração do r
 
 # O que copiar do estado da arte em 2026-03-19
 
+## Repositório de referência escolhido
+
+Para acelerar, eu copiaria o desenho destes dois repositórios oficiais:
+
+- `langchain-ai/open-agent-supervisor`
+- `langchain-ai/langgraph-supervisor`
+
+O que copiar, e não reinventar:
+
+- registro declarativo dos agentes filhos
+- handoff por tool dedicada
+- `forward_message` para não reescrever resposta de worker
+- escolha entre histórico completo e última mensagem
+- supervisor central coordenando agentes especializados
+
+O que eu não copiaria:
+
+- o runtime Python como coração do homelab
+- o acoplamento direto ao stack do LangGraph Platform
+- a política de auth da OAP como decisão pronta para a Aurélia
+
 ## LangGraph
 
 Vale copiar:
@@ -37,6 +58,8 @@ Vale copiar:
 Fonte:
 
 - https://docs.langchain.com/langgraph-platform/auth
+- https://github.com/langchain-ai/open-agent-supervisor
+- https://github.com/langchain-ai/langgraph-supervisor
 
 ## AutoGen Studio
 
@@ -289,6 +312,13 @@ Isso combina com a skill instalada:
 
 - `brainstorming`
 - `multi-agent-brainstorming`
+
+E combina com o padrão que o `langgraph-supervisor` empurra hoje:
+
+- supervisor por tool handoff
+- workers especializados
+- retorno explícito ao supervisor
+- controle explícito do histórico
 
 ## 9. Como guardar tudo
 

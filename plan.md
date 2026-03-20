@@ -452,6 +452,7 @@ MIC
 - [ ] Persistir governor/breaker fora da memoria
 - [ ] Fechar E2E com Antigravity e browser-use
 - [ ] Abrir `Slice 11` do swarm hierárquico com dashboard e assistance queue
+- [ ] Traduzir o contrato útil de `open-agent-supervisor` e `langgraph-supervisor` para o runtime em `Go`
 
 ## Proxima Acao Cirurgica
 

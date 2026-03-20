@@ -754,3 +754,4 @@ Estado:
 - Adicionada a lane `tts_provider=gemini` com voz pronta `Sulafat` para uso imediato, mantendo `voice-proxy` como fallback e MiniMax como futuro lane de clonagem autorizada.
 - Pesquisado o estado da arte de enxame de agentes em `2026-03-19` e fechado o desenho oficial: `Aurélia` acima de todos os agentes, `PostgreSQL` como bus operacional, `Qdrant` como memória semântica derivada, dashboard leve em `Go` e `assistance queue` para agentes ociosos.
 - Instaladas as skills `brainstorming` e `multi-agent-brainstorming` para sustentar revisão estruturada do futuro swarm sem cair em brainstorm caótico.
+- Escolhida uma linha de aceleração oficial via LangGraph: usar `langchain-ai/open-agent-supervisor` e `langchain-ai/langgraph-supervisor` como referência para copiar contrato de handoff, registro de agentes, histórico e supervisor, mas reimplementar o runtime final em `Go`.
