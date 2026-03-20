@@ -62,6 +62,28 @@ Antes de executar qualquer slice não trivial, leia nesta ordem:
 **Fase 1 (CRITICAL — Humano):** Criar vault KeePassXC em `/srv/data/vault/aurelia.kdbx`, migrar credenciais, shred plaintext, fix postgres password.
 **Fases 2-4 (Codex):** Scripts, esquemas, audits, compliance. Usar `/governance-polish --phase 2` (após Fase 1).
 
+## 🧠 2.3 Memory Sync Architecture — Vector DB para Aurelia Bot
+
+**Problema:** Aurelia bot precisa trabalhar com **LLMs pequenas SEM web**, acessando **code history completo**.
+
+**Solução:** Memory Sync sincroniza memória local → Qdrant (busca semântica) + Postgres (metadata).
+
+```
+Markdown Files → SYNC CRON (Fiscal) → Qdrant (bge-m3) + Postgres → Aurelia Bot (offline)
+```
+
+**Skills & Docs:**
+- **Skill:** [`/memory-sync-vector-db`](./.context/skills/memory-sync-vector-db/SKILL.md) — arquitetura e fluxo
+- **Architecture:** [`docs/memory-sync-architecture.md`](./docs/memory-sync-architecture.md) — SQL schema, exemplos, queries
+- **Runbook:** [`.context/runbooks/memory-sync-fiscal-cron.md`](./.context/runbooks/memory-sync-fiscal-cron.md) — crons como "fiscal" automático
+- **Script:** [`scripts/memory-sync-fiscal.sh`](./scripts/memory-sync-fiscal.sh) — modos: fast (5min), postgres-index (15min), validate (6am), compact (seg 2am)
+
+**Crons (automáticos via systemd):**
+- `*/5 * * * *` — fast sync (embedding incremental)
+- `*/15 * * * *` — postgres-index (atualizar indices)
+- `0 6 * * *` — validate (integrity check diário)
+- `0 2 * * 1` — compact (cleanup semanal)
+
 Regras fechadas:
 
 - mudança estrutural exige ADR
