@@ -22,5 +22,5 @@ description: Adaptador de orquestração para o Antigravity IDE (Gemini).
 - [AGENTS.md](./AGENTS.md)
 - [REPOSITORY_CONTRACT.md](./docs/REPOSITORY_CONTRACT.md)
 - [ADR Index](./docs/adr/README.md)
-- [MODEL.md](./MODEL.md)
-- [plan.md](./plan.md)
+- [Política de Modelos](./docs/adr/ADR-20260320-politica-modelos-hardware-vram.md)
+- [Plano Mestre](./docs/adr/ADR-20260320-plano-mestre-jarvis-local-first.md)

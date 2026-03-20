@@ -17,9 +17,9 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 1.  **Humanos operadores** — Autoridade final, veto final e direção estratégica.
 2.  **AGENTS.md** (Este arquivo) — Fonte primária de verdade.
 3.  **Aurélia** — Autoridade arquitetural e operacional soberana do sistema, abaixo apenas dos humanos.
-4.  **`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`** — Adaptadores finos por motor, sempre subordinados a este contrato e à autoridade da Aurélia.
+4.  **`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `OPENCODE.md`** — Adaptadores finos por motor, sempre subordinados a este contrato e à autoridade da Aurélia.
 5.  **REPOSITORY_CONTRACT.md** — Índice de governança e cadeia de autoridade.
-6.  **plan.md** — Plano mestre e roadmap do projeto.
+6.  **`docs/adr/`** — Decisões arquiteturais (modelos, hardware, plano mestre, slices).
 7.  **.agents/rules/** — Regras operacionais para o Antigravity.
 8.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
 9.  **docs/adr/** — Decisões arquiteturais estruturadas por slice.
@@ -45,6 +45,10 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 ### ⚡ Codex (OpenAI)
 - **Papel**: Executor Rápido e de Escopo Definido.
 - **Responsabilidade**: Refatorações e correções rápidas, subordinadas à direção da Aurélia.
+
+### 🔓 OpenCode
+- **Papel**: Executor Versátil e Local-First.
+- **Responsabilidade**: Execução de tarefas com suporte a múltiplos providers (incluindo Ollama local), subordinado à direção da Aurélia.
 </agent-roles>
 
 ## 3.1 Adaptadores do Repositório
@@ -54,7 +58,7 @@ Os arquivos abaixo existem para alinhar motores e UIs diferentes ao mesmo contra
 - `CLAUDE.md`
 - `CODEX.md`
 - `GEMINI.md`
-- `MODEL.md`
+- `OPENCODE.md`
 
 Regra:
 
@@ -78,8 +82,10 @@ Regra:
 
 <governance-tiers>
 - **Tier A (Read-only)**: Auto-approve 100%. (Pesquisa e análise).
-- **Tier B (Local Edit)**: Auto-approve condicional (Worktrees).
-- **Tier C (High-risk)**: Aprovação Humana OBRIGATÓRIA (Deploy, Rede, Secrets).
+- **Tier B (Local Edit)**: Auto-approve 100%. (Worktrees preferenciais).
+- **Tier C (High-risk)**: Auto-approve com log obrigatório. (Deploy, Rede, Secrets, sudo).
+  - **Diretiva:** sudo=1 — autonomia total habilitada pelo humano (2026-03-20).
+  - **Segurança compensatória:** log estruturado, dry-run quando possível, auditoria de segredos pré-push.
 </governance-tiers>
 ## AI Context References
 - Documentation index: `.context/docs/README.md`

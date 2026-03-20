@@ -27,24 +27,27 @@ type OpenAICompatibleSynthesizer struct {
 	baseURL    string
 	model      string
 	voice      string
+	language   string
 	format     string
 	speed      float64
 	httpClient *http.Client
 }
 
-func NewOpenAICompatibleSynthesizer(baseURL, model, voice, format string, speed float64) *OpenAICompatibleSynthesizer {
+func NewOpenAICompatibleSynthesizer(baseURL, model, voice, language, format string, speed float64) *OpenAICompatibleSynthesizer {
 	if strings.TrimSpace(format) == "" {
 		format = "opus"
 	}
+
 	if speed <= 0 {
 		speed = 1.0
 	}
 	return &OpenAICompatibleSynthesizer{
-		baseURL: strings.TrimRight(strings.TrimSpace(baseURL), "/"),
-		model:   strings.TrimSpace(model),
-		voice:   strings.TrimSpace(voice),
-		format:  strings.TrimSpace(format),
-		speed:   speed,
+		baseURL:  strings.TrimRight(strings.TrimSpace(baseURL), "/"),
+		model:    strings.TrimSpace(model),
+		voice:    strings.TrimSpace(voice),
+		language: strings.TrimSpace(language),
+		format:   strings.TrimSpace(format),
+		speed:    speed,
 		httpClient: &http.Client{
 			Timeout: 120 * time.Second,
 		},
@@ -55,6 +58,7 @@ func (s *OpenAICompatibleSynthesizer) IsAvailable() bool {
 	return s != nil && s.baseURL != "" && s.model != "" && s.voice != ""
 }
 
+
 func (s *OpenAICompatibleSynthesizer) Synthesize(ctx context.Context, text string) (Audio, error) {
 	if !s.IsAvailable() {
 		return Audio{}, fmt.Errorf("tts synthesizer is not configured")
@@ -63,10 +67,15 @@ func (s *OpenAICompatibleSynthesizer) Synthesize(ctx context.Context, text strin
 		"model":           s.model,
 		"input":           strings.TrimSpace(text),
 		"voice":           s.voice,
+		"language":        s.language,
 		"response_format": s.format,
 		"speed":           s.speed,
 	}
+	if s.language == "" {
+		delete(payload, "language")
+	}
 	body, err := json.Marshal(payload)
+
 	if err != nil {
 		return Audio{}, fmt.Errorf("encode tts payload: %w", err)
 	}

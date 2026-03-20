@@ -21,7 +21,10 @@ func (bc *BotController) whitelistMiddleware() telebot.MiddlewareFunc {
 
 func (bc *BotController) registerContentRoutes() {
 	bc.bot.Handle(telebot.OnText, bc.handleText)
+	bc.bot.Handle(telebot.OnPhoto, bc.handlePhoto) // Re-ativado
 	bc.bot.Handle(telebot.OnDocument, bc.handleDocument)
 	bc.bot.Handle(telebot.OnVoice, bc.handleVoice)
 	bc.bot.Handle(telebot.OnAudio, bc.handleVoice)
 }
+
+
