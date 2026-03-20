@@ -48,6 +48,7 @@ Este diretório contém o registro histórico de todas as decisões técnicas si
 | [20260319-deploy-gateway-voice](./ADR-20260319-deploy-gateway-voice.md) | Deploy gateway voice nonstop | 2026-03-19 | 🔵 Em execução |
 | [20260319-extensions-governance](./ADR-20260319-extensions-governance.md) | Governança de extensões | 2026-03-19 | ✅ Aceito |
 | [20260319-offline-homelab-manual-qdrant](./ADR-20260319-offline-homelab-manual-qdrant.md) | Manual offline do homelab para recuperação semântica | 2026-03-19 | 🟡 Proposto |
+| [20260319-polish-governance-all](./ADR-20260319-Polish-Governance-All.md) | Governança industrial do homelab (secrets, dados, rede, ops, obs, compliance) | 2026-03-19 | 🟡 Proposto |
 
 ## Como Criar um ADR
 
