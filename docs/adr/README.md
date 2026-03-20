@@ -31,6 +31,7 @@ Este diretório contém o registro histórico de todas as decisões técnicas si
 | [20260319-keepassxc](./20260319-keepassxc-cofre-humano.md) | KeePassXC como cofre humano | 2026-03-19 | ✅ Aceito |
 | [20260319-gemini-tts-ready-voice](./20260319-gemini-tts-ready-voice.md) | Voz pronta da Aurelia via Gemini TTS | 2026-03-19 | ✅ Aceito |
 | [20260319-aurelia-authority](./20260319-aurelia-authority-model.md) | Aurélia como autoridade arquitetural e operacional | 2026-03-19 | ✅ Aceito |
+| [20260319-hierarchical-agent-swarm](./20260319-hierarchical-agent-swarm.md) | Swarm hierárquico da Aurélia com Postgres + Qdrant | 2026-03-19 | ✅ Aceito |
 | [20260319-telegram-tts](./20260319-telegram-tts-local.md) | Telegram TTS local via voice-proxy | 2026-03-19 | ✅ Aceito |
 | [20260319-aurelia-media-voice](./ADR-20260319-aurelia-media-voice.md) | Transcript de mídia e voz oficial da Aurelia | 2026-03-19 | 🔵 Em execução |
 | [20260319-aurelia-authorized-voice-clone](./ADR-20260319-aurelia-authorized-voice-clone.md) | Clonagem autorizada da voz oficial da Aurelia | 2026-03-19 | 🔵 Em execução |
