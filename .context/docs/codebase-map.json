@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-20T01:37:35Z",
+  "generated": "2026-03-20T01:42:48Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 534,
+    "totalFiles": 538,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -56,7 +56,7 @@
       },
       {
         "name": "internal",
-        "fileCount": 178,
+        "fileCount": 182,
         "description": "Core runtime layers and domain logic"
       },
       {
@@ -78,7 +78,7 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 228
+        "count": 232
       },
       {
         "extension": ".md",
