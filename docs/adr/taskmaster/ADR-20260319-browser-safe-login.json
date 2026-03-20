@@ -1,0 +1,55 @@
+{
+  "adr_id": "ADR-20260319-browser-safe-login",
+  "title": "Browser Safe Login",
+  "status": "in_progress",
+  "phase": "design",
+  "progress": 10,
+  "goal": "Fechar um fluxo de login guiado seguro para browser-use sem vazar segredo, sem automacao cega e com handoff humano claro nas etapas sensiveis.",
+  "scope": [
+    "allowlist de dominio",
+    "gates de username/password/2FA",
+    "screenshots seguros",
+    "pause/handoff",
+    "contrato de abort"
+  ],
+  "done_definition": [
+    "dominio fora da allowlist e recusado",
+    "senha e 2FA nunca vazam em log",
+    "fluxo pausa antes da etapa sensivel",
+    "browser smoke continua verde"
+  ],
+  "next_actions": [
+    "definir shape do state machine de login guiado",
+    "mapear pontos de hook entre browser e operador",
+    "escrever smoke browser para dominio permitido e bloqueado"
+  ],
+  "simulation_commands": [
+    "navegacao em dominio permitido sem credencial",
+    "tentativa em dominio fora da allowlist",
+    "entrada em etapa password e pausa obrigatoria",
+    "entrada em etapa 2FA e handoff obrigatorio"
+  ],
+  "test_commands": [
+    "go test ./internal/agent ./internal/tools ./internal/telegram -count=1",
+    "go test ./... -count=1"
+  ],
+  "curl_checks": [
+    "curl -fsS http://127.0.0.1:8484/health",
+    "curl -fsS http://127.0.0.1:8484/v1/router/status"
+  ],
+  "fallback_commands": [
+    "handoff_required=true",
+    "browser login desabilitado e delegacao ao humano"
+  ],
+  "evidence": [
+    "ADR aberta",
+    "contrato de login guiado definido",
+    "smoke browser previsto"
+  ],
+  "blockers": [],
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "Continue a slice ADR-20260319-browser-safe-login. Feche o state machine de login guiado, dominios permitidos, pausa obrigatoria em password/2FA e evidencias seguras.",
+    "last_updated": "2026-03-19T23:59:00-03:00"
+  }
+}

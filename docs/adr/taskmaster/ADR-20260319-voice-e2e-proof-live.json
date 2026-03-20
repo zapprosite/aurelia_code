@@ -1,0 +1,59 @@
+{
+  "adr_id": "ADR-20260319-voice-e2e-proof-live",
+  "title": "Voice E2E Proof Live",
+  "status": "in_progress",
+  "phase": "validation",
+  "progress": 25,
+  "goal": "Provar no ambiente live o caminho completo de wake word ate resposta usando o headset real, sem falso positivo e com evidencia em banco, logs e health.",
+  "scope": [
+    "headset ALSA",
+    "wake phrase positiva",
+    "transcript aceito",
+    "resposta util",
+    "evidencia live"
+  ],
+  "done_definition": [
+    "voice_capture e voice_processor ficam ok",
+    "wake positive chega ao voice_events",
+    "transcript aceito entra no pipeline",
+    "usuario recebe resposta util"
+  ],
+  "next_actions": [
+    "validar device ALSA definitivo",
+    "fazer prova humana positiva de wake word",
+    "coletar evidencia em health, voice status e sqlite"
+  ],
+  "simulation_commands": [
+    "silencio sem falso positivo",
+    "wake phrase valida gera transcript",
+    "transcript rejeitado sem wake phrase",
+    "fallback manual por voice enqueue"
+  ],
+  "test_commands": [
+    "go test ./internal/voice ./cmd/aurelia -count=1",
+    "go test ./... -count=1",
+    "bash ./scripts/voice-capture-smoke.sh"
+  ],
+  "curl_checks": [
+    "curl -fsS http://127.0.0.1:8484/health",
+    "curl -fsS http://127.0.0.1:8484/v1/voice/capture/status",
+    "curl -fsS http://127.0.0.1:8484/v1/voice/status"
+  ],
+  "fallback_commands": [
+    "go run ./cmd/aurelia voice enqueue <arquivo>",
+    "voice_capture_enabled=false"
+  ],
+  "evidence": [
+    "ADR aberta",
+    "voice plane live ja saudavel",
+    "prova humana positiva ainda pendente"
+  ],
+  "blockers": [
+    "depende de prova humana real no headset"
+  ],
+  "handoff": {
+    "owner_engine": "codex",
+    "resume_prompt": "Continue a slice ADR-20260319-voice-e2e-proof-live. Faça a prova humana positiva no ambiente live e capture as evidencias em health, voice status e voice_events.",
+    "last_updated": "2026-03-19T23:59:00-03:00"
+  }
+}

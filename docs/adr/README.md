@@ -34,6 +34,11 @@ Este diretório contém o registro histórico de todas as decisões técnicas si
 | [20260319-hierarchical-agent-swarm](./20260319-hierarchical-agent-swarm.md) | Swarm hierárquico da Aurélia com Postgres + Qdrant | 2026-03-19 | ✅ Aceito |
 | [20260319-langgraph-swarm-acceleration](./20260319-langgraph-swarm-acceleration.md) | Acelerar o swarm com referência oficial do LangGraph | 2026-03-19 | ✅ Aceito |
 | [20260319-telegram-tts](./20260319-telegram-tts-local.md) | Telegram TTS local via voice-proxy | 2026-03-19 | ✅ Aceito |
+| [20260319-browser-safe-login](./ADR-20260319-browser-safe-login.md) | Login guiado seguro no browser | 2026-03-19 | 🔵 Em execução |
+| [20260319-antigravity-handoff-e2e](./ADR-20260319-antigravity-handoff-e2e.md) | Handoff fim a fim com o Antigravity | 2026-03-19 | 🔵 Em execução |
+| [20260319-desktop-safe-fallback](./ADR-20260319-desktop-safe-fallback.md) | Desktop fallback seguro | 2026-03-19 | 🔵 Em execução |
+| [20260319-voice-e2e-proof-live](./ADR-20260319-voice-e2e-proof-live.md) | Prova live do voice plane | 2026-03-19 | 🔵 Em execução |
+| [20260319-hierarchical-agent-bus](./ADR-20260319-hierarchical-agent-bus.md) | Agent bus hierárquico da Aurélia | 2026-03-19 | 🟡 Proposto |
 | [20260319-aurelia-media-voice](./ADR-20260319-aurelia-media-voice.md) | Transcript de mídia e voz oficial da Aurelia | 2026-03-19 | 🔵 Em execução |
 | [20260319-aurelia-authorized-voice-clone](./ADR-20260319-aurelia-authorized-voice-clone.md) | Clonagem autorizada da voz oficial da Aurelia | 2026-03-19 | 🔵 Em execução |
 | [20260319-voice-capture](./20260319-voice-capture-plane.md) | Voice capture plane real | 2026-03-19 | 🟡 Proposto |
