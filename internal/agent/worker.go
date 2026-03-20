@@ -104,8 +104,10 @@ func (w *WorkerRuntime) startHeartbeat(ctx context.Context, teamID string) func(
 	}
 
 	stop := make(chan struct{})
+	done := make(chan struct{})
 	ticker := time.NewTicker(25 * time.Millisecond)
 	go func() {
+		defer close(done)
 		defer ticker.Stop()
 		for {
 			select {
@@ -121,6 +123,7 @@ func (w *WorkerRuntime) startHeartbeat(ctx context.Context, teamID string) func(
 
 	return func() {
 		close(stop)
+		<-done
 	}
 }
 

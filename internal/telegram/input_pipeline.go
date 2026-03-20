@@ -22,7 +22,9 @@ type inputSession struct {
 	convID   string
 	ctx      context.Context
 	text     string
+	message  agent.Message
 }
+
 
 func (bc *BotController) processInput(c telebot.Context, text string, requiresAudio bool) error {
 	logger := observability.Logger("telegram.pipeline")
@@ -81,8 +83,18 @@ func newInputSessionWithContext(ctx context.Context, senderUserID int64, text st
 		ctx = context.Background()
 	}
 	ctx = agent.WithRunContext(agent.WithTeamContext(ctx, convID, senderID), uuid.NewString())
-	return inputSession{senderID: senderID, convID: convID, ctx: ctx, text: text}
+	return inputSession{
+		senderID: senderID,
+		convID:   convID,
+		ctx:      ctx,
+		text:     text,
+		message: agent.Message{
+			Role:    "user",
+			Content: text,
+		},
+	}
 }
+
 
 func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatID int64, text string, requiresAudio bool) error {
 	if bc == nil || bc.bot == nil {
@@ -189,7 +201,29 @@ func (bc *BotController) prepareExecution(session inputSession) (*skill.Skill, [
 	if err != nil {
 		return nil, nil, "", nil, err
 	}
+
+	// Se a sessão já possui partes (ex: imagens), usamos a mensagem estruturada
+	if len(session.message.Parts) > 0 {
+		// Garantimos que o texto principal está sincronizado se houver apenas texto em Parts[0]
+		if len(session.message.Parts) == 1 && session.message.Parts[0].Type == agent.ContentPartText {
+			session.message.Parts[0].Text = session.text
+		}
+	} else {
+		// Caso contrário, criamos a mensagem simples de texto para o executor
+		session.message = agent.Message{Role: "user", Content: session.text}
+	}
+
 	activeSkill := resolveActiveSkill(skills, targetSkill)
+ 
+	// Se houver partes multimodais (imagens), removemos a última versão textual
+	// salvada no banco e injetamos a versão completa no histórico para o LLM.
+	if len(session.message.Parts) > 0 {
+		if len(history) > 0 && history[len(history)-1].Role == "user" {
+			history = history[:len(history)-1]
+		}
+		history = append(history, session.message)
+	}
+
 	systemPrompt, allowedTools := bc.resolveExecutionPrompt(session)
 	return activeSkill, history, systemPrompt, allowedTools, nil
 }

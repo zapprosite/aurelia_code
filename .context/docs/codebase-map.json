@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-20T06:53:06Z",
+  "generated": "2026-03-20T12:31:19Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,12 +26,12 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 567,
+    "totalFiles": 573,
     "rootPath": ".",
     "topDirectories": [
       {
         "name": ".agents",
-        "fileCount": 108,
+        "fileCount": 109,
         "description": "Governance rules, workflows, and reusable skills"
       },
       {
@@ -46,7 +46,7 @@
       },
       {
         "name": "cmd",
-        "fileCount": 12,
+        "fileCount": 13,
         "description": "Application entrypoints and composition root"
       },
       {
@@ -56,17 +56,17 @@
       },
       {
         "name": "internal",
-        "fileCount": 182,
+        "fileCount": 184,
         "description": "Core runtime layers and domain logic"
       },
       {
         "name": "pkg",
-        "fileCount": 32,
+        "fileCount": 33,
         "description": "LLM and STT provider integrations"
       },
       {
         "name": "scripts",
-        "fileCount": 28,
+        "fileCount": 29,
         "description": "Build, daemon, and host operations"
       },
       {
@@ -78,15 +78,15 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 216
+        "count": 219
       },
       {
         "extension": ".md",
-        "count": 92
+        "count": 91
       },
       {
         "extension": ".sh",
-        "count": 24
+        "count": 25
       },
       {
         "extension": ".json",

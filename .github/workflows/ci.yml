@@ -8,7 +8,7 @@ on:
 
 jobs:
   test-build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -34,3 +34,9 @@ jobs:
 
       - name: Build
         run: go build -trimpath -ldflags "-s -w" -o ./build/aurelia ./cmd/aurelia
+
+      - name: Homelab Smoke Script
+        run: bash ./scripts/smoke-test-homelab.sh
+
+      - name: E2E Smoke
+        run: go test ./e2e -run TestSmoke -timeout 60s
