@@ -63,7 +63,7 @@ function App() {
               <div className="bg-[#0a0a0a] rounded-xl p-4 border border-white/5 font-mono text-xs text-emerald-400/80">
                 <p>{'>'} git push --no-verify origin HEAD</p>
                 <p className="text-white/40 mt-1">To https://github.com/zapprosite/aurelia_code.git</p>
-                <p className="text-white/40">   b95ce85..5c580c7  HEAD -> feat/gpu-cpu-rate-limit</p>
+                <p className="text-white/40">   b95ce85..5c580c7  HEAD {'->'} feat/gpu-cpu-rate-limit</p>
               </div>
             </motion.div>
 
