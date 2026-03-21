@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kocar/aurelia/internal/agent"
+	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/skill"
@@ -42,6 +43,14 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 	if err := bc.persistIncomingContext(session, c.Sender().ID); err != nil {
 		logger.Warn("failed to persist incoming context", slog.Any("err", err))
 	}
+
+	dashboard.Publish(dashboard.Event{
+		Type:      "user_message",
+		Agent:     "User",
+		Action:    "Mensagem recebida",
+		Payload:   text,
+		Timestamp: time.Now().Format(time.Kitchen),
+	})
 
 	if handoffResult := maybeParseAntigravityHandoffResult(session.text); handoffResult != nil {
 		finalAnswer := formatAntigravityHandoffResult(handoffResult)

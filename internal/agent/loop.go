@@ -7,8 +7,10 @@ import (
 	"log/slog"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/observability"
 )
 
@@ -78,6 +80,15 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 			return currentHistory, "", fmt.Errorf("provider error: %w", err)
 		}
 
+		// Publishes thought to dashboard
+		dashboard.Publish(dashboard.Event{
+			Type:      "agent_thought",
+			Agent:     "Aurelia",
+			Action:    "Pensando...",
+			Payload:   resp.ReasoningContent,
+			Timestamp: time.Now().Format(time.Kitchen),
+		})
+
 		// AI provided a final answer without tools
 		if len(resp.ToolCalls) == 0 {
 			if resp.Content != "" || resp.ReasoningContent != "" {
@@ -101,6 +112,14 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 		// Execute tools sequentially per PRD spec "- NG-02: as tool calls serão tratadas resolutivamente em cascata iterativa/síncrona na mesma Goroutine"
 		for _, call := range resp.ToolCalls {
 			logger.Info("executing tool", slog.String("tool_name", call.Name), slog.Any("arg_keys", observability.MapKeys(call.Arguments)))
+			
+			dashboard.Publish(dashboard.Event{
+				Type:      "agent_tool",
+				Agent:     "Aurelia",
+				Action:    "Executando tool: " + call.Name,
+				Payload:   call.Arguments,
+				Timestamp: time.Now().Format(time.Kitchen),
+			})
 
 			resultStr, toolErr := l.registry.Execute(ctx, call.Name, call.Arguments)
 
