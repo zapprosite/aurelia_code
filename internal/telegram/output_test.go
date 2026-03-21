@@ -108,11 +108,24 @@ func TestSplitTelegramMarkdown_PrefersParagraphBoundaries(t *testing.T) {
 	}
 }
 
+type mockSender struct {
+	onSend func(c *telebot.Chat, message string) error
+}
+
+func (m *mockSender) Send(to telebot.Recipient, what interface{}, opts ...interface{}) (*telebot.Message, error) {
+	if m.onSend != nil {
+		if msg, ok := what.(string); ok {
+			return nil, m.onSend(to.(*telebot.Chat), msg)
+		}
+	}
+	return nil, nil
+}
+
 func TestSendError_SendsFormattedHTML(t *testing.T) {
 	sender := &stubSender{}
 	chat := &telebot.Chat{ID: 123}
 
-	if err := sendErrorWithSender(sender, chat, "Erro", sanitizeUserVisibleErrorMessage("provider error: empty guarded content for openrouter:deepseek/deepseek-v3.2")); err != nil {
+	if err := sendErrorWithSender(sender, chat, "Erro", sanitizeUserVisibleErrorMessage("provider error: empty guarded content for openrouter:google/gemini-2.5-flash")); err != nil {
 		t.Fatalf("sendErrorWithSender returned error: %v", err)
 	}
 
@@ -130,7 +143,7 @@ func TestSendError_SendsFormattedHTML(t *testing.T) {
 	if !containsSubstring(text, "falha temporaria do runtime") {
 		t.Fatalf("expected error body in payload, got: %s", text)
 	}
-	if containsSubstring(strings.ToLower(text), "deepseek") {
+	if containsSubstring(strings.ToLower(text), "gemini-2.5") {
 		t.Fatalf("expected provider/model details to be hidden, got: %s", text)
 	}
 

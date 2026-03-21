@@ -18,10 +18,10 @@ var (
 		"registry.ollama.ai",
 		"does not support tools",
 		"all gateway routes failed",
-		"deepseek/deepseek-v3.2",
 		"openrouter:",
 		"minimax/minimax",
 		"qwen3.5:",
+		"google/gemini-2.5-flash",
 	}
 	internalOutputMarkers = []string{
 		"router parse error",
@@ -36,7 +36,7 @@ var (
 		"route breaker open",
 		"budget exceeded",
 		"empty guarded content",
-		"deepseek/deepseek-v3.2",
+		"google/gemini-2.5-flash",
 	}
 )
 
