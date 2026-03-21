@@ -136,6 +136,20 @@ Tarefas:
 
 ---
 
+### 🟢 [P9] Dashboard ULTRATRINK (Agentes)
+
+**Status:** 📋 Proposto
+**ADR:** `ADR-20260320-dashboard-agentes-ultratrink.md`
+
+- [ ] Setup frontend (Next.js/Vite) c/ estética Sênior Glassmorphism Dark
+- [ ] Incorporar no binário Go como static embed (porta `3333`)
+- [ ] Homing page "Workspace/Notion" com squad feed
+- [ ] WebSocket streaming (Timeline e task-boards)
+
+**Aceite:** Developer acompanha orquestração do swarm em interface gráfica premium real-time em `http://localhost:3333/`.
+
+---
+
 ### ✅ Concluídos
 
 | Slice | Evidência |
@@ -163,6 +177,7 @@ P5 → Browser Login Seguro
 P6 → Desktop Fallback
 P7 → KeePass Vault (humano)
 P8 → Governance Polish
+P9 → Dashboard ULTRATRINK (UI Agentes)
 ```
 
 ## Consequências
