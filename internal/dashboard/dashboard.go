@@ -25,7 +25,17 @@ type Event struct {
 var (
 	subscribers = make(map[chan Event]bool)
 	subMu       sync.Mutex
+
+	customRoutes   = make(map[string]http.HandlerFunc)
+	customRoutesMu sync.Mutex
 )
+
+// RegisterRoute allows registering external handlers (like /api/squad) safely.
+func RegisterRoute(path string, handler http.HandlerFunc) {
+	customRoutesMu.Lock()
+	defer customRoutesMu.Unlock()
+	customRoutes[path] = handler
+}
 
 // Publish envia um evento para todos os clientes conectados ao dashboard
 func Publish(e Event) {
@@ -82,6 +92,12 @@ func StartServer(logger *slog.Logger) error {
 	})
 
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
+
+	customRoutesMu.Lock()
+	for path, handler := range customRoutes {
+		mux.HandleFunc(path, handler)
+	}
+	customRoutesMu.Unlock()
 
 	go func() {
 		logger.Info("ULTRATRINK Dashboard Online", slog.String("url", "http://localhost:3334"))

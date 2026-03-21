@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -378,6 +380,14 @@ func (a *app) start() {
 			logger.Warn("failed to start voice capture worker", slog.Any("err", err))
 		}
 	}
+
+	dashboard.RegisterRoute("/api/squad", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if err := json.NewEncoder(w).Encode(agent.GetFixedSquad()); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
 
 	if err := dashboard.StartServer(logger); err != nil {
 		logger.Warn("failed to start ultratrink dashboard", slog.Any("err", err))
