@@ -10,7 +10,7 @@ supersedes: todos-ADRs-20260319, todos-blueprints-20260319
 
 ## Contexto
 
-Hardware alvo: AMD Ryzen 9 7900X + RX 7900 XTX (24 GiB VRAM, ROCm), 32 GiB DDR5.
+Hardware alvo: AMD Ryzen 9 7900X + NVIDIA RTX 4090 (24 GiB VRAM), 32 GiB DDR5.
 Stack: Go, Telegram, Ollama local, Qdrant, Supabase, Postgres, SQLite.
 
 ---
@@ -62,22 +62,17 @@ Stack: Go, Telegram, Ollama local, Qdrant, Supabase, Postgres, SQLite.
 
 ---
 
-### 🟠 [P3] Swarm Hierárquico Go — Onda 3
+### 🟠 [P3] Agent-to-Agent Communication — Go Native
 
-**Status:** 📋 Proposto — branch `agent-to-agent` pronta para cherry-pick
+**Status:** ✅ Concluído (v6.0-handoff)
 
-Arquivos para cherry-pick:
-- `internal/voice/kokoro_client.go` + `kokoro_test.go`
-- `scripts/simulate_swarm_2026.go`
-- `supabase/migrations/20260320_swarm_tables.sql`
+- [x] HandoffTool nativo em Go (`internal/agent/handoff.go`)
+- [x] MasterTeamService com delegação síncrona
+- [x] Agent Loop com interrupção para handoff
+- [x] Dashboard SSE com eventos de handoff
+- [x] Simulação E2E aprovada
 
-Tarefas:
-- [ ] Cherry-pick joias de `agent-to-agent`
-- [ ] Implementar `agent_bus` Go em Postgres (schema pronto no SQL)
-- [ ] Memória compartilhada via Qdrant entre agentes
-- [ ] Traduzir padrões LangGraph → Go nativo (channels + goroutines)
-
-**Aceite:** Múltiplos agentes Go se comunicam via bus sem Python runtime.
+**Aceite:** Agentes Go se comunicam via handoff nativo sem Python runtime.
 
 ---
 
@@ -129,18 +124,27 @@ Tarefas:
 
 ### 🟢 [P8] Governance Polish
 
-**Status:** 📋 Proposto
+**Status:** 🔄 Em progresso
 
-- [ ] Fases 1-4 de Polish-Governance-All
+- [x] Secrets.env consolidado com systemd EnvironmentFile
+- [x] Env Overrides implementados em `internal/config/config.go`
 - [ ] Secret-audit no crontab semanal (`0 6 * * 1`)
+- [ ] KeePassXC vault (deadline: 2026-03-27)
 
 ---
 
-### 🟢 [P10] Dashboard Real-Time Engine (Onda 4)
-**Status:** 📋 Proposto
-- [ ] Implementar camada de streaming via WebSockets/SSE em Go
-- [ ] Substituir `MOCK_FEED` por dados reais do barramento de eventos
-- [ ] Status de rede e latência de agentes live
+### ✅ [P9] Dashboard ULTRATRINK Premium (v6.0)
+**Status:** ✅ Concluído
+- [x] Refatoração modular React (componentes `shadcn`)
+- [x] Sistema de tabs (Timeline, Squad, Brain, Roadmap)
+- [x] Micro-animações com `framer-motion`
+
+### ✅ [P10] Dashboard Real-Time Engine (v6.1-realtime)
+**Status:** ✅ Concluído
+- [x] EventBus + endpoint `/api/events` em Go
+- [x] Instrumentação de `agent/loop.go` e `telegram/input_pipeline.go`
+- [x] Frontend conectado via `EventSource` (React hooks)
+- [x] Build de produção embarcado no binário Go
 
 ### 🟢 [P11] Cockpit de Comando V1
 **Status:** 📋 Proposto
@@ -150,7 +154,7 @@ Tarefas:
 
 ### 🟢 [P12] Observabilidade Hardware Pro
 **Status:** 📋 Proposto
-- [ ] Gráficos dinâmicos de GPU/VRAM (ROCm/NVIDIA)
+- [ ] Gráficos dinâmicos de GPU/VRAM (NVIDIA RTX 4090)
 - [ ] Histórico de temperatura e clock
 - [ ] Widget de carga de CPU por agente
 
@@ -159,6 +163,25 @@ Tarefas:
 - [ ] Notificações Push de Self-Healing (sonner/toast)
 - [ ] Alertas de instabilidade em containers Docker
 - [ ] Feedback visual de intervenções autônomas
+
+---
+
+### 🔴 [P14] Aurelia Autonomous Engineering — ULTRATRINK
+**Status:** 🔄 Em progresso
+**ADR:** [ADR-20260321-aurelia-autonomous-engineering.md](ADR-20260321-aurelia-autonomous-engineering.md)
+**Taskmaster:** [JSON](taskmaster/ADR-20260321-aurelia-autonomous-engineering.json)
+
+As 7 capacidades que transformam a Aurélia em engenheiro de software autônomo:
+
+- [ ] **Sub-1:** Tool Introspection System (`internal/agent/tool_catalog.go`) 🔄
+- [ ] **Sub-2:** Execution DNA System (`internal/persona/execution_dna.go`)
+- [ ] **Sub-3:** Planning Loop PREV (`internal/agent/planner.go`)
+- [ ] **Sub-4:** Codebase Symbol Map (`internal/agent/codebase_map.go`)
+- [ ] **Sub-5:** Semantic Skill Router (`internal/skill/semantic_router.go`)
+- [ ] **Sub-6:** Dashboard Cockpit / CMD+K (`frontend/src/components/dashboard/`)
+- [ ] **Sub-7:** Memory Context Assembler (`internal/memory/context_assembler.go`)
+
+**Aceite:** A Aurélia recebe uma tarefa complexa, gera um plano estruturado, executa ferramenta por ferramenta com consciência do codebase, verifica o resultado e faz rollback se necessário — sem intervenção humana.
 
 ---
 
@@ -176,6 +199,11 @@ Tarefas:
 | Repositório Template | padronizado, 4 agentes, sudo=1 |
 | Migração ADRs | plan.md + MODEL.md → ADR-20260320-* |
 | Dashboard ULTRATRINK | V2 Modular React, Glassmorphism, Squad Grid (v6.0) |
+| [P3] Agent-to-Agent Go Native | HandoffTool + MasterTeamService + SSE (v6.0-handoff) |
+| [P9] Dashboard Premium | Componentes shadcn + tabs + framer-motion (v6.0) |
+| [P10] Real-Time SSE Engine | EventBus + /api/events + React hooks (v6.1-realtime) |
+| [P-] Unificação Cross-Model Skills | Symlinks centralizados em `.agents/skills/` |
+| [P-] Env Overrides Config | Variáveis de ambiente sobrepondo config.json (21/03/2026) |
 
 ---
 
@@ -184,13 +212,11 @@ Tarefas:
 ```
 P1 → Voz E2E (prova humana)
 P2 → Antigravity Handoff (round-trip)
-P3 → Swarm Go (cherry-pick agent-to-agent)
 P4 → Memória offline Qdrant
 P5 → Browser Login Seguro
 P6 → Desktop Fallback
 P7 → KeePass Vault (humano)
-P8 → Governance Polish
-P10 → Dashboard Real-Time Engine
+P8 → Governance Polish (🔄 em progresso)
 P11 → Cockpit de Comando
 P12 → Observabilidade Hardware
 P13 → Watchdog/Toasts

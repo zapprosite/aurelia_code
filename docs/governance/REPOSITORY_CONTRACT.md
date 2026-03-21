@@ -37,7 +37,6 @@ Este é o índice único de governança para humanos e agentes.
 | `CLAUDE.md` | adaptador do Claude | não, só executa sob contrato e sob a Aurélia |
 | `CODEX.md` | adaptador do Codex | não, só executa sob contrato e sob a Aurélia |
 | `GEMINI.md` | adaptador do Antigravity | não, só coordena sob contrato e sob a Aurélia |
-| `MODEL.md` | política de modelos/voz | sim, mas subordinada a `AGENTS.md` e ADR |
 
 ## Regra profissional adotada
 
@@ -73,13 +72,9 @@ Comando canônico:
 ## Fontes operacionais
 
 - [ADR Index](./adr/README.md)
-- [ADR Slice Template](./adr/TEMPLATE-SLICE.md)
-- [ADR Nonstop Template](./adr/TEMPLATE-NONSTOP-SLICE.md)
-- [Pending Slices](./adr/PENDING-SLICES-20260319.md)
-- [Aurelia Master Blueprint](./aurelia_master_blueprint_20260319.md)
 - [JARVIS Master Plan](../plan.md)
-- [Voz Oficial da Aurelia](./aurelia_voice_profile_20260319.md)
-- [Fontes de Estudo PT-BR](./voice_study_sources_ptbr_20260319.md)
+- [Política de Modelos](./adr/ADR-20260320-politica-modelos-hardware-vram.md)
+- [Roadmap Mestre](./adr/ADR-20260320-roadmap-mestre-slices.md)
 - [.agents/skills/systems-engineer-homelab/SKILL.md](../.agents/skills/systems-engineer-homelab/SKILL.md)
 
 ## Regra de higiene da raiz

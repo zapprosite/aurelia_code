@@ -1,0 +1,353 @@
+{
+  "id": "ADR-20260321-aurelia-autonomous-engineering",
+  "title": "Aurelia Autonomous Engineering — ULTRATRINK",
+  "status": "active",
+  "priority": "P14",
+  "created": "2026-03-21T14:14:00-03:00",
+  "updated": "2026-03-21T14:14:00-03:00",
+  "current_sub_slice": "Sub-1",
+  "agent": "antigravity",
+  "sub_slices": [
+    {
+      "id": "Sub-1",
+      "name": "Tool Introspection System",
+      "status": "done",
+      "file": "internal/agent/tool_catalog.go",
+      "priority": "CRITICAL",
+      "estimated_hours": 3,
+      "steps": [
+        {
+          "id": "1.1",
+          "action": "Criar struct ToolEntry com Name, Description, Parameters, Examples",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "1.2",
+          "action": "Implementar BuildToolCatalog(registry *ToolRegistry) []ToolEntry",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "1.3",
+          "action": "Implementar MatchToolsForTask(prompt string, catalog []ToolEntry, k int) []ToolEntry usando embed Qdrant",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "1.4",
+          "action": "Implementar InjectToolContext(tools []ToolEntry) para filtrar tools no Loop",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "1.5",
+          "action": "Integrar no agent.Loop via WithToolFilter(catalog) option",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "1.6",
+          "action": "Escrever TestToolCatalog e TestToolMatching",
+          "status": "pending",
+          "cmd": "go test ./internal/agent/... -run TestToolCatalog -v"
+        }
+      ],
+      "smoke_commands": [
+        "go test ./internal/agent/... -run TestToolCatalog -v",
+        "go test ./internal/agent/... -run TestToolMatching -v"
+      ],
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "Sub-2",
+      "name": "Execution DNA System",
+      "status": "pending",
+      "file": "internal/persona/execution_dna.go",
+      "priority": "CRITICAL",
+      "estimated_hours": 3,
+      "steps": [
+        {
+          "id": "2.1",
+          "action": "Definir TaskType enum: debug|feature|refactor|research|ops|governance",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "2.2",
+          "action": "Implementar ClassifyTask(prompt string) TaskType",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "2.3",
+          "action": "Escrever DNA templates para cada TaskType (workflow steps)",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "2.4",
+          "action": "Integrar BuildExecutionDNA no CanonicalIdentityService.BuildPromptForQuery",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "2.5",
+          "action": "Escrever TestExecutionDNA com fixtures de prompts reais",
+          "status": "pending",
+          "cmd": "go test ./internal/persona/... -run TestExecutionDNA -v"
+        }
+      ],
+      "smoke_commands": [
+        "go test ./internal/persona/... -run TestExecutionDNA -v"
+      ],
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "Sub-3",
+      "name": "Planning Loop (PREV)",
+      "status": "pending",
+      "file": "internal/agent/planner.go",
+      "priority": "HIGH",
+      "estimated_hours": 5,
+      "steps": [
+        {
+          "id": "3.1",
+          "action": "Definir ActionPlan struct com Steps, Rationale, RollbackPlan",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "3.2",
+          "action": "Implementar Planner.Plan(ctx, task) usando LLM com structured output",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "3.3",
+          "action": "Implementar Planner.SelfReview(plan) para detectar gaps e riscos",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "3.4",
+          "action": "Integrar Plan+Review no agent.Loop antes do primeiro tool call",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "3.5",
+          "action": "Implementar Verify(executionLog) com smoke command execution",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "3.6",
+          "action": "Publicar ActionPlan via dashboard SSE (PlanViewer)",
+          "status": "pending",
+          "cmd": ""
+        }
+      ],
+      "smoke_commands": [
+        "go test ./internal/agent/... -run TestPlanningLoop -v",
+        "AURORA_COGNITION_TEST=1 go test ./cmd/aurelia/... -run TestCognitionE2E -v -timeout 120s"
+      ],
+      "evidence": [],
+      "blockers": ["Sub-1 e Sub-2 devem estar completos"]
+    },
+    {
+      "id": "Sub-4",
+      "name": "Codebase Symbol Map",
+      "status": "pending",
+      "file": "internal/agent/codebase_map.go",
+      "priority": "HIGH",
+      "estimated_hours": 4,
+      "steps": [
+        {
+          "id": "4.1",
+          "action": "Implementar BuildSymbolIndex usando go/ast para parse de .go files",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "4.2",
+          "action": "Indexar símbolos no Qdrant (coleção symbol_index)",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "4.3",
+          "action": "Implementar FindRelevantFiles(task string) []FileContext",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "4.4",
+          "action": "Implementar GetDependencyGraph para impact analysis",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "4.5",
+          "action": "Hook post-commit para RefreshOnChange automático",
+          "status": "pending",
+          "cmd": ""
+        }
+      ],
+      "smoke_commands": [
+        "go test ./internal/agent/... -run TestCodebaseMap -v"
+      ],
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "Sub-5",
+      "name": "Semantic Skill Router",
+      "status": "pending",
+      "file": "internal/skill/semantic_router.go",
+      "priority": "MEDIUM",
+      "estimated_hours": 4,
+      "steps": [
+        {
+          "id": "5.1",
+          "action": "IndexSkills: embeddar todas as skill descriptions no Qdrant (coleção skill_index)",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "5.2",
+          "action": "Implementar MatchSkillsForTask(prompt string, k int) []Skill",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "5.3",
+          "action": "Implementar ComposeSkillChain para execução sequencial com shared context",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "5.4",
+          "action": "Substituir skill.Router atual por SemanticRouter com fallback",
+          "status": "pending",
+          "cmd": ""
+        }
+      ],
+      "smoke_commands": [
+        "go test ./internal/skill/... -run TestSemanticRouter -v"
+      ],
+      "evidence": [],
+      "blockers": ["Qdrant configurado (já está)"]
+    },
+    {
+      "id": "Sub-6",
+      "name": "Dashboard Cockpit (P11)",
+      "status": "pending",
+      "files": [
+        "frontend/src/components/dashboard/CommandPalette.tsx",
+        "frontend/src/components/dashboard/TaskBoard.tsx",
+        "frontend/src/components/dashboard/PlanViewer.tsx",
+        "frontend/src/components/dashboard/ToolInspector.tsx"
+      ],
+      "priority": "MEDIUM",
+      "estimated_hours": 6,
+      "steps": [
+        {
+          "id": "6.1",
+          "action": "Implementar CommandPalette.tsx com CMD+K global e envio de prompt via POST /api/command",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "6.2",
+          "action": "Adicionar endpoint POST /api/command no Go (dashboard.go)",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "6.3",
+          "action": "Implementar PlanViewer.tsx consumindo SSE event type=agent_plan",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "6.4",
+          "action": "Implementar ToolInspector.tsx mostrando tool name + args em real-time",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "6.5",
+          "action": "Implementar TaskBoard.tsx com kanban de tasks ativas (live SSE)",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "6.6",
+          "action": "Build de produção e embed no binário Go",
+          "status": "pending",
+          "cmd": "cd frontend && npm run build && go build ./cmd/aurelia"
+        }
+      ],
+      "smoke_commands": [
+        "curl -s http://localhost:3334/api/command -X POST -d '{\"prompt\":\"health check\"}'",
+        "open http://localhost:3334"
+      ],
+      "evidence": [],
+      "blockers": ["Sub-3 (PlanViewer requer Planning Loop)"]
+    },
+    {
+      "id": "Sub-7",
+      "name": "Memory Context Assembler",
+      "status": "pending",
+      "file": "internal/memory/context_assembler.go",
+      "priority": "MEDIUM",
+      "estimated_hours": 4,
+      "steps": [
+        {
+          "id": "7.1",
+          "action": "Implementar ShouldSearch(prompt string) bool com heurística de keywords",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "7.2",
+          "action": "Implementar AssembleContext(prompt, budget int) compondo Qdrant + codebase + skills",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "7.3",
+          "action": "Implementar CompressContext(ctx, maxTokens) com summarization por LLM",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "7.4",
+          "action": "Integrar ContextAssembler no CanonicalIdentityService.BuildPromptForQuery",
+          "status": "pending",
+          "cmd": ""
+        },
+        {
+          "id": "7.5",
+          "action": "Conectar com memory-sync-fiscal.sh (cron já existente)",
+          "status": "pending",
+          "cmd": ""
+        }
+      ],
+      "smoke_commands": [
+        "go test ./internal/memory/... -run TestContextAssembler -v"
+      ],
+      "evidence": [],
+      "blockers": []
+    }
+  ],
+  "handoff": {
+    "from": "antigravity",
+    "context": "Slice P14 iniciado. Sub-1 (Tool Introspection) é a próxima tarefa - começar por internal/agent/tool_catalog.go. ToolRegistry já existe em internal/agent/tool_registry.go.",
+    "next_agent": "antigravity",
+    "resume_command": "cat docs/adr/taskmaster/ADR-20260321-aurelia-autonomous-engineering.json | jq '.sub_slices[] | select(.status==\"in_progress\")'"
+  }
+}

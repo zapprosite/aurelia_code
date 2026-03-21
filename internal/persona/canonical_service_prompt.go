@@ -29,7 +29,14 @@ func (s *CanonicalIdentityService) BuildPromptForQuery(ctx context.Context, user
 	// Runtime tools come from the live ToolRegistry, not from persona markdown.
 	// The persona remains responsible for identity/tone/instructions, while the
 	// execution layer injects the actual capabilities available in this process.
-	return s.appendRuntimeContext(p.RenderSystemPrompt(identity, facts, notes)), nil, nil
+	basePrompt := s.appendRuntimeContext(p.RenderSystemPrompt(identity, facts, notes))
+
+	// Sub-2: Execution DNA — injeta workflow específico por tipo de tarefa
+	if query != "" {
+		basePrompt = InjectDNAIntoPrompt(basePrompt, query)
+	}
+
+	return basePrompt, nil, nil
 }
 
 func (s *CanonicalIdentityService) selectedLongTermMemory(ctx context.Context, userID, conversationID, query string) ([]memory.Fact, []memory.Note, error) {

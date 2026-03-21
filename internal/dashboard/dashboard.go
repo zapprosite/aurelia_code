@@ -84,8 +84,8 @@ func StartServer(logger *slog.Logger) error {
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
 
 	go func() {
-		logger.Info("ULTRATRINK Dashboard Online", slog.String("url", "http://localhost:3333"))
-		if err := http.ListenAndServe(":3333", mux); err != nil {
+		logger.Info("ULTRATRINK Dashboard Online", slog.String("url", "http://localhost:3334"))
+		if err := http.ListenAndServe(":3334", mux); err != nil {
 			logger.Error("servidor do dashboard parou", slog.Any("err", err))
 		}
 	}()
