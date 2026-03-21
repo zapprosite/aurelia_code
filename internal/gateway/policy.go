@@ -7,7 +7,7 @@ const (
 	defaultLocalBalancedModel    = "qwen3.5:9b"
 	defaultRemoteVisionModel     = "qwen/qwen3.5-9b"
 	defaultRemoteCheapLongModel  = "qwen/qwen3.5-flash-02-23"
-	defaultRemoteStructuredModel = "deepseek/deepseek-v3.2"
+	defaultRemoteStructuredModel = "google/gemini-2.5-flash"
 	defaultRemotePremiumModel    = "minimax/minimax-m2.7"
 	defaultAudioModel            = "whisper-large-v3-turbo"
 	defaultDeepResearchModel     = "gemini-web-deep-research"
