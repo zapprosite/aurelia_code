@@ -144,6 +144,12 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 				Content:    resultStr,
 				ToolCallID: call.ID,
 			})
+
+			// Se a ferramenta executada foi o Handoff, interrompemos o loop imediatamente
+			if call.Name == "handoff_to_agent" {
+				logger.Info("handoff detected, exiting loop", slog.String("target", call.Name))
+				return currentHistory, resultStr, nil
+			}
 		}
 	}
 
