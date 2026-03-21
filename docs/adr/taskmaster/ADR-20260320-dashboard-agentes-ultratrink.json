@@ -1,0 +1,29 @@
+{
+  "id": "ADR-20260320-dashboard-agentes-ultratrink",
+  "status": "in_progress",
+  "current_phase": "scaffold_frontend",
+  "assigned_skills": ["frontend-design"],
+  "design_directives": [
+    "Dark Mode Premium (glassmorphism tech-noir)",
+    "Contraste WCAG AA, cores sem preto puro (#0F0F0F ou #1A1A1A)",
+    "Tipografia hierárquica clara com letter-spacing negativo em títulos",
+    "TailwindCSS + Framer Motion + Lucide React",
+    "Componentização estrita e responsividade mobile-first"
+  ],
+  "next_commands": [
+    "npx -y create-vite@latest frontend --template react-ts",
+    "cd frontend && npm install",
+    "cd frontend && npm install -D tailwindcss postcss autoprefixer",
+    "cd frontend && npx tailwindcss init -p",
+    "cd frontend && npm install framer-motion lucide-react class-variance-authority clsx tailwind-merge"
+  ],
+  "smoke_commands": [
+    "cd frontend && npm run build"
+  ],
+  "simulations": [
+    "Host frontend mock na porta 3333 para validar proxy reverso do Go",
+    "Renderizar feed visual de handoffs entre Claude e Antigravity mockado"
+  ],
+  "evidences": [],
+  "blockers": []
+}
