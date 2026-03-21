@@ -3,6 +3,7 @@ package telegram
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"sync"
 	"time"
 
@@ -69,6 +70,9 @@ func NewBotController(
 	pref := telebot.Settings{
 		Token:  cfg.TelegramBotToken,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
+	}
+	if os.Getenv("RUN_SWARM_E2E") != "" {
+		pref.Offline = true
 	}
 
 	b, err := telebot.NewBot(pref)

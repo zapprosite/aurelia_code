@@ -20,6 +20,10 @@ type messageSender interface {
 }
 
 func SendText(bot *telebot.Bot, chat *telebot.Chat, text string) error {
+	if os.Getenv("RUN_SWARM_E2E") != "" {
+		log.Printf("\n[LLM SWARM RESPONSE E2E]:\n%s\n\n", text)
+		return nil
+	}
 	return sendTextWithSender(bot, chat, text, telegramMessageLimit)
 }
 

@@ -136,17 +136,29 @@ Tarefas:
 
 ---
 
-### 🟢 [P9] Dashboard ULTRATRINK (Agentes)
-
+### 🟢 [P10] Dashboard Real-Time Engine (Onda 4)
 **Status:** 📋 Proposto
-**ADR:** `ADR-20260320-dashboard-agentes-ultratrink.md`
+- [ ] Implementar camada de streaming via WebSockets/SSE em Go
+- [ ] Substituir `MOCK_FEED` por dados reais do barramento de eventos
+- [ ] Status de rede e latência de agentes live
 
-- [ ] Setup frontend (Next.js/Vite) c/ estética Sênior Glassmorphism Dark
-- [ ] Incorporar no binário Go como static embed (porta `3333`)
-- [ ] Homing page "Workspace/Notion" com squad feed
-- [ ] WebSocket streaming (Timeline e task-boards)
+### 🟢 [P11] Cockpit de Comando V1
+**Status:** 📋 Proposto
+- [ ] Input Global (CMD+K) no Dashboard para envio de prompts
+- [ ] Integração com barramento de comando da Aurélia
+- [ ] Histórico de comandos locais (browser storage)
 
-**Aceite:** Developer acompanha orquestração do swarm em interface gráfica premium real-time em `http://localhost:3333/`.
+### 🟢 [P12] Observabilidade Hardware Pro
+**Status:** 📋 Proposto
+- [ ] Gráficos dinâmicos de GPU/VRAM (ROCm/NVIDIA)
+- [ ] Histórico de temperatura e clock
+- [ ] Widget de carga de CPU por agente
+
+### 🟢 [P13] Watchdog integration (Toasts)
+**Status:** 📋 Proposto
+- [ ] Notificações Push de Self-Healing (sonner/toast)
+- [ ] Alertas de instabilidade em containers Docker
+- [ ] Feedback visual de intervenções autônomas
 
 ---
 
@@ -163,6 +175,7 @@ Tarefas:
 | Sync AI Context | crons ativos, regra de slice |
 | Repositório Template | padronizado, 4 agentes, sudo=1 |
 | Migração ADRs | plan.md + MODEL.md → ADR-20260320-* |
+| Dashboard ULTRATRINK | V2 Modular React, Glassmorphism, Squad Grid (v6.0) |
 
 ---
 
@@ -177,7 +190,10 @@ P5 → Browser Login Seguro
 P6 → Desktop Fallback
 P7 → KeePass Vault (humano)
 P8 → Governance Polish
-P9 → Dashboard ULTRATRINK (UI Agentes)
+P10 → Dashboard Real-Time Engine
+P11 → Cockpit de Comando
+P12 → Observabilidade Hardware
+P13 → Watchdog/Toasts
 ```
 
 ## Consequências
