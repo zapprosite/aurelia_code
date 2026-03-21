@@ -12,6 +12,7 @@ import (
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/cron"
+	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/gateway"
 	"github.com/kocar/aurelia/internal/health"
 	"github.com/kocar/aurelia/internal/heartbeat"
@@ -376,6 +377,10 @@ func (a *app) start() {
 		if err := a.voiceCapture.Start(); err != nil {
 			logger.Warn("failed to start voice capture worker", slog.Any("err", err))
 		}
+	}
+
+	if err := dashboard.StartServer(logger); err != nil {
+		logger.Warn("failed to start ultratrink dashboard", slog.Any("err", err))
 	}
 
 	go a.bot.Start()
