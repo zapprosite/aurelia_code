@@ -9,47 +9,54 @@ import { Card, CardHeader, CardTitle } from "./components/ui/Card";
 import { Badge } from "./components/ui/Badge";
 import { Brain, Layout, Map, type LucideIcon } from "lucide-react";
 
-// Mock Data for the Timeline
-const MOCK_FEED: FeedItemProps[] = [
+// Initial Feed Placeholder
+const INITIAL_FEED: FeedItemProps[] = [
   {
-    id: "1",
-    type: "git",
-    agent: "Antigravity",
-    action: "commit docs(adr): unificação de skills",
-    timestamp: "Just Now",
-    content: "> git commit -m \"feat: centralizar skills em .agents/skills\"\n> git push origin feat/unified-skills\nTo https://github.com/zapprosite/aurelia_code.git\n   b95ce85..5c580c7  HEAD -> feat/unified-skills",
+    id: "welcome",
+    type: "system",
+    agent: "System",
+    action: "Awaiting Live Events...",
+    timestamp: "Now",
+    content: "Connected to ULTRATRINK Real-time Engine. Monitoring Aurelia's neural activity.",
     status: "success"
-  },
-  {
-    id: "2",
-    type: "ai",
-    agent: "Aurelia",
-    action: "Re-indexando base vetorial Qdrant",
-    timestamp: "2 mins ago",
-    content: "Iniciando re-indexação de 1.2k documentos no cluster local.\nEmbedding model: nomic-embed-text-v1.5\nStatus: 100% Complete",
-    status: "success"
-  },
-  {
-    id: "3",
-    type: "docker",
-    agent: "Antigravity",
-    action: "Restarting service: ollama-vision",
-    timestamp: "5 mins ago",
-    content: "Container ID: 4c371dd5cf33\nUptime reset: 0s\nHealth: HEALTHY",
-    status: "success"
-  },
-  {
-     id: "4",
-     type: "system",
-     agent: "Claude 5",
-     action: "Análise de segurança concluída",
-     timestamp: "12 mins ago",
-     status: "success"
   }
 ];
 
 function App() {
   const [activeTab, setActiveTab] = React.useState<TabId>("timeline");
+  const [feed, setFeed] = React.useState<FeedItemProps[]>(INITIAL_FEED);
+
+  React.useEffect(() => {
+    // SSE Connection to Go Backend
+    const eventSource = new EventSource("/api/events");
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const newItem: FeedItemProps = {
+          id: Math.random().toString(36).substr(2, 9),
+          type: data.type === "agent_thought" ? "ai" : (data.type === "agent_tool" ? "system" : "git"),
+          agent: data.agent,
+          action: data.action,
+          timestamp: data.timestamp || "Just Now",
+          content: typeof data.payload === "string" ? data.payload : JSON.stringify(data.payload, null, 2),
+          status: "success"
+        };
+        
+        setFeed(prev => [newItem, ...prev].slice(0, 50)); // Keep last 50 events
+      } catch (err) {
+        console.error("Error parsing SSE event:", err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("SSE connection error:", err);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   const getTabTitle = () => {
     switch (activeTab) {
@@ -93,7 +100,7 @@ function App() {
                         <Badge variant="outline" className="text-[10px] opacity-30">AUTO-SYNC: ON</Badge>
                      </div>
                      <div className="space-y-4">
-                        {MOCK_FEED.map((item) => (
+                        {feed.map((item) => (
                            <FeedItem key={item.id} {...item} />
                         ))}
                      </div>
