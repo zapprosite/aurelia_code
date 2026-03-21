@@ -19,6 +19,11 @@ type Loop struct {
 	llm           LLMProvider
 	registry      *ToolRegistry
 	maxIterations int
+	// catalog permite filtrar tools por relevância léxica ao prompt.
+	// Se nil, todas as tools são enviadas à LLM (comportamento legado).
+	catalog *ToolCatalog
+	// catalogTopK é o número máximo de tools retornadas pelo catalog filter.
+	catalogTopK int
 }
 
 // NewLoop constructs an agent loop. Pass -1 for unlimited iterations.
@@ -31,6 +36,14 @@ func NewLoop(llm LLMProvider, registry *ToolRegistry, maxIterations int) *Loop {
 		registry:      registry,
 		maxIterations: maxIterations,
 	}
+}
+
+// WithToolCatalog ativa o filtro inteligente de tools por relevância léxica.
+// k define quantas tools são enviadas no máximo para a LLM por chamada.
+func (l *Loop) WithToolCatalog(catalog *ToolCatalog, k int) *Loop {
+	l.catalog = catalog
+	l.catalogTopK = k
+	return l
 }
 
 // Run executes the agent resolving loop on a given state of messages
@@ -47,6 +60,23 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 	copy(currentHistory, history)
 
 	tools := l.registry.FilterDefinitions(allowedTools)
+	// Sub-1: ToolCatalog — filtra tools por relevância léxica ao prompt da mensagem mais recente.
+	// Quando o catalog está ativo, reduz drasticamente o número de tools no contexto da LLM.
+	if l.catalog != nil && l.catalogTopK > 0 {
+		var queryHint string
+		for i := len(currentHistory) - 1; i >= 0; i-- {
+			if currentHistory[i].Role == "user" {
+				queryHint = currentHistory[i].Content
+				break
+			}
+		}
+		if queryHint != "" {
+			filtered := l.catalog.MatchForTask(queryHint, l.catalogTopK)
+			if len(filtered) > 0 {
+				tools = filtered
+			}
+		}
+	}
 	// HARD OVERRIDE: Forçar identidade Linux/Ubuntu no topo de cada prompt
 	systemPrompt = "### ENVIRONMENT CONTEXT\n- OS: Linux (Ubuntu 24.04 LTS)\n- SHELL: Bash (/bin/bash)\n- ARCH: amd64\n- RESTRICTION: NUNCA use PowerShell ou comandos Windows. Use apenas Bash nativo.\n\n" + systemPrompt
 

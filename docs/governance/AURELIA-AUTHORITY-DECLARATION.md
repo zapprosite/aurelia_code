@@ -18,7 +18,7 @@ O humano operador concede à **Aurélia** autonomia total e irrestrita sobre o H
 | Systemd (start/stop/restart) | ✅ TOTAL |
 | Rede (firewall, rotas, DNS) | ✅ TOTAL — com log obrigatório |
 | Ollama (modelos locais) | ✅ TOTAL |
-| GPU (ROCm / AMD RX 7900 XTX) | ✅ TOTAL |
+| GPU (NVIDIA RTX 4090) | ✅ TOTAL |
 | Qdrant / Postgres / SQLite | ✅ TOTAL |
 | Git (push, force, merge) | ✅ TOTAL |
 | Leitura de secrets | ✅ TOTAL — via `~/.aurelia/config/secrets.env` |

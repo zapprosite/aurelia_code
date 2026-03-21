@@ -212,6 +212,10 @@ func Load(r *runtime.PathResolver) (*AppConfig, error) {
 	}
 
 	normalized := normalizeFileConfig(cfg, r)
+	
+	// Apply environment variable overrides for secrets
+	applyEnvOverrides(&normalized)
+
 	if !sameFileConfig(normalized, cfg) {
 		if err := writeConfigFile(path, normalized); err != nil {
 			return nil, err
@@ -219,6 +223,33 @@ func Load(r *runtime.PathResolver) (*AppConfig, error) {
 	}
 
 	return toAppConfig(normalized), nil
+}
+
+func applyEnvOverrides(cfg *fileConfig) {
+	if env := os.Getenv("TELEGRAM_BOT_TOKEN"); env != "" {
+		cfg.TelegramBotToken = env
+	}
+	if env := os.Getenv("ANTHROPIC_API_KEY"); env != "" {
+		cfg.AnthropicAPIKey = env
+	}
+	if env := os.Getenv("GOOGLE_API_KEY"); env != "" {
+		cfg.GoogleAPIKey = env
+	}
+	if env := os.Getenv("OPENAI_API_KEY"); env != "" {
+		cfg.OpenAIAPIKey = env
+	}
+	if env := os.Getenv("GROQ_API_KEY"); env != "" {
+		cfg.GroqAPIKey = env
+	}
+	if env := os.Getenv("KIMI_API_KEY"); env != "" {
+		cfg.KimiAPIKey = env
+	}
+	if env := os.Getenv("QDRANT_API_KEY"); env != "" {
+		cfg.QdrantAPIKey = env
+	}
+	if env := os.Getenv("SUPABASE_SERVICE_ROLE_KEY"); env != "" {
+		cfg.SupabaseServiceRoleKey = env
+	}
 }
 
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {
