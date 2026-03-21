@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/kocar/aurelia/internal/dashboard"
 )
 
 const MasterAgentName = "master"
@@ -283,6 +285,68 @@ func mapsClone(src map[string]bool) map[string]bool {
 		dst[k] = v
 	}
 	return dst
+}
+
+func (s *MasterTeamService) HandleDirectHandoff(ctx context.Context, req HandoffRequest) error {
+	teamID, taskID, ok := TaskContextFromContext(ctx)
+	if !ok {
+		return fmt.Errorf("contexto de task nao encontrado para handoff")
+	}
+
+	agentName, _ := AgentContextFromContext(ctx)
+	if agentName == "" {
+		agentName = MasterAgentName
+	}
+
+	// 1. Marca a task atual como completa com o motivo do handoff
+	result := fmt.Sprintf("Handoff para %s: %s (Motivo: %s)", req.TargetAgent, req.TaskDescription, req.Reason)
+	if err := s.manager.CompleteTask(ctx, teamID, taskID, agentName, result); err != nil {
+		return fmt.Errorf("falha ao completar task durante handoff: %w", err)
+	}
+
+	// 2. Cria a nova task para o agente destino
+	_, err := s.Spawn(ctx, s.resolveTeamKey(teamID), s.resolveUserID(teamID), req.TargetAgent, "Especialista em "+req.TargetAgent, req.TaskDescription, s.resolveAllowedTools(ctx)...)
+	if err != nil {
+		return fmt.Errorf("falha ao spawnar agente destino: %w", err)
+	}
+
+	// 3. Notifica o Dashboard
+	dashboard.Publish(dashboard.Event{
+		Type:      "agent_handoff",
+		Agent:     "System",
+		Action:    fmt.Sprintf("Handoff: %s -> %s", MasterAgentName, req.TargetAgent),
+		Payload:   req,
+		Timestamp: time.Now().Format(time.Kitchen),
+	})
+
+	return nil
+}
+
+func (s *MasterTeamService) resolveTeamKey(teamID string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for k, v := range s.teamByKey {
+		if v == teamID {
+			return k
+		}
+	}
+	return teamID
+}
+
+func (s *MasterTeamService) resolveUserID(teamID string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for k, v := range s.teamByKey {
+		if v == teamID {
+			return s.userByKey[k]
+		}
+	}
+	return ""
+}
+
+func (s *MasterTeamService) resolveAllowedTools(ctx context.Context) []string {
+	// Reutiliza as ferramentas da task pai ou envia todas se vazio
+	return []string{"run_command", "read_file", "write_file", "list_dir", "handoff_to_agent"}
 }
 
 func isTerminalTeamStatus(status string) bool {

@@ -1,9 +1,9 @@
-import { Terminal, Github, Container, Sparkles } from "lucide-react";
+import { Terminal, Github, Container, Sparkles, Repeat } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { motion } from "framer-motion";
 
-export type FeedType = "git" | "docker" | "ai" | "system";
+export type FeedType = "git" | "docker" | "ai" | "system" | "handoff";
 
 export interface FeedItemProps {
   id: string;
@@ -21,6 +21,7 @@ export function FeedItem({ type, agent, action, timestamp, content, status = "su
       case "git": return <Github className="w-4 h-4 text-blue-400" />;
       case "docker": return <Container className="w-4 h-4 text-blue-300" />;
       case "ai": return <Sparkles className="w-4 h-4 text-purple-400" />;
+      case "handoff": return <Repeat className="w-4 h-4 text-orange-400" />;
       default: return <Terminal className="w-4 h-4 text-emerald-400" />;
     }
   };

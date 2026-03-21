@@ -95,6 +95,8 @@ func registerSpawnAgentTool(
 
 	spawnAgent := tools.NewSpawnAgentTool(masterTeams)
 	registry.Register(spawnAgent.Definition(), spawnAgent.Execute)
+	handoffAgent := agent.GetHandoffToolDefinition()
+	registry.Register(handoffAgent, agent.HandoffHandler(masterTeams))
 	pauseTeam := tools.NewPauseTeamTool(masterTeams)
 	registry.Register(pauseTeam.Definition(), pauseTeam.Execute)
 	resumeTeam := tools.NewResumeTeamTool(masterTeams)

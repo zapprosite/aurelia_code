@@ -35,7 +35,9 @@ function App() {
         const data = JSON.parse(event.data);
         const newItem: FeedItemProps = {
           id: Math.random().toString(36).substr(2, 9),
-          type: data.type === "agent_thought" ? "ai" : (data.type === "agent_tool" ? "system" : "git"),
+          type: data.type === "agent_thought" ? "ai" : 
+                (data.type === "agent_tool" ? "system" : 
+                (data.type === "agent_handoff" ? "handoff" : "git")),
           agent: data.agent,
           action: data.action,
           timestamp: data.timestamp || "Just Now",
