@@ -179,7 +179,7 @@ As 7 capacidades que transformam a Aurélia em engenheiro de software autônomo:
 - [x] **Sub-4:** Codebase Symbol Map (`internal/agent/codebase_map.go`)
 - [ ] **Sub-5:** Semantic Skill Router (`internal/skill/semantic_router.go`)
 - [ ] **Sub-6:** Dashboard Cockpit / CMD+K (`frontend/src/components/dashboard/`)
-- [ ] **Sub-7:** Memory Context Assembler (`internal/memory/context_assembler.go`)
+- [x] **Sub-7:** Memory Context Assembler (`internal/memory/context_assembler.go`)
 
 **Aceite:** A Aurélia recebe uma tarefa complexa, gera um plano estruturado, executa ferramenta por ferramenta com consciência do codebase, verifica o resultado e faz rollback se necessário — sem intervenção humana.
 

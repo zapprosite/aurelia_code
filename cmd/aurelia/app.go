@@ -156,7 +156,9 @@ func bootstrapApp(args []string) (*app, error) {
 		}
 	}
 
-	loop := agent.NewLoop(llmProvider, registry, cfg.MaxIterations)
+	assembler := memory.NewContextAssembler(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel, mem)
+
+	loop := agent.NewLoop(llmProvider, registry, cfg.MaxIterations).WithMemoryAssembler(assembler)
 	skillLoader := skill.NewLoader(resolver.Skills(), projectSkillsDir)
 	skillRouter := skill.NewRouter(llmProvider)
 	skillExecutor := skill.NewExecutor(loop)
