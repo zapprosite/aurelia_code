@@ -1,3 +1,6 @@
+> [!NOTE]
+> Status: ✅ Arquivado / Concluído em 22/03/2026
+
 # ADR-20260321-codebase-symbol-map: Sub-4 Codebase Symbol Map
 
 ## Status

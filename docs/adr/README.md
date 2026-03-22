@@ -1,26 +1,21 @@
-# Índice de ADRs — Aurelia
+# Índice de ADRs Master — Aurelia Elite 🛰️
 
-| Data | ADR | Status |
-|------|-----|--------|
-| 2026-03-20 | [Dashboard Agentes ULTRATRINK](ADR-20260320-dashboard-agentes-ultratrink.md) | ✅ Concluído |
-| 2026-03-20 | [Plano Mestre JARVIS Local-First](ADR-20260320-plano-mestre-jarvis-local-first.md) | 🔄 Ativo |
-| 2026-03-20 | [Política de Modelos e Hardware/VRAM](ADR-20260320-politica-modelos-hardware-vram.md) | 🔄 Ativo |
-| 2026-03-20 | [Roadmap Mestre de Slices](ADR-20260320-roadmap-mestre-slices.md) | 🔄 Ativo |
-| 2026-03-20 | [Unificação Cross-Model Skills](ADR-20260320-unificacao-cross-model-skills.md) | ✅ Concluído |
-| 2026-03-21 | [Agent-to-Agent Go Native](ADR-20260321-agent-to-agent-go-native.md) | ✅ Concluído |
-| 2026-03-21 | [Aurelia Autonomous Engineering — ULTRATRINK](ADR-20260321-aurelia-autonomous-engineering.md) | 🔄 Em progresso |
+Conforme governança de nível sênior, as Decisões Arquiteturais estão consolidadas em apenas dois documentos principais para evitar a fragmentação e garantir a autoridade única.
 
-## Taskmasters (JSON de continuidade)
+## Documentos Mestres
 
-| ADR | Arquivo |
-|-----|---------|
-| Dashboard Agentes ULTRATRINK | [JSON](taskmaster/ADR-20260320-dashboard-agentes-ultratrink.json) |
-| Restore Telegram Vision | [JSON](taskmaster/ADR-20260320-restore-telegram-vision.json) |
-| Agent-to-Agent Go Native | [JSON](taskmaster/ADR-20260321-agent-to-agent-go-native.json) |
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [HISTORICO-S0-S14](./ADR-2026-HISTORICO-S0-S14.md) | Recapitulação detalhada de todas as eras, foundation, cockpit e autonomia pines. | ✅ Estável |
+| [ROADMAP-FUTURO](./ADR-2026-ROADMAP-FUTURO.md) | Slices pendentes, Engenharia Autônoma e planos de cognição e escala. | 🔄 Ativo |
 
-## Convenções
+---
 
-- **Formato de nome:** `ADR-YYYYMMDD-slug.md`
-- **Taskmaster JSON:** `taskmaster/ADR-YYYYMMDD-slug.json`
-- **Scaffold:** `./scripts/adr-slice-init.sh <slug> --title "Title"`
-- **Escopo obrigatório:** arquitetura, providers, storage, runtime, áudio, deploy, segurança
+## Arquivo Histórico (Fragmentados)
+Para auditoria detalhada de slices individuais já concluídos, consulte a pasta:
+- [archive/](./archive/)
+
+## Convenções de Governança
+- **Autoridade Final**: Aurélia (conforme [AGENTS.md](../../AGENTS.md)).
+- **Sync**: Sempre sincronize o contexto via `./scripts/sync-ai-context.sh` após mudanças estruturais.
+- **Sudo**: Autonomia total habilitada (sudo=1), com auditoria via logs estruturados.

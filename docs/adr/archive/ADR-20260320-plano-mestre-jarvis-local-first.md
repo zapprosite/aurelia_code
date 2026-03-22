@@ -1,3 +1,6 @@
+> [!NOTE]
+> Status: ✅ Arquivado / Concluído em 22/03/2026
+
 ---
 title: Plano Mestre JARVIS — Aurelia Local-First
 status: accepted

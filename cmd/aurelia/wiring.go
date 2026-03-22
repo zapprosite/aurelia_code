@@ -20,6 +20,9 @@ import (
 func buildToolRegistry() *agent.ToolRegistry {
 	registry := agent.NewToolRegistry()
 	tools.RegisterCoreTools(registry)
+	registry.RegisterPlannerTools()
+	registry.RegisterMemoryTools()
+	registry.RegisterVerifierTools() // Nova ferramenta de verificação
 	return registry
 }
 

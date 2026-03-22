@@ -1,4 +1,4 @@
-import { Terminal, Github, Container, Sparkles, Repeat } from "lucide-react";
+import { Terminal, Github, Container, Sparkles, Repeat, Volume2 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { motion } from "framer-motion";
@@ -56,7 +56,12 @@ export function FeedItem({ type, agent, action, timestamp, content, status = "su
           </div>
           <div className="text-right shrink-0">
              <span className="text-[10px] text-white/20 font-mono block">{timestamp}</span>
-             <div className="flex justify-end mt-1">
+             <div className="flex justify-end items-center gap-2 mt-1">
+                {type === "ai" && (
+                  <button className="p-1 hover:bg-white/10 rounded-md transition-colors group/audio">
+                    <Volume2 className="w-3 h-3 text-white/20 group-hover/audio:text-purple-400 transition-colors" />
+                  </button>
+                )}
                 <span className={`w-1.5 h-1.5 rounded-full ${status === "success" ? "bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" : "bg-orange-500"}`} />
              </div>
           </div>

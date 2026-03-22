@@ -180,7 +180,7 @@ func (bc *BotController) loadRecentMedia(convID string) (recentMedia, bool) {
 		return recentMedia{}, false
 	}
 
-	if time.Since(media.updatedAt) > 3*time.Minute {
+	if time.Since(media.updatedAt) > 30*time.Minute {
 		delete(bc.recentMedia, convID)
 		return recentMedia{}, false
 	}
@@ -226,18 +226,26 @@ func (bc *BotController) processInputWithParts(c telebot.Context, parts []agent.
 
 	bc.storeRecentMedia(session)
 	// processInput as usual
-	return bc.processInput(c, session.text, false)
+	return bc.processInputSession(c, session, false)
 }
 
 func (s *inputSession) persistedContent() string {
 	images := 0
+	caption := ""
 	for _, p := range s.message.Parts {
 		if p.Type == agent.ContentPartImage {
 			images++
 		}
+		if p.Type == agent.ContentPartText && p.Text != "" {
+			caption = p.Text
+		}
 	}
 	if images > 0 {
-		return fmt.Sprintf("%s [imagem anexada: %d]", s.text, images)
+		desc := fmt.Sprintf("[%d imagem(ns) enviada(s)]", images)
+		if caption != "" {
+			return fmt.Sprintf("%s\n%s", caption, desc)
+		}
+		return desc
 	}
 	return s.text
 }
