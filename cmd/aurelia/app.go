@@ -158,11 +158,20 @@ func bootstrapApp(args []string) (*app, error) {
 
 	assembler := memory.NewContextAssembler(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel, mem)
 
-	loop := agent.NewLoop(llmProvider, registry, cfg.MaxIterations).WithMemoryAssembler(assembler)
+	loop := agent.NewLoop(llmProvider, registry, cfg.MaxIterations).
+		WithMemoryAssembler(assembler).
+		WithToolCatalog(agent.NewToolCatalog(registry), 7)
 	skillLoader := skill.NewLoader(resolver.Skills(), projectSkillsDir)
 	skillRouter := skill.NewRouter(llmProvider)
 	skillExecutor := skill.NewExecutor(loop)
 	skillInstaller := skill.NewInstaller(resolver.Skills(), projectSkillsDir)
+	
+	semanticRouter := skill.NewSemanticRouter(cfg.QdrantURL, cfg.QdrantAPIKey, "aurelia_skills", cfg.QdrantEmbeddingModel)
+	loop.WithSemanticRouter(semanticRouter)
+
+	if loadedSkills, err := skillLoader.LoadAll(); err == nil {
+		go semanticRouter.SyncSkills(context.Background(), loadedSkills)
+	}
 	transcriber, err := buildTranscriber(cfg)
 	if err != nil {
 		_ = instanceLock.Release()

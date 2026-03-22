@@ -1,0 +1,18 @@
+{
+  "slug": "ADR-20260322-semantic-skill-router",
+  "status": "completed",
+  "current_phase": "verification_done",
+  "next_commands": [],
+  "smoke_commands": [
+    "go test ./internal/skill/... ./internal/agent/..."
+  ],
+  "simulations": [
+    "Testar injeção do SemanticRouter no ToolCatalog."
+  ],
+  "evidence": [
+    "Agent Loop agora puxa tools dinamicamente do Qdrant usando embled local.",
+    "Lexical index mantido apenas como fallback resiliente."
+  ],
+  "blocked_by": [],
+  "last_updated": "2026-03-22T00:35:00-03:00"
+}
