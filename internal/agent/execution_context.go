@@ -12,7 +12,20 @@ const (
 	runIDContextKey    executionContextKey = "run_id"
 	agentKeyContextKey executionContextKey = "agent_name"
 	workdirContextKey  executionContextKey = "workdir"
+	runOptionsContextKey  executionContextKey = "run_options"
+	prevPhaseContextKey   executionContextKey = "prev_phase"
 )
+
+const (
+	PhasePlanning     = "PLANNING"
+	PhaseReview       = "REVIEW"
+	PhaseExecution    = "EXECUTION"
+	PhaseVerification = "VERIFICATION"
+)
+
+type RunOptions struct {
+	LocalOnly bool
+}
 
 func WithTeamContext(ctx context.Context, teamKey, userID string) context.Context {
 	ctx = context.WithValue(ctx, teamKeyContextKey, teamKey)
@@ -101,4 +114,31 @@ func WorkdirFromContext(ctx context.Context) (workdir string, ok bool) {
 	}
 
 	return workdir, true
+}
+
+func WithRunOptions(ctx context.Context, opts RunOptions) context.Context {
+	return context.WithValue(ctx, runOptionsContextKey, opts)
+}
+
+func RunOptionsFromContext(ctx context.Context) (RunOptions, bool) {
+	if ctx == nil {
+		return RunOptions{}, false
+	}
+	opts, ok := ctx.Value(runOptionsContextKey).(RunOptions)
+	return opts, ok
+}
+
+func WithPrevPhase(ctx context.Context, phase string) context.Context {
+	return context.WithValue(ctx, prevPhaseContextKey, phase)
+}
+
+func PrevPhaseFromContext(ctx context.Context) (string, bool) {
+	if ctx == nil {
+		return "", false
+	}
+	phase, ok := ctx.Value(prevPhaseContextKey).(string)
+	if !ok || phase == "" {
+		return PhaseExecution, false // default retro-compatibility
+	}
+	return phase, true
 }

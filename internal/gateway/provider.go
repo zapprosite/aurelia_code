@@ -36,11 +36,19 @@ type routeState struct {
 	LastDecisionModel string    `json:"last_decision_model,omitempty"`
 }
 
+type DegradedState struct {
+	Active         bool      `json:"active"`
+	Reason         string    `json:"reason"`
+	CheckedAt      time.Time `json:"checked_at"`
+	RemoteDisabled bool      `json:"remote_disabled"`
+}
+
 type StatusSnapshot struct {
 	PrimaryLane string                `json:"primary_lane"`
 	PrimaryMode string                `json:"primary_mode"`
 	Budgets     map[string]laneBudget `json:"budgets"`
 	Routes      map[string]routeState `json:"routes"`
+	Degraded    DegradedState         `json:"degraded"`
 }
 
 type closableProvider interface {
@@ -60,9 +68,10 @@ type Provider struct {
 	remoteStructured  closableProvider
 	remotePremium     closableProvider
 
-	mu      sync.Mutex
-	budgets map[string]laneBudget
-	states  map[string]*routeState
+	mu       sync.Mutex
+	budgets  map[string]laneBudget
+	states   map[string]*routeState
+	degraded DegradedState
 }
 
 func NewProvider(cfg *config.AppConfig) (*Provider, error) {
@@ -124,11 +133,31 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 			"research":          {Soft: 40, Hard: 80},
 		},
 		states: make(map[string]*routeState),
+		degraded: DegradedState{
+			Active: false,
+		},
 	}
 	if err := provider.loadState(); err != nil {
 		return nil, err
 	}
 	return provider, nil
+}
+
+func (p *Provider) EnableDegradedMode(reason string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.degraded = DegradedState{
+		Active:         true,
+		Reason:         reason,
+		CheckedAt:      time.Now(),
+		RemoteDisabled: true,
+	}
+}
+
+func (p *Provider) IsDegraded() DegradedState {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.degraded
 }
 
 func (p *Provider) Close() {
@@ -154,28 +183,47 @@ func (p *Provider) PrimaryLLMDescription() string {
 }
 
 func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (*agent.ModelResponse, error) {
+	opts, _ := agent.RunOptionsFromContext(ctx)
 	req := buildDryRunRequest(systemPrompt, history, tools)
-	decision := p.planner.Decide(req)
-	resp, err := p.generateWithDecision(ctx, decision, systemPrompt, history, tools)
-	if err == nil && responseSatisfies(decision, resp) {
+	
+	if opts.LocalOnly {
+		req.LocalOnly = true
+	}
+
+	degraded := p.IsDegraded()
+	if degraded.Active && degraded.RemoteDisabled {
+		req.LocalOnly = true
+	}
+
+	candidates := p.planner.Plan(req)
+
+	var lastErr error
+	var previousCandidate *RouteCandidate
+
+	for _, candidate := range candidates {
+		if degraded.Active && degraded.RemoteDisabled && candidate.UseRemote {
+			continue
+		}
+
+		if previousCandidate != nil {
+			p.recordFallback(*previousCandidate, candidate)
+		}
+
+		resp, err := p.generateWithDecision(ctx, candidate, systemPrompt, history, tools)
+
+		if err != nil {
+			previousCandidate = &candidate
+			lastErr = err
+			// O gateway continua e tenta o proximo candidato da fila silenciando o erro atual.
+			continue
+		}
+
+		// Se bateu aqui, retornou sucesso. 
 		return resp, nil
 	}
 
-	fallbacks := p.fallbackDecisions(req, decision)
-	lastErr := err
-	for _, fallback := range fallbacks {
-		p.recordFallback(decision, fallback)
-		resp, err = p.generateWithDecision(ctx, fallback, systemPrompt, history, tools)
-		if err == nil && responseSatisfies(fallback, resp) {
-			return resp, nil
-		}
-		lastErr = err
-	}
-	if resp != nil && responseSatisfies(decision, resp) {
-		return resp, nil
-	}
 	if lastErr == nil {
-		lastErr = fmt.Errorf("all gateway routes failed or returned empty guarded content")
+		lastErr = fmt.Errorf("all gateway routes failed or were filtered by degraded mode")
 	}
 	return nil, lastErr
 }
@@ -198,12 +246,18 @@ func (p *Provider) StatusSnapshot() StatusSnapshot {
 		PrimaryMode: defaultLocalBalancedModel,
 		Budgets:     budgets,
 		Routes:      routes,
+		Degraded:    p.degraded,
 	}
 }
 
 func (p *Provider) HealthCheck() health.CheckResult {
 	snapshot := p.StatusSnapshot()
 	var warnings []string
+
+	if snapshot.Degraded.Active {
+		warnings = append(warnings, "DEGRADED_MODE: "+snapshot.Degraded.Reason)
+	}
+
 	for key, state := range snapshot.Routes {
 		if state.BreakerState == "open" {
 			warnings = append(warnings, key+" open")
@@ -284,33 +338,6 @@ func (p *Provider) providerFor(decision DryRunDecision) closableProvider {
 		return p.remotePremium
 	default:
 		return p.localBalanced
-	}
-}
-
-func (p *Provider) fallbackDecisions(req DryRunRequest, original DryRunDecision) []DryRunDecision {
-	switch original.Lane {
-	case "remote-premium-workflow":
-		return []DryRunDecision{
-			p.planner.Decide(DryRunRequest{Task: req.Task, TaskClass: "curation", OutputMode: req.OutputMode, RequiresTools: req.RequiresTools, LocalOnly: false}),
-			p.planner.Decide(DryRunRequest{Task: req.Task, TaskClass: "maintenance", RequiresTools: req.RequiresTools, LocalOnly: true}),
-		}
-	case "remote-tool-long-output", "remote-cheap-long-context", "remote-cheap-vision":
-		return []DryRunDecision{
-			p.planner.Decide(DryRunRequest{Task: req.Task, TaskClass: "maintenance", OutputMode: req.OutputMode, RequiresTools: req.RequiresTools, LocalOnly: true, LatencyBudgetMS: req.LatencyBudgetMS}),
-		}
-	default:
-		return []DryRunDecision{
-			{
-				Lane:       "remote-tool-long-output",
-				Provider:   "openrouter",
-				Model:      defaultRemoteStructuredModel,
-				UseRemote:  true,
-				UseTools:   req.RequiresTools,
-				Reason:     "fallback estruturado para lane remota previsivel",
-				Guards:     guardsFor(req.OutputMode, true),
-				BudgetLane: "remote_structured",
-			},
-		}
 	}
 }
 

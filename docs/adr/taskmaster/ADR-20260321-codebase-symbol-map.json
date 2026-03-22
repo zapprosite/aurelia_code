@@ -1,0 +1,19 @@
+{
+  "slug": "ADR-20260321-codebase-symbol-map",
+  "status": "completed",
+  "current_phase": "verification_done",
+  "next_commands": [],
+  "smoke_commands": [
+    "go test ./internal/agent/...",
+    "go build ./cmd/aurelia"
+  ],
+  "simulations": [
+    "Analisar injeção do Codebase-map na system prompt em dry-run."
+  ],
+  "evidence": [
+    "Compilação confirmada com sucesso (go build cmd/aurelia).",
+    "prompt augmentation ativo para injetar o sumário gerado por `GetCodebaseMapSummary` durante o Phase: PLANNING"
+  ],
+  "blocked_by": [],
+  "last_updated": "2026-03-21T22:30:00-03:00"
+}

@@ -48,6 +48,12 @@ func (l *Loop) WithToolCatalog(catalog *ToolCatalog, k int) *Loop {
 
 // Run executes the agent resolving loop on a given state of messages
 func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, allowedTools []string) ([]Message, string, error) {
+	return l.RunWithOptions(ctx, systemPrompt, history, allowedTools, RunOptions{})
+}
+
+// RunWithOptions executes the agent resolving loop on a given state of messages
+func (l *Loop) RunWithOptions(ctx context.Context, systemPrompt string, history []Message, allowedTools []string, opts RunOptions) ([]Message, string, error) {
+	ctx = WithRunOptions(ctx, opts)
 	if _, ok := RunContextFromContext(ctx); !ok {
 		ctx = WithRunContext(ctx, uuid.NewString())
 	}
@@ -80,8 +86,12 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 	// HARD OVERRIDE: Forçar identidade Linux/Ubuntu no topo de cada prompt
 	systemPrompt = "### ENVIRONMENT CONTEXT\n- OS: Linux (Ubuntu 24.04 LTS)\n- SHELL: Bash (/bin/bash)\n- ARCH: amd64\n- RESTRICTION: NUNCA use PowerShell ou comandos Windows. Use apenas Bash nativo.\n\n" + systemPrompt
 
+	// Extrair fase atual e retroalimentar visualmente na engine
+	currentPhase, _ := PrevPhaseFromContext(ctx)
+
 	systemPrompt = augmentSystemPromptWithToolGuidance(systemPrompt, tools)
 	systemPrompt = augmentSystemPromptWithRuntimeCapabilities(systemPrompt, tools)
+	systemPrompt = augmentSystemPromptWithPREV(systemPrompt, currentPhase)
 
 	// DIANOGSTIC LOG: Check what tools are actually being sent to the LLM
 	var toolNames []string
@@ -180,6 +190,13 @@ func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, 
 				logger.Info("handoff detected, exiting loop", slog.String("target", call.Name))
 				return currentHistory, resultStr, nil
 			}
+
+			// Interceptador global do PREV
+			if call.Name == "set_phase" {
+				if newPhase, ok := call.Arguments["phase"].(string); ok {
+					ctx = WithPrevPhase(ctx, newPhase)
+				}
+			}
 		}
 	}
 
@@ -255,4 +272,35 @@ func augmentSystemPromptWithRuntimeCapabilities(systemPrompt string, tools []Too
 		return strings.Join(lines, "\n")
 	}
 	return base + "\n\n" + strings.Join(lines, "\n")
+}
+
+func augmentSystemPromptWithPREV(systemPrompt string, currentPhase string) string {
+	var lines []string
+	lines = append(lines, "# PREV STATE MACHINE (PLAN, REVIEW, EXECUTE, VERIFY)")
+	lines = append(lines, fmt.Sprintf("SUA FASE ATUAL E: %s", currentPhase))
+	
+	switch currentPhase {
+	case PhasePlanning:
+		lines = append(lines, "OBJETIVO: Pesquisar repositório, ler arquivos, validar contexto e CRIAR O PLANO.")
+		
+		if mapSummary := GetCodebaseMapSummary(); mapSummary != "" {
+			lines = append(lines, "\n### CODEBASE ARCHITECTURE MAP (.context/docs/codebase-map.json)\n"+mapSummary)
+			lines = append(lines, "DICA: O mapa acima resume a arquitetura. Use-o para focar seu `list_dir` ou `read_file` nos arquivos/diretorios exatos.\n")
+		}
+
+		lines = append(lines, "RESTRICAO: Nao escreva codigo definitivo nem aplique simulacoes complexas antes de tracar a estrategia local.")
+		lines = append(lines, "PROXIMO PASSO: Quando tiver 100% de confianca no que vai fazer, use a tool `set_phase` mudando para EXECUTION com o `reasoning` do seu plano arquitetural.")
+	case PhaseReview:
+		lines = append(lines, "OBJETIVO: Aguardar a revisao de pares ou aprovacao humana. Nao execute codigo novo agora.")
+	case PhaseExecution:
+		lines = append(lines, "OBJETIVO: Executar as ferramentas de mutacao estrutural (escrever codigo, alterar docker, instalar deps).")
+		lines = append(lines, "PROXIMO PASSO: Quando a mutacao terminar, use a tool `set_phase` mudando para VERIFICATION.")
+	case PhaseVerification:
+		lines = append(lines, "OBJETIVO: Rodar os testes, lint, systemctl status ou build commands para provar o commit.")
+		lines = append(lines, "RESTRICAO: Pare de tentar consertar se falhar mais de 3 vezes. Re-planeje.")
+	default:
+		lines = append(lines, "Voce esta operando de forma autonoma. Utilize o bom senso de engenharia.")
+	}
+
+	return strings.TrimSpace(systemPrompt) + "\n\n" + strings.Join(lines, "\n")
 }
