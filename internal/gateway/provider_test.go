@@ -71,8 +71,10 @@ func TestProviderGenerateContent_MaintenancePrefersLocalBalanced(t *testing.T) {
 func TestProviderGenerateContent_FallsBackWhenGuardedResponseIsEmpty(t *testing.T) {
 	t.Parallel()
 
-	localBalanced := &fakeProvider{response: &agent.ModelResponse{ReasoningContent: "internal only"}}
-	remoteStructured := &fakeProvider{response: &agent.ModelResponse{Content: "{\"status\":\"ok\"}"}}
+	// Na nova política, curadoria prioriza remoteStructured (Gemini).
+	// Vamos fazer o Gemini falhar na guarda (só reasoning) para testar o fallback pro local.
+	remoteStructured := &fakeProvider{response: &agent.ModelResponse{ReasoningContent: "gemini analyzing..."}}
+	localBalanced := &fakeProvider{response: &agent.ModelResponse{Content: "{\"status\":\"ok\"}"}}
 
 	provider := newTestGatewayProvider()
 	provider.localBalanced = localBalanced
@@ -94,12 +96,12 @@ func TestProviderGenerateContent_FallsBackWhenGuardedResponseIsEmpty(t *testing.
 	if len(remoteStructured.prompts) != 1 {
 		t.Fatalf("remote structured calls = %d", len(remoteStructured.prompts))
 	}
-	if !strings.Contains(localBalanced.prompts[0], "# RESPONSE GUARD") {
-		t.Fatalf("expected response guard in prompt, got %q", localBalanced.prompts[0])
+	if !strings.Contains(remoteStructured.prompts[0], "# RESPONSE GUARD") {
+		t.Fatalf("expected response guard in gemini prompt, got %q", remoteStructured.prompts[0])
 	}
-	state := provider.StatusSnapshot().Routes["ollama:"+defaultLocalBalancedModel]
+	state := provider.StatusSnapshot().Routes["openrouter:"+defaultRemoteStructuredModel]
 	if state.Failures != 1 {
-		t.Fatalf("failures = %d", state.Failures)
+		t.Fatalf("gemini failures = %d", state.Failures)
 	}
 }
 
