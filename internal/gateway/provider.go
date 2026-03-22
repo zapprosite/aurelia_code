@@ -38,6 +38,9 @@ type routeState struct {
 	TotalInputTokens  int       `json:"total_input_tokens"`
 	TotalOutputTokens int       `json:"total_output_tokens"`
 	TotalCostUSD      float64   `json:"total_cost_usd"`
+	RateLimitRequests int       `json:"ratelimit_requests"`
+	RateLimitRemaining int      `json:"ratelimit_remaining"`
+	RateLimitReset     time.Time `json:"ratelimit_reset"`
 }
 
 type DegradedState struct {
@@ -326,8 +329,8 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 		return resp, fmt.Errorf("empty guarded content for %s", providerKey)
 	}
 	p.markSuccess(providerKey)
-	if resp.InputTokens > 0 || resp.OutputTokens > 0 {
-		p.recordTokens(decision.BudgetLane, providerKey, decision.Model, resp.InputTokens, resp.OutputTokens)
+	if resp.InputTokens > 0 || resp.OutputTokens > 0 || len(resp.Metadata) > 0 {
+		p.recordTokens(decision.BudgetLane, providerKey, decision.Model, resp.InputTokens, resp.OutputTokens, resp.Metadata)
 	}
 	p.observeResult(decision, "success", time.Since(startedAt))
 	return resp, nil
@@ -378,7 +381,7 @@ func detectOutputMode(systemPrompt, userMessage string) string {
 	switch {
 	case strings.Contains(systemLower, "json valido") || strings.Contains(systemLower, "only valid json"):
 		return "structured_json"
-	case strings.Contains(userLower, "3 facts") || strings.Contains(userLower, "3 tags") || strings.Contains(userLower, "facts curtos"):
+	case strings.Contains(userLower, "3 facts") || strings.Contains(userLower, "3 tags") || strings.Contains(userLower, "facts curtos") || strings.Contains(userLower, "fatos curtos"):
 		return "curation"
 	default:
 		return "text"
@@ -471,14 +474,35 @@ func (p *Provider) markFailure(budgetLane, providerKey, reason string) {
 	p.persistLocked(toPersist...)
 }
 
-func (p *Provider) recordTokens(budgetLane, providerKey, model string, inputTokens, outputTokens int) {
+func (p *Provider) recordTokens(budgetLane, providerKey, model string, inputTokens, outputTokens int, metadata map[string]string) {
 	cost := CalculateCostUSD(model, inputTokens, outputTokens)
+	
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	state := p.ensureStateLocked(providerKey)
 	state.TotalInputTokens += inputTokens
 	state.TotalOutputTokens += outputTokens
 	state.TotalCostUSD += cost
+
+	// Parse Rate Limits
+	if val, ok := metadata["X-RateLimit-Limit-Requests"]; ok {
+		fmt.Sscanf(val, "%d", &state.RateLimitRequests)
+	}
+	if val, ok := metadata["X-RateLimit-Remaining-Requests"]; ok {
+		fmt.Sscanf(val, "%d", &state.RateLimitRemaining)
+	}
+	if val, ok := metadata["X-RateLimit-Reset-Requests"]; ok {
+		// Reset is usually seconds or timestamp. OpenAI uses seconds.
+		var seconds float64
+		if _, err := fmt.Sscanf(val, "%fs", &seconds); err == nil {
+			state.RateLimitReset = time.Now().Add(time.Duration(seconds * float64(time.Second)))
+		}
+	} else if val, ok := metadata["Retry-After"]; ok {
+		var seconds int
+		if _, err := fmt.Sscanf(val, "%d", &seconds); err == nil {
+			state.RateLimitReset = time.Now().Add(time.Duration(seconds) * time.Second)
+		}
+	}
 	var toPersist []persistableRouteState
 	toPersist = append(toPersist, persistableRouteState{Key: providerKey, State: *state})
 	if budgetLane != "" {
@@ -508,6 +532,9 @@ func (p *Provider) breakerOpen(providerKey string) bool {
 		p.setBreakerMetricLocked(providerKey, state.BreakerState)
 		p.persistLocked(persistableRouteState{Key: providerKey, State: *state})
 		return false
+	}
+	if state.RateLimitRemaining == 0 && !state.RateLimitReset.IsZero() && time.Now().Before(state.RateLimitReset) {
+		return true
 	}
 	p.setBreakerMetricLocked(providerKey, state.BreakerState)
 	return true

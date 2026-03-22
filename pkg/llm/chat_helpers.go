@@ -3,11 +3,13 @@ package llm
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/kocar/aurelia/internal/agent"
 )
 
-func parseChatCompletionResponse(respBody []byte) (*agent.ModelResponse, error) {
+func parseChatCompletionResponse(respBody []byte, headers http.Header) (*agent.ModelResponse, error) {
 	var apiResp chatCompletionResponse
 	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal chat completion response: %w", err)
@@ -21,7 +23,18 @@ func parseChatCompletionResponse(respBody []byte) (*agent.ModelResponse, error) 
 	result := &agent.ModelResponse{
 		Content:          choice.Content,
 		ReasoningContent: choice.ReasoningContent,
+		Metadata:         make(map[string]string),
 	}
+
+	for k, v := range headers {
+		lk := strings.ToLower(k)
+		if strings.HasPrefix(lk, "x-ratelimit-") || strings.HasPrefix(lk, "retry-after") {
+			if len(v) > 0 {
+				result.Metadata[k] = v[0]
+			}
+		}
+	}
+
 	if apiResp.Usage != nil {
 		result.InputTokens = apiResp.Usage.PromptTokens
 		result.OutputTokens = apiResp.Usage.CompletionTokens

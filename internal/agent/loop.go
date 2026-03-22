@@ -31,6 +31,10 @@ func NewLoop(llm LLMProvider, registry *ToolRegistry, maxIterations int) *Loop {
 	}
 }
 
+func (l *Loop) Registry() *ToolRegistry {
+	return l.registry
+}
+
 // Run é a interface clássica do loop, mantida para compatibilidade
 func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, allowedTools []string) ([]Message, string, error) {
 	opts := LoopOptions{

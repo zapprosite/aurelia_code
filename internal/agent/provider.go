@@ -33,6 +33,7 @@ type ModelResponse struct {
 	ToolCalls        []ToolCall
 	InputTokens      int
 	OutputTokens     int
+	Metadata         map[string]string // Capture headers like X-RateLimit-*
 }
 
 // LLMProvider is the interface for different AI providers (Gemini, DeepSeek, etc)

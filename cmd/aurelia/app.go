@@ -35,20 +35,28 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+// app is the central application container, managing lifecycle and dependencies.
 type app struct {
+	cfg            *config.AppConfig
 	resolver       *runtime.PathResolver
 	instanceLock   *runtime.InstanceLock
+
+	// Core Infrastructure
 	mem            *memory.MemoryManager
 	cronStore      *cron.SQLiteCronStore
 	mcpManager     *mcp.Manager
 	taskStore      *agent.SQLiteTaskStore
 	llmProvider    closableLLMProvider
+
+	// Features
 	bot            *telegram.BotController
 	cronScheduler  *cron.Scheduler
 	cronCtx        context.Context
 	cronCancel     context.CancelFunc
 	heartbeat      *heartbeat.HeartbeatService
 	healthServer   *health.Server
+
+	// Voice Stack
 	voiceProcessor *voice.Processor
 	voiceCapture   *voice.CaptureWorker
 	voiceMirrorDB  closableVoiceMirror
@@ -64,283 +72,304 @@ type closableVoiceMirror interface {
 	Close() error
 }
 
+// bootstrapApp initializes the entire application stack in a modular fashion.
 func bootstrapApp(args []string) (*app, error) {
-	logger := observability.Logger("cmd.app")
+	logger := observability.Logger("cmd.bootstrap")
+	a := &app{}
 
+	// 1. Initial Infrastructure
+	if err := a.initInfrastructure(args, logger); err != nil {
+		return nil, err
+	}
+
+	// 2. Core Dependencies
+	if err := a.initCore(logger); err != nil {
+		a.close() // Cleanup partially initialized state
+		return nil, err
+	}
+
+	// 3. Skills and Intelligence
+	loop, err := a.initSkills(logger)
+	if err != nil {
+		a.close()
+		return nil, err
+	}
+
+	// 4. Features & Interfaces
+	if err := a.initFeatures(loop, logger); err != nil {
+		a.close()
+		return nil, err
+	}
+
+	// 5. Voice Processing (Optional)
+	if err := a.initVoice(logger); err != nil {
+		a.close()
+		return nil, err
+	}
+
+	// 6. Servers & Connectivity
+	a.initServers(logger)
+
+	return a, nil
+}
+
+func (a *app) initInfrastructure(args []string, logger *slog.Logger) error {
 	resolver, err := runtime.New()
 	if err != nil {
-		return nil, fmt.Errorf("resolve instance root: %w", err)
+		return fmt.Errorf("resolve instance root: %w", err)
 	}
+	a.resolver = resolver
+
 	if err := runtime.Bootstrap(resolver); err != nil {
-		return nil, fmt.Errorf("bootstrap instance directory: %w", err)
+		return fmt.Errorf("bootstrap instance directory: %w", err)
 	}
+
 	instanceLock, err := runtime.AcquireInstanceLock(resolver, args)
 	if err != nil {
-		return nil, fmt.Errorf("acquire instance lock: %w", err)
+		return fmt.Errorf("acquire instance lock: %w", err)
 	}
+	a.instanceLock = instanceLock
 
 	cfg, err := config.Load(resolver)
 	if err != nil {
-		_ = instanceLock.Release()
-		return nil, fmt.Errorf("load config: %w", err)
+		return fmt.Errorf("load config: %w", err)
 	}
+	a.cfg = cfg
 
-	mem, err := memory.NewMemoryManager(cfg.DBPath, cfg.MemoryWindowSize)
-	if err != nil {
-		_ = instanceLock.Release()
-		return nil, fmt.Errorf("initialize memory manager: %w", err)
-	}
+	return nil
+}
 
-	personasDir := resolver.MemoryPersonas()
-	memoryDir := resolver.Memory()
-	ownerPlaybookPath := filepath.Join(memoryDir, "OWNER_PLAYBOOK.md")
-	lessonsLearnedPath := filepath.Join(memoryDir, "LESSONS_LEARNED.md")
-	cwd, err := os.Getwd()
+func (a *app) initCore(logger *slog.Logger) error {
+	mem, err := memory.NewMemoryManager(a.cfg.DBPath, a.cfg.MemoryWindowSize)
 	if err != nil {
-		logger.Warn("failed to resolve working directory for project playbook", slog.Any("err", err))
-		cwd = ""
+		return fmt.Errorf("initialize memory manager: %w", err)
 	}
-	if err := runtime.BootstrapProject(cwd); err != nil {
-		logger.Warn("failed to bootstrap project-local Aurelia directory", slog.Any("err", err))
-	}
-	var projectPlaybookPath string
-	var projectSkillsDir string
-	if cwd != "" {
-		projectPlaybookPath = filepath.Join(cwd, "docs", "PROJECT_PLAYBOOK.md")
-		projectSkillsDir = runtime.ProjectSkills(cwd)
-	}
-	llmProvider, err := buildLLMProvider(cfg, resolver)
+	a.mem = mem
+
+	cronStore, err := cron.NewSQLiteCronStore(a.cfg.DBPath)
 	if err != nil {
-		_ = instanceLock.Release()
-		_ = mem.Close()
-		return nil, fmt.Errorf("initialize llm provider: %w", err)
+		return fmt.Errorf("initialize cron store: %w", err)
 	}
-	canonicalService := persona.NewCanonicalIdentityService(
-		mem,
-		filepath.Join(personasDir, "IDENTITY.md"),
-		filepath.Join(personasDir, "SOUL.md"),
-		filepath.Join(personasDir, "USER.md"),
-		ownerPlaybookPath,
-		lessonsLearnedPath,
-		projectPlaybookPath,
-	)
+	a.cronStore = cronStore
+
+	taskStore, err := agent.NewSQLiteTaskStore(a.cfg.DBPath + ".teams")
+	if err != nil {
+		return fmt.Errorf("initialize team task store: %w", err)
+	}
+	a.taskStore = taskStore
+
+	llmProvider, err := buildLLMProvider(a.cfg, a.resolver)
+	if err != nil {
+		return fmt.Errorf("initialize llm provider: %w", err)
+	}
+	a.llmProvider = llmProvider
+
+	return nil
+}
+
+func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 	registry := buildToolRegistry()
+	registerScheduleTools(registry, a.cronStore)
 
-	cronStore, err := cron.NewSQLiteCronStore(cfg.DBPath)
+	mcpManager, err := maybeRegisterMCPTools(a.cfg, registry)
 	if err != nil {
-		_ = instanceLock.Release()
-		_ = mem.Close()
-		return nil, fmt.Errorf("initialize cron store: %w", err)
+		logger.Warn("failed to initialize MCP tools (degraded mode likely)", slog.Any("err", err))
 	}
+	a.mcpManager = mcpManager
 
-	registerScheduleTools(registry, cronStore)
-	var preflightErrors []string
-	mcpManager, mcpErr := maybeRegisterMCPTools(cfg, registry)
-	if mcpErr != nil {
-		logger.Warn("failed to initialize MCP tools", slog.Any("err", mcpErr))
-		preflightErrors = append(preflightErrors, "mcp: "+mcpErr.Error())
-	}
-
-	if gwProvider, ok := llmProvider.(*gateway.Provider); ok {
+	// Perform Preflight
+	if gwProvider, ok := a.llmProvider.(*gateway.Provider); ok {
 		ctxP, cancelP := context.WithTimeout(context.Background(), 3*time.Second)
-		if err := performPreflightCheck(ctxP, cfg); err != nil {
-			preflightErrors = append(preflightErrors, "openrouter: "+err.Error())
+		if err := performPreflightCheck(ctxP, a.cfg); err != nil {
+			logger.Warn("preflight check failed, enabling degraded mode", slog.Any("err", err))
+			gwProvider.EnableDegradedMode("Preflight failures: " + err.Error())
 		}
 		cancelP()
-
-		if len(preflightErrors) > 0 {
-			reason := strings.Join(preflightErrors, "; ")
-			logger.Warn("Preflight check failed, enabling Degraded Mode", slog.String("reason", reason))
-			gwProvider.EnableDegradedMode("Preflight failures: " + reason)
-		} else {
-			logger.Info("Preflight check passed, all remote systems go")
-		}
 	}
 
-	// Proactive warm-up for local models to reduce latency
-	go performOllamaWarmup(cfg)
+	go performOllamaWarmup(a.cfg)
 
-	assembler := memory.NewContextAssembler(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel, cfg.OllamaURL, mem)
+	assembler := memory.NewContextAssembler(
+		a.cfg.QdrantURL, a.cfg.QdrantAPIKey,
+		a.cfg.QdrantCollection, a.cfg.QdrantEmbeddingModel,
+		a.cfg.OllamaURL, a.mem,
+	)
 
-	loop := agent.NewLoop(llmProvider, registry, cfg.MaxIterations).
+	loop := agent.NewLoop(a.llmProvider, registry, a.cfg.MaxIterations).
 		WithMemoryAssembler(assembler).
 		WithToolCatalog(agent.NewToolCatalog(registry), 7)
-	skillLoader := skill.NewLoader(resolver.Skills(), projectSkillsDir)
-	skillRouter := skill.NewRouter(llmProvider)
-	skillExecutor := skill.NewExecutor(loop)
-	skillInstaller := skill.NewInstaller(resolver.Skills(), projectSkillsDir)
-	
-	semanticRouter := skill.NewSemanticRouter(cfg.QdrantURL, cfg.QdrantAPIKey, "aurelia_skills", cfg.QdrantEmbeddingModel, cfg.OllamaURL)
+
+	cwd, _ := os.Getwd()
+	if err := runtime.BootstrapProject(cwd); err != nil {
+		logger.Warn("failed to bootstrap project-local directory", slog.Any("err", err))
+	}
+	projectSkillsDir := runtime.ProjectSkills(cwd)
+
+	skillInstaller := skill.NewInstaller(a.resolver.Skills(), projectSkillsDir)
+
+	semanticRouter := skill.NewSemanticRouter(
+		a.cfg.QdrantURL, a.cfg.QdrantAPIKey, "aurelia_skills",
+		a.cfg.QdrantEmbeddingModel, a.cfg.OllamaURL,
+	)
 	loop.WithSemanticRouter(semanticRouter)
 
+	skillLoader := skill.NewLoader(a.resolver.Skills(), projectSkillsDir)
 	if loadedSkills, err := skillLoader.LoadAll(); err == nil {
 		go semanticRouter.SyncSkills(context.Background(), loadedSkills)
-	}
-	transcriber, err := buildTranscriber(cfg)
-	if err != nil {
-		_ = instanceLock.Release()
-		_ = cronStore.Close()
-		_ = mem.Close()
-		return nil, fmt.Errorf("initialize transcriber: %w", err)
 	}
 
 	installSkillTool := tools.NewInstallSkillTool(skillInstaller)
 	registry.Register(installSkillTool.Definition(), installSkillTool.Execute)
 
+	return loop, nil
+}
+
+func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
+	cwd, _ := os.Getwd()
+	projectPlaybookPath := filepath.Join(cwd, "docs", "PROJECT_PLAYBOOK.md")
+	projectSkillsDir := runtime.ProjectSkills(cwd)
+
+	canonicalService := persona.NewCanonicalIdentityService(
+		a.mem,
+		filepath.Join(a.resolver.MemoryPersonas(), "IDENTITY.md"),
+		filepath.Join(a.resolver.MemoryPersonas(), "SOUL.md"),
+		filepath.Join(a.resolver.MemoryPersonas(), "USER.md"),
+		filepath.Join(a.resolver.Memory(), "OWNER_PLAYBOOK.md"),
+		filepath.Join(a.resolver.Memory(), "LESSONS_LEARNED.md"),
+		projectPlaybookPath,
+	)
+
+	transcriber, err := buildTranscriber(a.cfg)
+	if err != nil {
+		return fmt.Errorf("initialize transcriber: %w", err)
+	}
+
+	skillLoader := skill.NewLoader(a.resolver.Skills(), projectSkillsDir)
+	skillRouter := skill.NewRouter(a.llmProvider)
+	skillExecutor := skill.NewExecutor(loop)
+
 	bot, err := telegram.NewBotController(
-		cfg,
-		mem,
-		skillRouter,
-		skillExecutor,
-		skillLoader,
-		transcriber,
-		canonicalService,
-		personasDir,
+		a.cfg, a.mem, skillRouter, skillExecutor, skillLoader,
+		transcriber, canonicalService, a.resolver.MemoryPersonas(),
 	)
 	if err != nil {
-		_ = instanceLock.Release()
-		_ = cronStore.Close()
-		_ = mem.Close()
-		return nil, fmt.Errorf("initialize telegram block: %w", err)
+		return fmt.Errorf("initialize telegram: %w", err)
+	}
+	a.bot = bot
+
+	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, bot, a.taskStore); err != nil {
+		return fmt.Errorf("register spawn agent tool: %w", err)
 	}
 
-	var voiceProcessor *voice.Processor
-	var voiceCapture *voice.CaptureWorker
-	var sqliteMirror closableVoiceMirror
-	if cfg.VoiceCaptureEnabled && !cfg.VoiceEnabled {
-		_ = instanceLock.Release()
-		_ = cronStore.Close()
-		_ = mem.Close()
-		return nil, fmt.Errorf("voice capture requires voice_enabled=true")
-	}
-	if cfg.VoiceEnabled {
-		voiceSpool, err := voice.NewSpool(cfg.VoiceSpoolPath)
-		if err != nil {
-			_ = instanceLock.Release()
-			_ = cronStore.Close()
-			_ = mem.Close()
-			return nil, fmt.Errorf("initialize voice spool: %w", err)
-		}
-		var fallback stt.Transcriber
-		if cfg.STTFallbackCommand != "" {
-			fallback = stt.NewCommandTranscriber(cfg.STTFallbackCommand)
-		}
-		sqliteMirror = voice.NewSQLiteMirror(cfg.DBPath)
-		voiceMirror := voice.NewMultiMirror(
-			sqliteMirror,
-			voice.NewQdrantMirror(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel, cfg.OllamaURL),
-		)
-		voiceProcessor = voice.NewProcessor(voiceSpool, transcriber, fallback, voiceBotDispatcher{bot: bot}, voice.Config{
-			PollInterval:       time.Duration(cfg.VoicePollIntervalMS) * time.Millisecond,
-			HeartbeatPath:      cfg.VoiceHeartbeatPath,
-			HeartbeatFreshness: time.Duration(cfg.VoiceHeartbeatFreshSec) * time.Second,
-			WakePhrase:         cfg.VoiceWakePhrase,
-			DefaultUserID:      cfg.VoiceReplyUserID,
-			DefaultChatID:      cfg.VoiceReplyChatID,
-			SoftCapDaily:       cfg.GroqSoftCapDaily,
-			HardCapDaily:       cfg.GroqHardCapDaily,
-			PrimaryLabel:       cfg.STTProvider,
-			Mirror:             voiceMirror,
-		})
-		if cfg.VoiceCaptureEnabled {
-			if cfg.VoiceCaptureCommand == "" {
-				_ = instanceLock.Release()
-				_ = cronStore.Close()
-				_ = mem.Close()
-				return nil, fmt.Errorf("voice capture is enabled but voice_capture_command is missing")
-			}
-			voiceCapture = voice.NewCaptureWorker(
-				voiceSpool,
-				voice.NewCommandCaptureSource(cfg.VoiceCaptureCommand, map[string]string{
-					"AURELIA_VOICE_WAKE_PHRASE": cfg.VoiceWakePhrase,
-					"AURELIA_VOICE_DROP_PATH":   cfg.VoiceDropPath,
-					"AURELIA_VOICE_USER_ID":     strconv.FormatInt(cfg.VoiceReplyUserID, 10),
-					"AURELIA_VOICE_CHAT_ID":     strconv.FormatInt(cfg.VoiceReplyChatID, 10),
-				}),
-				voice.CaptureConfig{
-					PollInterval:       time.Duration(cfg.VoiceCapturePollMS) * time.Millisecond,
-					HeartbeatPath:      cfg.VoiceCaptureHeartbeat,
-					HeartbeatFreshness: time.Duration(cfg.VoiceCaptureFreshSec) * time.Second,
-					DefaultUserID:      cfg.VoiceReplyUserID,
-					DefaultChatID:      cfg.VoiceReplyChatID,
-					DefaultSource:      "capture",
-				},
-			)
-		}
-	}
-
-	taskStore, err := agent.NewSQLiteTaskStore(cfg.DBPath + ".teams")
+	cronScheduler, cronCtx, cronCancel, err := buildCronScheduler(a.cronStore, loop, canonicalService, bot)
 	if err != nil {
-		_ = instanceLock.Release()
-		_ = cronStore.Close()
-		_ = mem.Close()
-		return nil, fmt.Errorf("initialize team task store: %w", err)
+		return fmt.Errorf("initialize cron scheduler: %w", err)
 	}
+	a.cronScheduler = cronScheduler
+	a.cronCtx = cronCtx
+	a.cronCancel = cronCancel
 
-	if err := registerSpawnAgentTool(cfg, registry, llmProvider, bot, taskStore); err != nil {
-		_ = instanceLock.Release()
-		_ = taskStore.Close()
-		_ = cronStore.Close()
-		_ = mem.Close()
-		return nil, err
-	}
-
-	cronScheduler, cronCtx, cronCancel, err := buildCronScheduler(cronStore, loop, canonicalService, bot)
-	if err != nil {
-		_ = instanceLock.Release()
-		_ = taskStore.Close()
-		_ = cronStore.Close()
-		_ = mem.Close()
-		return nil, fmt.Errorf("initialize cron scheduler: %w", err)
-	}
-
-	// Initialize heartbeat service
-	hbService := heartbeat.NewHeartbeatService(
-		resolver.Root(),
-		cfg.HeartbeatIntervalMinutes,
-		cfg.HeartbeatEnabled,
+	a.heartbeat = heartbeat.NewHeartbeatService(
+		a.resolver.Root(),
+		a.cfg.HeartbeatIntervalMinutes,
+		a.cfg.HeartbeatEnabled,
 		loop,
 	)
 
-	// Initialize health server
-	healthSrv := health.NewServer(8484) // Default port, could be configurable
-	registerAuxiliaryHealthChecks(healthSrv, cfg, resolver, llmProvider)
-	healthSrv.RegisterRoute("/metrics", promhttp.Handler())
-	healthSrv.RegisterRoute("/v1/router/dry-run", gateway.NewDryRunHandler(gateway.NewPlanner()))
-	if gwProvider, ok := llmProvider.(*gateway.Provider); ok {
-		healthSrv.RegisterRoute("/v1/router/status", gwProvider.StatusHandler())
-	}
-	if voiceProcessor != nil {
-		healthSrv.RegisterCheck("voice_processor", voiceProcessor.HealthCheck)
-		healthSrv.RegisterRoute("/v1/voice/status", voiceProcessor.StatusHandler())
-	}
-	if voiceCapture != nil {
-		healthSrv.RegisterCheck("voice_capture", voiceCapture.HealthCheck)
-		healthSrv.RegisterRoute("/v1/voice/capture/status", voiceCapture.StatusHandler())
+	return nil
+}
+
+func (a *app) initVoice(logger *slog.Logger) error {
+	if !a.cfg.VoiceEnabled {
+		return nil
 	}
 
-	return &app{
-		resolver:       resolver,
-		instanceLock:   instanceLock,
-		mem:            mem,
-		cronStore:      cronStore,
-		mcpManager:     mcpManager,
-		taskStore:      taskStore,
-		llmProvider:    llmProvider,
-		bot:            bot,
-		cronScheduler:  cronScheduler,
-		cronCtx:        cronCtx,
-		cronCancel:     cronCancel,
-		heartbeat:      hbService,
-		healthServer:   healthSrv,
-		voiceProcessor: voiceProcessor,
-		voiceCapture:   voiceCapture,
-		voiceMirrorDB:  sqliteMirror,
-	}, nil
+	voiceSpool, err := voice.NewSpool(a.cfg.VoiceSpoolPath)
+	if err != nil {
+		return fmt.Errorf("initialize voice spool: %w", err)
+	}
+
+	transcriber, _ := buildTranscriber(a.cfg)
+	var fallback stt.Transcriber
+	if a.cfg.STTFallbackCommand != "" {
+		fallback = stt.NewCommandTranscriber(a.cfg.STTFallbackCommand)
+	}
+
+	a.voiceMirrorDB = voice.NewSQLiteMirror(a.cfg.DBPath)
+	voiceMirror := voice.NewMultiMirror(
+		a.voiceMirrorDB,
+		voice.NewQdrantMirror(
+			a.cfg.QdrantURL, a.cfg.QdrantAPIKey,
+			a.cfg.QdrantCollection, a.cfg.QdrantEmbeddingModel,
+			a.cfg.OllamaURL,
+		),
+	)
+
+	a.voiceProcessor = voice.NewProcessor(
+		voiceSpool, transcriber, fallback,
+		voiceBotDispatcher{bot: a.bot},
+		voice.Config{
+			PollInterval:       time.Duration(a.cfg.VoicePollIntervalMS) * time.Millisecond,
+			HeartbeatPath:      a.cfg.VoiceHeartbeatPath,
+			HeartbeatFreshness: time.Duration(a.cfg.VoiceHeartbeatFreshSec) * time.Second,
+			WakePhrase:         a.cfg.VoiceWakePhrase,
+			DefaultUserID:      a.cfg.VoiceReplyUserID,
+			DefaultChatID:      a.cfg.VoiceReplyChatID,
+			SoftCapDaily:       a.cfg.GroqSoftCapDaily,
+			HardCapDaily:       a.cfg.GroqHardCapDaily,
+			PrimaryLabel:       a.cfg.STTProvider,
+			Mirror:             voiceMirror,
+		},
+	)
+
+	if a.cfg.VoiceCaptureEnabled {
+		if a.cfg.VoiceCaptureCommand == "" {
+			return fmt.Errorf("voice capture is enabled but voice_capture_command is missing")
+		}
+		a.voiceCapture = voice.NewCaptureWorker(
+			voiceSpool,
+			voice.NewCommandCaptureSource(a.cfg.VoiceCaptureCommand, map[string]string{
+				"AURELIA_VOICE_WAKE_PHRASE": a.cfg.VoiceWakePhrase,
+				"AURELIA_VOICE_DROP_PATH":   a.cfg.VoiceDropPath,
+				"AURELIA_VOICE_USER_ID":     strconv.FormatInt(a.cfg.VoiceReplyUserID, 10),
+				"AURELIA_VOICE_CHAT_ID":     strconv.FormatInt(a.cfg.VoiceReplyChatID, 10),
+			}),
+			voice.CaptureConfig{
+				PollInterval:       time.Duration(a.cfg.VoiceCapturePollMS) * time.Millisecond,
+				HeartbeatPath:      a.cfg.VoiceCaptureHeartbeat,
+				HeartbeatFreshness: time.Duration(a.cfg.VoiceCaptureFreshSec) * time.Second,
+				DefaultUserID:      a.cfg.VoiceReplyUserID,
+				DefaultChatID:      a.cfg.VoiceReplyChatID,
+				DefaultSource:      "capture",
+			},
+		)
+	}
+
+	return nil
+}
+
+func (a *app) initServers(logger *slog.Logger) {
+	healthSrv := health.NewServer(8484)
+	registerAuxiliaryHealthChecks(healthSrv, a.cfg, a.resolver, a.llmProvider)
+
+	healthSrv.RegisterRoute("/metrics", promhttp.Handler())
+	healthSrv.RegisterRoute("/v1/router/dry-run", gateway.NewDryRunHandler(gateway.NewPlanner()))
+
+	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
+		healthSrv.RegisterRoute("/v1/router/status", gw.StatusHandler())
+	}
+	if a.voiceProcessor != nil {
+		healthSrv.RegisterCheck("voice_processor", a.voiceProcessor.HealthCheck)
+		healthSrv.RegisterRoute("/v1/voice/status", a.voiceProcessor.StatusHandler())
+	}
+	if a.voiceCapture != nil {
+		healthSrv.RegisterCheck("voice_capture", a.voiceCapture.HealthCheck)
+		healthSrv.RegisterRoute("/v1/voice/capture/status", a.voiceCapture.StatusHandler())
+	}
+	a.healthServer = healthSrv
 }
 
 func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (closableLLMProvider, error) {
-	_ = resolver
 	if (cfg.LLMProvider == "openrouter" || cfg.LLMProvider == "ollama") && cfg.OpenRouterAPIKey != "" {
 		return gateway.NewProvider(cfg)
 	}
@@ -371,48 +400,31 @@ func buildTranscriber(cfg *config.AppConfig) (stt.Transcriber, error) {
 
 func (a *app) start() {
 	logger := observability.Logger("cmd.app")
-
 	go func() {
 		if err := a.cronScheduler.Start(a.cronCtx); err != nil && err != context.Canceled {
 			logger.Warn("cron scheduler stopped with error", slog.Any("err", err))
 		}
 	}()
-
 	if a.heartbeat != nil {
-		if err := a.heartbeat.Start(); err != nil {
-			logger.Warn("failed to start heartbeat service", slog.Any("err", err))
-		}
+		_ = a.heartbeat.Start()
 	}
-
 	if a.healthServer != nil {
-		if err := a.healthServer.Start(); err != nil {
-			logger.Warn("failed to start health server", slog.Any("err", err))
-		}
+		_ = a.healthServer.Start()
 	}
 	if a.voiceProcessor != nil {
-		if err := a.voiceProcessor.Start(); err != nil {
-			logger.Warn("failed to start voice processor", slog.Any("err", err))
-		}
+		_ = a.voiceProcessor.Start()
 	}
 	if a.voiceCapture != nil {
-		if err := a.voiceCapture.Start(); err != nil {
-			logger.Warn("failed to start voice capture worker", slog.Any("err", err))
-		}
+		_ = a.voiceCapture.Start()
 	}
 
 	dashboard.RegisterRoute("/api/squad", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		if err := json.NewEncoder(w).Encode(agent.GetFixedSquad()); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		_ = json.NewEncoder(w).Encode(agent.GetFixedSquad())
 	})
 	dashboard.RegisterRoute("/api/commands", dashboard.HandleCommands)
-
-	if err := dashboard.StartServer(logger); err != nil {
-		logger.Warn("failed to start ultratrink dashboard", slog.Any("err", err))
-	}
-
+	_ = dashboard.StartServer(logger)
 	go a.bot.Start()
 }
 
@@ -435,7 +447,30 @@ func (a *app) shutdown(ctx context.Context) {
 	if a.bot != nil {
 		a.bot.Stop()
 	}
-	_ = ctx
+}
+
+func (a *app) close() {
+	if a.taskStore != nil {
+		_ = a.taskStore.Close()
+	}
+	if a.mcpManager != nil {
+		_ = a.mcpManager.Close()
+	}
+	if a.cronStore != nil {
+		_ = a.cronStore.Close()
+	}
+	if a.mem != nil {
+		_ = a.mem.Close()
+	}
+	if a.voiceMirrorDB != nil {
+		_ = a.voiceMirrorDB.Close()
+	}
+	if a.llmProvider != nil {
+		a.llmProvider.Close()
+	}
+	if a.instanceLock != nil {
+		_ = a.instanceLock.Release()
+	}
 }
 
 type voiceBotDispatcher struct {
@@ -447,44 +482,6 @@ func (d voiceBotDispatcher) DispatchVoice(ctx context.Context, userID, chatID in
 		return fmt.Errorf("telegram bot dispatcher unavailable")
 	}
 	return d.bot.ProcessExternalInput(ctx, userID, chatID, text, requiresAudio)
-}
-
-func (a *app) close() {
-	logger := observability.Logger("cmd.app")
-
-	if a.taskStore != nil {
-		if err := a.taskStore.Close(); err != nil {
-			logger.Warn("failed to close team task store", slog.Any("err", err))
-		}
-	}
-	if a.mcpManager != nil {
-		if err := a.mcpManager.Close(); err != nil {
-			logger.Warn("failed to close MCP manager", slog.Any("err", err))
-		}
-	}
-	if a.cronStore != nil {
-		if err := a.cronStore.Close(); err != nil {
-			logger.Warn("failed to close cron store", slog.Any("err", err))
-		}
-	}
-	if a.mem != nil {
-		if err := a.mem.Close(); err != nil {
-			logger.Warn("failed to close memory manager", slog.Any("err", err))
-		}
-	}
-	if a.voiceMirrorDB != nil {
-		if err := a.voiceMirrorDB.Close(); err != nil {
-			logger.Warn("failed to close voice sqlite mirror", slog.Any("err", err))
-		}
-	}
-	if a.llmProvider != nil {
-		a.llmProvider.Close()
-	}
-	if a.instanceLock != nil {
-		if err := a.instanceLock.Release(); err != nil {
-			logger.Warn("failed to release instance lock", slog.Any("err", err))
-		}
-	}
 }
 
 func buildCronScheduler(

@@ -84,12 +84,12 @@ func (p *OpenAICompatibleProvider) GenerateContent(
 		return nil, err
 	}
 
-	respBody, err := p.doChatCompletionRequest(ctx, reqBody)
+	respBody, headers, err := p.doChatCompletionRequest(ctx, reqBody)
 	if err != nil {
 		return nil, err
 	}
 
-	return parseChatCompletionResponse(respBody)
+	return parseChatCompletionResponse(respBody, headers)
 }
 
 func buildOpenAICompatibleRequest(
@@ -185,15 +185,15 @@ func buildOpenAICompatibleContent(parts []agent.ContentPart) []map[string]any {
 	return content
 }
 
-func (p *OpenAICompatibleProvider) doChatCompletionRequest(ctx context.Context, reqBody map[string]any) ([]byte, error) {
+func (p *OpenAICompatibleProvider) doChatCompletionRequest(ctx context.Context, reqBody map[string]any) ([]byte, http.Header, error) {
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.baseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create http request: %w", err)
+		return nil, nil, fmt.Errorf("failed to create http request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -209,18 +209,18 @@ func (p *OpenAICompatibleProvider) doChatCompletionRequest(ctx context.Context, 
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("http request failed: %w", err)
+		return nil, nil, fmt.Errorf("http request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		if isVisionUnsupportedAPIResponse(resp.StatusCode, respBody) {
-			return nil, VisionUnsupportedError{provider: p.provider, model: p.model}
+			return nil, nil, VisionUnsupportedError{provider: p.provider, model: p.model}
 		}
-		return nil, fmt.Errorf("openai-compatible API error: %d, response: %s", resp.StatusCode, string(respBody))
+		return nil, nil, fmt.Errorf("openai-compatible API error: %d, response: %s", resp.StatusCode, string(respBody))
 	}
-	return respBody, nil
+	return respBody, resp.Header, nil
 }
 
 func isVisionUnsupportedAPIResponse(statusCode int, body []byte) bool {
