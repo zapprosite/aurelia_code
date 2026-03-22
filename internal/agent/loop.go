@@ -28,6 +28,13 @@ type Loop struct {
 	catalogTopK int
 	// memoryAssembler consolida informações históricas e RAG
 	memoryAssembler *memory.ContextAssembler
+	// semanticRouter filtra tools por intenção vetorial embeddada (Sub-5)
+	semanticRouter SemanticToolRouter
+}
+
+// SemanticToolRouter localiza as ferramentas mais prováveis no Qdrant Embeddings
+type SemanticToolRouter interface {
+	Search(ctx context.Context, query string, limit int) ([]string, error)
 }
 
 // NewLoop constructs an agent loop. Pass -1 for unlimited iterations.
@@ -53,6 +60,12 @@ func (l *Loop) WithToolCatalog(catalog *ToolCatalog, k int) *Loop {
 // WithMemoryAssembler atrela o pipeline de RAG cognitivo ao agente.
 func (l *Loop) WithMemoryAssembler(assembler *memory.ContextAssembler) *Loop {
 	l.memoryAssembler = assembler
+	return l
+}
+
+// WithSemanticRouter define um roteador avançado de tools baseado em embeddings geográficos/semânticos.
+func (l *Loop) WithSemanticRouter(router SemanticToolRouter) *Loop {
+	l.semanticRouter = router
 	return l
 }
 
@@ -86,8 +99,50 @@ func (l *Loop) RunWithOptions(ctx context.Context, systemPrompt string, history 
 		}
 	}
 
-	// Sub-1: ToolCatalog — filtra tools por relevância léxica ao prompt da mensagem mais recente.
-	if l.catalog != nil && l.catalogTopK > 0 && queryHint != "" {
+	var toolsFiltered bool
+
+	// Sub-5: Semantic Skill Router — tenta buscar as top-K tools correspondentes à query vetorialmente (Qdrant)
+	if l.semanticRouter != nil && l.catalogTopK > 0 && queryHint != "" {
+		logger.Debug("using semantic router for tool filtering", slog.String("query", queryHint))
+		matchedNames, err := l.semanticRouter.Search(ctx, queryHint, l.catalogTopK)
+		if err == nil && len(matchedNames) > 0 {
+			var semanticTools []Tool
+			coreNames := coreToolNames()
+			added := make(map[string]bool)
+
+			// 1. Core Tools sempre carregadas no baseline da VM de Raciocínio
+			defs := l.registry.GetDefinitions()
+			for _, def := range defs {
+				if coreNames[def.Name] {
+					semanticTools = append(semanticTools, def)
+					added[def.Name] = true
+				}
+			}
+			
+			// 2. Map vetorizado com fallback lex para extrair os Schemas completos
+			for _, mname := range matchedNames {
+				if added[mname] {
+					continue
+				}
+				for _, def := range defs {
+					if def.Name == mname {
+						semanticTools = append(semanticTools, def)
+						added[mname] = true
+						break
+					}
+				}
+			}
+
+			tools = semanticTools
+			toolsFiltered = true
+			logger.Debug("semantic skill router matches", slog.Any("names", matchedNames))
+		} else if err != nil {
+			logger.Warn("semantic router error, falling back to lexical", slog.Any("err", err))
+		}
+	}
+
+	// Sub-1: ToolCatalog Fallback Lexico — filtra tools por relevância de tokens
+	if !toolsFiltered && l.catalog != nil && l.catalogTopK > 0 && queryHint != "" {
 		filtered := l.catalog.MatchForTask(queryHint, l.catalogTopK)
 		if len(filtered) > 0 {
 			tools = filtered

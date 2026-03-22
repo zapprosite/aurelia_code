@@ -177,7 +177,7 @@ As 7 capacidades que transformam a Aurélia em engenheiro de software autônomo:
 - [x] **Sub-2:** Execution DNA System (`internal/persona/execution_dna.go`)
 - [x] **Sub-3:** Planning Loop PREV (`internal/agent/planner.go` e `loop.go`)
 - [x] **Sub-4:** Codebase Symbol Map (`internal/agent/codebase_map.go`)
-- [ ] **Sub-5:** Semantic Skill Router (`internal/skill/semantic_router.go`)
+- [x] **Sub-5:** Semantic Skill Router (`internal/skill/semantic_router.go`)
 - [ ] **Sub-6:** Dashboard Cockpit / CMD+K (`frontend/src/components/dashboard/`)
 - [x] **Sub-7:** Memory Context Assembler (`internal/memory/context_assembler.go`)
 
