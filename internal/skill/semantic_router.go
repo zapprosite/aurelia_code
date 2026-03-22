@@ -14,7 +14,6 @@ import (
 	"github.com/kocar/aurelia/internal/observability"
 )
 
-const defaultOllamaEmbedURL = "http://127.0.0.1:11434/api/embed"
 const defaultSemanticSkillsCollection = "aurelia_skills"
 const defaultSemanticSkillsEmbedding = "bge-m3"
 
@@ -31,7 +30,7 @@ type SemanticRouter struct {
 }
 
 // NewSemanticRouter creates a new vector-based skill router.
-func NewSemanticRouter(qdrantURL, qdrantAPIKey, collection, embeddingModel string) *SemanticRouter {
+func NewSemanticRouter(qdrantURL, qdrantAPIKey, collection, embeddingModel, ollamaURL string) *SemanticRouter {
 	col := strings.TrimSpace(collection)
 	if col == "" {
 		col = defaultSemanticSkillsCollection
@@ -45,7 +44,7 @@ func NewSemanticRouter(qdrantURL, qdrantAPIKey, collection, embeddingModel strin
 		qdrantAPIKey:   strings.TrimSpace(qdrantAPIKey),
 		collection:     col,
 		embeddingModel: emb,
-		embedURL:       defaultOllamaEmbedURL,
+		embedURL:       strings.TrimRight(strings.TrimSpace(ollamaURL), "/") + "/api/embed",
 		client:         &http.Client{Timeout: 30 * time.Second}, // Sync can take longer for batches
 	}
 }

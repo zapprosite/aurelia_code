@@ -94,6 +94,7 @@ type AppConfig struct {
 	QdrantAPIKey             string
 	QdrantCollection         string
 	QdrantEmbeddingModel     string
+	OllamaURL                string
 }
 
 type fileConfig struct {
@@ -150,6 +151,7 @@ type fileConfig struct {
 	QdrantAPIKey             string  `json:"qdrant_api_key"`
 	QdrantCollection         string  `json:"qdrant_collection"`
 	QdrantEmbeddingModel     string  `json:"qdrant_embedding_model"`
+	OllamaURL                string  `json:"ollama_url"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
@@ -250,6 +252,9 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("SUPABASE_SERVICE_ROLE_KEY"); env != "" {
 		cfg.SupabaseServiceRoleKey = env
 	}
+	if env := os.Getenv("OLLAMA_URL"); env != "" {
+		cfg.OllamaURL = env
+	}
 }
 
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {
@@ -288,6 +293,7 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		SupabaseEventsTable:      defaultSupabaseEventsTable,
 		QdrantCollection:         defaultQdrantCollection,
 		QdrantEmbeddingModel:     defaultQdrantEmbeddingModel,
+		OllamaURL:                "http://127.0.0.1:11434",
 	}
 }
 
@@ -499,6 +505,9 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.QdrantEmbeddingModel == "" {
 		cfg.QdrantEmbeddingModel = defaults.QdrantEmbeddingModel
 	}
+	if cfg.OllamaURL == "" {
+		cfg.OllamaURL = defaults.OllamaURL
+	}
 	return cfg
 }
 
@@ -578,6 +587,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		QdrantAPIKey:             cfg.QdrantAPIKey,
 		QdrantCollection:         cfg.QdrantCollection,
 		QdrantEmbeddingModel:     cfg.QdrantEmbeddingModel,
+		OllamaURL:                cfg.OllamaURL,
 	}
 }
 
