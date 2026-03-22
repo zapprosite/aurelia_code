@@ -123,6 +123,40 @@ func (m *MemoryManager) ListRecentNotes(ctx context.Context, conversationID stri
 	return notes, nil
 }
 
+// GetGlobalTopics retrieves the newest notes globally across all conversations, useful for cross-session Planning RAG.
+func (m *MemoryManager) GetGlobalTopics(ctx context.Context, limit int) ([]Note, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	query := `
+		SELECT id, conversation_id, topic, summary, kind, importance, source, created_at
+		FROM memory_notes
+		ORDER BY created_at DESC, id DESC
+		LIMIT ?
+	`
+	rows, err := m.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query global notes: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var notes []Note
+	for rows.Next() {
+		var note Note
+		if err := rows.Scan(&note.ID, &note.ConversationID, &note.Topic, &note.Summary, &note.Kind, &note.Importance, &note.Source, &note.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan note row: %w", err)
+		}
+		notes = append(notes, note)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	reverseNotes(notes)
+	return notes, nil
+}
+
 func reverseNotes(notes []Note) {
 	for i, j := 0, len(notes)-1; i < j; i, j = i+1, j-1 {
 		notes[i], notes[j] = notes[j], notes[i]

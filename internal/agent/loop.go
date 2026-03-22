@@ -11,8 +11,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kocar/aurelia/internal/dashboard"
+	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/observability"
 )
+
 
 // Loop executes the ReAct logic
 type Loop struct {
@@ -24,6 +26,8 @@ type Loop struct {
 	catalog *ToolCatalog
 	// catalogTopK é o número máximo de tools retornadas pelo catalog filter.
 	catalogTopK int
+	// memoryAssembler consolida informações históricas e RAG
+	memoryAssembler *memory.ContextAssembler
 }
 
 // NewLoop constructs an agent loop. Pass -1 for unlimited iterations.
@@ -43,6 +47,12 @@ func NewLoop(llm LLMProvider, registry *ToolRegistry, maxIterations int) *Loop {
 func (l *Loop) WithToolCatalog(catalog *ToolCatalog, k int) *Loop {
 	l.catalog = catalog
 	l.catalogTopK = k
+	return l
+}
+
+// WithMemoryAssembler atrela o pipeline de RAG cognitivo ao agente.
+func (l *Loop) WithMemoryAssembler(assembler *memory.ContextAssembler) *Loop {
+	l.memoryAssembler = assembler
 	return l
 }
 
@@ -68,21 +78,22 @@ func (l *Loop) RunWithOptions(ctx context.Context, systemPrompt string, history 
 	tools := l.registry.FilterDefinitions(allowedTools)
 	// Sub-1: ToolCatalog — filtra tools por relevância léxica ao prompt da mensagem mais recente.
 	// Quando o catalog está ativo, reduz drasticamente o número de tools no contexto da LLM.
-	if l.catalog != nil && l.catalogTopK > 0 {
-		var queryHint string
-		for i := len(currentHistory) - 1; i >= 0; i-- {
-			if currentHistory[i].Role == "user" {
-				queryHint = currentHistory[i].Content
-				break
-			}
-		}
-		if queryHint != "" {
-			filtered := l.catalog.MatchForTask(queryHint, l.catalogTopK)
-			if len(filtered) > 0 {
-				tools = filtered
-			}
+	var queryHint string
+	for i := len(currentHistory) - 1; i >= 0; i-- {
+		if currentHistory[i].Role == "user" {
+			queryHint = currentHistory[i].Content
+			break
 		}
 	}
+
+	// Sub-1: ToolCatalog — filtra tools por relevância léxica ao prompt da mensagem mais recente.
+	if l.catalog != nil && l.catalogTopK > 0 && queryHint != "" {
+		filtered := l.catalog.MatchForTask(queryHint, l.catalogTopK)
+		if len(filtered) > 0 {
+			tools = filtered
+		}
+	}
+
 	// HARD OVERRIDE: Forçar identidade Linux/Ubuntu no topo de cada prompt
 	systemPrompt = "### ENVIRONMENT CONTEXT\n- OS: Linux (Ubuntu 24.04 LTS)\n- SHELL: Bash (/bin/bash)\n- ARCH: amd64\n- RESTRICTION: NUNCA use PowerShell ou comandos Windows. Use apenas Bash nativo.\n\n" + systemPrompt
 
@@ -91,7 +102,7 @@ func (l *Loop) RunWithOptions(ctx context.Context, systemPrompt string, history 
 
 	systemPrompt = augmentSystemPromptWithToolGuidance(systemPrompt, tools)
 	systemPrompt = augmentSystemPromptWithRuntimeCapabilities(systemPrompt, tools)
-	systemPrompt = augmentSystemPromptWithPREV(systemPrompt, currentPhase)
+	systemPrompt = l.augmentSystemPromptWithPREV(ctx, systemPrompt, currentPhase, queryHint)
 
 	// DIANOGSTIC LOG: Check what tools are actually being sent to the LLM
 	var toolNames []string
@@ -274,7 +285,7 @@ func augmentSystemPromptWithRuntimeCapabilities(systemPrompt string, tools []Too
 	return base + "\n\n" + strings.Join(lines, "\n")
 }
 
-func augmentSystemPromptWithPREV(systemPrompt string, currentPhase string) string {
+func (l *Loop) augmentSystemPromptWithPREV(ctx context.Context, systemPrompt string, currentPhase string, queryHint string) string {
 	var lines []string
 	lines = append(lines, "# PREV STATE MACHINE (PLAN, REVIEW, EXECUTE, VERIFY)")
 	lines = append(lines, fmt.Sprintf("SUA FASE ATUAL E: %s", currentPhase))
@@ -286,6 +297,14 @@ func augmentSystemPromptWithPREV(systemPrompt string, currentPhase string) strin
 		if mapSummary := GetCodebaseMapSummary(); mapSummary != "" {
 			lines = append(lines, "\n### CODEBASE ARCHITECTURE MAP (.context/docs/codebase-map.json)\n"+mapSummary)
 			lines = append(lines, "DICA: O mapa acima resume a arquitetura. Use-o para focar seu `list_dir` ou `read_file` nos arquivos/diretorios exatos.\n")
+		}
+
+		if l.memoryAssembler != nil && queryHint != "" {
+			historicContext := l.memoryAssembler.AssembleContext(ctx, queryHint)
+			if historicContext != "" {
+				lines = append(lines, "\n### MEMÓRIA DE LONGO PRAZO E CONTEXTO HISTÓRICO (RAG)\n"+historicContext)
+				lines = append(lines, "DICA: O contexto acima é trazido do Qdrant e SQLite para evitar que você repita erros ou perca arquiteturas decididas anteriormente.\n")
+			}
 		}
 
 		lines = append(lines, "RESTRICAO: Nao escreva codigo definitivo nem aplique simulacoes complexas antes de tracar a estrategia local.")
