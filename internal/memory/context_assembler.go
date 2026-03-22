@@ -20,12 +20,12 @@ type ContextAssembler struct {
 	client         *http.Client
 }
 
-func NewContextAssembler(qdrantURL, apiKey, collection, embeddingModel string, mem *MemoryManager) *ContextAssembler {
+func NewContextAssembler(qdrantURL, apiKey, collection, embeddingModel, ollamaURL string, mem *MemoryManager) *ContextAssembler {
 	return &ContextAssembler{
 		qdrantURL:        strings.TrimRight(strings.TrimSpace(qdrantURL), "/"),
 		qdrantAPIKey:     strings.TrimSpace(apiKey),
 		qdrantCollection: strings.TrimSpace(collection),
-		embedURL:         "http://127.0.0.1:11434/api/embed", // default ollama local
+		embedURL:         strings.TrimRight(strings.TrimSpace(ollamaURL), "/") + "/api/embed",
 		embeddingModel:   strings.TrimSpace(embeddingModel),
 		mem:              mem,
 		client:           &http.Client{Timeout: 10 * time.Second},

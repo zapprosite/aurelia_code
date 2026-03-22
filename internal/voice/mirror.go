@@ -11,7 +11,6 @@ import (
 	"time"
 )
 
-const defaultOllamaEmbedURL = "http://127.0.0.1:11434/api/embed"
 const (
 	defaultSupabaseMirrorTable    = "aurelia_voice_events"
 	defaultQdrantMirrorCollection = "conversation_memory"
@@ -118,7 +117,7 @@ type QdrantMirror struct {
 	ensureErr      error
 }
 
-func NewQdrantMirror(baseURL, apiKey, collection, embeddingModel string) *QdrantMirror {
+func NewQdrantMirror(baseURL, apiKey, collection, embeddingModel, ollamaURL string) *QdrantMirror {
 	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
 	collection = strings.TrimSpace(collection)
 	if collection == "" {
@@ -133,7 +132,7 @@ func NewQdrantMirror(baseURL, apiKey, collection, embeddingModel string) *Qdrant
 		apiKey:         strings.TrimSpace(apiKey),
 		collection:     collection,
 		embeddingModel: embeddingModel,
-		embedURL:       defaultOllamaEmbedURL,
+		embedURL:       strings.TrimRight(strings.TrimSpace(ollamaURL), "/") + "/api/embed",
 		client:         &http.Client{Timeout: 15 * time.Second},
 	}
 }

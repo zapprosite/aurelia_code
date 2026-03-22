@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -156,7 +157,10 @@ func bootstrapApp(args []string) (*app, error) {
 		}
 	}
 
-	assembler := memory.NewContextAssembler(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel, mem)
+	// Proactive warm-up for local models to reduce latency
+	go performOllamaWarmup(cfg)
+
+	assembler := memory.NewContextAssembler(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel, cfg.OllamaURL, mem)
 
 	loop := agent.NewLoop(llmProvider, registry, cfg.MaxIterations).
 		WithMemoryAssembler(assembler).
@@ -166,7 +170,7 @@ func bootstrapApp(args []string) (*app, error) {
 	skillExecutor := skill.NewExecutor(loop)
 	skillInstaller := skill.NewInstaller(resolver.Skills(), projectSkillsDir)
 	
-	semanticRouter := skill.NewSemanticRouter(cfg.QdrantURL, cfg.QdrantAPIKey, "aurelia_skills", cfg.QdrantEmbeddingModel)
+	semanticRouter := skill.NewSemanticRouter(cfg.QdrantURL, cfg.QdrantAPIKey, "aurelia_skills", cfg.QdrantEmbeddingModel, cfg.OllamaURL)
 	loop.WithSemanticRouter(semanticRouter)
 
 	if loadedSkills, err := skillLoader.LoadAll(); err == nil {
@@ -225,7 +229,7 @@ func bootstrapApp(args []string) (*app, error) {
 		voiceMirror := voice.NewMultiMirror(
 			sqliteMirror,
 			voice.NewSupabaseMirror(cfg.SupabaseURL, cfg.SupabaseServiceRoleKey, cfg.SupabaseEventsTable),
-			voice.NewQdrantMirror(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel),
+			voice.NewQdrantMirror(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel, cfg.OllamaURL),
 		)
 		voiceProcessor = voice.NewProcessor(voiceSpool, transcriber, fallback, voiceBotDispatcher{bot: bot}, voice.Config{
 			PollInterval:       time.Duration(cfg.VoicePollIntervalMS) * time.Millisecond,
@@ -551,4 +555,44 @@ func performPreflightCheck(ctx context.Context, cfg *config.AppConfig) error {
 		return fmt.Errorf("auth rejected HTTP %d", resp.StatusCode)
 	}
 	return nil
+}
+
+func performOllamaWarmup(cfg *config.AppConfig) {
+	if cfg.LLMProvider != "ollama" {
+		return
+	}
+	logger := observability.Logger("ollama.warmup")
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	url := strings.TrimRight(cfg.OllamaURL, "/") + "/api/generate"
+	payload := map[string]any{
+		"model":  cfg.LLMModel,
+		"prompt": "", // Empty prompt just triggers load
+		"stream": false,
+	}
+	body, _ := json.Marshal(payload)
+	
+	logger.Info("warming up local model", "model", cfg.LLMModel)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	resp, err := http.DefaultClient.Do(req)
+	if err == nil {
+		resp.Body.Close()
+		logger.Info("model warmed up successfully", "model", cfg.LLMModel)
+	} else {
+		logger.Warn("model warm up failed", "model", cfg.LLMModel, "err", err)
+	}
+
+	// Also warm up embedding model
+	embedURL := strings.TrimRight(cfg.OllamaURL, "/") + "/api/embed"
+	embedPayload := map[string]any{
+		"model": cfg.QdrantEmbeddingModel,
+		"input": "warmup",
+	}
+	ebody, _ := json.Marshal(embedPayload)
+	req2, _ := http.NewRequestWithContext(ctx, http.MethodPost, embedURL, bytes.NewReader(ebody))
+	if resp2, err := http.DefaultClient.Do(req2); err == nil {
+		resp2.Body.Close()
+		logger.Info("embedding model warmed up successfully", "model", cfg.QdrantEmbeddingModel)
+	}
 }
