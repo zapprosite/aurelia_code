@@ -12,8 +12,8 @@ import (
 const (
 	defaultMaxIterations        = 500
 	defaultMemoryWindowSize     = 20
-	defaultLLMProvider          = "kimi"
-	defaultLLMModel             = "kimi-k2-thinking"
+	defaultLLMProvider          = "ollama"
+	defaultLLMModel             = "gemma3:12b"
 	defaultSTTProvider          = "groq"
 	defaultTTSProvider          = "openai_compatible"
 	defaultLocalTTSBaseURL = "http://127.0.0.1:8011"
@@ -696,7 +696,7 @@ func defaultLLMModelForProvider(provider string) string {
 	case "kilo":
 		return "gpt-5.4"
 	case "ollama":
-		return "qwen3.5:9b"
+		return "gemma3:12b"
 	case "openrouter":
 		return "openrouter/auto"
 	case "zai":
