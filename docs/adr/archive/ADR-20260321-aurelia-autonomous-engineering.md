@@ -1,3 +1,6 @@
+> [!NOTE]
+> Status: ✅ Arquivado / Concluído em 22/03/2026
+
 ---
 title: "Aurelia Autonomous Engineering — ULTRATRINK"
 slug: aurelia-autonomous-engineering

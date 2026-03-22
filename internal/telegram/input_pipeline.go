@@ -28,14 +28,18 @@ type inputSession struct {
 
 
 func (bc *BotController) processInput(c telebot.Context, text string, requiresAudio bool) error {
+	session := newInputSession(c, text)
+	return bc.processInputSession(c, session, requiresAudio)
+}
+
+func (bc *BotController) processInputSession(c telebot.Context, session inputSession, requiresAudio bool) error {
 	logger := observability.Logger("telegram.pipeline")
-	text = strings.ReplaceAll(text, "\x00", "")
+	session.text = strings.ReplaceAll(session.text, "\x00", "")
 
 	if state, ok := bc.popPendingBootstrap(c.Sender().ID); ok {
-		return bc.completeBootstrapProfile(c, state, text)
+		return bc.completeBootstrapProfile(c, state, session.text)
 	}
 
-	session := newInputSession(c, text)
 	if handled, err := bc.handleMemoryCommand(c, session); handled {
 		return err
 	}
@@ -48,7 +52,7 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 		Type:      "user_message",
 		Agent:     "User",
 		Action:    "Mensagem recebida",
-		Payload:   text,
+		Payload:   session.text,
 		Timestamp: time.Now().Format(time.Kitchen),
 	})
 

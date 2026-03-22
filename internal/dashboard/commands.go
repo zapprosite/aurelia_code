@@ -4,15 +4,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/kocar/aurelia/internal/plan"
 )
 
 // CommandRequest representa um comando vindo do Cockpit (Frontend)
 type CommandRequest struct {
-	Action  string            `json:"action"`
-	Params  map[string]string `json:"params,omitempty"`
+	Action string            `json:"action"`
+	Params map[string]string `json:"params"`
 }
 
-// HandleCommands processa as requisições de controle do Dashboard
+// HandleCommands processa as requisições do Dashboard
 func HandleCommands(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -21,50 +23,48 @@ func HandleCommands(w http.ResponseWriter, r *http.Request) {
 
 	var req CommandRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Feedback imediato no Feed via SSE
-	Publish(Event{
-		Type:      "system_command",
-		Agent:     "Cockpit",
-		Action:    "Executing: " + req.Action,
-		Timestamp: time.Now().Format("15:04:05"),
-		Payload:   req.Params,
-	})
-
-	// Dispatcher de lógica (Placeholder por enquanto, integrará com agent/loop e config)
 	switch req.Action {
-	case "sync_ai":
-		// TODO: Trigger context sync workflow
-		go func() {
-			time.Sleep(1 * time.Second)
-			Publish(Event{
-				Type: "system",
-				Agent: "System",
-				Action: "Sync Complete",
-				Timestamp: time.Now().Format("15:04:05"),
-				Payload: "Codebase memory refreshed.",
-			})
-		}()
-	case "flush_memory":
-		// TODO: Clear agent loop memory
-		Publish(Event{
-			Type: "system",
-			Agent: "System",
-			Action: "Memory Flushed",
-			Timestamp: time.Now().Format("15:04:05"),
-		})
 	case "set_model":
 		model := req.Params["model"]
 		Publish(Event{
-			Type: "system",
-			Agent: "Config",
-			Action: "Model Switch Requested",
-			Payload: "Target: " + model,
+			Type:      "agent_update",
+			Agent:     "System",
+			Action:    "Modelo alterado para " + model,
+			Payload:   map[string]string{"model": model},
 			Timestamp: time.Now().Format("15:04:05"),
 		})
+
+	case "approve_plan", "reject_plan":
+		planID := req.Params["plan_id"]
+		status := "approved"
+		if req.Action == "reject_plan" {
+			status = "rejected"
+		}
+		
+		// Atualizar o Store global (Acessando pacote neutro para evitar ciclo)
+		plan.GlobalPlanStore.UpdateStatus(planID, status)
+
+		// Notificar Cockpit e Agente via SSE
+		Publish(Event{
+			Type:    "agent_plan",
+			Agent:   "User",
+			Action:  "Plano " + status,
+			Payload: map[string]string{"id": planID, "status": status},
+		})
+
+		// Evento de Segurança no log
+		Publish(Event{
+			Type: "security_alert",
+			Agent: "Dashboard",
+			Action: "Plan Authority Override",
+			Payload: "Plano " + planID + " marcado como " + status,
+			Timestamp: time.Now().Format("15:04:05"),
+		})
+
 	default:
 		http.Error(w, "Unknown action", http.StatusNotFound)
 		return

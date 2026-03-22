@@ -1,3 +1,6 @@
+> [!NOTE]
+> Status: ✅ Arquivado / Concluído em 22/03/2026
+
 # ADR-20260322-dashboard-cockpit-cmdk
 
 ## Status

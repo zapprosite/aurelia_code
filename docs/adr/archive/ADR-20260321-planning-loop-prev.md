@@ -1,3 +1,6 @@
+> [!NOTE]
+> Status: ✅ Arquivado / Concluído em 22/03/2026
+
 ---
 title: "ADR-20260321-planning-loop-prev"
 status: proposed

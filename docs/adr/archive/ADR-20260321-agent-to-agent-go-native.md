@@ -1,3 +1,6 @@
+> [!NOTE]
+> Status: ✅ Arquivado / Concluído em 22/03/2026
+
 # ADR-20260321: Comunicação Agent-to-Agent (Go Nativo)
 
 ## Status

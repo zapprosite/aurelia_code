@@ -1,3 +1,6 @@
+> [!NOTE]
+> Status: ✅ Arquivado / Concluído em 22/03/2026
+
 ---
 title: Política de Modelos, Hardware e Budget de VRAM
 status: accepted
@@ -14,36 +17,33 @@ O projeto operava com um `MODEL.md` na raiz que definia a política de modelos d
 
 ## Decisão
 
-### Hardware
+### Hardware Pinned (Verificado em 2026-03-22)
 
-- CPU: `AMD Ryzen 9 7900X` (Zen 4, iGPU RDNA 2 integrada)
-- GPU: `AMD RX 7900 XTX` (24 GiB VRAM, ROCm)
-- RAM: `32 GiB DDR5 Gen5`
-- Storage: `4 TB NVMe Gen5 (ZFS) + 1 TB NVMe Gen3 (Ubuntu Desktop)`
-- Mobo: `ASUS X670E-Plus`
-- Regra operacional: desktop na iGPU (cabo no onboard), GPU 100% para ML
+- CPU: `AMD Ryzen 9 7900X` (12 Cores, 24 Threads) → **Master of Voice & Orchestration**
+- GPU: `NVIDIA GeForce RTX 4090` (24 GiB VRAM) → **Pure Inference Engine**
+- RAM: `32 GiB DDR5 Gen5` → **System Buffer** (Objetivo: Swap < 5%)
 
-### Stack de Modelos Locais
+### Lógica Matemática Pinned (Budget de VRAM)
 
-| Função | Modelo | VRAM | Notas |
-|--------|--------|------|-------|
-| Residente principal (agêntico) | `gemma3:12b` | ~8.1 GiB | Melhor p/ agent instructions (ref. comunidade) |
-| Fallback contexto longo | `qwen3.5:9b` | ~6.6 GiB | 262K ctx, vision, tools, thinking |
-| Escalonamento pesado | `gemma3:27b-it-q4_K_M` | ~17 GiB | Sob demanda, contexto curto |
-| Embedding | `bge-m3` (384-dim) | ~1.2 GiB | Sempre carregado, busca semântica Qdrant |
-| STT | `Groq` (remoto) | 0 GiB | Grátis, PT-BR excelente |
-| TTS | `Kokoro` (local) | 0 GiB | CPU-only |
+| Recurso | Modelo | VRAM Alocada | Notas |
+|--------|--------|--------------|-------|
+| **Cérebro (Primary)** | `gemma3:12b` | 8.1 GiB | Ativo 100% do tempo |
+| **Contexto (Fallback)** | `qwen3.5:9b` | 6.6 GiB | Residente para tarefas longas/multimodais |
+| **Memória (Cognitive)** | `bge-m3` | 1.2 GiB | Residente para busca semântica |
+| **Overhead (System/KV)** | - | ~4.0 GiB | Xorg, Rustdesk, context window, KV cache |
+| **TOTAL PINNED** | - | **~19.9 GiB** | **Segurança: ~4.1 GiB Livres** ✅ |
 
-### Budget de VRAM (contabilizando KV cache + overhead ROCm)
+### Regras da Lógica Matemática
 
-- `gemma3:12b` + bge-m3 + KV + overhead = ~13 GiB → **~11 GiB de folga** ✅
-- `gemma3:27b` + bge-m3 + KV + overhead = ~22 GiB → **~2 GiB de folga** ⚠️ apenas contexto curto
+1.  **Voz no CPU**: O processamento de áudio (Kokoro/STT local se houver) deve usar os 12 cores do 7900X, poupando VRAM para os LLMs.
+2.  **Pinned Residency**: `gemma3:12b`, `qwen3.5:9b` e `bge-m3` devem estar sempre carregados para latência zero.
+3.  **Anti-Swap**: Se a VRAM exceder 22GB ou a RAM 90%, o Agente deve abortar tarefas pesadas de imagem/video para proteger o kernel.
+4.  **Descarte do 27B**: O modelo `gemma3:27b` foi removido por ser matematicamente incompatível com a política de residência multi-modelo.
 
 ### Regras Fechadas
 
-1. `gemma3:12b` é o residente principal para orquestração do enxame agêntico.
-2. `qwen3.5:9b` é o fallback quando a task exige contexto longo (262K vs 128K).
-3. `gemma3:27b-it-q4_K_M` é o escalonamento sob demanda para raciocínio profundo.
+1. `gemma3:12b` é o residente principal.
+2. `gemma3:27b` exige comando explícito e descarregamento de outros LLMs pesados.
 4. `Groq` fica isolado no lane de áudio/STT.
 5. `Kokoro` é o TTS local (CPU-only, zero VRAM).
 6. `Gemini TTS / Sulafat` é a voz pronta imediata da Aurelia (fallback remoto).

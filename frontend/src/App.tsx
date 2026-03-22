@@ -5,10 +5,11 @@ import { Header } from "./components/dashboard/Header";
 import { FeedItem, type FeedItemProps } from "./components/dashboard/FeedItem";
 import { SquadGrid } from "./components/dashboard/SquadGrid";
 import { CommandMenu } from "./components/dashboard/CommandMenu";
+import { PlanViewer, type ActionPlan } from "./components/dashboard/PlanViewer";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Card, CardHeader, CardTitle } from "./components/ui/Card";
 import { Badge } from "./components/ui/Badge";
-import { Brain, Layout, Map, type LucideIcon } from "lucide-react";
+import { Brain, Layout, type LucideIcon } from "lucide-react";
 
 // Initial Feed Placeholder
 const INITIAL_FEED: FeedItemProps[] = [
@@ -26,6 +27,7 @@ const INITIAL_FEED: FeedItemProps[] = [
 function App() {
   const [activeTab, setActiveTab] = React.useState<TabId>("timeline");
   const [feed, setFeed] = React.useState<FeedItemProps[]>(INITIAL_FEED);
+  const [plans, setPlans] = React.useState<ActionPlan[]>([]);
 
   React.useEffect(() => {
     // SSE Connection to Go Backend
@@ -46,7 +48,20 @@ function App() {
           status: "success"
         };
         
-        setFeed(prev => [newItem, ...prev].slice(0, 50)); // Keep last 50 events
+        if (data.type === "agent_plan") {
+           setPlans(prev => {
+              const existing = prev.find(p => p.id === data.payload.id);
+              if (existing) {
+                return prev.map(p => p.id === data.payload.id ? data.payload : p);
+              }
+              return [data.payload, ...prev];
+           });
+           if (data.action.includes("Proposto")) {
+              setFeed(prev => [newItem, ...prev].slice(0, 50));
+           }
+        } else {
+           setFeed(prev => [newItem, ...prev].slice(0, 50));
+        }
       } catch (err) {
         console.error("Error parsing SSE event:", err);
       }
@@ -77,7 +92,6 @@ function App() {
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        {/* Background Ambient Glow */}
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
 
@@ -138,7 +152,17 @@ function App() {
                 )}
 
                 {activeTab === "brain" && <SectionPlaceholder icon={Brain} title="Semantic Cortex" description="Explorador de memória vetorial e documentos de contexto do projeto." />}
-                {activeTab === "roadmap" && <SectionPlaceholder icon={Map} title="Master Roadmap" description="Acompanhamento de Slices, PRD e progresso arquitetural." />}
+                {activeTab === "roadmap" && (
+                  <PlanViewer 
+                    plans={plans} 
+                    onAction={(planId, action) => {
+                       fetch("/api/commands", {
+                          method: "POST",
+                          body: JSON.stringify({ action: `${action}_plan`, params: { plan_id: planId } })
+                       });
+                    }} 
+                  />
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
