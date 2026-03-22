@@ -9,37 +9,6 @@ import (
 	"testing"
 )
 
-func TestSupabaseMirror_MirrorTranscriptPostsEvent(t *testing.T) {
-	t.Parallel()
-
-	var gotPath string
-	var gotAuth string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPath = r.URL.Path
-		gotAuth = r.Header.Get("Authorization")
-		w.WriteHeader(http.StatusCreated)
-	}))
-	defer server.Close()
-
-	mirror := NewSupabaseMirror(server.URL, "secret", "voice_events")
-	if err := mirror.MirrorTranscript(context.Background(), TranscriptEvent{
-		JobID:      "job-1",
-		UserID:     42,
-		ChatID:     42,
-		Source:     "test",
-		Transcript: "ola",
-		Accepted:   true,
-	}); err != nil {
-		t.Fatalf("MirrorTranscript() error = %v", err)
-	}
-	if gotPath != "/rest/v1/voice_events" {
-		t.Fatalf("path = %q", gotPath)
-	}
-	if gotAuth != "Bearer secret" {
-		t.Fatalf("auth = %q", gotAuth)
-	}
-}
-
 func TestQdrantMirror_MirrorTranscriptEmbedsAndUpserts(t *testing.T) {
 	t.Parallel()
 

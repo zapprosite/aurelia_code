@@ -221,7 +221,7 @@ func runOnboardTUI(stdin *os.File, stdout *os.File, resolver *runtime.PathResolv
 
 func newOnboardingUI(cfg config.EditableConfig) *onboardingUI {
 	if cfg.LLMProvider == "" {
-		cfg.LLMProvider = "kimi"
+		cfg.LLMProvider = "ollama"
 	}
 	if cfg.LLMModel == "" {
 		cfg.LLMModel = config.DefaultEditableConfig().LLMModel
@@ -685,11 +685,11 @@ func selectedProviderIndex(provider string) int {
 }
 
 func llmProviderChoices() []string {
-	return []string{"kimi", "anthropic", "google", "kilo", "ollama", "openrouter", "zai", "alibaba", "openai"}
+	return []string{"ollama", "anthropic", "google", "openrouter", "openai"}
 }
 
 func llmProviderLabels() []string {
-	return []string{"Kimi", "Anthropic", "Google", "Kilo Code", "Ollama (local)", "OpenRouter", "Z.ai", "Alibaba", "OpenAI"}
+	return []string{"Ollama (local)", "Anthropic", "Google", "OpenRouter", "OpenAI"}
 }
 
 func llmKeyLabel(provider string) string {
@@ -698,20 +698,14 @@ func llmKeyLabel(provider string) string {
 		return "Anthropic API key"
 	case "google":
 		return "Google API key"
-	case "kilo":
-		return "Kilo API key"
 	case "ollama":
 		return "Ollama local runtime"
 	case "openrouter":
 		return "OpenRouter API key"
-	case "zai":
-		return "Z.ai Coding Plan API key"
-	case "alibaba":
-		return "Alibaba Coding Plan API key"
 	case "openai":
 		return "OpenAI API key"
 	default:
-		return "Kimi API key"
+		return "API key"
 	}
 }
 
@@ -732,16 +726,10 @@ func llmKeyHelp(provider string) string {
 		return "Used for the Anthropic LLM runtime."
 	case "google":
 		return "Used for the Google Gemini LLM runtime."
-	case "kilo":
-		return "Used for the Kilo Gateway LLM runtime."
 	case "ollama":
 		return "No API key required. Uses the local Ollama endpoint on 127.0.0.1:11434."
 	case "openrouter":
 		return "Used for the OpenRouter LLM runtime."
-	case "zai":
-		return "Used for the Z.ai GLM Coding Plan runtime."
-	case "alibaba":
-		return "Used for the Alibaba Coding Plan runtime."
 	case "openai":
 		return "Used for the OpenAI LLM runtime."
 	default:
@@ -755,20 +743,14 @@ func currentLLMKey(cfg config.EditableConfig) string {
 		return cfg.AnthropicAPIKey
 	case "google":
 		return cfg.GoogleAPIKey
-	case "kilo":
-		return cfg.KiloAPIKey
 	case "ollama":
 		return ""
 	case "openrouter":
 		return cfg.OpenRouterAPIKey
-	case "zai":
-		return cfg.ZAIAPIKey
-	case "alibaba":
-		return cfg.AlibabaAPIKey
 	case "openai":
 		return cfg.OpenAIAPIKey
 	default:
-		return cfg.KimiAPIKey
+		return ""
 	}
 }
 
@@ -778,20 +760,12 @@ func setCurrentLLMKey(cfg *config.EditableConfig, value string) {
 		cfg.AnthropicAPIKey = value
 	case "google":
 		cfg.GoogleAPIKey = value
-	case "kilo":
-		cfg.KiloAPIKey = value
 	case "ollama":
 		return
 	case "openrouter":
 		cfg.OpenRouterAPIKey = value
-	case "zai":
-		cfg.ZAIAPIKey = value
-	case "alibaba":
-		cfg.AlibabaAPIKey = value
 	case "openai":
 		cfg.OpenAIAPIKey = value
-	default:
-		cfg.KimiAPIKey = value
 	}
 }
 
@@ -880,11 +854,7 @@ func modelCatalogCredentials(cfg config.EditableConfig) llm.ModelCatalogCredenti
 	return llm.ModelCatalogCredentials{
 		AnthropicAPIKey:  cfg.AnthropicAPIKey,
 		GoogleAPIKey:     cfg.GoogleAPIKey,
-		KiloAPIKey:       cfg.KiloAPIKey,
-		KimiAPIKey:       cfg.KimiAPIKey,
 		OpenRouterAPIKey: cfg.OpenRouterAPIKey,
-		ZAIAPIKey:        cfg.ZAIAPIKey,
-		AlibabaAPIKey:    cfg.AlibabaAPIKey,
 		OpenAIAPIKey:     cfg.OpenAIAPIKey,
 		OpenAIAuthMode:   cfg.OpenAIAuthMode,
 	}
@@ -892,7 +862,7 @@ func modelCatalogCredentials(cfg config.EditableConfig) llm.ModelCatalogCredenti
 
 func usesProviderModelSearch(cfg config.EditableConfig) bool {
 	switch cfg.LLMProvider {
-	case "openrouter", "kilo":
+	case "openrouter":
 		return true
 	default:
 		return false
@@ -978,8 +948,8 @@ func matchesCapabilityFilter(option llm.ModelOption, capability modelCapabilityF
 	}
 }
 
-func runOpenAIDeviceAuthCommand(stdin io.Reader, stdout io.Writer) error {
-	return runCodexLoginCommand(stdin, stdout, "--device-auth")
+func runOpenAIDeviceAuthCommand(_ io.Reader, _ io.Writer) error {
+	return fmt.Errorf("codex CLI auth has been removed; use the openai provider with an API key instead")
 }
 
 func promptString(reader *bufio.Reader, stdout io.Writer, label, current string, secret bool) (string, error) {

@@ -33,6 +33,12 @@ type chatToolDef struct {
 	Parameters  json.RawMessage `json:"parameters,omitempty"`
 }
 
+type chatUsage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+}
+
 type chatCompletionResponse struct {
 	Choices []struct {
 		Message struct {
@@ -42,4 +48,5 @@ type chatCompletionResponse struct {
 			ToolCalls        []chatToolCall `json:"tool_calls"`
 		} `json:"message"`
 	} `json:"choices"`
+	Usage *chatUsage `json:"usage,omitempty"`
 }

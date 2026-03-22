@@ -34,7 +34,6 @@ const (
 	defaultVoiceWakePhrase      = "jarvis"
 	defaultGroqSoftCapDaily     = 800
 	defaultGroqHardCapDaily     = 1200
-	defaultSupabaseEventsTable  = "aurelia_voice_events"
 	defaultQdrantCollection     = "conversation_memory"
 	defaultQdrantEmbeddingModel = "bge-m3"
 )
@@ -56,11 +55,7 @@ type AppConfig struct {
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
 	GoogleAPIKey             string
-	KiloAPIKey               string
-	KimiAPIKey               string
 	OpenRouterAPIKey         string
-	ZAIAPIKey                string
-	AlibabaAPIKey            string
 	OpenAIAPIKey             string
 	OpenAIAuthMode           string
 	GroqAPIKey               string
@@ -87,9 +82,6 @@ type AppConfig struct {
 	STTFallbackCommand       string
 	GroqSoftCapDaily         int
 	GroqHardCapDaily         int
-	SupabaseURL              string
-	SupabaseServiceRoleKey   string
-	SupabaseEventsTable      string
 	QdrantURL                string
 	QdrantAPIKey             string
 	QdrantCollection         string
@@ -113,11 +105,7 @@ type fileConfig struct {
 	TelegramAllowedUserIDs   []int64 `json:"telegram_allowed_user_ids"`
 	AnthropicAPIKey          string  `json:"anthropic_api_key"`
 	GoogleAPIKey             string  `json:"google_api_key"`
-	KiloAPIKey               string  `json:"kilo_api_key"`
-	KimiAPIKey               string  `json:"kimi_api_key"`
 	OpenRouterAPIKey         string  `json:"openrouter_api_key"`
-	ZAIAPIKey                string  `json:"zai_api_key"`
-	AlibabaAPIKey            string  `json:"alibaba_api_key"`
 	OpenAIAPIKey             string  `json:"openai_api_key"`
 	OpenAIAuthMode           string  `json:"openai_auth_mode"`
 	GroqAPIKey               string  `json:"groq_api_key"`
@@ -144,9 +132,6 @@ type fileConfig struct {
 	STTFallbackCommand       string  `json:"stt_fallback_command"`
 	GroqSoftCapDaily         int     `json:"groq_soft_cap_daily"`
 	GroqHardCapDaily         int     `json:"groq_hard_cap_daily"`
-	SupabaseURL              string  `json:"supabase_url"`
-	SupabaseServiceRoleKey   string  `json:"supabase_service_role_key"`
-	SupabaseEventsTable      string  `json:"supabase_events_table"`
 	QdrantURL                string  `json:"qdrant_url"`
 	QdrantAPIKey             string  `json:"qdrant_api_key"`
 	QdrantCollection         string  `json:"qdrant_collection"`
@@ -171,11 +156,7 @@ type EditableConfig struct {
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
 	GoogleAPIKey             string
-	KiloAPIKey               string
-	KimiAPIKey               string
 	OpenRouterAPIKey         string
-	ZAIAPIKey                string
-	AlibabaAPIKey            string
 	OpenAIAPIKey             string
 	OpenAIAuthMode           string
 	GroqAPIKey               string
@@ -243,14 +224,8 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("GROQ_API_KEY"); env != "" {
 		cfg.GroqAPIKey = env
 	}
-	if env := os.Getenv("KIMI_API_KEY"); env != "" {
-		cfg.KimiAPIKey = env
-	}
 	if env := os.Getenv("QDRANT_API_KEY"); env != "" {
 		cfg.QdrantAPIKey = env
-	}
-	if env := os.Getenv("SUPABASE_SERVICE_ROLE_KEY"); env != "" {
-		cfg.SupabaseServiceRoleKey = env
 	}
 	if env := os.Getenv("OLLAMA_URL"); env != "" {
 		cfg.OllamaURL = env
@@ -290,7 +265,6 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		VoiceCapturePollMS:       defaultVoiceCapturePollMS,
 		GroqSoftCapDaily:         defaultGroqSoftCapDaily,
 		GroqHardCapDaily:         defaultGroqHardCapDaily,
-		SupabaseEventsTable:      defaultSupabaseEventsTable,
 		QdrantCollection:         defaultQdrantCollection,
 		QdrantEmbeddingModel:     defaultQdrantEmbeddingModel,
 		OllamaURL:                "http://127.0.0.1:11434",
@@ -347,11 +321,7 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		TelegramAllowedUserIDs:   append([]int64(nil), cfg.TelegramAllowedUserIDs...),
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
 		GoogleAPIKey:             cfg.GoogleAPIKey,
-		KiloAPIKey:               cfg.KiloAPIKey,
-		KimiAPIKey:               cfg.KimiAPIKey,
 		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
-		ZAIAPIKey:                cfg.ZAIAPIKey,
-		AlibabaAPIKey:            cfg.AlibabaAPIKey,
 		OpenAIAPIKey:             cfg.OpenAIAPIKey,
 		OpenAIAuthMode:           cfg.OpenAIAuthMode,
 		GroqAPIKey:               cfg.GroqAPIKey,
@@ -383,11 +353,7 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.TelegramAllowedUserIDs = append([]int64(nil), editable.TelegramAllowedUserIDs...)
 	cfg.AnthropicAPIKey = editable.AnthropicAPIKey
 	cfg.GoogleAPIKey = editable.GoogleAPIKey
-	cfg.KiloAPIKey = editable.KiloAPIKey
-	cfg.KimiAPIKey = editable.KimiAPIKey
 	cfg.OpenRouterAPIKey = editable.OpenRouterAPIKey
-	cfg.ZAIAPIKey = editable.ZAIAPIKey
-	cfg.AlibabaAPIKey = editable.AlibabaAPIKey
 	cfg.OpenAIAPIKey = editable.OpenAIAPIKey
 	cfg.OpenAIAuthMode = editable.OpenAIAuthMode
 	cfg.GroqAPIKey = editable.GroqAPIKey
@@ -496,9 +462,6 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.GroqHardCapDaily <= 0 {
 		cfg.GroqHardCapDaily = defaults.GroqHardCapDaily
 	}
-	if cfg.SupabaseEventsTable == "" {
-		cfg.SupabaseEventsTable = defaults.SupabaseEventsTable
-	}
 	if cfg.QdrantCollection == "" {
 		cfg.QdrantCollection = defaults.QdrantCollection
 	}
@@ -549,11 +512,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		TelegramAllowedUserIDs:   cfg.TelegramAllowedUserIDs,
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
 		GoogleAPIKey:             cfg.GoogleAPIKey,
-		KiloAPIKey:               cfg.KiloAPIKey,
-		KimiAPIKey:               cfg.KimiAPIKey,
 		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
-		ZAIAPIKey:                cfg.ZAIAPIKey,
-		AlibabaAPIKey:            cfg.AlibabaAPIKey,
 		OpenAIAPIKey:             cfg.OpenAIAPIKey,
 		OpenAIAuthMode:           cfg.OpenAIAuthMode,
 		GroqAPIKey:               cfg.GroqAPIKey,
@@ -580,9 +539,6 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		STTFallbackCommand:       cfg.STTFallbackCommand,
 		GroqSoftCapDaily:         cfg.GroqSoftCapDaily,
 		GroqHardCapDaily:         cfg.GroqHardCapDaily,
-		SupabaseURL:              cfg.SupabaseURL,
-		SupabaseServiceRoleKey:   cfg.SupabaseServiceRoleKey,
-		SupabaseEventsTable:      cfg.SupabaseEventsTable,
 		QdrantURL:                cfg.QdrantURL,
 		QdrantAPIKey:             cfg.QdrantAPIKey,
 		QdrantCollection:         cfg.QdrantCollection,
@@ -606,11 +562,7 @@ func sameFileConfig(a, b fileConfig) bool {
 
 		a.AnthropicAPIKey != b.AnthropicAPIKey ||
 		a.GoogleAPIKey != b.GoogleAPIKey ||
-		a.KiloAPIKey != b.KiloAPIKey ||
-		a.KimiAPIKey != b.KimiAPIKey ||
 		a.OpenRouterAPIKey != b.OpenRouterAPIKey ||
-		a.ZAIAPIKey != b.ZAIAPIKey ||
-		a.AlibabaAPIKey != b.AlibabaAPIKey ||
 		a.OpenAIAPIKey != b.OpenAIAPIKey ||
 		a.OpenAIAuthMode != b.OpenAIAuthMode ||
 		a.GroqAPIKey != b.GroqAPIKey ||
@@ -637,9 +589,6 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.STTFallbackCommand != b.STTFallbackCommand ||
 		a.GroqSoftCapDaily != b.GroqSoftCapDaily ||
 		a.GroqHardCapDaily != b.GroqHardCapDaily ||
-		a.SupabaseURL != b.SupabaseURL ||
-		a.SupabaseServiceRoleKey != b.SupabaseServiceRoleKey ||
-		a.SupabaseEventsTable != b.SupabaseEventsTable ||
 		a.QdrantURL != b.QdrantURL ||
 		a.QdrantAPIKey != b.QdrantAPIKey ||
 		a.QdrantCollection != b.QdrantCollection ||
@@ -703,16 +652,10 @@ func defaultLLMModelForProvider(provider string) string {
 		return "claude-sonnet-4-6"
 	case "google":
 		return "gemini-2.5-pro"
-	case "kilo":
-		return "gpt-5.4"
 	case "ollama":
 		return "gemma3:12b"
 	case "openrouter":
 		return "openrouter/auto"
-	case "zai":
-		return "glm-5"
-	case "alibaba":
-		return "qwen3-coder-plus"
 	case "openai":
 		return "gpt-5.4"
 	default:

@@ -31,6 +31,8 @@ type ModelResponse struct {
 	Content          string
 	ReasoningContent string
 	ToolCalls        []ToolCall
+	InputTokens      int
+	OutputTokens     int
 }
 
 // LLMProvider is the interface for different AI providers (Gemini, DeepSeek, etc)

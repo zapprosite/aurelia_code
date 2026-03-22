@@ -21,8 +21,9 @@ const (
 )
 
 type laneBudget struct {
-	Soft int `json:"soft"`
-	Hard int `json:"hard"`
+	Soft        int     `json:"soft"`
+	Hard        int     `json:"hard"`
+	CostHardUSD float64 `json:"cost_hard_usd,omitempty"`
 }
 
 type routeState struct {
@@ -34,6 +35,9 @@ type routeState struct {
 	BreakerOpenUntil  time.Time `json:"breaker_open_until,omitempty"`
 	LastError         string    `json:"last_error,omitempty"`
 	LastDecisionModel string    `json:"last_decision_model,omitempty"`
+	TotalInputTokens  int       `json:"total_input_tokens"`
+	TotalOutputTokens int       `json:"total_output_tokens"`
+	TotalCostUSD      float64   `json:"total_cost_usd"`
 }
 
 type DegradedState struct {
@@ -125,10 +129,10 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		remotePremium:     remotePremium,
 		budgets: map[string]laneBudget{
 			"local":             {Soft: 1000000, Hard: 1000000},
-			"remote_cheap":      {Soft: 400, Hard: 800},
-			"remote_vision":     {Soft: 120, Hard: 240},
-			"remote_structured": {Soft: 200, Hard: 400},
-			"remote_premium":    {Soft: 80, Hard: 160},
+			"remote_cheap":      {Soft: 400, Hard: 800, CostHardUSD: 0.50},
+			"remote_vision":     {Soft: 120, Hard: 240, CostHardUSD: 0.25},
+			"remote_structured": {Soft: 200, Hard: 400, CostHardUSD: 1.00},
+			"remote_premium":    {Soft: 80, Hard: 160, CostHardUSD: 2.00},
 			"audio":             {Soft: 800, Hard: 1200},
 			"research":          {Soft: 40, Hard: 80},
 		},
@@ -296,6 +300,10 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 		p.observeResult(decision, "budget_exceeded", time.Since(startedAt))
 		return nil, fmt.Errorf("budget exceeded for %s", decision.BudgetLane)
 	}
+	if p.costExceeded(decision.BudgetLane) {
+		p.observeResult(decision, "cost_exceeded", time.Since(startedAt))
+		return nil, fmt.Errorf("cost limit exceeded for %s", decision.BudgetLane)
+	}
 
 	provider := p.providerFor(decision)
 	if provider == nil {
@@ -318,6 +326,9 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 		return resp, fmt.Errorf("empty guarded content for %s", providerKey)
 	}
 	p.markSuccess(providerKey)
+	if resp.InputTokens > 0 || resp.OutputTokens > 0 {
+		p.recordTokens(decision.BudgetLane, providerKey, decision.Model, resp.InputTokens, resp.OutputTokens)
+	}
 	p.observeResult(decision, "success", time.Since(startedAt))
 	return resp, nil
 }
@@ -349,36 +360,40 @@ func buildDryRunRequest(systemPrompt string, history []agent.Message, tools []ag
 			break
 		}
 	}
-	outputMode := "text"
-	systemLower := strings.ToLower(systemPrompt)
-	userLower := strings.ToLower(latestUser)
-	switch {
-	case strings.Contains(systemLower, "json valido") || strings.Contains(systemLower, "only valid json"):
-		outputMode = "structured_json"
-	case strings.Contains(userLower, "3 facts") || strings.Contains(userLower, "3 tags") || strings.Contains(userLower, "facts curtos"):
-		outputMode = "curation"
-	}
 
-	taskClass := ""
-	switch {
-	case strings.Contains(userLower, "screenshot") || strings.Contains(userLower, "ide"):
-		taskClass = "vision"
-	case strings.Contains(userLower, "roteamento") || strings.Contains(systemLower, "classifier"):
-		taskClass = "routing"
-	case outputMode == "curation":
-		taskClass = "curation"
-	case strings.Contains(userLower, "reboot") || strings.Contains(userLower, "nvidia-gpu") || strings.Contains(userLower, "homelab"):
-		taskClass = "maintenance"
-	}
+	outputMode := detectOutputMode(systemPrompt, latestUser)
 
 	return DryRunRequest{
 		Task:           latestUser,
-		TaskClass:      taskClass,
 		OutputMode:     outputMode,
 		RequiresTools:  len(tools) > 0,
-		RequiresVision: strings.Contains(userLower, "screenshot") || strings.Contains(userLower, "imagem"),
-		LocalOnly:      strings.Contains(systemLower, "local only") || strings.Contains(userLower, "local only"),
+		RequiresVision: containsVisionKeywords(latestUser),
+		LocalOnly:      containsLocalOnly(systemPrompt, latestUser),
 	}
+}
+
+func detectOutputMode(systemPrompt, userMessage string) string {
+	systemLower := strings.ToLower(systemPrompt)
+	userLower := strings.ToLower(userMessage)
+	switch {
+	case strings.Contains(systemLower, "json valido") || strings.Contains(systemLower, "only valid json"):
+		return "structured_json"
+	case strings.Contains(userLower, "3 facts") || strings.Contains(userLower, "3 tags") || strings.Contains(userLower, "facts curtos"):
+		return "curation"
+	default:
+		return "text"
+	}
+}
+
+func containsVisionKeywords(text string) bool {
+	lower := strings.ToLower(text)
+	return strings.Contains(lower, "screenshot") || strings.Contains(lower, "imagem")
+}
+
+func containsLocalOnly(systemPrompt, userMessage string) bool {
+	systemLower := strings.ToLower(systemPrompt)
+	userLower := strings.ToLower(userMessage)
+	return strings.Contains(systemLower, "local only") || strings.Contains(userLower, "local only")
 }
 
 func applyGuards(systemPrompt string, decision DryRunDecision) string {
@@ -456,6 +471,31 @@ func (p *Provider) markFailure(budgetLane, providerKey, reason string) {
 	p.persistLocked(toPersist...)
 }
 
+func (p *Provider) recordTokens(budgetLane, providerKey, model string, inputTokens, outputTokens int) {
+	cost := CalculateCostUSD(model, inputTokens, outputTokens)
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	state := p.ensureStateLocked(providerKey)
+	state.TotalInputTokens += inputTokens
+	state.TotalOutputTokens += outputTokens
+	state.TotalCostUSD += cost
+	var toPersist []persistableRouteState
+	toPersist = append(toPersist, persistableRouteState{Key: providerKey, State: *state})
+	if budgetLane != "" {
+		budgetState := p.ensureStateLocked(budgetLane)
+		budgetState.TotalInputTokens += inputTokens
+		budgetState.TotalOutputTokens += outputTokens
+		budgetState.TotalCostUSD += cost
+		toPersist = append(toPersist, persistableRouteState{Key: budgetLane, State: *budgetState})
+	}
+	p.persistLocked(toPersist...)
+	if p.metrics != nil {
+		p.metrics.tokens.WithLabelValues(budgetLane, "input").Add(float64(inputTokens))
+		p.metrics.tokens.WithLabelValues(budgetLane, "output").Add(float64(outputTokens))
+		p.metrics.costUSD.WithLabelValues(budgetLane).Add(cost)
+	}
+}
+
 func (p *Provider) breakerOpen(providerKey string) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -471,6 +511,20 @@ func (p *Provider) breakerOpen(providerKey string) bool {
 	}
 	p.setBreakerMetricLocked(providerKey, state.BreakerState)
 	return true
+}
+
+func (p *Provider) costExceeded(lane string) bool {
+	if lane == "" {
+		return false
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	state := p.ensureStateLocked(lane)
+	budget, ok := p.budgets[lane]
+	if !ok || budget.CostHardUSD <= 0 {
+		return false
+	}
+	return state.TotalCostUSD >= budget.CostHardUSD
 }
 
 func (p *Provider) budgetExceeded(lane string) bool {
@@ -512,6 +566,9 @@ func (p *Provider) rolloverStateLocked(state *routeState) {
 	state.BreakerState = "closed"
 	state.BreakerOpenUntil = time.Time{}
 	state.LastError = ""
+	state.TotalInputTokens = 0
+	state.TotalOutputTokens = 0
+	state.TotalCostUSD = 0
 }
 
 func (p *Provider) loadState() error {

@@ -46,11 +46,7 @@ func (m ModelOption) Label() string {
 type ModelCatalogCredentials struct {
 	AnthropicAPIKey  string
 	GoogleAPIKey     string
-	KiloAPIKey       string
-	KimiAPIKey       string
 	OpenRouterAPIKey string
-	ZAIAPIKey        string
-	AlibabaAPIKey    string
 	OpenAIAPIKey     string
 	OpenAIAuthMode   string
 }
@@ -74,12 +70,6 @@ func ListModels(ctx context.Context, provider string, creds ModelCatalogCredenti
 			return listGoogleModels(ctx, creds.GoogleAPIKey, googleModelsURL, http.DefaultClient)
 		}
 		return fallbackModels("google"), nil
-	case "kilo":
-		models, err := listKiloModels(ctx, creds.KiloAPIKey, kiloModelsCatalogURL, http.DefaultClient)
-		if err == nil && len(models) != 0 {
-			return models, nil
-		}
-		return fallbackModels("kilo"), nil
 	case "ollama":
 		models, err := listOllamaModels(ctx, ollamaModelsURL, http.DefaultClient)
 		if err == nil && len(models) != 0 {
@@ -88,20 +78,11 @@ func ListModels(ctx context.Context, provider string, creds ModelCatalogCredenti
 		return fallbackModels("ollama"), nil
 	case "openrouter":
 		return listOpenRouterModels(ctx, creds.OpenRouterAPIKey, openRouterModelsURL, http.DefaultClient)
-	case "zai":
-		return fallbackModels("zai"), nil
-	case "alibaba":
-		return fallbackModels("alibaba"), nil
 	case "openai":
-		if creds.OpenAIAuthMode == "codex" {
-			return fallbackModels("openai_codex"), nil
-		}
 		if creds.OpenAIAPIKey != "" {
 			return listOpenAIModels(ctx, creds.OpenAIAPIKey, openAIModelsURL, http.DefaultClient)
 		}
 		return fallbackModels("openai"), nil
-	case "", "kimi":
-		return fallbackModels("kimi"), nil
 	default:
 		return nil, fmt.Errorf("unsupported llm provider %q", provider)
 	}
@@ -126,14 +107,6 @@ func fallbackModels(provider string) []ModelOption {
 			{ID: "gemini-2.5-flash", Name: "Gemini 2.5 Flash", SupportsImageInput: true},
 			{ID: "gemini-2.5-flash-lite", Name: "Gemini 2.5 Flash-Lite", SupportsImageInput: true},
 		}
-	case "kilo":
-		return []ModelOption{
-			{ID: "openai/gpt-5.4", Name: "OpenAI: GPT-5.4", SupportsImageInput: true},
-			{ID: "anthropic/claude-sonnet-4.6", Name: "Anthropic: Claude Sonnet 4.6", SupportsImageInput: true},
-			{ID: "google/gemini-3.1-pro-preview", Name: "Google: Gemini 3.1 Pro Preview", SupportsImageInput: true},
-			{ID: "z-ai/glm-4.6v", Name: "Z.ai: GLM 4.6V", SupportsImageInput: true},
-			{ID: "z-ai/glm-5-turbo", Name: "Z.ai: GLM 5 Turbo"},
-		}
 	case "ollama":
 		return []ModelOption{
 			{ID: "qwen3.5:9b", Name: "Qwen 3.5 9B"},
@@ -147,44 +120,13 @@ func fallbackModels(provider string) []ModelOption {
 			{ID: "openrouter/auto", Name: "OpenRouter Auto"},
 			{ID: "openrouter/free", Name: "OpenRouter Free Router", IsFree: true},
 		}
-	case "zai":
-		return []ModelOption{
-			{ID: "glm-5", Name: "GLM-5"},
-			{ID: "glm-4.7", Name: "GLM-4.7"},
-			{ID: "glm-4.6v", Name: "GLM-4.6V", SupportsImageInput: true},
-			{ID: "glm-4.5-air", Name: "GLM-4.5 Air"},
-		}
-	case "alibaba":
-		return []ModelOption{
-			{ID: "qwen3-coder-plus", Name: "Qwen3 Coder Plus"},
-			{ID: "qwen3-coder-next", Name: "Qwen3 Coder Next"},
-			{ID: "qwen-vl-max", Name: "Qwen VL Max", SupportsImageInput: true},
-			{ID: "qwen3.5-plus", Name: "Qwen3.5 Plus"},
-		}
 	case "openai":
 		return []ModelOption{
 			{ID: "gpt-5.4", Name: "GPT-5.4", SupportsImageInput: true, SupportsTools: true},
 			{ID: "gpt-5-mini", Name: "GPT-5 mini", SupportsImageInput: true, SupportsTools: true},
 			{ID: "o4-mini", Name: "o4-mini", SupportsImageInput: true, SupportsTools: true},
 		}
-	case "openai_codex":
-		return []ModelOption{
-			{ID: "gpt-5.4", Name: "GPT-5.4", SupportsImageInput: true, SupportsTools: true},
-			{ID: "gpt-5-mini", Name: "GPT-5 mini", SupportsImageInput: true, SupportsTools: true},
-			{ID: "gpt-5.2-codex", Name: "GPT-5.2-Codex"},
-			{ID: "o4-mini", Name: "o4-mini", SupportsImageInput: true, SupportsTools: true},
-		}
-	case "", "kimi":
-		return []ModelOption{
-			{ID: "kimi-k2-thinking", Name: "Kimi K2 Thinking"},
-			{ID: "kimi-k2-thinking-turbo", Name: "Kimi K2 Thinking Turbo"},
-			{ID: "k2.5", Name: "Kimi K2.5"},
-			{ID: "moonshot-v1-vision", Name: "Moonshot Vision", SupportsImageInput: true},
-			{ID: "moonshot-v1-8k", Name: "Moonshot v1 8K"},
-			{ID: "moonshot-v1-32k", Name: "Moonshot v1 32K"},
-			{ID: "moonshot-v1-128k", Name: "Moonshot v1 128K"},
-		}
-	default:
+default:
 		return nil
 	}
 }

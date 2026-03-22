@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	defaultSupabaseMirrorTable    = "aurelia_voice_events"
 	defaultQdrantMirrorCollection = "conversation_memory"
 	defaultQdrantMirrorEmbedding  = "bge-m3"
 )
@@ -39,69 +38,6 @@ func (m *MultiMirror) MirrorTranscript(ctx context.Context, event TranscriptEven
 		if err := mirror.MirrorTranscript(ctx, event); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-type SupabaseMirror struct {
-	baseURL string
-	apiKey  string
-	table   string
-	client  *http.Client
-}
-
-func NewSupabaseMirror(baseURL, apiKey, table string) *SupabaseMirror {
-	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
-	table = strings.TrimSpace(table)
-	if table == "" {
-		table = defaultSupabaseMirrorTable
-	}
-	return &SupabaseMirror{
-		baseURL: baseURL,
-		apiKey:  strings.TrimSpace(apiKey),
-		table:   table,
-		client:  &http.Client{Timeout: 10 * time.Second},
-	}
-}
-
-func (m *SupabaseMirror) MirrorTranscript(ctx context.Context, event TranscriptEvent) error {
-	if m == nil || m.baseURL == "" || m.apiKey == "" {
-		return nil
-	}
-
-	body, err := json.Marshal(map[string]any{
-		"job_id":       event.JobID,
-		"user_id":      event.UserID,
-		"chat_id":      event.ChatID,
-		"source":       event.Source,
-		"transcript":   event.Transcript,
-		"accepted":     event.Accepted,
-		"requires_tts": event.RequiresTTS,
-		"processed_at": time.Now().UTC().Format(time.RFC3339Nano),
-		"conversation": fmt.Sprintf("%d", event.UserID),
-		"message_type": "audio_transcript",
-		"created_at":   event.CreatedAt.Format(time.RFC3339Nano),
-	})
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, m.baseURL+"/rest/v1/"+m.table, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", m.apiKey)
-	req.Header.Set("Authorization", "Bearer "+m.apiKey)
-	req.Header.Set("Prefer", "return=minimal")
-
-	resp, err := m.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("supabase mirror returned %s", resp.Status)
 	}
 	return nil
 }

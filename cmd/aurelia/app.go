@@ -228,7 +228,6 @@ func bootstrapApp(args []string) (*app, error) {
 		sqliteMirror = voice.NewSQLiteMirror(cfg.DBPath)
 		voiceMirror := voice.NewMultiMirror(
 			sqliteMirror,
-			voice.NewSupabaseMirror(cfg.SupabaseURL, cfg.SupabaseServiceRoleKey, cfg.SupabaseEventsTable),
 			voice.NewQdrantMirror(cfg.QdrantURL, cfg.QdrantAPIKey, cfg.QdrantCollection, cfg.QdrantEmbeddingModel, cfg.OllamaURL),
 		)
 		voiceProcessor = voice.NewProcessor(voiceSpool, transcriber, fallback, voiceBotDispatcher{bot: bot}, voice.Config{
@@ -350,26 +349,12 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 		return llm.NewAnthropicProvider(cfg.AnthropicAPIKey, cfg.LLMModel), nil
 	case "google":
 		return llm.NewGeminiProvider(context.Background(), cfg.GoogleAPIKey, cfg.LLMModel)
-	case "kilo":
-		return llm.NewKiloProvider(cfg.KiloAPIKey, cfg.LLMModel), nil
 	case "ollama":
 		return llm.NewOllamaProvider(cfg.LLMModel), nil
 	case "openrouter":
 		return llm.NewOpenRouterProvider(cfg.OpenRouterAPIKey, cfg.LLMModel), nil
-	case "zai":
-		return llm.NewZAIProvider(cfg.ZAIAPIKey, cfg.LLMModel), nil
-	case "alibaba":
-		return llm.NewAlibabaProvider(cfg.AlibabaAPIKey, cfg.LLMModel), nil
 	case "openai":
-		if cfg.OpenAIAuthMode == "codex" {
-			if err := llm.EnsureCodexCLIAvailable(); err != nil {
-				return nil, err
-			}
-			return llm.NewCodexCLIProvider(cfg.LLMModel)
-		}
 		return llm.NewOpenAIProvider(cfg.OpenAIAPIKey, cfg.LLMModel), nil
-	case "", "kimi":
-		return llm.NewKimiProvider(cfg.KimiAPIKey, cfg.LLMModel), nil
 	default:
 		return nil, fmt.Errorf("unsupported llm provider %q", cfg.LLMProvider)
 	}
