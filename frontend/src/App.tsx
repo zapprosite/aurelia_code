@@ -4,6 +4,7 @@ import { Sidebar, type TabId } from "./components/sidebar/Sidebar";
 import { Header } from "./components/dashboard/Header";
 import { FeedItem, type FeedItemProps } from "./components/dashboard/FeedItem";
 import { SquadGrid } from "./components/dashboard/SquadGrid";
+import { CommandMenu } from "./components/dashboard/CommandMenu";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Card, CardHeader, CardTitle } from "./components/ui/Card";
 import { Badge } from "./components/ui/Badge";
@@ -72,6 +73,7 @@ function App() {
 
   return (
     <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30">
+      <CommandMenu />
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <main className="flex-1 flex flex-col relative overflow-hidden">

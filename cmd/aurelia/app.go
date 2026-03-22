@@ -422,6 +422,7 @@ func (a *app) start() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
+	dashboard.RegisterRoute("/api/commands", dashboard.HandleCommands)
 
 	if err := dashboard.StartServer(logger); err != nil {
 		logger.Warn("failed to start ultratrink dashboard", slog.Any("err", err))
