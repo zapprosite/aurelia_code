@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kocar/aurelia/internal/agent"
@@ -132,9 +133,27 @@ func bootstrapApp(args []string) (*app, error) {
 	}
 
 	registerScheduleTools(registry, cronStore)
-	mcpManager, err := maybeRegisterMCPTools(cfg, registry)
-	if err != nil {
-		logger.Warn("failed to initialize MCP tools", slog.Any("err", err))
+	var preflightErrors []string
+	mcpManager, mcpErr := maybeRegisterMCPTools(cfg, registry)
+	if mcpErr != nil {
+		logger.Warn("failed to initialize MCP tools", slog.Any("err", mcpErr))
+		preflightErrors = append(preflightErrors, "mcp: "+mcpErr.Error())
+	}
+
+	if gwProvider, ok := llmProvider.(*gateway.Provider); ok {
+		ctxP, cancelP := context.WithTimeout(context.Background(), 3*time.Second)
+		if err := performPreflightCheck(ctxP, cfg); err != nil {
+			preflightErrors = append(preflightErrors, "openrouter: "+err.Error())
+		}
+		cancelP()
+
+		if len(preflightErrors) > 0 {
+			reason := strings.Join(preflightErrors, "; ")
+			logger.Warn("Preflight check failed, enabling Degraded Mode", slog.String("reason", reason))
+			gwProvider.EnableDegradedMode("Preflight failures: " + reason)
+		} else {
+			logger.Info("Preflight check passed, all remote systems go")
+		}
 	}
 
 	loop := agent.NewLoop(llmProvider, registry, cfg.MaxIterations)
@@ -501,4 +520,24 @@ func buildCronScheduler(
 
 	cronCtx, cancel := context.WithCancel(context.Background())
 	return scheduler, cronCtx, cancel, nil
+}
+
+func performPreflightCheck(ctx context.Context, cfg *config.AppConfig) error {
+	if cfg.OpenRouterAPIKey == "" {
+		return nil
+	}
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://openrouter.ai/api/v1/auth/key", nil)
+	if err != nil {
+		return fmt.Errorf("req build failed: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+cfg.OpenRouterAPIKey)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unreachable (%w)", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("auth rejected HTTP %d", resp.StatusCode)
+	}
+	return nil
 }

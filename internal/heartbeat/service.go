@@ -154,9 +154,9 @@ If there is nothing that requires attention, respond with: HEARTBEAT_OK
 
 Be concise. Focus on essential health checks and corrective actions.`
 
-	_, result, err := hs.loop.Run(ctx, systemPrompt, history, []string{
+	_, result, err := hs.loop.RunWithOptions(ctx, systemPrompt, history, []string{
 		"run_command", "docker_control", "system_monitor", "service_control",
-	})
+	}, agent.RunOptions{LocalOnly: true})
 
 	if err != nil {
 		hs.logger.Error("Heartbeat error", slog.Any("err", err))

@@ -146,6 +146,9 @@ func RegisterCoreTools(registry *agent.ToolRegistry) {
 	registry.Register(SystemMonitorDefinition(), SystemMonitorHandler)
 	registry.Register(ServiceControlDefinition(), ServiceControlHandler)
 	registry.Register(OllamaControlDefinition(), OllamaControlHandler)
+
+	setPhase := NewSetPhaseTool()
+	registry.Register(setPhase.Definition(), setPhase.Execute)
 }
 
 func objectSchema(properties map[string]any, required ...string) map[string]any {
