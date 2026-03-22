@@ -68,8 +68,8 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 	}
 
 	input := fileConfig{
-		LLMProvider:            "kimi",
-		LLMModel:               "moonshot-v1-8k",
+		LLMProvider:            "ollama",
+		LLMModel:               "qwen3.5:9b",
 		STTProvider:            "groq",
 		TTSProvider:            "openai_compatible",
 		TTSBaseURL:             "http://127.0.0.1:8011",
@@ -81,13 +81,9 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 		TelegramAllowedUserIDs: []int64{1, 2, 3},
 		AnthropicAPIKey:        "anthropic-key",
 		GoogleAPIKey:           "google-key",
-		KiloAPIKey:             "kilo-key",
-		KimiAPIKey:             "kimi-key",
 		OpenRouterAPIKey:       "openrouter-key",
-		ZAIAPIKey:              "zai-key",
-		AlibabaAPIKey:          "alibaba-key",
 		OpenAIAPIKey:           "openai-key",
-		OpenAIAuthMode:         "codex",
+		OpenAIAuthMode:         "api_key",
 		GroqAPIKey:             "groq-key",
 		MaxIterations:          321,
 		DBPath:                 filepath.Join(tmpDir, "data", "custom.db"),
@@ -134,20 +130,11 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 	if !reflect.DeepEqual(cfg.TelegramAllowedUserIDs, input.TelegramAllowedUserIDs) {
 		t.Fatalf("TelegramAllowedUserIDs = %v, want %v", cfg.TelegramAllowedUserIDs, input.TelegramAllowedUserIDs)
 	}
-	if cfg.KimiAPIKey != input.KimiAPIKey {
-		t.Fatalf("KimiAPIKey = %q, want %q", cfg.KimiAPIKey, input.KimiAPIKey)
-	}
 	if cfg.GroqAPIKey != input.GroqAPIKey {
 		t.Fatalf("GroqAPIKey = %q, want %q", cfg.GroqAPIKey, input.GroqAPIKey)
 	}
 	if cfg.OpenRouterAPIKey != input.OpenRouterAPIKey {
 		t.Fatalf("OpenRouterAPIKey = %q, want %q", cfg.OpenRouterAPIKey, input.OpenRouterAPIKey)
-	}
-	if cfg.ZAIAPIKey != input.ZAIAPIKey {
-		t.Fatalf("ZAIAPIKey = %q, want %q", cfg.ZAIAPIKey, input.ZAIAPIKey)
-	}
-	if cfg.AlibabaAPIKey != input.AlibabaAPIKey {
-		t.Fatalf("AlibabaAPIKey = %q, want %q", cfg.AlibabaAPIKey, input.AlibabaAPIKey)
 	}
 	if cfg.OpenAIAPIKey != input.OpenAIAPIKey {
 		t.Fatalf("OpenAIAPIKey = %q, want %q", cfg.OpenAIAPIKey, input.OpenAIAPIKey)
@@ -160,9 +147,6 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 	}
 	if cfg.GoogleAPIKey != input.GoogleAPIKey {
 		t.Fatalf("GoogleAPIKey = %q, want %q", cfg.GoogleAPIKey, input.GoogleAPIKey)
-	}
-	if cfg.KiloAPIKey != input.KiloAPIKey {
-		t.Fatalf("KiloAPIKey = %q, want %q", cfg.KiloAPIKey, input.KiloAPIKey)
 	}
 	if cfg.MaxIterations != input.MaxIterations {
 		t.Fatalf("MaxIterations = %d, want %d", cfg.MaxIterations, input.MaxIterations)
@@ -241,20 +225,16 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 	}
 
 	if err := SaveEditable(r, EditableConfig{
-		LLMProvider:            "kimi",
-		LLMModel:               "kimi-k2-thinking",
+		LLMProvider:            "ollama",
+		LLMModel:               "qwen3.5:9b",
 		STTProvider:            "groq",
 		TelegramBotToken:       "telegram-token",
 		TelegramAllowedUserIDs: []int64{7, 8},
 		AnthropicAPIKey:        "anthropic-key",
 		GoogleAPIKey:           "google-key",
-		KiloAPIKey:             "kilo-key",
-		KimiAPIKey:             "kimi-key",
 		OpenRouterAPIKey:       "openrouter-key",
-		ZAIAPIKey:              "zai-key",
-		AlibabaAPIKey:          "alibaba-key",
 		OpenAIAPIKey:           "openai-key",
-		OpenAIAuthMode:         "codex",
+		OpenAIAuthMode:         "api_key",
 		GroqAPIKey:             "groq-key",
 		MaxIterations:          900,
 		MemoryWindowSize:       25,
@@ -270,14 +250,11 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 	if cfg.DBPath != filepath.Join(tmpDir, "data", "aurelia.db") {
 		t.Fatalf("DBPath = %q, want managed default", cfg.DBPath)
 	}
-	if cfg.LLMProvider != "kimi" || cfg.LLMModel != "kimi-k2-thinking" || cfg.STTProvider != "groq" {
+	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "qwen3.5:9b" || cfg.STTProvider != "groq" {
 		t.Fatalf("unexpected providers llm=%q model=%q stt=%q", cfg.LLMProvider, cfg.LLMModel, cfg.STTProvider)
 	}
-	if cfg.OpenAIAuthMode != "codex" {
-		t.Fatalf("OpenAIAuthMode = %q, want %q", cfg.OpenAIAuthMode, "codex")
-	}
-	if cfg.KiloAPIKey != "kilo-key" {
-		t.Fatalf("KiloAPIKey = %q, want %q", cfg.KiloAPIKey, "kilo-key")
+	if cfg.OpenAIAuthMode != "api_key" {
+		t.Fatalf("OpenAIAuthMode = %q, want %q", cfg.OpenAIAuthMode, "api_key")
 	}
 	if cfg.MCPConfigPath != filepath.Join(tmpDir, "config", "mcp_servers.json") {
 		t.Fatalf("MCPConfigPath = %q, want managed default", cfg.MCPConfigPath)

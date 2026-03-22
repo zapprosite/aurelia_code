@@ -18,8 +18,8 @@ func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 
 	input := strings.Join([]string{
 		"",
-		"kimi-key",
-		"kimi-k2-thinking",
+		"",
+		"qwen3.5:9b",
 		"groq-key",
 		"telegram-token",
 		"101,202",
@@ -42,13 +42,13 @@ func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 		t.Fatalf("config.Load() error = %v", err)
 	}
 
-	if cfg.LLMProvider != "kimi" {
+	if cfg.LLMProvider != "ollama" {
 		t.Fatalf("LLMProvider = %q", cfg.LLMProvider)
 	}
 	if cfg.STTProvider != "groq" {
 		t.Fatalf("STTProvider = %q", cfg.STTProvider)
 	}
-	if cfg.LLMModel != "kimi-k2-thinking" {
+	if cfg.LLMModel != "qwen3.5:9b" {
 		t.Fatalf("LLMModel = %q", cfg.LLMModel)
 	}
 	if cfg.TelegramBotToken != "telegram-token" {
@@ -56,9 +56,6 @@ func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 	}
 	if got, want := cfg.TelegramAllowedUserIDs, []int64{101, 202}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
 		t.Fatalf("TelegramAllowedUserIDs = %v", got)
-	}
-	if cfg.KimiAPIKey != "kimi-key" {
-		t.Fatalf("KimiAPIKey = %q", cfg.KimiAPIKey)
 	}
 	if cfg.GroqAPIKey != "groq-key" {
 		t.Fatalf("GroqAPIKey = %q", cfg.GroqAPIKey)
@@ -86,18 +83,14 @@ func TestRunOnboard_PreservesExistingValuesOnBlankInput(t *testing.T) {
 		t.Fatalf("runtime.Bootstrap() error = %v", err)
 	}
 	if err := config.SaveEditable(resolver, config.EditableConfig{
-		LLMProvider:            "kimi",
-		LLMModel:               "moonshot-v1-32k",
+		LLMProvider:            "ollama",
+		LLMModel:               "qwen3.5:9b",
 		STTProvider:            "groq",
 		TelegramBotToken:       "old-telegram",
 		TelegramAllowedUserIDs: []int64{42},
 		AnthropicAPIKey:        "old-anthropic",
 		GoogleAPIKey:           "old-google",
-		KiloAPIKey:             "old-kilo",
-		KimiAPIKey:             "old-kimi",
 		OpenRouterAPIKey:       "old-openrouter",
-		ZAIAPIKey:              "old-zai",
-		AlibabaAPIKey:          "old-alibaba",
 		OpenAIAPIKey:           "old-openai",
 		GroqAPIKey:             "old-groq",
 		MaxIterations:          600,
@@ -115,10 +108,10 @@ func TestRunOnboard_PreservesExistingValuesOnBlankInput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("config.Load() error = %v", err)
 	}
-	if cfg.TelegramBotToken != "old-telegram" || cfg.KimiAPIKey != "old-kimi" || cfg.AnthropicAPIKey != "old-anthropic" || cfg.GoogleAPIKey != "old-google" || cfg.KiloAPIKey != "old-kilo" || cfg.OpenRouterAPIKey != "old-openrouter" || cfg.ZAIAPIKey != "old-zai" || cfg.AlibabaAPIKey != "old-alibaba" || cfg.OpenAIAPIKey != "old-openai" || cfg.GroqAPIKey != "old-groq" {
+	if cfg.TelegramBotToken != "old-telegram" || cfg.AnthropicAPIKey != "old-anthropic" || cfg.GoogleAPIKey != "old-google" || cfg.OpenRouterAPIKey != "old-openrouter" || cfg.OpenAIAPIKey != "old-openai" || cfg.GroqAPIKey != "old-groq" {
 		t.Fatalf("expected secrets to be preserved, got %+v", cfg)
 	}
-	if cfg.LLMProvider != "kimi" || cfg.LLMModel != "moonshot-v1-32k" || cfg.STTProvider != "groq" {
+	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "qwen3.5:9b" || cfg.STTProvider != "groq" {
 		t.Fatalf("expected providers to be preserved, got llm=%q model=%q stt=%q", cfg.LLMProvider, cfg.LLMModel, cfg.STTProvider)
 	}
 	if len(cfg.TelegramAllowedUserIDs) != 1 || cfg.TelegramAllowedUserIDs[0] != 42 {
@@ -172,7 +165,10 @@ func TestRawTerminalFrame_DoesNotDuplicateExistingCRLF(t *testing.T) {
 }
 
 func TestOnboardingUI_MenuFlowAndBack(t *testing.T) {
-	ui := newOnboardingUI(config.DefaultEditableConfig())
+	cfg := config.DefaultEditableConfig()
+	cfg.LLMProvider = "anthropic"
+	cfg.LLMModel = "claude-sonnet-4-6"
+	ui := newOnboardingUI(cfg)
 
 	_, _, err := ui.HandleKey(keyEvent{code: keyEnter})
 	if err != nil {
@@ -181,7 +177,7 @@ func TestOnboardingUI_MenuFlowAndBack(t *testing.T) {
 	if ui.step != stepLLMKey {
 		t.Fatalf("step = %v, want %v", ui.step, stepLLMKey)
 	}
-	ui.input = "kimi-key"
+	ui.input = "test-key"
 	_, _, err = ui.HandleKey(keyEvent{code: keyEnter})
 	if err != nil {
 		t.Fatalf("HandleKey() error = %v", err)
@@ -202,8 +198,8 @@ func TestOnboardingUI_ModelSelectionPersistsChoice(t *testing.T) {
 	ui := newOnboardingUI(config.DefaultEditableConfig())
 	ui.step = stepLLMModel
 	ui.modelOptions = []llm.ModelOption{
-		{ID: "kimi-k2-thinking", Name: "Kimi K2 Thinking"},
-		{ID: "moonshot-v1-32k", Name: "Moonshot v1 32K"},
+		{ID: "qwen3.5:9b", Name: "Qwen 3.5 9B"},
+		{ID: "qwen3.5:27b-q4_K_M", Name: "Qwen 3.5 27B Q4_K_M"},
 	}
 	ui.menuIndex = 1
 
@@ -211,7 +207,7 @@ func TestOnboardingUI_ModelSelectionPersistsChoice(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleKey() error = %v", err)
 	}
-	if ui.cfg.LLMModel != "moonshot-v1-32k" {
+	if ui.cfg.LLMModel != "qwen3.5:27b-q4_K_M" {
 		t.Fatalf("LLMModel = %q", ui.cfg.LLMModel)
 	}
 	if ui.step != stepSTTProvider {
@@ -233,29 +229,6 @@ func TestOnboardingUI_AnthropicKeyInputTargetsAnthropicSecret(t *testing.T) {
 	}
 	if ui.cfg.AnthropicAPIKey != "anthropic-key" {
 		t.Fatalf("AnthropicAPIKey = %q", ui.cfg.AnthropicAPIKey)
-	}
-	if ui.cfg.KimiAPIKey != "" {
-		t.Fatalf("KimiAPIKey = %q", ui.cfg.KimiAPIKey)
-	}
-}
-
-func TestOnboardingUI_KiloKeyInputTargetsKiloSecret(t *testing.T) {
-	ui := newOnboardingUI(config.EditableConfig{
-		LLMProvider: "kilo",
-		LLMModel:    "gpt-5.4",
-	})
-	ui.step = stepLLMKey
-	ui.input = "kilo-key"
-
-	_, _, err := ui.HandleKey(keyEvent{code: keyEnter})
-	if err != nil {
-		t.Fatalf("HandleKey() error = %v", err)
-	}
-	if ui.cfg.KiloAPIKey != "kilo-key" {
-		t.Fatalf("KiloAPIKey = %q", ui.cfg.KiloAPIKey)
-	}
-	if ui.cfg.KimiAPIKey != "" {
-		t.Fatalf("KimiAPIKey = %q", ui.cfg.KimiAPIKey)
 	}
 }
 
@@ -356,75 +329,26 @@ func TestOnboardingUI_OpenRouterModelSearchFiltersResults(t *testing.T) {
 	}
 }
 
-func TestFilterModelOptions_KiloMatchesProviderAndModel(t *testing.T) {
-	options := []llm.ModelOption{
-		{ID: "gpt-5.4", Name: "GPT-5.4 · openai"},
-		{ID: "claude-sonnet-4-6", Name: "Claude Sonnet 4.6 · anthropic"},
-		{ID: "gemini-2.5-pro", Name: "Gemini 2.5 Pro · google"},
-	}
-
-	cfg := config.EditableConfig{LLMProvider: "kilo"}
-
-	filteredByProvider := filterModelOptions(cfg, options, "anthropic", modelCapabilityAll)
-	if len(filteredByProvider) != 1 || filteredByProvider[0].ID != "claude-sonnet-4-6" {
-		t.Fatalf("filteredByProvider = %+v", filteredByProvider)
-	}
-
-	filteredByModel := filterModelOptions(cfg, options, "gpt-5", modelCapabilityAll)
-	if len(filteredByModel) != 1 || filteredByModel[0].ID != "gpt-5.4" {
-		t.Fatalf("filteredByModel = %+v", filteredByModel)
-	}
-}
-
-func TestOnboardingUI_KiloModelSearchFiltersResults(t *testing.T) {
-	ui := newOnboardingUI(config.EditableConfig{
-		LLMProvider: "kilo",
-		LLMModel:    "gpt-5.4",
-	})
-	ui.step = stepLLMModel
-	ui.allModelOptions = []llm.ModelOption{
-		{ID: "gpt-5.4", Name: "GPT-5.4 · openai"},
-		{ID: "claude-sonnet-4-6", Name: "Claude Sonnet 4.6 · anthropic"},
-		{ID: "gemini-2.5-pro", Name: "Gemini 2.5 Pro · google"},
-	}
-	ui.modelOptions = append([]llm.ModelOption(nil), ui.allModelOptions...)
-
-	_, _, err := ui.HandleKey(keyEvent{code: keyRune, r: 'g'})
-	if err != nil {
-		t.Fatalf("HandleKey() error = %v", err)
-	}
-	_, _, err = ui.HandleKey(keyEvent{code: keyRune, r: 'o'})
-	if err != nil {
-		t.Fatalf("HandleKey() error = %v", err)
-	}
-	if ui.modelFilter != "go" {
-		t.Fatalf("modelFilter = %q", ui.modelFilter)
-	}
-	if len(ui.modelOptions) != 1 || ui.modelOptions[0].ID != "gemini-2.5-pro" {
-		t.Fatalf("modelOptions = %+v", ui.modelOptions)
-	}
-}
-
 func TestFilterModelOptions_VisionOnly(t *testing.T) {
 	options := []llm.ModelOption{
-		{ID: "kimi-k2-thinking", Name: "Kimi K2 Thinking"},
-		{ID: "moonshot-v1-vision", Name: "Moonshot Vision", SupportsImageInput: true},
+		{ID: "qwen3.5:9b", Name: "Qwen 3.5 9B"},
+		{ID: "gemma3:27b-it-q4_K_M", Name: "Gemma 3 27B", SupportsImageInput: true},
 	}
 
-	filtered := filterModelOptions(config.EditableConfig{LLMProvider: "kimi"}, options, "", modelCapabilityVision)
-	if len(filtered) != 1 || filtered[0].ID != "moonshot-v1-vision" {
+	filtered := filterModelOptions(config.EditableConfig{LLMProvider: "ollama"}, options, "", modelCapabilityVision)
+	if len(filtered) != 1 || filtered[0].ID != "gemma3:27b-it-q4_K_M" {
 		t.Fatalf("filtered = %+v", filtered)
 	}
 }
 
 func TestOnboardingUI_ModelVisionToggleFiltersResults(t *testing.T) {
 	ui := newOnboardingUI(config.EditableConfig{
-		LLMProvider: "kilo",
+		LLMProvider: "openrouter",
 		LLMModel:    "openai/gpt-5.4",
 	})
 	ui.step = stepLLMModel
 	ui.allModelOptions = []llm.ModelOption{
-		{ID: "z-ai/glm-5-turbo", Name: "GLM-5 Turbo"},
+		{ID: "meta-llama/llama-3", Name: "Llama 3"},
 		{ID: "openai/gpt-5.4", Name: "GPT-5.4", SupportsImageInput: true},
 	}
 	ui.modelOptions = append([]llm.ModelOption(nil), ui.allModelOptions...)

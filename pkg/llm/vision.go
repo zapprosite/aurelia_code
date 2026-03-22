@@ -54,11 +54,6 @@ func modelSupportsVision(provider, model string) bool {
 	}
 
 	switch provider {
-	case "kilo":
-		if supported, ok := kiloModelSupportsVision(model); ok {
-			return supported
-		}
-		return false
 	case "openrouter":
 		if supported, ok := openRouterModelSupportsVision(model); ok {
 			return supported
@@ -66,12 +61,6 @@ func modelSupportsVision(provider, model string) bool {
 		return heuristicVisionSupport(model)
 	case "openai":
 		return looksLikeOpenAIVisionModel(model)
-	case "zai":
-		return strings.Contains(model, "4.6v") || strings.Contains(model, "vision")
-	case "alibaba":
-		return strings.Contains(model, "vl")
-	case "kimi":
-		return strings.Contains(model, "vision")
 	case "anthropic", "google":
 		return true
 	default:

@@ -61,7 +61,7 @@ func (p *Planner) Decide(req DryRunRequest) DryRunDecision {
 }
 
 func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
-	taskClass := normalizeTaskClass(req)
+	taskClass := classifyTask(req)
 	outputMode := strings.ToLower(strings.TrimSpace(req.OutputMode))
 	useTools := req.RequiresTools || taskClass == "maintenance" || taskClass == "browser_workflow"
 
@@ -256,30 +256,58 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	}}
 }
 
-func normalizeTaskClass(req DryRunRequest) string {
+// classifyRule maps keyword patterns to a task class with a weight.
+type classifyRule struct {
+	Class         string
+	Keywords      []string
+	Weight        int
+	RequiresField string // "vision", or "" for none
+}
+
+var classifyRules = []classifyRule{
+	{Class: "audio", Keywords: []string{"audio", "stt", "transcri", "whisper", "gravacao", "microfone"}, Weight: 10},
+	{Class: "deep_research", Keywords: []string{"deep research", "pesquisa profunda", "deep search", "investigar a fundo"}, Weight: 10},
+	{Class: "vision", Keywords: []string{"screenshot", "imagem", "image", "visual", "foto", "captura de tela"}, Weight: 8, RequiresField: "vision"},
+	{Class: "routing", Keywords: []string{"roteamento", "classifier", "classify", "categorize", "categorizar", "route"}, Weight: 6},
+	{Class: "curation", Keywords: []string{"curadoria", "facts", "tags", "resumo curto", "bullet points", "curate"}, Weight: 6},
+	{Class: "browser_workflow", Keywords: []string{"browser", "navigate", "navegar", "web page", "pagina web"}, Weight: 7},
+	{Class: "workflow_premium", Keywords: []string{"workflow complexo", "agentico", "multi-step", "complex workflow"}, Weight: 7},
+	{Class: "maintenance", Keywords: []string{"maint", "homelab", "runbook", "reboot", "nvidia-gpu", "servidor", "deploy"}, Weight: 5},
+	{Class: "general", Keywords: []string{}, Weight: 0},
+}
+
+// classifyTask uses weighted keyword scoring to determine task class.
+// Explicit TaskClass in the request takes precedence.
+func classifyTask(req DryRunRequest) string {
 	taskClass := strings.ToLower(strings.TrimSpace(req.TaskClass))
 	if taskClass != "" {
 		return taskClass
 	}
+
 	task := strings.ToLower(req.Task)
-	switch {
-	case strings.Contains(task, "audio") || strings.Contains(task, "stt") || strings.Contains(task, "transcri"):
-		return "audio"
-	case strings.Contains(task, "research") || strings.Contains(task, "pesquisa") || strings.Contains(task, "deep search"):
-		return "deep_research"
-	case strings.Contains(task, "screenshot") || strings.Contains(task, "imagem") || strings.Contains(task, "vision"):
-		return "vision"
-	case strings.Contains(task, "json") || strings.Contains(task, "roteamento"):
-		return "routing"
-	case strings.Contains(task, "curadoria") || strings.Contains(task, "facts") || strings.Contains(task, "tags"):
-		return "curation"
-	case strings.Contains(task, "browser") || strings.Contains(task, "ide"):
-		return "browser_workflow"
-	case strings.Contains(task, "maint") || strings.Contains(task, "homelab") || strings.Contains(task, "runbook"):
-		return "maintenance"
-	default:
+	if task == "" {
 		return "general"
 	}
+
+	bestClass := "general"
+	bestScore := 0
+
+	for _, rule := range classifyRules {
+		if rule.RequiresField == "vision" && !req.RequiresVision {
+			continue
+		}
+		score := 0
+		for _, kw := range rule.Keywords {
+			if strings.Contains(task, kw) {
+				score += rule.Weight
+			}
+		}
+		if score > bestScore {
+			bestScore = score
+			bestClass = rule.Class
+		}
+	}
+	return bestClass
 }
 
 func guardsFor(outputMode string, remote bool) ResponseGuards {

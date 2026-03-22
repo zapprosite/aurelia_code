@@ -13,6 +13,8 @@ type gatewayMetrics struct {
 	latency   *prometheus.HistogramVec
 	breakers  *prometheus.GaugeVec
 	budgets   *prometheus.GaugeVec
+	tokens    *prometheus.CounterVec
+	costUSD   *prometheus.CounterVec
 }
 
 var (
@@ -59,6 +61,18 @@ func defaultMetrics() *gatewayMetrics {
 				Subsystem: "gateway",
 				Name:      "budget_usage_ratio",
 				Help:      "Uso do budget por lane em relacao ao limite hard.",
+			}, []string{"lane"})),
+			tokens: mustRegisterCollector(prometheus.NewCounterVec(prometheus.CounterOpts{
+				Namespace: "aurelia",
+				Subsystem: "gateway",
+				Name:      "tokens_total",
+				Help:      "Total de tokens processados pelo gateway.",
+			}, []string{"lane", "direction"})),
+			costUSD: mustRegisterCollector(prometheus.NewCounterVec(prometheus.CounterOpts{
+				Namespace: "aurelia",
+				Subsystem: "gateway",
+				Name:      "cost_usd_total",
+				Help:      "Custo total em USD por lane.",
 			}, []string{"lane"})),
 		}
 	})
