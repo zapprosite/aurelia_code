@@ -1,0 +1,22 @@
+{
+  "adr": "docs/adr/20260323-resource-governance-ram-ipv6.md",
+  "slug": "resource-governance-ram-ipv6",
+  "title": "Governança de Recursos (RAM & IPv6)",
+  "status": "RESOLVED",
+  "current_state": "Implementação concluída. Limites de memória aplicados a 19 serviços e cleanup IPv6 realizado.",
+  "next_steps": [
+    "Monitorar consumo de RAM via Grafana/Dashboard nas próximas 24h",
+    "Validar se algum container atinge o hard limit e causa OOM Kill"
+  ],
+  "smoke_commands": [
+    "docker stats --no-stream",
+    "ip -6 addr show enp8s0",
+    "go build ./cmd/aurelia"
+  ],
+  "simulations": [],
+  "evidence": [
+    "docs/adr/20260323-resource-governance-ram-ipv6.md",
+    ".context/workflow/actions.jsonl"
+  ],
+  "blockers": []
+}

@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-23T20:49:09Z",
+  "generated": "2026-03-23T22:50:24Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 12278,
+    "totalFiles": 12282,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -51,17 +51,17 @@
       },
       {
         "name": "docs",
-        "fileCount": 33,
+        "fileCount": 36,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
         "name": "internal",
-        "fileCount": 211,
+        "fileCount": 212,
         "description": "Core runtime layers and domain logic"
       },
       {
         "name": "pkg",
-        "fileCount": 24,
+        "fileCount": 25,
         "description": "LLM and STT provider integrations"
       },
       {
@@ -78,11 +78,11 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 247
+        "count": 249
       },
       {
         "extension": ".md",
-        "count": 34
+        "count": 36
       },
       {
         "extension": ".sh",
@@ -90,7 +90,7 @@
       },
       {
         "extension": ".json",
-        "count": 17
+        "count": 18
       },
       {
         "extension": ".yml",
@@ -102,7 +102,7 @@
       },
       {
         "extension": ".png",
-        "count": 3
+        "count": 2
       }
     ]
   },
