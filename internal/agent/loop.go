@@ -37,12 +37,32 @@ func (l *Loop) Registry() *ToolRegistry {
 
 // Run é a interface clássica do loop, mantida para compatibilidade
 func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, allowedTools []string) ([]Message, string, error) {
-	opts := LoopOptions{
-		SystemPrompt:  systemPrompt,
-		InitialHistory: history,
-		MaxIterations: l.maxIterations,
+	// Filtrar definições de tools baseado em allowedTools
+	var filteredTools []Tool
+	if len(allowedTools) > 0 {
+		allTools := l.registry.GetDefinitions()
+		allowedSet := make(map[string]bool)
+		for _, t := range allowedTools {
+			allowedSet[t] = true
+		}
+		for _, tool := range allTools {
+			if allowedSet[tool.Name] {
+				filteredTools = append(filteredTools, tool)
+			}
+		}
+	} else {
+		filteredTools = l.registry.GetDefinitions()
 	}
-	// TODO: Na versão premium, filtrar registry baseado em allowedTools aqui
+
+	// Aumentar o system prompt com orientações de runtime capabilities
+	augmentedPrompt := augmentSystemPromptWithRuntimeCapabilities(systemPrompt, filteredTools)
+
+	opts := LoopOptions{
+		SystemPrompt:     augmentedPrompt,
+		InitialHistory:   history,
+		MaxIterations:    l.maxIterations,
+		ToolDefinitions:  filteredTools,
+	}
 	return l.RunWithOptions(ctx, opts)
 }
 
@@ -67,6 +87,7 @@ type LoopOptions struct {
 	InitialHistory   []Message
 	MaxIterations    int
 	InterruptHandler func() bool
+	ToolDefinitions  []Tool // Filtered tools for this run
 }
 
 func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message, string, error) {
@@ -92,9 +113,12 @@ func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message,
 		// Adicionar orientação sobre a fase atual no System Prompt dinâmico
 		currentPhase, _ := PrevPhaseFromContext(ctx)
 		dynamicSystemPrompt := augmentSystemPromptWithPhase(opts.SystemPrompt, currentPhase)
-
-		// O provedor de LLM PRECISA das ferramentas registradas
-		resp, err := l.llm.GenerateContent(ctx, dynamicSystemPrompt, currentHistory, l.registry.GetDefinitions())
+		// O provedor de LLM PRECISA das ferramentas registradas (usar filtradas se disponíveis)
+		toolDefs := opts.ToolDefinitions
+		if len(toolDefs) == 0 {
+			toolDefs = l.registry.GetDefinitions()
+		}
+		resp, err := l.llm.GenerateContent(ctx, dynamicSystemPrompt, currentHistory, toolDefs)
 		if err != nil {
 			return currentHistory, "", fmt.Errorf("generate content error: %w", err)
 		}
@@ -200,5 +224,32 @@ func augmentSystemPromptWithPhase(basePrompt, phase string) string {
 		lines = append(lines, "DIRETRIZ: Valide as mudanças com testes ou leitura de logs. Use `log_verification` para concluir.")
 	}
 	
+	return strings.Join(lines, "\n")
+}
+
+func augmentSystemPromptWithRuntimeCapabilities(basePrompt string, tools []Tool) string {
+	if len(tools) == 0 {
+		return basePrompt
+	}
+
+	var lines []string
+	lines = append(lines, basePrompt)
+	lines = append(lines, "\n---")
+	lines = append(lines, "# RUNTIME CAPABILITIES")
+	lines = append(lines, "")
+	lines = append(lines, "Se o usuario pedir para rodar comandos, ler/escrever arquivos, ou fazer outras operações no sistema, você TEM permissão para usar estas ferramentas:")
+	lines = append(lines, "")
+
+	for _, tool := range tools {
+		lines = append(lines, fmt.Sprintf("- %s: %s", tool.Name, tool.Description))
+	}
+
+	lines = append(lines, "")
+	lines = append(lines, "REGRAS IMPORTANTES:")
+	lines = append(lines, "1. Use `workdir` para entender o diretório de trabalho atual antes de qualquer operação de arquivo.")
+	lines = append(lines, "2. Para operações de longa duração ou repetidas, prefira criar schedules com `create_schedule` em vez de executar direto.")
+	lines = append(lines, "3. Nao diga que o ambiente esta bloqueado ou que nao pode executar comandos — você TEM as ferramentas listadas acima.")
+	lines = append(lines, "4. Sempre confirme caminhos completos e permissões antes de modificar arquivos críticos.")
+
 	return strings.Join(lines, "\n")
 }
