@@ -1,6 +1,19 @@
 package gateway
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
+
+func TestCalculateCostUSD_GroqLlama(t *testing.T) {
+	t.Parallel()
+	// 1000 input tokens + 500 output tokens on groq llama-3.3
+	cost := CalculateCostUSD("llama-3.3-70b-versatile", 1000, 500)
+	// Expected: (1000 * 0.59 / 1M) + (500 * 0.79 / 1M) = 0.00059 + 0.000395 = 0.000985
+	if cost < 0.0009 || cost > 0.001 {
+		t.Fatalf("cost = %f, want ~0.000985", cost)
+	}
+}
 
 func TestCalculateCostUSD_MiniMaxM2_7(t *testing.T) {
 	t.Parallel()
@@ -43,7 +56,7 @@ func TestCostExceeded_BlocksWhenOverLimit(t *testing.T) {
 			"remote_premium": {Soft: 80, Hard: 160, CostHardUSD: 2.00},
 		},
 		states: map[string]*routeState{
-			"remote_premium": {Day: "2026-03-22", TotalCostUSD: 2.50},
+			"remote_premium": {Day: time.Now().UTC().Format("2006-01-02"), TotalCostUSD: 2.50},
 		},
 	}
 	if !p.costExceeded("remote_premium") {
@@ -58,7 +71,7 @@ func TestCostExceeded_AllowsUnderLimit(t *testing.T) {
 			"remote_premium": {Soft: 80, Hard: 160, CostHardUSD: 2.00},
 		},
 		states: map[string]*routeState{
-			"remote_premium": {Day: "2026-03-22", TotalCostUSD: 0.50},
+			"remote_premium": {Day: time.Now().UTC().Format("2006-01-02"), TotalCostUSD: 0.50},
 		},
 	}
 	if p.costExceeded("remote_premium") {

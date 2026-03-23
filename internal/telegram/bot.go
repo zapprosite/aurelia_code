@@ -29,6 +29,7 @@ type BotController struct {
 	loader           *skill.Loader
 	stt              stt.Transcriber
 	tts              tts.Synthesizer
+	premiumTTS       tts.Synthesizer
 	canonical        *persona.CanonicalIdentityService
 	bootstrapMu      sync.Mutex
 	pendingBootstrap map[int64]bootstrapState
@@ -89,6 +90,7 @@ func NewBotController(
 		loader:           l,
 		stt:              s,
 		tts:              buildTTSSynthesizer(cfg),
+		premiumTTS:       buildPremiumTTSSynthesizer(cfg),
 		canonical:        canonical,
 		pendingBootstrap: make(map[int64]bootstrapState),
 		pendingAlbums:    make(map[string]*pendingAlbum),
@@ -101,17 +103,17 @@ func NewBotController(
 }
 
 func buildTTSSynthesizer(cfg *config.AppConfig) tts.Synthesizer {
-	if cfg == nil {
+	if cfg == nil || cfg.TTSProvider == "" || cfg.TTSProvider == "disabled" {
 		return nil
 	}
-	switch cfg.TTSProvider {
-	case "", "disabled":
-		return nil
-	default:
-		// All TTS providers use local voice-proxy (OpenAI-compatible interface)
-		return tts.NewOpenAICompatibleSynthesizer(cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSVoice, cfg.TTSLanguage, cfg.TTSFormat, cfg.TTSSpeed)
+	return tts.NewOpenAICompatibleSynthesizer(cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSVoice, cfg.TTSLanguage, cfg.TTSFormat, cfg.TTSSpeed)
+}
 
+func buildPremiumTTSSynthesizer(cfg *config.AppConfig) tts.Synthesizer {
+	if cfg == nil || cfg.PremiumTTSProvider == "" || cfg.PremiumTTSProvider == "disabled" {
+		return nil
 	}
+	return tts.NewOpenAICompatibleSynthesizer(cfg.PremiumTTSBaseURL, cfg.PremiumTTSModel, cfg.PremiumTTSVoice, cfg.TTSLanguage, "opus", cfg.TTSSpeed)
 }
 
 // GetBot exposes the underlying Telebot instance.

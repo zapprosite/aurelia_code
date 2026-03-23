@@ -27,10 +27,10 @@ Orquestrar a implementação de governança industrial do homelab:
 | Secrets.env + systemd EnvironmentFile | ✅ Concluído |
 | Env Overrides em `internal/config/config.go` | ✅ Concluído |
 | Roadmap mestre sincronizado | ✅ Concluído |
-| Links quebrados no REPOSITORY_CONTRACT | ✅ Concluído |
+| Links verificados no REPOSITORY_CONTRACT | ✅ Concluído |
 | Índice de ADRs (`docs/adr/README.md`) | ✅ Concluído |
 | KeePassXC vault | ⏳ Aguardando humano (2026-03-27) |
-| Secret-audit no crontab semanal | ⏳ Pendente |
+| Secret-audit no crontab semanal | ✅ Concluído |
 
 ## Referência
 

@@ -4,19 +4,28 @@ import (
 	"testing"
 )
 
-func TestPlannerDecide_MaintenancePrefersLocalBalanced(t *testing.T) {
+func TestPlannerDecide_MaintenancePrefersGroqWithOllamaFallback(t *testing.T) {
 	t.Parallel()
 
-	got := NewPlanner().Decide(DryRunRequest{
+	opts := NewPlanner().Plan(DryRunRequest{
 		TaskClass:     "maintenance",
 		RequiresTools: true,
 	})
 
-	if got.Provider != "ollama" || got.Model != defaultLocalBalancedModel {
-		t.Fatalf("unexpected route: %+v", got)
+	// Primary should be Groq
+	if len(opts) == 0 {
+		t.Fatalf("expected at least one candidate")
 	}
-	if !got.UseTools {
-		t.Fatalf("expected tools enabled: %+v", got)
+	if opts[0].Provider != "groq" || opts[0].Model != defaultGroqTextModel {
+		t.Fatalf("unexpected primary route: %+v", opts[0])
+	}
+	if !opts[0].UseTools {
+		t.Fatalf("expected tools enabled: %+v", opts[0])
+	}
+
+	// Fallback should include local-balanced
+	if len(opts) < 2 || opts[1].Provider != "ollama" || opts[1].Model != defaultLocalBalancedModel {
+		t.Fatalf("expected ollama fallback, got: %+v", opts)
 	}
 }
 

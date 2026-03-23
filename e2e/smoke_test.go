@@ -208,7 +208,7 @@ func testMultiStepOrchestration(t *testing.T, bot *tg.BotAPI, chatID int64) {
 		expectations := []string{
 			"vram", "check", "verify", // Step 1: VRAM
 			"whisper", "speaches", "stт", // Step 2: STT backend
-			"chatterbox", "tts", // Step 3: TTS backend
+			"xtts", "tts", // Step 3: TTS backend
 			"proxy", // Step 4: Proxy
 			"healthy", "health", "up", // Final validation
 		}

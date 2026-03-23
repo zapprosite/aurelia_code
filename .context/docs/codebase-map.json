@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-22T17:57:22Z",
+  "generated": "2026-03-22T22:54:27Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 11719,
+    "totalFiles": 14978,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -56,12 +56,12 @@
       },
       {
         "name": "internal",
-        "fileCount": 210,
+        "fileCount": 212,
         "description": "Core runtime layers and domain logic"
       },
       {
         "name": "pkg",
-        "fileCount": 33,
+        "fileCount": 21,
         "description": "LLM and STT provider integrations"
       },
       {
@@ -78,11 +78,11 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 240
+        "count": 230
       },
       {
         "extension": ".md",
-        "count": 32
+        "count": 33
       },
       {
         "extension": ".sh",

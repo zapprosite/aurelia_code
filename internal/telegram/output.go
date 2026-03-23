@@ -123,19 +123,18 @@ func SendAudio(bot *telebot.Bot, chat *telebot.Chat, text string) error {
 
 func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string) error {
 	if synthesizer == nil || !synthesizer.IsAvailable() {
-		log.Println("TTS synthesizer unavailable. Falling back to text output.")
-		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+		return nil // No audio to send, text already sent
 	}
 
 	speechText := sanitizeTextForSpeech(text)
 	if speechText == "" {
-		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+		return nil
 	}
 
 	audio, err := synthesizer.Synthesize(context.Background(), speechText)
 	if err != nil {
-		log.Printf("TTS synthesis failed (%v). Falling back to text output...", err)
-		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+		log.Printf("TTS synthesis failed (%v).", err)
+		return nil // Don't fail the whole response if only audio fails
 	}
 
 	tmpFile, err := os.CreateTemp(os.TempDir(), "aurelia-tts-*"+audio.Extension)

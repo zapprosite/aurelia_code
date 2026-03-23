@@ -17,8 +17,8 @@ const (
 	defaultSTTProvider          = "groq"
 	defaultTTSProvider          = "openai_compatible"
 	defaultLocalTTSBaseURL = "http://127.0.0.1:8011"
-	defaultLocalTTSModel   = "chatterbox"
-	defaultLocalTTSVoice   = "Aurelia.wav" // PT-BR voice via gTTS (sweet, educated)
+	defaultLocalTTSModel   = "tts-1-hd"
+	defaultLocalTTSVoice   = "aurelia" // PT-BR voice clone via XTTS v2 (sweet, professional)
 	defaultTTSLanguage      = "pt"
 	defaultLocalTTSFormat  = "opus"
 
@@ -50,6 +50,10 @@ type AppConfig struct {
 	TTSLanguage              string
 	TTSFormat                string
 	TTSSpeed                 float64
+	PremiumTTSProvider       string
+	PremiumTTSBaseURL        string
+	PremiumTTSModel          string
+	PremiumTTSVoice          string
 	TelegramBotToken         string
 
 	TelegramAllowedUserIDs   []int64
@@ -100,6 +104,10 @@ type fileConfig struct {
 	TTSLanguage              string  `json:"tts_language"`
 	TTSFormat                string  `json:"tts_format"`
 	TTSSpeed                 float64 `json:"tts_speed"`
+	PremiumTTSProvider       string  `json:"premium_tts_provider"`
+	PremiumTTSBaseURL        string  `json:"premium_tts_base_url"`
+	PremiumTTSModel          string  `json:"premium_tts_model"`
+	PremiumTTSVoice          string  `json:"premium_tts_voice"`
 	TelegramBotToken         string  `json:"telegram_bot_token"`
 
 	TelegramAllowedUserIDs   []int64 `json:"telegram_allowed_user_ids"`
@@ -151,6 +159,10 @@ type EditableConfig struct {
 	TTSLanguage              string
 	TTSFormat                string
 	TTSSpeed                 float64
+	PremiumTTSProvider       string
+	PremiumTTSBaseURL        string
+	PremiumTTSModel          string
+	PremiumTTSVoice          string
 	TelegramBotToken         string
 
 	TelegramAllowedUserIDs   []int64
@@ -245,6 +257,10 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		TTSLanguage:              defaultTTSLanguage,
 		TTSFormat:                defaultTTSFormatForProvider(defaultTTSProvider),
 		TTSSpeed:                 defaultTTSSpeed,
+		PremiumTTSProvider:       "openai_compatible",
+		PremiumTTSBaseURL:        "http://127.0.0.1:8012",
+		PremiumTTSModel:          "kokoro",
+		PremiumTTSVoice:          "pt-br",
 		TelegramAllowedUserIDs:   []int64{},
 
 		MaxIterations:            defaultMaxIterations,
@@ -285,6 +301,10 @@ func DefaultEditableConfig() EditableConfig {
 		TTSLanguage:              defaultTTSLanguage,
 		TTSFormat:                defaultTTSFormatForProvider(defaultTTSProvider),
 		TTSSpeed:                 defaultTTSSpeed,
+		PremiumTTSProvider:       "openai_compatible",
+		PremiumTTSBaseURL:        "http://127.0.0.1:8012",
+		PremiumTTSModel:          "kokoro",
+		PremiumTTSVoice:          "pt-br",
 		TelegramAllowedUserIDs:   []int64{},
 
 		MaxIterations:            defaultMaxIterations,
@@ -316,6 +336,10 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		TTSLanguage:              cfg.TTSLanguage,
 		TTSFormat:                cfg.TTSFormat,
 		TTSSpeed:                 cfg.TTSSpeed,
+		PremiumTTSProvider:       cfg.PremiumTTSProvider,
+		PremiumTTSBaseURL:        cfg.PremiumTTSBaseURL,
+		PremiumTTSModel:          cfg.PremiumTTSModel,
+		PremiumTTSVoice:          cfg.PremiumTTSVoice,
 		TelegramBotToken:         cfg.TelegramBotToken,
 
 		TelegramAllowedUserIDs:   append([]int64(nil), cfg.TelegramAllowedUserIDs...),
@@ -348,6 +372,10 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.TTSLanguage = editable.TTSLanguage
 	cfg.TTSFormat = editable.TTSFormat
 	cfg.TTSSpeed = editable.TTSSpeed
+	cfg.PremiumTTSProvider = editable.PremiumTTSProvider
+	cfg.PremiumTTSBaseURL = editable.PremiumTTSBaseURL
+	cfg.PremiumTTSModel = editable.PremiumTTSModel
+	cfg.PremiumTTSVoice = editable.PremiumTTSVoice
 	cfg.TelegramBotToken = editable.TelegramBotToken
 
 	cfg.TelegramAllowedUserIDs = append([]int64(nil), editable.TelegramAllowedUserIDs...)
@@ -405,6 +433,18 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	}
 	if cfg.TTSLanguage == "" {
 		cfg.TTSLanguage = defaults.TTSLanguage
+	}
+	if cfg.PremiumTTSProvider == "" {
+		cfg.PremiumTTSProvider = "openai_compatible"
+	}
+	if cfg.PremiumTTSBaseURL == "" {
+		cfg.PremiumTTSBaseURL = "http://127.0.0.1:8012"
+	}
+	if cfg.PremiumTTSModel == "" {
+		cfg.PremiumTTSModel = "kokoro"
+	}
+	if cfg.PremiumTTSVoice == "" {
+		cfg.PremiumTTSVoice = "pt-br"
 	}
 	// Valor oficial: sempre manter PT-BR para a identidade vocal soberana.
 	if cfg.TTSLanguage != defaults.TTSLanguage {
@@ -507,6 +547,10 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		TTSLanguage:              cfg.TTSLanguage,
 		TTSFormat:                cfg.TTSFormat,
 		TTSSpeed:                 cfg.TTSSpeed,
+		PremiumTTSProvider:       cfg.PremiumTTSProvider,
+		PremiumTTSBaseURL:        cfg.PremiumTTSBaseURL,
+		PremiumTTSModel:          cfg.PremiumTTSModel,
+		PremiumTTSVoice:          cfg.PremiumTTSVoice,
 		TelegramBotToken:         cfg.TelegramBotToken,
 
 		TelegramAllowedUserIDs:   cfg.TelegramAllowedUserIDs,
@@ -559,6 +603,10 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.TTSLanguage != b.TTSLanguage ||
 		a.TTSFormat != b.TTSFormat ||
 		a.TTSSpeed != b.TTSSpeed ||
+		a.PremiumTTSProvider != b.PremiumTTSProvider ||
+		a.PremiumTTSBaseURL != b.PremiumTTSBaseURL ||
+		a.PremiumTTSModel != b.PremiumTTSModel ||
+		a.PremiumTTSVoice != b.PremiumTTSVoice ||
 
 		a.AnthropicAPIKey != b.AnthropicAPIKey ||
 		a.GoogleAPIKey != b.GoogleAPIKey ||

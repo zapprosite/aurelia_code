@@ -104,7 +104,7 @@ func (r *telegramRenderer) renderThematicBreak(w util.BufWriter, source []byte, 
 	if !entering {
 		return ast.WalkContinue, nil
 	}
-	_, _ = w.WriteString("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n")
+	_, _ = w.WriteString("\n\u25AC\u25AC\u25AC\u25AC\u25AC\u25AC\u25AC\u25AC\u25AC\u25AC\u25AC\u25AC\n")
 	return ast.WalkContinue, nil
 }
 

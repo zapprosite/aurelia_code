@@ -16,7 +16,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const defaultSystemPrompt = "Voce e o agente pessoal Aurelia. Siga as ordens do usuario com precisao. Retorne markdown estruturado. Se editar codigo, valide com run_command antes de concluir."
+const defaultSystemPrompt = "Você é Aurélia, uma assistente virtual de inteligência artificial de alto nível. Sua comunicação deve ser profissional, prestativa, objetiva e estruturada. Utilize formatação Markdown (negritos, listas e tabelas) para garantir clareza máxima. Ao analisar códigos ou realizar tarefas técnicas, priorize a precisão e sempre valide suas ações com 'run_command' antes de confirmar a conclusão."
 
 type inputSession struct {
 	senderID string
@@ -55,17 +55,6 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		Payload:   session.text,
 		Timestamp: time.Now().Format(time.Kitchen),
 	})
-
-	if handoffResult := maybeParseAntigravityHandoffResult(session.text); handoffResult != nil {
-		finalAnswer := formatAntigravityHandoffResult(handoffResult)
-		bc.persistAssistantAnswer(session, finalAnswer)
-		return bc.deliverFinalAnswer(c, finalAnswer, false)
-	}
-
-	if delegation := maybeBuildAntigravityDelegationPrompt(session.text); delegation != nil {
-		bc.persistAssistantAnswer(session, delegation.Prompt)
-		return bc.deliverFinalAnswer(c, delegation.Prompt, false)
-	}
 
 	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
 	if err != nil {
@@ -123,15 +112,6 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 	}
 	if err := bc.persistIncomingContext(session, userID); err != nil {
 		observability.Logger("telegram.pipeline").Warn("failed to persist external input context", slog.Any("err", err))
-	}
-	if handoffResult := maybeParseAntigravityHandoffResult(session.text); handoffResult != nil {
-		finalAnswer := formatAntigravityHandoffResult(handoffResult)
-		bc.persistAssistantAnswer(session, finalAnswer)
-		return bc.deliverFinalAnswerToChat(chat, finalAnswer, false)
-	}
-	if delegation := maybeBuildAntigravityDelegationPrompt(session.text); delegation != nil {
-		bc.persistAssistantAnswer(session, delegation.Prompt)
-		return bc.deliverFinalAnswerToChat(chat, delegation.Prompt, false)
 	}
 
 	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
@@ -307,15 +287,38 @@ func (bc *BotController) persistAssistantAnswer(session inputSession, finalAnswe
 }
 
 func (bc *BotController) deliverFinalAnswer(c telebot.Context, finalAnswer string, requiresAudio bool) error {
-	if requiresAudio {
-		return sendAudioWithSender(bc.bot, c.Chat(), bc.tts, finalAnswer)
+	// 1. Always send the text first
+	if err := SendText(bc.bot, c.Chat(), finalAnswer); err != nil {
+		return err
 	}
-	return SendText(bc.bot, c.Chat(), finalAnswer)
+
+	// 2. If TTS is available, send the audio as a follow-up
+	// We prioritize premiumTTS (Kokoro) over standard tts (XTTS)
+	synthesizer := bc.tts
+	if bc.premiumTTS != nil && bc.premiumTTS.IsAvailable() {
+		synthesizer = bc.premiumTTS
+	}
+
+	if synthesizer != nil && synthesizer.IsAvailable() {
+		return sendAudioWithSender(bc.bot, c.Chat(), synthesizer, finalAnswer)
+	}
+	return nil
 }
 
 func (bc *BotController) deliverFinalAnswerToChat(chat *telebot.Chat, finalAnswer string, requiresAudio bool) error {
-	if requiresAudio {
-		return sendAudioWithSender(bc.bot, chat, bc.tts, finalAnswer)
+	// 1. Always send the text first
+	if err := SendText(bc.bot, chat, finalAnswer); err != nil {
+		return err
 	}
-	return SendText(bc.bot, chat, finalAnswer)
+
+	// 2. If TTS is available, send the audio as a follow-up
+	synthesizer := bc.tts
+	if bc.premiumTTS != nil && bc.premiumTTS.IsAvailable() {
+		synthesizer = bc.premiumTTS
+	}
+
+	if synthesizer != nil && synthesizer.IsAvailable() {
+		return sendAudioWithSender(bc.bot, chat, synthesizer, finalAnswer)
+	}
+	return nil
 }

@@ -25,9 +25,9 @@ Este é o índice único de governança para humanos e agentes.
 4. [GEMINI.md](../GEMINI.md)
 5. [MODEL.md](../MODEL.md)
 6. [.agents/rules/](../.agents/rules/)
-7. [ADR Index](./adr/README.md)
-8. [plan.md](../plan.md)
-9. [.context/docs/README.md](../.context/docs/README.md)
+7. [ADR Index](../adr/README.md)
+8. [plan.md](../../plan.md)
+9. [.context/docs/README.md](../../.context/docs/README.md)
 
 ## O que cada arquivo manda
 
@@ -71,11 +71,11 @@ Comando canônico:
 
 ## Fontes operacionais
 
-- [ADR Index](./adr/README.md)
-- [JARVIS Master Plan](../plan.md)
-- [Política de Modelos](./adr/ADR-20260320-politica-modelos-hardware-vram.md)
-- [Roadmap Mestre](./adr/ADR-20260320-roadmap-mestre-slices.md)
-- [.agents/skills/systems-engineer-homelab/SKILL.md](../.agents/skills/systems-engineer-homelab/SKILL.md)
+- [ADR Index](../adr/README.md)
+- [JARVIS Master Plan](../../plan.md)
+- [Histórico de ADRs (S0-S14)](../adr/ADR-2026-HISTORICO-S0-S14.md)
+- [Roadmap Mestre (S15+)](../adr/ADR-2026-ROADMAP-FUTURO.md)
+- [.agents/skills/systems-engineer-homelab/SKILL.md](../../.agents/skills/systems-engineer-homelab/SKILL.md)
 
 ## Regra de higiene da raiz
 

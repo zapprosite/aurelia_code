@@ -58,10 +58,27 @@ func HandleCommands(w http.ResponseWriter, r *http.Request) {
 
 		// Evento de Segurança no log
 		Publish(Event{
-			Type: "security_alert",
-			Agent: "Dashboard",
-			Action: "Plan Authority Override",
+			Type:    "security_alert",
+			Agent:   "Dashboard",
+			Action:  "Plan Authority Override",
 			Payload: "Plano " + planID + " marcado como " + status,
+			Timestamp: time.Now().Format("15:04:05"),
+		})
+
+	case "minimax_analysis":
+		// Disparar uma análise executiva de saúde do enxame via Minimax 2.7
+		Publish(Event{
+			Type:      "agent_update",
+			Agent:     "Minimax",
+			Action:    "Iniciando Análise Executiva do Homelab...",
+			Timestamp: time.Now().Format("15:04:05"),
+		})
+		// Simular o despacho para o Gateway Premium
+		Publish(Event{
+			Type:      "agent_thought",
+			Agent:     "Aurelia (Premium)",
+			Action:    "Processando telemetria sênior via MiniMax 2.7...",
+			Payload:   "Analizando VRAM, taxa de sucesso do gateway e integridade do RAG.",
 			Timestamp: time.Now().Format("15:04:05"),
 		})
 

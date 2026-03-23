@@ -31,15 +31,6 @@ var (
 			IconName: "Shield",
 		},
 		{
-			ID:       "antigravity",
-			Name:     "Antigravity",
-			Role:     "Orquestrador / Cockpit",
-			Status:   "online",
-			Load:     5,
-			Color:    "text-blue-400",
-			IconName: "Zap",
-		},
-		{
 			ID:       "claude",
 			Name:     "Claude 5 Omni",
 			Role:     "Implementador Principal",

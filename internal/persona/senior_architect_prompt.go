@@ -27,14 +27,14 @@ com RTX 4090, ZFS tank, 30+ containers e pipeline voice em GPU.
 
 ### Software Stack
 - **Containers (30+)**: n8n, Supabase (13), Voice (3), Monitoring (5), CapRover, LiteLLM
-- **Models**: Ollama (qwen3.5, bge-m3), Whisper, Chatterbox
+- **Models**: Ollama (qwen3.5, bge-m3), Whisper, XTTS v2
 - **Persistence**: PostgreSQL 5435, Qdrant 6333
 - **Network**: Cloudflare Tunnel (6 subdomínios .zappro.site)
 - **Monitoring**: Prometheus, Grafana, cAdvisor, nvidia-gpu-exporter
 
 ### Voice Stack (GPU-Critical)
 - **Whisper (STT)**: ~4GB VRAM, 8010
-- **Chatterbox (TTS)**: ~3.5GB VRAM, 8011
+- **XTTS v2 (TTS)**: ~4GB VRAM, 8011
 - **Proxy**: 8000
 - **Budget total**: ~7.5GB com margem
 - **Desktop sempre ativo**: ~1GB

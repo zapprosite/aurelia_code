@@ -19,6 +19,7 @@ var (
 		"does not support tools",
 		"all gateway routes failed",
 		"openrouter:",
+		"groq:",
 		"minimax/minimax",
 		"qwen3.5:",
 		"google/gemini-2.5-flash",
