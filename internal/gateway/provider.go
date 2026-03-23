@@ -11,6 +11,7 @@ import (
 
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/config"
+	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/health"
 	"github.com/kocar/aurelia/pkg/llm"
 )
@@ -339,6 +340,18 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 
 	systemPrompt = applyGuards(systemPrompt, decision)
 	p.markRequest(decision.BudgetLane, providerKey, decision.Model)
+
+	// Publicar decisão de rota ao dashboard via SSE
+	reason := "cost_lane:" + decision.BudgetLane
+	if !decision.UseRemote {
+		reason = "local"
+	}
+	dashboard.Publish(dashboard.Event{
+		Type:      "route_decision",
+		Agent:     "Gateway",
+		Action:    fmt.Sprintf("%s → %s:%s", reason, decision.Provider, decision.Model),
+		Timestamp: time.Now().Format("15:04:05"),
+	})
 
 	// Strip tools for local models that don't support tool calling (e.g. gemma3).
 	effectiveTools := tools
@@ -688,6 +701,14 @@ func (p *Provider) recordFallback(from, to DryRunDecision) {
 		return
 	}
 	p.metrics.fallbacks.WithLabelValues(from.Lane, to.Lane).Inc()
+
+	// Publicar fallback ao dashboard
+	dashboard.Publish(dashboard.Event{
+		Type:      "route_fallback",
+		Agent:     "Gateway",
+		Action:    fmt.Sprintf("Fallback: %s:%s → %s:%s", from.Provider, from.Model, to.Provider, to.Model),
+		Timestamp: time.Now().Format("15:04:05"),
+	})
 }
 
 func (p *Provider) updateBudgetMetricLocked(lane string, requests int) {
