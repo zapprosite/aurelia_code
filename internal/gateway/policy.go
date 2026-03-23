@@ -235,22 +235,12 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	if req.CostSensitive && !req.LocalOnly && !useTools {
 		return []RouteCandidate{
 			{
-				Lane:       "groq-text",
-				Provider:   "groq",
-				Model:      defaultGroqTextModel,
-				UseRemote:  true,
-				UseTools:   false,
-				Reason:     "primary: groq ultra barato para tarefas sensiveis a custo.",
-				Guards:     guardsFor(outputMode, true),
-				BudgetLane: "groq_text",
-			},
-			{
 				Lane:       "remote-cheap-long-context",
 				Provider:   "openrouter",
 				Model:      defaultRemoteCheapLongModel,
 				UseRemote:  true,
 				UseTools:   false,
-				Reason:     "fallback 1: qwen alternativo.",
+				Reason:     "primary: qwen barato para tarefas sensiveis a custo.",
 				Guards:     guardsFor(outputMode, true),
 				BudgetLane: "remote_cheap",
 			},
@@ -260,7 +250,7 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Model:      defaultLocalBalancedModel,
 				UseRemote:  false,
 				UseTools:   false,
-				Reason:     "fallback 2: ollama local.",
+				Reason:     "fallback: ollama local.",
 				Guards:     guardsFor(outputMode, false),
 				BudgetLane: "local",
 			},
@@ -270,14 +260,14 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	// Maintenance, Local Only, General Default
 	return []RouteCandidate{
 		{
-			Lane:       "groq-text",
-			Provider:   "groq",
-			Model:      defaultGroqTextModel,
+			Lane:       "remote-premium-workflow",
+			Provider:   "openrouter",
+			Model:      defaultRemotePremiumModel,
 			UseRemote:  true,
 			UseTools:   useTools,
-			Reason:     "primary: groq llama-3.3 para respostas rapidas e baratas.",
+			Reason:     "primary: minimax-m2.7 para respostas de chat de alta qualidade.",
 			Guards:     guardsFor(outputMode, true),
-			BudgetLane: "groq_text",
+			BudgetLane: "remote_premium",
 		},
 		{
 			Lane:       "local-balanced",
@@ -285,19 +275,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			Model:      defaultLocalBalancedModel,
 			UseRemote:  false,
 			UseTools:   useTools,
-			Reason:     "fallback 1: ollama gemma3 local residente.",
+			Reason:     "fallback de emergencia: gemma3 local quando OpenRouter indisponivel.",
 			Guards:     guardsFor(outputMode, false),
 			BudgetLane: "local",
-		},
-		{
-			Lane:       "remote-premium-workflow",
-			Provider:   "openrouter",
-			Model:      defaultRemotePremiumModel,
-			UseRemote:  true,
-			UseTools:   useTools,
-			Reason:     "fallback 2: minimax premium como ultimo recurso.",
-			Guards:     guardsFor(outputMode, true),
-			BudgetLane: "remote_premium",
 		},
 	}
 }

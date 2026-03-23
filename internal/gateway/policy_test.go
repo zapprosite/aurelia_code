@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestPlannerDecide_MaintenancePrefersGroqWithOllamaFallback(t *testing.T) {
+func TestPlannerDecide_MaintenancePrefersOpenRouterWithOllamaFallback(t *testing.T) {
 	t.Parallel()
 
 	opts := NewPlanner().Plan(DryRunRequest{
@@ -12,11 +12,11 @@ func TestPlannerDecide_MaintenancePrefersGroqWithOllamaFallback(t *testing.T) {
 		RequiresTools: true,
 	})
 
-	// Primary should be Groq
+	// Primary should be OpenRouter minimax
 	if len(opts) == 0 {
 		t.Fatalf("expected at least one candidate")
 	}
-	if opts[0].Provider != "groq" || opts[0].Model != defaultGroqTextModel {
+	if opts[0].Provider != "openrouter" || opts[0].Model != defaultRemotePremiumModel {
 		t.Fatalf("unexpected primary route: %+v", opts[0])
 	}
 	if !opts[0].UseTools {

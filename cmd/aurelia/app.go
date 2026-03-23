@@ -261,6 +261,13 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		a.bot.SetHealthReporter(gw)
 	}
 
+	// Wire gemma3 input guard
+	ollamaURL := a.cfg.OllamaURL
+	if ollamaURL == "" {
+		ollamaURL = "http://localhost:11434"
+	}
+	a.bot.SetInputGuard(telegram.NewInputGuard(ollamaURL))
+
 	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, bot, a.taskStore); err != nil {
 		return fmt.Errorf("register spawn agent tool: %w", err)
 	}
