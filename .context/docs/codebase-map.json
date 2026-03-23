@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-23T15:40:02Z",
+  "generated": "2026-03-23T20:49:09Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,7 +26,7 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 15541,
+    "totalFiles": 12278,
     "rootPath": ".",
     "topDirectories": [
       {
@@ -61,12 +61,12 @@
       },
       {
         "name": "pkg",
-        "fileCount": 23,
+        "fileCount": 24,
         "description": "LLM and STT provider integrations"
       },
       {
         "name": "scripts",
-        "fileCount": 29,
+        "fileCount": 30,
         "description": "Build, daemon, and host operations"
       },
       {
@@ -78,23 +78,23 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 231
+        "count": 247
       },
       {
         "extension": ".md",
-        "count": 44
+        "count": 34
       },
       {
         "extension": ".sh",
-        "count": 35
+        "count": 25
       },
       {
         "extension": ".json",
-        "count": 23
+        "count": 17
       },
       {
         "extension": ".yml",
-        "count": 1
+        "count": 0
       },
       {
         "extension": ".yaml",
@@ -102,7 +102,7 @@
       },
       {
         "extension": ".png",
-        "count": 13
+        "count": 3
       }
     ]
   },
