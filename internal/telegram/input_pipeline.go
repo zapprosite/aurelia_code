@@ -70,9 +70,14 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 			slog.String("text", session.text),
 			slog.String("error_type", fmt.Sprintf("%T", err)),
 		)
-		// Se for erro de provider, tenta usar a resposta mesmo que incompleta
-		if strings.Contains(err.Error(), "provider error") && finalAnswer != "" {
-			logger.Info("using partial answer despite provider error",
+		// Se for erro de provider/gateway, tenta usar a resposta mesmo que incompleta
+		gatewayFailure := strings.Contains(err.Error(), "provider error") ||
+			strings.Contains(err.Error(), "all gateway routes failed") ||
+			strings.Contains(err.Error(), "route breaker open") ||
+			strings.Contains(err.Error(), "budget exceeded") ||
+			strings.Contains(err.Error(), "empty guarded content")
+		if gatewayFailure && finalAnswer != "" {
+			logger.Info("using partial answer despite gateway failure",
 				slog.String("partial_answer_len", fmt.Sprintf("%d", len(finalAnswer))),
 			)
 			finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
@@ -142,9 +147,14 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 			slog.String("user_id", fmt.Sprintf("%d", userID)),
 			slog.String("text", session.text),
 		)
-		// Se for erro de provider, tenta usar a resposta mesmo que incompleta
-		if strings.Contains(err.Error(), "provider error") && finalAnswer != "" {
-			logger.Info("using partial answer despite provider error",
+		// Se for erro de provider/gateway, tenta usar a resposta mesmo que incompleta
+		gatewayFailure := strings.Contains(err.Error(), "provider error") ||
+			strings.Contains(err.Error(), "all gateway routes failed") ||
+			strings.Contains(err.Error(), "route breaker open") ||
+			strings.Contains(err.Error(), "budget exceeded") ||
+			strings.Contains(err.Error(), "empty guarded content")
+		if gatewayFailure && finalAnswer != "" {
+			logger.Info("using partial answer despite gateway failure",
 				slog.String("partial_answer_len", fmt.Sprintf("%d", len(finalAnswer))),
 			)
 			finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
@@ -274,15 +284,28 @@ func resolveActiveSkill(skills map[string]skill.Skill, targetSkill string) *skil
 	return &s
 }
 
+// defaultConversationTools is used when no skill or persona specifies a tool list.
+// Limits Groq token usage by excluding the 77 MCP schemas sent by default.
+// MCP tools (github, playwright, filesystem, etc.) are still available via skills.
+var defaultConversationTools = []string{
+	"read_file", "write_file", "list_dir", "run_command",
+	"web_search", "docker_control", "system_monitor", "service_control",
+	"create_schedule", "list_schedules",
+}
+
 func (bc *BotController) resolveExecutionPrompt(session inputSession) (string, []string) {
 	if bc.canonical == nil {
-		return defaultSystemPrompt, nil
+		return defaultSystemPrompt, defaultConversationTools
 	}
 
 	prompt, tools, err := bc.canonical.BuildPromptForQuery(session.ctx, session.senderID, session.convID, session.text)
 	if err != nil {
 		observability.Logger("telegram.pipeline").Warn("falling back to default prompt", slog.Any("err", err))
-		return defaultSystemPrompt, nil
+		return defaultSystemPrompt, defaultConversationTools
+	}
+	// Persona doesn't specify tools → use default core set to avoid 77-tool token bloat.
+	if len(tools) == 0 {
+		tools = defaultConversationTools
 	}
 	return prompt, tools
 }

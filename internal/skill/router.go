@@ -28,6 +28,11 @@ func (r *Router) Route(ctx context.Context, prompt string, availableSkills map[s
 		return "", nil // no skills to pick
 	}
 
+	// Fast-fail: short/simple prompts unlikely to match a skill, skip LLM call.
+	if len(prompt) < 20 {
+		return "", nil
+	}
+
 	var descriptions []string
 	for name, skill := range availableSkills {
 		descriptions = append(descriptions, fmt.Sprintf("- Name: %s\n  Desc: %s", name, skill.Metadata.Description))

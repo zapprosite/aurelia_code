@@ -257,6 +257,10 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	}
 	a.bot = bot
 
+	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
+		a.bot.SetHealthReporter(gw)
+	}
+
 	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, bot, a.taskStore); err != nil {
 		return fmt.Errorf("register spawn agent tool: %w", err)
 	}

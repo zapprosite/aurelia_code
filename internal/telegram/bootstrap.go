@@ -9,8 +9,20 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+func (bc *BotController) handleStatus(c telebot.Context) error {
+	if bc.healthReporter == nil {
+		return SendContextText(c, "Diagnostico indisponivel neste runtime.")
+	}
+	data, err := bc.healthReporter.GatewayStatusJSON()
+	if err != nil {
+		return SendContextText(c, "Erro ao obter status do gateway.")
+	}
+	return SendContextText(c, "Gateway Status:\n```json\n"+string(data)+"\n```")
+}
+
 func (bc *BotController) setupBootstrapRoutes() {
 	bc.bot.Handle("/start", bc.handleStart)
+	bc.bot.Handle("/status", bc.handleStatus)
 	bc.bot.Handle("\fbtn_coder", bc.handleBootstrapChoice("coder"))
 	bc.bot.Handle("\fbtn_assist", bc.handleBootstrapChoice("assist"))
 }
