@@ -44,8 +44,10 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		return err
 	}
 
-	// Prompt injection guard (gemma3 local pre-filter)
-	if bc.inputGuard != nil {
+	// Prompt injection guard (gemma3 local pre-filter).
+	// Skipped for voice messages: Telegram voice is from an authenticated user,
+	// and injection via ASR transcription is unlikely. Skipping saves 1-3s latency.
+	if bc.inputGuard != nil && !requiresAudio {
 		if blocked, reason := bc.inputGuard.Check(session.ctx, session.text); blocked {
 			observability.Logger("telegram.pipeline").Warn("input blocked by guard", slog.String("reason", reason))
 			_ = SendError(bc.bot, c.Chat(), "Mensagem bloqueada pelo filtro de segurança: "+reason)
@@ -138,7 +140,7 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 	if handled, err := bc.handleExternalMemoryCommand(chat, session); handled {
 		return err
 	}
-	if bc.inputGuard != nil {
+	if bc.inputGuard != nil && !requiresAudio {
 		if blocked, reason := bc.inputGuard.Check(ctx, text); blocked {
 			observability.Logger("telegram.pipeline").Warn("external input blocked by guard", slog.String("reason", reason))
 			_ = SendError(bc.bot, chat, "Mensagem bloqueada pelo filtro de segurança: "+reason)
@@ -354,29 +356,11 @@ func (bc *BotController) persistAssistantAnswer(session inputSession, finalAnswe
 }
 
 func (bc *BotController) deliverFinalAnswer(c telebot.Context, finalAnswer string, requiresAudio bool) error {
-	// 1. Always send the text first
-	if err := SendText(bc.bot, c.Chat(), finalAnswer); err != nil {
-		return err
-	}
-
-	// 2. If TTS is available, send the audio as a follow-up
-	// TTS is now Kokoro (pt-br feminine voice)
-	if bc.tts != nil && bc.tts.IsAvailable() {
-		return sendAudioWithSender(bc.bot, c.Chat(), bc.tts, finalAnswer)
-	}
-	return nil
+	// Send text and synthesize TTS in parallel; audio follows once ready.
+	return deliverWithParallelTTS(bc.bot, c.Chat(), bc.tts, finalAnswer)
 }
 
 func (bc *BotController) deliverFinalAnswerToChat(chat *telebot.Chat, finalAnswer string, requiresAudio bool) error {
-	// 1. Always send the text first
-	if err := SendText(bc.bot, chat, finalAnswer); err != nil {
-		return err
-	}
-
-	// 2. If TTS is available, send the audio as a follow-up
-	// TTS is now Kokoro (pt-br feminine voice)
-	if bc.tts != nil && bc.tts.IsAvailable() {
-		return sendAudioWithSender(bc.bot, chat, bc.tts, finalAnswer)
-	}
-	return nil
+	// Send text and synthesize TTS in parallel; audio follows once ready.
+	return deliverWithParallelTTS(bc.bot, chat, bc.tts, finalAnswer)
 }

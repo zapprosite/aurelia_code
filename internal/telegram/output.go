@@ -13,6 +13,11 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+type ttsAsyncResult struct {
+	audio tts.Audio
+	err   error
+}
+
 const telegramMessageLimit = 3900
 
 type messageSender interface {
@@ -180,6 +185,87 @@ func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer t
 	if _, err := sender.Send(chat, clip); err != nil {
 		log.Printf("Telegram audio send failed (%v). Falling back to text output...", err)
 		return sendTextWithSender(sender, chat, text, telegramMessageLimit)
+	}
+	log.Printf("Telegram audio clip sent successfully (%d bytes).", len(audio.Data))
+	return nil
+}
+
+// deliverWithParallelTTS sends text to the user while concurrently synthesizing
+// TTS audio, then sends the audio once both are ready. This hides Kokoro latency
+// (~0.5-1.5s) behind the Telegram SendText round-trip for lower perceived latency.
+func deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string) error {
+	var ttsCh chan ttsAsyncResult
+	if synthesizer != nil && synthesizer.IsAvailable() {
+		if speechText := sanitizeTextForSpeech(text); speechText != "" {
+			ttsCh = make(chan ttsAsyncResult, 1)
+			go func() {
+				audio, err := synthesizer.Synthesize(context.Background(), speechText)
+				ttsCh <- ttsAsyncResult{audio, err}
+			}()
+		}
+	}
+
+	// Send text while TTS is generating in background.
+	if err := sendTextWithSender(sender, chat, text, telegramMessageLimit); err != nil {
+		return err
+	}
+
+	if ttsCh == nil {
+		return nil
+	}
+
+	r := <-ttsCh
+	if r.err != nil {
+		log.Printf("TTS synthesis failed (%v).", r.err)
+		return nil
+	}
+	return sendAudioBytes(sender, chat, r.audio, text)
+}
+
+// sendAudioBytes sends a pre-synthesized tts.Audio as a Telegram voice note or audio clip.
+func sendAudioBytes(sender messageSender, chat *telebot.Chat, audio tts.Audio, fallbackText string) error {
+	tmpFile, err := os.CreateTemp(os.TempDir(), "aurelia-tts-*"+audio.Extension)
+	if err != nil {
+		log.Printf("TTS temp file create failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, fallbackText, telegramMessageLimit)
+	}
+	tmpPath := tmpFile.Name()
+	defer func() {
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath)
+	}()
+
+	if _, err := tmpFile.Write(audio.Data); err != nil {
+		log.Printf("TTS temp file write failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, fallbackText, telegramMessageLimit)
+	}
+	if err := tmpFile.Close(); err != nil {
+		log.Printf("TTS temp file close failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, fallbackText, telegramMessageLimit)
+	}
+
+	if audio.AsVoiceNote {
+		voice := &telebot.Voice{
+			File: telebot.FromDisk(tmpPath),
+			MIME: "audio/ogg",
+		}
+		if _, err := sender.Send(chat, voice); err == nil {
+			log.Printf("Telegram voice note sent successfully (%d bytes).", len(audio.Data))
+			return nil
+		}
+		log.Printf("Telegram voice send failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, fallbackText, telegramMessageLimit)
+	}
+
+	clip := &telebot.Audio{
+		File:     telebot.FromDisk(tmpPath),
+		MIME:     audio.ContentType,
+		FileName: filepath.Base(tmpPath),
+		Title:    "Aurelia",
+	}
+	if _, err := sender.Send(chat, clip); err != nil {
+		log.Printf("Telegram audio clip send failed (%v). Falling back to text output...", err)
+		return sendTextWithSender(sender, chat, fallbackText, telegramMessageLimit)
 	}
 	log.Printf("Telegram audio clip sent successfully (%d bytes).", len(audio.Data))
 	return nil
