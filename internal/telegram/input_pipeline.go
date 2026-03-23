@@ -64,7 +64,21 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 
 	finalAnswer, err := bc.executeConversation(c, session, activeSkill, history, systemPrompt, allowedTools)
 	if err != nil {
-		logger.Error("conversation execution failed", slog.Any("err", err))
+		logger.Error("conversation execution failed",
+			slog.Any("err", err),
+			slog.String("user", c.Sender().Username),
+			slog.String("text", session.text),
+			slog.String("error_type", fmt.Sprintf("%T", err)),
+		)
+		// Se for erro de provider, tenta usar a resposta mesmo que incompleta
+		if strings.Contains(err.Error(), "provider error") && finalAnswer != "" {
+			logger.Info("using partial answer despite provider error",
+				slog.String("partial_answer_len", fmt.Sprintf("%d", len(finalAnswer))),
+			)
+			finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
+			bc.persistAssistantAnswer(session, finalAnswer)
+			return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
+		}
 		_ = SendError(bc.bot, c.Chat(), err.Error())
 		return nil
 	}
@@ -122,7 +136,21 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 
 	finalAnswer, err := bc.executeExternalConversation(chat, session, activeSkill, history, systemPrompt, allowedTools)
 	if err != nil {
-		observability.Logger("telegram.pipeline").Error("external conversation execution failed", slog.Any("err", err))
+		logger := observability.Logger("telegram.pipeline")
+		logger.Error("external conversation execution failed",
+			slog.Any("err", err),
+			slog.String("user_id", fmt.Sprintf("%d", userID)),
+			slog.String("text", session.text),
+		)
+		// Se for erro de provider, tenta usar a resposta mesmo que incompleta
+		if strings.Contains(err.Error(), "provider error") && finalAnswer != "" {
+			logger.Info("using partial answer despite provider error",
+				slog.String("partial_answer_len", fmt.Sprintf("%d", len(finalAnswer))),
+			)
+			finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
+			bc.persistAssistantAnswer(session, finalAnswer)
+			return bc.deliverFinalAnswerToChat(chat, finalAnswer, false)
+		}
 		_ = SendError(bc.bot, chat, err.Error())
 		return err
 	}
