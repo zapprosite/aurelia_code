@@ -293,14 +293,9 @@ func (bc *BotController) deliverFinalAnswer(c telebot.Context, finalAnswer strin
 	}
 
 	// 2. If TTS is available, send the audio as a follow-up
-	// We prioritize premiumTTS (Kokoro) over standard tts (XTTS)
-	synthesizer := bc.tts
-	if bc.premiumTTS != nil && bc.premiumTTS.IsAvailable() {
-		synthesizer = bc.premiumTTS
-	}
-
-	if synthesizer != nil && synthesizer.IsAvailable() {
-		return sendAudioWithSender(bc.bot, c.Chat(), synthesizer, finalAnswer)
+	// TTS is now Kokoro (pt-br feminine voice)
+	if bc.tts != nil && bc.tts.IsAvailable() {
+		return sendAudioWithSender(bc.bot, c.Chat(), bc.tts, finalAnswer)
 	}
 	return nil
 }
@@ -312,13 +307,9 @@ func (bc *BotController) deliverFinalAnswerToChat(chat *telebot.Chat, finalAnswe
 	}
 
 	// 2. If TTS is available, send the audio as a follow-up
-	synthesizer := bc.tts
-	if bc.premiumTTS != nil && bc.premiumTTS.IsAvailable() {
-		synthesizer = bc.premiumTTS
-	}
-
-	if synthesizer != nil && synthesizer.IsAvailable() {
-		return sendAudioWithSender(bc.bot, chat, synthesizer, finalAnswer)
+	// TTS is now Kokoro (pt-br feminine voice)
+	if bc.tts != nil && bc.tts.IsAvailable() {
+		return sendAudioWithSender(bc.bot, chat, bc.tts, finalAnswer)
 	}
 	return nil
 }

@@ -16,9 +16,9 @@ const (
 	defaultLLMModel             = "gemma3:12b"
 	defaultSTTProvider          = "groq"
 	defaultTTSProvider          = "openai_compatible"
-	defaultLocalTTSBaseURL = "http://127.0.0.1:8011"
-	defaultLocalTTSModel   = "tts-1-hd"
-	defaultLocalTTSVoice   = "aurelia" // PT-BR voice clone via XTTS v2 (sweet, professional)
+	defaultLocalTTSBaseURL = "http://127.0.0.1:8012" // Kokoro TTS (CPU, < 1.5GB VRAM)
+	defaultLocalTTSModel   = "kokoro"
+	defaultLocalTTSVoice   = "pt-br" // Kokoro 2026 feminine PT-BR voice (premium)
 	defaultTTSLanguage      = "pt"
 	defaultLocalTTSFormat  = "opus"
 
@@ -251,13 +251,13 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		OpenAIAuthMode:           "api_key",
 		STTProvider:              defaultSTTProvider,
 		TTSProvider:              defaultTTSProvider,
-		TTSBaseURL:               defaultTTSBaseURLForProvider(defaultTTSProvider),
-		TTSModel:                 defaultTTSModelForProvider(defaultTTSProvider),
-		TTSVoice:                 defaultTTSVoiceForProvider(defaultTTSProvider),
-		TTSLanguage:              defaultTTSLanguage,
-		TTSFormat:                defaultTTSFormatForProvider(defaultTTSProvider),
+		TTSBaseURL:               defaultLocalTTSBaseURL,        // Kokoro (CPU, < 1.5GB VRAM)
+		TTSModel:                 defaultLocalTTSModel,           // kokoro
+		TTSVoice:                 defaultLocalTTSVoice,           // pt-br (feminine)
+		TTSLanguage:              defaultTTSLanguage,             // pt
+		TTSFormat:                defaultLocalTTSFormat,          // opus
 		TTSSpeed:                 defaultTTSSpeed,
-		PremiumTTSProvider:       "openai_compatible",
+		PremiumTTSProvider:       "disabled",                     // Kokoro is now default, no premium needed
 		PremiumTTSBaseURL:        "http://127.0.0.1:8012",
 		PremiumTTSModel:          "kokoro",
 		PremiumTTSVoice:          "pt-br",
@@ -655,22 +655,22 @@ func sameFileConfig(a, b fileConfig) bool {
 }
 
 func defaultTTSBaseURLForProvider(provider string) string {
-	// All TTS providers use local voice-proxy service
+	// TTS uses Kokoro (CPU-based, < 1.5GB VRAM)
 	return defaultLocalTTSBaseURL
 }
 
 func defaultTTSModelForProvider(provider string) string {
-	// All TTS providers use local voice-proxy service
+	// Kokoro TTS 2026 model
 	return defaultLocalTTSModel
 }
 
 func defaultTTSVoiceForProvider(provider string) string {
-	// All TTS providers use local voice-proxy with Aurelia.wav (PT-BR)
+	// Kokoro pt-br feminine voice (premium)
 	return defaultLocalTTSVoice
 }
 
 func defaultTTSFormatForProvider(provider string) string {
-	// All TTS providers use local voice-proxy with opus format
+	// Opus format for Kokoro
 	return defaultLocalTTSFormat
 }
 
