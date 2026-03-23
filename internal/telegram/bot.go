@@ -19,6 +19,11 @@ import (
 	"github.com/kocar/aurelia/pkg/tts"
 )
 
+// HealthReporter exposes gateway diagnostics as JSON.
+type HealthReporter interface {
+	GatewayStatusJSON() ([]byte, error)
+}
+
 // BotController wires Telegram I/O to the application services.
 type BotController struct {
 	bot              *telebot.Bot
@@ -38,6 +43,12 @@ type BotController struct {
 	mediaMu          sync.Mutex
 	recentMedia      map[string]recentMedia
 	personasDir      string
+	healthReporter   HealthReporter
+}
+
+// SetHealthReporter wires a gateway health reporter for /status diagnostics.
+func (bc *BotController) SetHealthReporter(hr HealthReporter) {
+	bc.healthReporter = hr
 }
 
 type pendingAlbum struct {

@@ -172,7 +172,7 @@ func TestSendError_FallsBackToPlainTextWhenHTMLSendFails(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected plain text fallback payload, got %T", sender.calls[1].what)
 	}
-	if payload != "Erro\n\nNao consegui concluir isso agora por uma falha temporaria do runtime. Tente novamente em alguns segundos." {
+	if payload != "Erro\n\nProvedor temporariamente indisponivel (circuit breaker aberto). Tente em 1-2 minutos." {
 		t.Fatalf("unexpected fallback payload: %q", payload)
 	}
 }

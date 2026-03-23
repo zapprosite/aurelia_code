@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -13,6 +14,7 @@ import (
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/health"
+	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/pkg/llm"
 )
 
@@ -228,8 +230,16 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 
 	candidates := p.planner.Plan(req)
 
+	logger := observability.Logger("gateway.provider")
+	logger.Info("gateway routing attempt",
+		slog.Int("candidates", len(candidates)),
+		slog.Bool("degraded", degraded.Active),
+		slog.Bool("remote_disabled", degraded.RemoteDisabled),
+	)
+
 	var lastErr error
 	var previousCandidate *RouteCandidate
+	var failureReasons []string
 
 	for _, candidate := range candidates {
 		if degraded.Active && degraded.RemoteDisabled && candidate.UseRemote {
@@ -243,19 +253,22 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 		resp, err := p.generateWithDecision(ctx, candidate, systemPrompt, history, tools)
 
 		if err != nil {
+			failureReasons = append(failureReasons,
+				fmt.Sprintf("%s:%s=%s", candidate.Provider, candidate.Model, err.Error()))
 			previousCandidate = &candidate
 			lastErr = err
 			// O gateway continua e tenta o proximo candidato da fila silenciando o erro atual.
 			continue
 		}
 
-		// Se bateu aqui, retornou sucesso. 
+		// Se bateu aqui, retornou sucesso.
 		return resp, nil
 	}
 
 	if lastErr == nil {
 		lastErr = fmt.Errorf("all gateway routes failed or were filtered by degraded mode")
 	}
+	logger.Error("all gateway routes exhausted", slog.String("failures", strings.Join(failureReasons, " | ")))
 	return nil, lastErr
 }
 
@@ -279,6 +292,10 @@ func (p *Provider) StatusSnapshot() StatusSnapshot {
 		Routes:      routes,
 		Degraded:    p.degraded,
 	}
+}
+
+func (p *Provider) GatewayStatusJSON() ([]byte, error) {
+	return json.Marshal(p.StatusSnapshot())
 }
 
 func (p *Provider) HealthCheck() health.CheckResult {
@@ -355,8 +372,10 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 
 	// Strip tools for local models that don't support tool calling (e.g. gemma3).
 	effectiveTools := tools
+	toolsStripped := false
 	if !decision.UseRemote && !modelSupportsTools(decision.Model) {
 		effectiveTools = nil
+		toolsStripped = true
 	}
 
 	resp, err := provider.GenerateContent(ctx, systemPrompt, history, effectiveTools)
@@ -364,6 +383,12 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 		p.markFailure(decision.BudgetLane, providerKey, err.Error())
 		p.observeResult(decision, "error", time.Since(startedAt))
 		return nil, err
+	}
+	// Se tools foram stripped para modelo local e a resposta tem conteudo, aceitar sem guard.
+	if toolsStripped && resp != nil && strings.TrimSpace(resp.Content) != "" {
+		p.markSuccess(providerKey)
+		p.observeResult(decision, "success_no_tools", time.Since(startedAt))
+		return resp, nil
 	}
 	if !responseSatisfies(decision, resp) {
 		p.markFailure(decision.BudgetLane, providerKey, "empty guarded content")

@@ -53,6 +53,16 @@ func sanitizeUserVisibleErrorMessage(errMsg string) string {
 		strings.Contains(lower, "context cancelled by timer"),
 		strings.Contains(lower, "timeout"):
 		return "Nao consegui concluir essa tarefa a tempo. Tente novamente com um pedido mais curto ou em alguns segundos."
+	case strings.Contains(lower, "all gateway routes failed"):
+		return "Nenhum provedor de IA respondeu. Verifique: Groq API, Ollama local, e OpenRouter. Use /status para diagnostico."
+	case strings.Contains(lower, "budget exceeded"):
+		return "Limite de custo atingido para este provedor. Tente mais tarde ou use /status."
+	case strings.Contains(lower, "route breaker open"):
+		return "Provedor temporariamente indisponivel (circuit breaker aberto). Tente em 1-2 minutos."
+	case strings.Contains(lower, "rate_limit_exceeded"),
+		strings.Contains(lower, "request too large"),
+		strings.Contains(lower, "tokens per minute"):
+		return "Limite de tokens atingido. Tente uma mensagem mais curta ou aguarde alguns segundos."
 	case containsAny(lower, technicalErrorMarkers...):
 		return genericExecutionFailureMessage
 	default:
