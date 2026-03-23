@@ -157,7 +157,9 @@ func mapOpenAICompatibleMessage(msg agent.Message) map[string]any {
 	}
 
 	if msg.Role == "assistant" && len(msg.ToolCalls) > 0 {
-		cMsg["reasoning_content"] = msg.ReasoningContent
+		if msg.ReasoningContent != "" {
+			cMsg["reasoning_content"] = msg.ReasoningContent
+		}
 		cMsg["tool_calls"] = mapToolCalls(msg.ToolCalls)
 	}
 
