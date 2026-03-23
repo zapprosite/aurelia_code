@@ -65,20 +65,12 @@ func HandleCommands(w http.ResponseWriter, r *http.Request) {
 			Timestamp: time.Now().Format("15:04:05"),
 		})
 
-	case "minimax_analysis":
-		// Disparar uma análise executiva de saúde do enxame via Minimax 2.7
+	case "gateway_status":
+		// Retornar status atual do gateway (chamada ao endpoint /api/router/status)
 		Publish(Event{
-			Type:      "agent_update",
-			Agent:     "Minimax",
-			Action:    "Iniciando Análise Executiva do Homelab...",
-			Timestamp: time.Now().Format("15:04:05"),
-		})
-		// Simular o despacho para o Gateway Premium
-		Publish(Event{
-			Type:      "agent_thought",
-			Agent:     "Aurelia (Premium)",
-			Action:    "Processando telemetria sênior via MiniMax 2.7...",
-			Payload:   "Analizando VRAM, taxa de sucesso do gateway e integridade do RAG.",
+			Type:      "gateway_status_request",
+			Agent:     "Dashboard",
+			Action:    "Consultando status do gateway de roteamento...",
 			Timestamp: time.Now().Format("15:04:05"),
 		})
 

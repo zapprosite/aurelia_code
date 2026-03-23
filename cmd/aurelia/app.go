@@ -425,6 +425,14 @@ func (a *app) start() {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		_ = json.NewEncoder(w).Encode(agent.GetFixedSquad())
 	})
+	// Expor gateway status ao dashboard
+	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
+		dashboard.RegisterRoute("/api/router/status", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			_ = json.NewEncoder(w).Encode(gw.StatusSnapshot())
+		})
+	}
 	dashboard.RegisterRoute("/api/commands", dashboard.HandleCommands)
 	_ = dashboard.StartServer(logger)
 	go a.bot.Start()
