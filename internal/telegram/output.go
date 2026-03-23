@@ -272,9 +272,41 @@ func sendAudioBytes(sender messageSender, chat *telebot.Chat, audio tts.Audio, f
 }
 
 var (
-	markdownLinkPattern = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
-	codeFencePattern    = regexp.MustCompile("(?s)```(.*?)```")
-	multiSpacePattern   = regexp.MustCompile(`\s+`)
+	markdownLinkPattern       = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
+	codeFencePattern          = regexp.MustCompile("(?s)```[a-z]*\n?(.*?)```")
+	inlineCodePattern         = regexp.MustCompile("`([^`]+)`")
+	multiSpacePattern         = regexp.MustCompile(`\s+`)
+
+	// speechSymbolReplacer converts symbols/punctuation to spoken equivalents.
+	speechSymbolReplacer = strings.NewReplacer(
+		"R$", "reais ",
+		"%", " por cento",
+		"&", " e ",
+		"/", " ou ",
+		"->", " para ",
+		"=>", " resulta em ",
+		"!=", " diferente de ",
+		"==", " igual a ",
+		">=", " maior ou igual a ",
+		"<=", " menor ou igual a ",
+		"...", ". ",
+		"\n\n", ". ",
+		"\n", ". ",
+		"|", ", ",
+	)
+
+	// markdownDecorationReplacer strips visual markdown that has no spoken value.
+	markdownDecorationReplacer = strings.NewReplacer(
+		"**", "",
+		"__", "",
+		"***", "",
+		"*", "",
+		"_", "",
+		"##", "",
+		"#", "",
+		">", "",
+		"`", "",
+	)
 )
 
 func sanitizeTextForSpeech(text string) string {
@@ -282,22 +314,29 @@ func sanitizeTextForSpeech(text string) string {
 	if sanitized == "" {
 		return ""
 	}
-	sanitized = codeFencePattern.ReplaceAllString(sanitized, "$1")
+
+	// Remove code blocks entirely — reading code aloud is useless.
+	sanitized = codeFencePattern.ReplaceAllString(sanitized, "")
+
+	// Keep link label, discard URL.
 	sanitized = markdownLinkPattern.ReplaceAllString(sanitized, "$1")
-	replacer := strings.NewReplacer(
-		"`", "",
-		"**", "",
-		"__", "",
-		"*", "",
-		"_", "",
-		"#", "",
-		">", "",
-		"|", ", ",
-		"\n", ". ",
-	)
-	sanitized = replacer.Replace(sanitized)
+
+	// Inline code: strip backticks but keep content.
+	sanitized = inlineCodePattern.ReplaceAllString(sanitized, "$1")
+
+	// Expand common symbols to spoken equivalents.
+	sanitized = speechSymbolReplacer.Replace(sanitized)
+
+	// Strip remaining markdown decoration.
+	sanitized = markdownDecorationReplacer.Replace(sanitized)
+
+	// Collapse whitespace and fix double-period artifacts.
 	sanitized = multiSpacePattern.ReplaceAllString(sanitized, " ")
+	sanitized = strings.ReplaceAll(sanitized, ".. ", ". ")
+	sanitized = strings.ReplaceAll(sanitized, "..", ".")
 	sanitized = strings.TrimSpace(sanitized)
+
+	// Truncate at ~1200 runes to avoid very long TTS synthesis.
 	runes := []rune(sanitized)
 	if len(runes) > 1200 {
 		sanitized = strings.TrimSpace(string(runes[:1200])) + "."

@@ -19,11 +19,12 @@ import (
 const defaultSystemPrompt = "Você é Aurélia, uma assistente virtual de inteligência artificial de alto nível. Sua comunicação deve ser profissional, prestativa, objetiva e estruturada. Utilize formatação Markdown (negritos, listas e tabelas) para garantir clareza máxima. Ao analisar códigos ou realizar tarefas técnicas, priorize a precisão e sempre valide suas ações com 'run_command' antes de confirmar a conclusão."
 
 type inputSession struct {
-	senderID string
-	convID   string
-	ctx      context.Context
-	text     string
-	message  agent.Message
+	senderID  string
+	convID    string
+	ctx       context.Context
+	text      string
+	message   agent.Message
+	voiceMode bool // true when input came from a voice/audio message
 }
 
 
@@ -35,6 +36,7 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 func (bc *BotController) processInputSession(c telebot.Context, session inputSession, requiresAudio bool) error {
 	logger := observability.Logger("telegram.pipeline")
 	session.text = strings.ReplaceAll(session.text, "\x00", "")
+	session.voiceMode = requiresAudio
 
 	if state, ok := bc.popPendingBootstrap(c.Sender().ID); ok {
 		return bc.completeBootstrapProfile(c, state, session.text)
@@ -136,6 +138,7 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 	session := newInputSessionWithContext(ctx, userID, text)
 	text = strings.ReplaceAll(text, "\x00", "")
 	session.text = text
+	session.voiceMode = requiresAudio
 
 	if handled, err := bc.handleExternalMemoryCommand(chat, session); handled {
 		return err
@@ -311,19 +314,34 @@ var defaultConversationTools = []string{
 	"create_schedule", "list_schedules",
 }
 
+// voiceSystemPromptSuffix is appended to the system prompt when the user
+// sent a voice message. It instructs the LLM to produce speech-ready text:
+// natural sentences, no markdown, numbers written out, conversational tone.
+const voiceSystemPromptSuffix = "\n\nATENÇÃO — MODO VOZ: Esta mensagem chegou por áudio e a resposta será sintetizada em voz. Escreva de forma completamente conversacional e natural, como se estivesse falando em voz alta. Regras obrigatórias: (1) Sem markdown — nada de asteriscos, underlines, cerquilhas, colchetes ou backticks. (2) Sem listas numeradas ou com marcadores — use frases conectadas (\"Primeiro... depois... por fim...\"). (3) Sem tabelas. (4) Números por extenso quando for natural (\"dois mil e vinte e seis\", \"trinta por cento\"). (5) Frases curtas e diretas. (6) Se precisar enumerar itens, separe por vírgula ou use \"e\" entre eles."
+
 func (bc *BotController) resolveExecutionPrompt(session inputSession) (string, []string) {
+	var prompt string
+	var tools []string
+
 	if bc.canonical == nil {
-		return defaultSystemPrompt, defaultConversationTools
+		prompt = defaultSystemPrompt
+		tools = defaultConversationTools
+	} else {
+		var err error
+		prompt, tools, err = bc.canonical.BuildPromptForQuery(session.ctx, session.senderID, session.convID, session.text)
+		if err != nil {
+			observability.Logger("telegram.pipeline").Warn("falling back to default prompt", slog.Any("err", err))
+			prompt = defaultSystemPrompt
+			tools = defaultConversationTools
+		}
+		// Persona doesn't specify tools → use default core set to avoid 77-tool token bloat.
+		if len(tools) == 0 {
+			tools = defaultConversationTools
+		}
 	}
 
-	prompt, tools, err := bc.canonical.BuildPromptForQuery(session.ctx, session.senderID, session.convID, session.text)
-	if err != nil {
-		observability.Logger("telegram.pipeline").Warn("falling back to default prompt", slog.Any("err", err))
-		return defaultSystemPrompt, defaultConversationTools
-	}
-	// Persona doesn't specify tools → use default core set to avoid 77-tool token bloat.
-	if len(tools) == 0 {
-		tools = defaultConversationTools
+	if session.voiceMode {
+		prompt += voiceSystemPromptSuffix
 	}
 	return prompt, tools
 }
