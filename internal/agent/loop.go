@@ -94,6 +94,13 @@ func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message,
 	logger := observability.Logger("agent.loop")
 	currentHistory := opts.InitialHistory
 
+	// Atualizar squad status quando inicia
+	agentName, _ := AgentContextFromContext(ctx)
+	if agentName != "" {
+		UpdateSquadAgentStatus(agentName, "busy", 50)
+		defer UpdateSquadAgentStatus(agentName, "online", 0)
+	}
+
 	if opts.MaxIterations <= 0 {
 		opts.MaxIterations = l.maxIterations
 	}

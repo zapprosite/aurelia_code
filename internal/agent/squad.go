@@ -66,7 +66,7 @@ func GetFixedSquad() []SquadAgent {
 func UpdateSquadAgentStatus(id string, status string, load int) {
 	squadMu.Lock()
 	defer squadMu.Unlock()
-	
+
 	for i := range fixedSquad {
 		if fixedSquad[i].ID == id {
 			fixedSquad[i].Status = status
@@ -74,4 +74,21 @@ func UpdateSquadAgentStatus(id string, status string, load int) {
 			break
 		}
 	}
+}
+
+// AddSquadAgent registra um novo agente no squad se não existir com esse ID.
+// Permite dinâmicamente adicionar agentes spawned pelo swarm.
+func AddSquadAgent(a SquadAgent) {
+	squadMu.Lock()
+	defer squadMu.Unlock()
+
+	// Verificar se já existe
+	for _, s := range fixedSquad {
+		if s.ID == a.ID {
+			return
+		}
+	}
+
+	// Adicionar novo agente
+	fixedSquad = append(fixedSquad, a)
 }
