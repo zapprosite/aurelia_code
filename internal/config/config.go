@@ -236,6 +236,9 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("GROQ_API_KEY"); env != "" {
 		cfg.GroqAPIKey = env
 	}
+	if env := os.Getenv("OPENROUTER_API_KEY"); env != "" {
+		cfg.OpenRouterAPIKey = env
+	}
 	if env := os.Getenv("QDRANT_API_KEY"); env != "" {
 		cfg.QdrantAPIKey = env
 	}

@@ -44,11 +44,17 @@ type BotController struct {
 	recentMedia      map[string]recentMedia
 	personasDir      string
 	healthReporter   HealthReporter
+	inputGuard       *InputGuard
 }
 
 // SetHealthReporter wires a gateway health reporter for /status diagnostics.
 func (bc *BotController) SetHealthReporter(hr HealthReporter) {
 	bc.healthReporter = hr
+}
+
+// SetInputGuard wires the prompt injection guard.
+func (bc *BotController) SetInputGuard(g *InputGuard) {
+	bc.inputGuard = g
 }
 
 type pendingAlbum struct {

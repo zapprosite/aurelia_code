@@ -44,6 +44,15 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		return err
 	}
 
+	// Prompt injection guard (gemma3 local pre-filter)
+	if bc.inputGuard != nil {
+		if blocked, reason := bc.inputGuard.Check(session.ctx, session.text); blocked {
+			observability.Logger("telegram.pipeline").Warn("input blocked by guard", slog.String("reason", reason))
+			_ = SendError(bc.bot, c.Chat(), "Mensagem bloqueada pelo filtro de segurança: "+reason)
+			return nil
+		}
+	}
+
 	if err := bc.persistIncomingContext(session, c.Sender().ID); err != nil {
 		logger.Warn("failed to persist incoming context", slog.Any("err", err))
 	}
@@ -128,6 +137,13 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 
 	if handled, err := bc.handleExternalMemoryCommand(chat, session); handled {
 		return err
+	}
+	if bc.inputGuard != nil {
+		if blocked, reason := bc.inputGuard.Check(ctx, text); blocked {
+			observability.Logger("telegram.pipeline").Warn("external input blocked by guard", slog.String("reason", reason))
+			_ = SendError(bc.bot, chat, "Mensagem bloqueada pelo filtro de segurança: "+reason)
+			return nil
+		}
 	}
 	if err := bc.persistIncomingContext(session, userID); err != nil {
 		observability.Logger("telegram.pipeline").Warn("failed to persist external input context", slog.Any("err", err))
