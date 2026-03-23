@@ -89,8 +89,8 @@ func NewBotController(
 		executor:         e,
 		loader:           l,
 		stt:              s,
-		tts:              buildTTSSynthesizer(cfg),
-		premiumTTS:       buildPremiumTTSSynthesizer(cfg),
+		tts:              tts.NewDefaultSynthesizer(cfg),
+		premiumTTS:       tts.NewPremiumSynthesizer(cfg),
 		canonical:        canonical,
 		pendingBootstrap: make(map[int64]bootstrapState),
 		pendingAlbums:    make(map[string]*pendingAlbum),
@@ -100,20 +100,6 @@ func NewBotController(
 
 	bc.setupRoutes()
 	return bc, nil
-}
-
-func buildTTSSynthesizer(cfg *config.AppConfig) tts.Synthesizer {
-	if cfg == nil || cfg.TTSProvider == "" || cfg.TTSProvider == "disabled" {
-		return nil
-	}
-	return tts.NewOpenAICompatibleSynthesizer(cfg.TTSBaseURL, cfg.TTSModel, cfg.TTSVoice, cfg.TTSLanguage, cfg.TTSFormat, cfg.TTSSpeed)
-}
-
-func buildPremiumTTSSynthesizer(cfg *config.AppConfig) tts.Synthesizer {
-	if cfg == nil || cfg.PremiumTTSProvider == "" || cfg.PremiumTTSProvider == "disabled" {
-		return nil
-	}
-	return tts.NewOpenAICompatibleSynthesizer(cfg.PremiumTTSBaseURL, cfg.PremiumTTSModel, cfg.PremiumTTSVoice, cfg.TTSLanguage, "opus", cfg.TTSSpeed)
 }
 
 // GetBot exposes the underlying Telebot instance.

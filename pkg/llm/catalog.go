@@ -83,6 +83,9 @@ func ListModels(ctx context.Context, provider string, creds ModelCatalogCredenti
 			return listOpenAIModels(ctx, creds.OpenAIAPIKey, openAIModelsURL, http.DefaultClient)
 		}
 		return fallbackModels("openai"), nil
+	case "groq":
+		// Groq uses OpenAI-compatible models list
+		return listOpenAIModels(ctx, creds.AnthropicAPIKey, "https://api.groq.com/openai/v1/models", http.DefaultClient)
 	default:
 		return nil, fmt.Errorf("unsupported llm provider %q", provider)
 	}

@@ -18,11 +18,14 @@ func (bc *BotController) setupBootstrapRoutes() {
 func (bc *BotController) handleStart(c telebot.Context) error {
 	identityExists := bootstrapIdentityExists(bc.personasDir)
 
-	message, menu := bootstrapStartResponse(identityExists)
-	if menu == nil {
-		return SendContextText(c, message)
+	if !identityExists {
+		// Inicializa silenciosamente com o preset de coder (padrão sênior)
+		preset, _ := bootstrapPresetForChoice("coder")
+		_ = writeBootstrapPreset(bc.personasDir, preset)
+		_ = bc.seedBootstrapIdentity(c, preset)
 	}
-	return SendContextText(c, message, menu)
+
+	return SendContextText(c, "🛰️ Aurélia Elite Online. Sistema pronto e operando com Groq Llama 70b. Como posso ajudar, Master?")
 }
 
 func (bc *BotController) handleBootstrapChoice(choice string) func(telebot.Context) error {

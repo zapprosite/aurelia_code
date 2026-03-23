@@ -73,6 +73,15 @@ specs/
 
 # Local planning workspace
 .planning/
-aurelia
-aurelia-elite
+/aurelia
+/aurelia-elite
 ~/.aurelia/config/secrets.env
+
+# Node and testing artifacts
+node_modules/
+package.json
+package-lock.json
+stress-test.log
+stress-test-reports/
+stress-test-simulations.js
+scripts/test_tts.py

@@ -384,6 +384,8 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 		return llm.NewOpenRouterProvider(cfg.OpenRouterAPIKey, cfg.LLMModel), nil
 	case "openai":
 		return llm.NewOpenAIProvider(cfg.OpenAIAPIKey, cfg.LLMModel), nil
+	case "groq":
+		return llm.NewGroqProvider(cfg.GroqAPIKey, cfg.LLMModel), nil
 	default:
 		return nil, fmt.Errorf("unsupported llm provider %q", cfg.LLMProvider)
 	}
