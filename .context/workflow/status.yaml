@@ -18,3 +18,19 @@ phases:
     status: skipped
     reason: "Not required for scale MEDIUM"
 
+execution:
+  history:
+    - timestamp: "2026-03-18T20:30:43.897Z"
+      phase: P
+      action: started
+    - timestamp: "2026-03-23T22:47:30.389Z"
+      phase: C
+      action: phase_skipped
+  last_activity: "2026-03-23T22:47:30.389Z"
+  resume_context: "Fase P (Planejamento) em progresso"
+
+settings:
+  autonomous_mode: true
+  require_plan: true
+  require_approval: true
+

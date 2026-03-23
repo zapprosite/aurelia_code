@@ -352,10 +352,12 @@ func guardsFor(outputMode string, remote bool) ResponseGuards {
 				SoftTimeoutMS:   30000,
 			}
 		}
+		// Para modelos locais (predominantemente gemma3:12b), 
+		// permitimos o raciocínio por padrão para evitar respostas vazias.
 		return ResponseGuards{
-			ReasoningMode:   "minimize",
-			MaxOutputTokens: 384,
-			SoftTimeoutMS:   15000,
+			ReasoningMode:   "default",
+			MaxOutputTokens: 512,
+			SoftTimeoutMS:   25000,
 		}
 	}
 }

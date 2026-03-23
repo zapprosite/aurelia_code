@@ -481,15 +481,21 @@ func responseSatisfies(decision DryRunDecision, resp *agent.ModelResponse) bool 
 	if resp == nil {
 		return false
 	}
+	// Se chamou ferramentas, a resposta é válida idependente de texto.
 	if len(resp.ToolCalls) > 0 {
 		return true
 	}
+	// Se tem conteúdo textual, é válida.
 	if strings.TrimSpace(resp.Content) != "" {
 		return true
 	}
+	// Se o modo é 'minimize', exigimos conteúdo textual final (Content).
+	// Sem conteúdo, consideramos insatisfatória.
 	if decision.Guards.ReasoningMode == "minimize" {
 		return false
 	}
+	// Em outros modos (default, require), permitimos que a resposta contenha apenas raciocínio
+	// caso o modelo tenha falhado em separar o pensamento da resposta final.
 	return strings.TrimSpace(resp.ReasoningContent) != ""
 }
 
