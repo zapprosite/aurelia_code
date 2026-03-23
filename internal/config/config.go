@@ -12,8 +12,8 @@ import (
 const (
 	defaultMaxIterations        = 500
 	defaultMemoryWindowSize     = 20
-	defaultLLMProvider          = "ollama"
-	defaultLLMModel             = "gemma3:12b"
+	defaultLLMProvider          = "groq"
+	defaultLLMModel             = "llama-3.3-70b-versatile"
 	defaultSTTProvider          = "groq"
 	defaultTTSProvider          = "openai_compatible"
 	defaultLocalTTSBaseURL = "http://127.0.0.1:8012" // Kokoro TTS (CPU, < 1.5GB VRAM)

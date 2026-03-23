@@ -20,4 +20,4 @@ Implementaremos um sistema de **fábrica (factory)** para síntese de voz que pe
 
 ## Status
 - [x] Proposto (2026-03-24)
-- [/] Em Implementação
+- [x] Implementado (2026-03-23)

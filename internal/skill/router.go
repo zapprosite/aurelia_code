@@ -66,6 +66,11 @@ Example Output:
 		SkillName *string `json:"skillName"`
 	}
 
+	if !strings.HasPrefix(raw, "{") {
+		logger.Debug("router response is not JSON, ignoring", slog.String("raw", raw))
+		return "", nil
+	}
+
 	if err := json.Unmarshal([]byte(raw), &output); err != nil {
 		logger.Warn("router parse error", slog.Any("err", err))
 		return "", nil
