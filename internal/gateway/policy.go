@@ -3,14 +3,16 @@ package gateway
 import "strings"
 
 const (
-	defaultLocalFastModel        = "qwen3.5:4b"
-	defaultLocalBalancedModel    = "qwen3.5:9b"
-	defaultRemoteVisionModel     = "qwen/qwen3.5-9b"
+	defaultLocalFastModel        = "gemma3:12b"
+	defaultLocalBalancedModel    = "gemma3:12b"
+	defaultLocalVisionModel      = "gemma3:12b"
+	defaultRemoteVisionModel     = "google/gemma-3-27b-it:free"
 	defaultRemoteCheapLongModel  = "qwen/qwen3.5-flash-02-23"
 	defaultRemoteStructuredModel = "google/gemini-2.5-flash"
 	defaultRemotePremiumModel    = "minimax/minimax-m2.7"
 	defaultAudioModel            = "whisper-large-v3-turbo"
 	defaultDeepResearchModel     = "gemini-web-deep-research"
+	defaultGroqTextModel         = "llama-3.3-70b-versatile"
 )
 
 type DryRunRequest struct {
@@ -94,14 +96,26 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	}
 
 	// Vision
-	if req.RequiresVision && !req.LocalOnly {
+	if req.RequiresVision {
+		if req.LocalOnly {
+			return []RouteCandidate{{
+				Lane:       "local-vision",
+				Provider:   "ollama",
+				Model:      defaultLocalVisionModel,
+				UseRemote:  false,
+				UseTools:   useTools,
+				Reason:     "visao local usando gemma 3 multitarefa.",
+				Guards:     guardsFor(outputMode, false),
+				BudgetLane: "local",
+			}}
+		}
 		return []RouteCandidate{{
 			Lane:       "remote-cheap-vision",
 			Provider:   "openrouter",
 			Model:      defaultRemoteVisionModel,
 			UseRemote:  true,
 			UseTools:   useTools,
-			Reason:     "visao fica melhor no lane remoto barato e multimodal.",
+			Reason:     "visao fica melhor no lane remoto barato e multimodal (Gemma 3 / Qwen).",
 			Guards:     guardsFor(outputMode, true),
 			BudgetLane: "remote_vision",
 		}}
@@ -221,12 +235,22 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	if req.CostSensitive && !req.LocalOnly && !useTools {
 		return []RouteCandidate{
 			{
+				Lane:       "groq-text",
+				Provider:   "groq",
+				Model:      defaultGroqTextModel,
+				UseRemote:  true,
+				UseTools:   false,
+				Reason:     "primary: groq ultra barato para tarefas sensiveis a custo.",
+				Guards:     guardsFor(outputMode, true),
+				BudgetLane: "groq_text",
+			},
+			{
 				Lane:       "remote-cheap-long-context",
 				Provider:   "openrouter",
 				Model:      defaultRemoteCheapLongModel,
 				UseRemote:  true,
 				UseTools:   false,
-				Reason:     "primary: tarefas remotas sensiveis a custo.",
+				Reason:     "fallback 1: qwen alternativo.",
 				Guards:     guardsFor(outputMode, true),
 				BudgetLane: "remote_cheap",
 			},
@@ -236,7 +260,7 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Model:      defaultLocalBalancedModel,
 				UseRemote:  false,
 				UseTools:   false,
-				Reason:     "fallback: ollama local.",
+				Reason:     "fallback 2: ollama local.",
 				Guards:     guardsFor(outputMode, false),
 				BudgetLane: "local",
 			},
@@ -244,16 +268,38 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	}
 
 	// Maintenance, Local Only, General Default
-	return []RouteCandidate{{
-		Lane:       "local-balanced",
-		Provider:   "ollama",
-		Model:      defaultLocalBalancedModel,
-		UseRemote:  false,
-		UseTools:   useTools,
-		Reason:     "manutencao, repo e tool use local priorizam cerebro local residente.",
-		Guards:     guardsFor(outputMode, false),
-		BudgetLane: "local",
-	}}
+	return []RouteCandidate{
+		{
+			Lane:       "groq-text",
+			Provider:   "groq",
+			Model:      defaultGroqTextModel,
+			UseRemote:  true,
+			UseTools:   useTools,
+			Reason:     "primary: groq llama-3.3 para respostas rapidas e baratas.",
+			Guards:     guardsFor(outputMode, true),
+			BudgetLane: "groq_text",
+		},
+		{
+			Lane:       "local-balanced",
+			Provider:   "ollama",
+			Model:      defaultLocalBalancedModel,
+			UseRemote:  false,
+			UseTools:   useTools,
+			Reason:     "fallback 1: ollama gemma3 local residente.",
+			Guards:     guardsFor(outputMode, false),
+			BudgetLane: "local",
+		},
+		{
+			Lane:       "remote-premium-workflow",
+			Provider:   "openrouter",
+			Model:      defaultRemotePremiumModel,
+			UseRemote:  true,
+			UseTools:   useTools,
+			Reason:     "fallback 2: minimax premium como ultimo recurso.",
+			Guards:     guardsFor(outputMode, true),
+			BudgetLane: "remote_premium",
+		},
+	}
 }
 
 // classifyRule maps keyword patterns to a task class with a weight.
@@ -271,7 +317,7 @@ var classifyRules = []classifyRule{
 	{Class: "routing", Keywords: []string{"roteamento", "classifier", "classify", "categorize", "categorizar", "route"}, Weight: 6},
 	{Class: "curation", Keywords: []string{"curadoria", "facts", "tags", "resumo curto", "fatos curtos", "bullet points", "curate"}, Weight: 6},
 	{Class: "browser_workflow", Keywords: []string{"browser", "navigate", "navegar", "web page", "pagina web"}, Weight: 7},
-	{Class: "workflow_premium", Keywords: []string{"workflow complexo", "agentico", "multi-step", "complex workflow"}, Weight: 7},
+	{Class: "workflow_premium", Keywords: []string{"workflow complexo", "agentico", "multi-step", "complex workflow", "minimax", "poderoso", "openai", "claude"}, Weight: 10},
 	{Class: "maintenance", Keywords: []string{"maint", "homelab", "runbook", "reboot", "nvidia-gpu", "servidor", "deploy"}, Weight: 5},
 	{Class: "general", Keywords: []string{}, Weight: 0},
 }

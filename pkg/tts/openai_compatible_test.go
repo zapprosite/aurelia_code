@@ -11,10 +11,10 @@ import (
 func TestOpenAICompatibleSynthesizer_IsAvailable(t *testing.T) {
 	t.Parallel()
 
-	if NewOpenAICompatibleSynthesizer("", "chatterbox", "Aurelia.wav", "", "opus", 1).IsAvailable() {
+	if NewOpenAICompatibleSynthesizer("", "tts-1-hd", "aurelia", "", "opus", 1).IsAvailable() {
 		t.Fatal("expected unavailable synthesizer without base url")
 	}
-	if !NewOpenAICompatibleSynthesizer("http://127.0.0.1:8011", "chatterbox", "Aurelia.wav", "", "opus", 1).IsAvailable() {
+	if !NewOpenAICompatibleSynthesizer("http://127.0.0.1:8011", "tts-1-hd", "aurelia", "", "opus", 1).IsAvailable() {
 		t.Fatal("expected configured synthesizer to be available")
 	}
 }
@@ -30,10 +30,10 @@ func TestOpenAICompatibleSynthesizer_SynthesizeSuccess(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
-		if body["model"] != "chatterbox" {
+		if body["model"] != "tts-1-hd" {
 			t.Fatalf("unexpected model: %v", body["model"])
 		}
-		if body["voice"] != "Aurelia.wav" {
+		if body["voice"] != "aurelia" {
 			t.Fatalf("unexpected voice: %v", body["voice"])
 		}
 		w.Header().Set("Content-Type", "audio/opus")
@@ -41,7 +41,7 @@ func TestOpenAICompatibleSynthesizer_SynthesizeSuccess(t *testing.T) {
 	}))
 	defer server.Close()
 
-	synth := NewOpenAICompatibleSynthesizer(server.URL, "chatterbox", "Aurelia.wav", "", "opus", 1)
+	synth := NewOpenAICompatibleSynthesizer(server.URL, "tts-1-hd", "aurelia", "", "opus", 1)
 	audio, err := synth.Synthesize(context.Background(), "Ola")
 	if err != nil {
 		t.Fatalf("Synthesize() error = %v", err)
@@ -65,7 +65,7 @@ func TestOpenAICompatibleSynthesizer_SynthesizeAPIError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	synth := NewOpenAICompatibleSynthesizer(server.URL, "chatterbox", "Aurelia.wav", "", "opus", 1)
+	synth := NewOpenAICompatibleSynthesizer(server.URL, "tts-1-hd", "aurelia", "", "opus", 1)
 	if _, err := synth.Synthesize(context.Background(), "Ola"); err == nil {
 		t.Fatal("expected api error")
 	}

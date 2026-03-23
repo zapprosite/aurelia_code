@@ -1,44 +1,41 @@
 package telegram
 
 const (
-	unsupportedDocumentMessage = "⚠️ **Formato nao suportado**\n\n" +
-		"No momento eu consigo processar:\n" +
-		"- arquivos `.md`\n" +
-		"- arquivos `.pdf`\n" +
-		"- audio e voz\n"
+	unsupportedDocumentMessage = "⚠️ **Formato não suportado**\n\n" +
+		"Para garantir a melhor análise, no momento consigo processar os seguintes formatos:\n" +
+		"- Documentos Markdown (`.md`)\n" +
+		"- Arquivos PDF (`.pdf`)\n" +
+		"- Mensagens de áudio e voz\n" +
+		"- Imagens e fotos (incluindo álbuns)\n"
 
-	downloadFailureMessage = "❌ **Falha no download**\n\n" +
-		"Nao consegui baixar o arquivo enviado pelo Telegram. Tente novamente."
+	downloadFailureMessage = "❌ **Falha no processamento**\n\n" +
+		"Não foi possível baixar o arquivo enviado. Por favor, tente encaminhar novamente."
 
-	audioNotConfiguredMessage = "⚠️ **Audio indisponivel**\n\n" +
-		"Meu modulo de transcricao nao esta configurado.\n\n" +
-		"Configure `groq_api_key` no arquivo `~/.aurelia/config/app.json`."
+	audioNotConfiguredMessage = "⚠️ **Módulo de Áudio não configurado**\n\n" +
+		"O serviço de transcrição ainda não foi ativado.\n\n" +
+		"Para habilitar, configure a `groq_api_key` em suas definições de sistema."
 
-	audioProcessingFailureMessage = "❌ **Falha na transcricao**\n\n" +
-		"Nao consegui compreender o audio. Tente falar mais claro ou mais perto do microfone."
+	audioProcessingFailureMessage = "❌ **Erro de Transcrição**\n\n" +
+		"Não consegui processar seu áudio com clareza. Poderia repetir ou enviar uma mensagem de texto?"
 
-	emptyAudioMessage = "⚠️ **Audio vazio**\n\n" +
-		"Nao captei conteudo util. Pode reenviar?"
+	emptyAudioMessage = "⚠️ **Áudio sem conteúdo**\n\n" +
+		"O arquivo de áudio parece estar vazio ou inaudível. Poderia verificar e reenviar?"
 
-	alreadyConfiguredMessage = "✅ **Aurelia online**\n\n" +
-		"Ja estou configurado e pronto. Como posso ajudar?"
+	alreadyConfiguredMessage = "✨ **Sistema Operacional**\n\n" +
+		"A Aurélia já está configurada e pronta para auxiliá-lo. Como posso ser útil hoje?"
 
-	bootstrapWelcomeMessage = "# Boas-vindas\n\n" +
-		"Eu sou o **Aurelia** recem-iniciado.\n\n" +
-		"Escolha como voce quer que eu atue primariamente hoje."
+	bootstrapWelcomeMessage = "💎 **Boas-vindas à Aurélia**\n\n" +
+		"Sou sua nova assistente de inteligência artificial de elite.\n\n" +
+		"Para começarmos, selecione o perfil de atuação que melhor atende às suas necessidades atuais:"
 
-	bootstrapFailureMessage = "❌ **Falha no bootstrap**\n\n" +
-		"Nao consegui criar os arquivos base de persona."
+	bootstrapFailureMessage = "❌ **Falha na Inicialização**\n\n" +
+		"Ocorreu um erro técnico ao criar seus arquivos de identidade. Por favor, contate o administrador."
 
-	bootstrapProfileMessage = "✅ **Modo inicial configurado**\n\n" +
-		"Agora me diga seu nome e como prefere que eu trabalhe com voce.\n\n" +
-		"Exemplo: `Me chamo Rafael e quero respostas diretas, sem floreios.`"
+	bootstrapProfileMessage = "✅ **Perfil Inicial Configurado**\n\n" +
+		"Excelente escolha. Agora, por favor, informe seu nome e como você gostaria que eu me dirigisse a você (formal ou informal).\n\n" +
+		"Exemplo: `Sou o Rafael e prefiro uma comunicação direta e formal.`"
 
-	bootstrapSuccessMessage = "✅ **Personas criadas**\n\n" +
-		"Suas configuracoes base foram salvas em `~/.aurelia/memory/personas/`.\n\n" +
-		"Voce ja pode conversar comigo ou editar:\n" +
-		"- `IDENTITY.md`\n" +
-		"- `SOUL.md`\n" +
-		"- `USER.md`\n\n" +
-		"para refinar nosso comportamento."
+	bootstrapSuccessMessage = "🎯 **Configuração Concluída**\n\n" +
+		"Seus protocolos de identidade foram salvos com sucesso.\n\n" +
+		"Estou pronta para atuar. Sinta-se à vontade para enviar textos, comandos, áudios ou imagens para análise."
 )

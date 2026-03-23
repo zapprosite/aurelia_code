@@ -98,7 +98,7 @@ func TestInputSessionPersistedContent_MultipleImages(t *testing.T) {
 	}
 
 
-	if got := session.persistedContent(); got != "Compare estas referencias. [imagem anexada: 2]" {
+	if got := session.persistedContent(); got != "Compare estas referencias.\n[2 imagem(ns) enviada(s)]" {
 		t.Fatalf("unexpected persisted content %q", got)
 	}
 }
@@ -153,7 +153,7 @@ func TestLoadRecentMedia_Expires(t *testing.T) {
 		recentMedia: map[string]recentMedia{
 			"42": {
 				parts:     []agent.ContentPart{{Type: agent.ContentPartImage, MIMEType: "image/jpeg", Data: []byte("jpg")}},
-				updatedAt: time.Now().Add(-4 * time.Minute),
+				updatedAt: time.Now().Add(-31 * time.Minute),
 			},
 		},
 	}

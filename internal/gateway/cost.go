@@ -30,6 +30,9 @@ var modelCosts = map[string]ModelCost{
 
 	// Audio (Groq STT)
 	"whisper-large-v3-turbo": {InputPerMToken: 0, OutputPerMToken: 0},
+
+	// Groq Text
+	"llama-3.3-70b-versatile": {InputPerMToken: 0.59, OutputPerMToken: 0.79},
 }
 
 // LookupCost returns the cost for a model. Returns zero cost for unknown models.

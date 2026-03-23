@@ -70,6 +70,7 @@ type Provider struct {
 
 	localFast         closableProvider
 	localBalanced     closableProvider
+	groqText          closableProvider
 	remoteCheapLong   closableProvider
 	remoteCheapVision closableProvider
 	remoteStructured  closableProvider
@@ -96,6 +97,14 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		Temperature: &lowTemp,
 		ExtraFields: map[string]any{"think": false},
 	})
+
+	var groqText closableProvider
+	if cfg.GroqAPIKey != "" {
+		groqText = llm.NewGroqProviderWithOptions(cfg.GroqAPIKey, defaultGroqTextModel, llm.OpenAICompatibleRequestOptions{
+			MaxTokens:   512,
+			Temperature: &lowTemp,
+		})
+	}
 
 	var remoteCheapLong closableProvider
 	var remoteCheapVision closableProvider
@@ -126,12 +135,14 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		store:             newSQLiteStateStore(cfg.DBPath),
 		localFast:         localFast,
 		localBalanced:     localBalanced,
+		groqText:          groqText,
 		remoteCheapLong:   remoteCheapLong,
 		remoteCheapVision: remoteCheapVision,
 		remoteStructured:  remoteStructured,
 		remotePremium:     remotePremium,
 		budgets: map[string]laneBudget{
 			"local":             {Soft: 1000000, Hard: 1000000},
+			"groq_text":         {Soft: 600, Hard: 1000, CostHardUSD: 0.50},
 			"remote_cheap":      {Soft: 400, Hard: 800, CostHardUSD: 0.50},
 			"remote_vision":     {Soft: 120, Hard: 240, CostHardUSD: 0.25},
 			"remote_structured": {Soft: 200, Hard: 400, CostHardUSD: 1.00},
@@ -174,6 +185,7 @@ func (p *Provider) Close() {
 	for _, provider := range []closableProvider{
 		p.localFast,
 		p.localBalanced,
+		p.groqText,
 		p.remoteCheapLong,
 		p.remoteCheapVision,
 		p.remoteStructured,
@@ -186,7 +198,18 @@ func (p *Provider) Close() {
 }
 
 func (p *Provider) PrimaryLLMDescription() string {
-	return "gateway/qwen3.5:9b"
+	return "gateway/" + defaultLocalBalancedModel
+}
+
+// modelSupportsTools returns whether the model supports OpenAI-style tool calling.
+// Gemma3 does not support tools via Ollama's OpenAI-compatible API.
+func modelSupportsTools(model string) bool {
+	switch {
+	case strings.HasPrefix(model, "gemma"):
+		return false
+	default:
+		return true
+	}
 }
 
 func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (*agent.ModelResponse, error) {
@@ -317,7 +340,13 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 	systemPrompt = applyGuards(systemPrompt, decision)
 	p.markRequest(decision.BudgetLane, providerKey, decision.Model)
 
-	resp, err := provider.GenerateContent(ctx, systemPrompt, history, tools)
+	// Strip tools for local models that don't support tool calling (e.g. gemma3).
+	effectiveTools := tools
+	if !decision.UseRemote && !modelSupportsTools(decision.Model) {
+		effectiveTools = nil
+	}
+
+	resp, err := provider.GenerateContent(ctx, systemPrompt, history, effectiveTools)
 	if err != nil {
 		p.markFailure(decision.BudgetLane, providerKey, err.Error())
 		p.observeResult(decision, "error", time.Since(startedAt))
@@ -342,6 +371,8 @@ func (p *Provider) providerFor(decision DryRunDecision) closableProvider {
 		return p.localFast
 	case "local-balanced":
 		return p.localBalanced
+	case "groq-text":
+		return p.groqText
 	case "remote-cheap-long-context":
 		return p.remoteCheapLong
 	case "remote-cheap-vision":

@@ -201,7 +201,7 @@ func TestSendAudio_SendsTelegramVoiceWhenTTSSucceeds(t *testing.T) {
 	}
 }
 
-func TestSendAudio_FallsBackToTextWhenTTSFails(t *testing.T) {
+func TestSendAudio_NoFallbackWhenTTSFails(t *testing.T) {
 	sender := &stubSender{}
 	chat := &telebot.Chat{ID: 123}
 
@@ -210,11 +210,8 @@ func TestSendAudio_FallsBackToTextWhenTTSFails(t *testing.T) {
 		t.Fatalf("sendAudioWithSender returned error: %v", err)
 	}
 
-	if len(sender.calls) != 1 {
-		t.Fatalf("expected 1 send call, got %d", len(sender.calls))
-	}
-	if _, ok := sender.calls[0].what.(string); !ok {
-		t.Fatalf("expected text fallback payload, got %T", sender.calls[0].what)
+	if len(sender.calls) != 0 {
+		t.Fatalf("expected 0 send calls (text is handled by pipeline), got %d", len(sender.calls))
 	}
 }
 

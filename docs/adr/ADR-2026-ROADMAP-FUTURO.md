@@ -1,39 +1,45 @@
-# ADR-2026-ROADMAP-FUTURO: Roadmap Estratégico e Slices Pendentes
+# ADR-2026-ROADMAP-FUTURO: Estratégia de Evolução e Slices Pendentes 🛰️
 
-**Status:** 🔄 Ativo
+**Status:** 🔄 Ativo (Em Evolução)
 **Autoridade:** Aurélia (Arquiteta Principal)
-**Foco:** Autonomia Total e Cognição Avançada
+**Data de Revisão:** 2026-03-22
+**Nível de Governança:** Industrial Homelab
 
-## 1. Objetivo Estratégico
-Elevar a Aurelia ao estado de "Jarvis Local-First", com capacidade de auto-resolução de problemas complexos, introspecção de ferramentas e gerenciamento de contexto semântico.
+---
 
-## 2. Slices Prioritários (Próximas Fases)
+## 1. Resumo Executivo
+Este roadmap define a trajetória da subida da Aurélia do estado de assistente para "Jarvis Local-First". O foco é a **Autonomia Total (Level 5)**, eliminando latências externas e garantindo que a cognição ocorra prioritariamente no hardware local (RTX 4090 + 7900X), utilizando a nuvem apenas como fallback de alta inteligência ou ferramenta estruturada.
 
-### S-15: Tool Introspection System
-- **Objetivo**: Permitir que a Aurelia entenda e filtre suas próprias ferramentas dinamicamente baseada na tarefa.
-- **Componentes**: `internal/agent/tool_catalog.go`, integração com Qdrant para matching semântico.
+## 2. Status dos Slices (Backlog Oficial)
 
-### S-16: Execution DNA
-- **Objetivo**: Templates de workflow por tipo de tarefa (debug, feature, refactor).
-- **Componentes**: `internal/persona/execution_dna.go`.
+| ID | Slice Name | Descrição | Status | Prioridade |
+|:---|:---|:---|:---:|:---:|
+| **S-15** | Tool Introspection | Filtro semântico dinâmico de ferramentas via Qdrant. | 📅 Pendente | ALTA |
+| **S-16** | Execution DNA | Templates de workflow nativos (Go) por tipo de tarefa. | 📅 Pendente | MÉDIA |
+| **S-17** | Planning Loop | Loop PREV (Plan-Review-Exec-Verify) nativo no daemon. | 📅 Pendente | CRÍTICA |
+| **S-18** | Codebase Symbol Map | Parseamento AST (.ast) para localização de símbolos. | 📅 Pendente | ALTA |
+| **S-19** | Semantic Skill Router| Roteamento de skills via embeddings (Vector-First). | 📅 Pendente | ALTA |
 
-### S-17: Planning Loop (PREV Phase)
-- **Objetivo**: Implementar o loop de Plano -> Revisão -> Execução -> Verificação nativo no binário Go.
-- **Garantia**: Bloqueio de segurança para planos de alto risco sem aprovação humana.
+## 3. Detalhamento Técnico dos Slices
+
+### S-17: Planning Loop (PREV Phase) — CRITICAL PATH
+O objetivo é mover a lógica de orquestração do Antigravity/Claude para dentro do binário `aurelia` em Go.
+- **Garantia**: Bloqueio de segurança (`gate`) para planos que afetam infraestrutura (sudo) sem intervenção humana.
+- **Componentes**: `internal/orchestrator/`, `internal/gatekeeper/`.
 
 ### S-18: Codebase Symbol Map
-- **Objetivo**: Parseamento de símbolos Go (.ast) para que a Aurelia localize funções e tipos sem busca por texto puro.
-- **Componentes**: `internal/agent/codebase_map.go`.
+Substituição do `grep` puro por uma busca de símbolos consciente do tipo.
+- **Garantia**: Redução de alucinações em renames e refatorações complexas.
+- **Tecnologia**: Go Parser + Qdrant Metadata Sync.
 
-### S-19: Semantic Skill Router
-- **Objetivo**: Roteamento inteligente de habilidades via embeddings, substituindo o roteador atual baseado em strings.
+## 4. Visão de Longo Prazo (S20+)
+- **Autonomous HW Management**: Auto-escalonamento de VRAM e gestão de energia via `nvidia-smi` monitorado pelo `homelab-control`.
+- **Global Auth Proxy**: Unificação de sessões entre Dashboard (Next.js), Telegram e CLI.
+- **Cognitive Self-Healing**: Capacidade da Aurélia de detectar falhas em logs de containers e aplicar correções via PR interno.
 
-## 3. Planos Futuros e Inovação
-- **Memory Context Assembler**: Assemblagem dinâmica de contexto (Qdrant + Git + Code) para alimentar a LLM com precisão máxima.
-- **Autonomous HW Management**: Auto-gerenciamento de VRAM e containers via `homelab-control`.
-- **Global Auth Proxy**: Unificação de autenticação entre Dashboard, Telegram e API.
+## 5. Critérios de Sucesso Industrial
+- **Autonomia**: Intervenção humana < 5% em fluxos de desenvolvimento.
+- **Performance**: Latência de "Pensamento" < 500ms usando modelos locais otimizados (Gemma 3).
+- **Higiene**: Zero discrepância entre o estado do código e o `.context/`.
 
-## 4. Critérios de Sucesso
-- Autonomia Level 5 (Human-in-the-loop apenas para aprovação estratégica).
-- Latência de resposta < 2s para ferramentas locais.
-- Zero drift semântico entre código e documentação.
+---
