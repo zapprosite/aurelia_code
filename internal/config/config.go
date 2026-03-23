@@ -43,6 +43,8 @@ type AppConfig struct {
 	LLMProvider              string
 	LLMModel                 string
 	STTProvider              string
+	STTBaseURL               string
+	STTModel                 string
 	TTSProvider              string
 	TTSBaseURL               string
 	TTSModel                 string
@@ -97,6 +99,8 @@ type fileConfig struct {
 	LLMProvider              string  `json:"llm_provider"`
 	LLMModel                 string  `json:"llm_model"`
 	STTProvider              string  `json:"stt_provider"`
+	STTBaseURL               string  `json:"stt_base_url"`
+	STTModel                 string  `json:"stt_model"`
 	TTSProvider              string  `json:"tts_provider"`
 	TTSBaseURL               string  `json:"tts_base_url"`
 	TTSModel                 string  `json:"tts_model"`
@@ -543,6 +547,8 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		LLMProvider:              cfg.LLMProvider,
 		LLMModel:                 cfg.LLMModel,
 		STTProvider:              cfg.STTProvider,
+		STTBaseURL:               cfg.STTBaseURL,
+		STTModel:                 cfg.STTModel,
 		TTSProvider:              cfg.TTSProvider,
 		TTSBaseURL:               cfg.TTSBaseURL,
 		TTSModel:                 cfg.TTSModel,

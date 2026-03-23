@@ -404,6 +404,8 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 
 func buildTranscriber(cfg *config.AppConfig) (stt.Transcriber, error) {
 	switch cfg.STTProvider {
+	case "local", "faster-whisper":
+		return stt.NewLocalTranscriber(cfg.STTBaseURL, cfg.STTModel), nil
 	case "", "groq":
 		return stt.NewGroqTranscriber(cfg.GroqAPIKey), nil
 	default:
