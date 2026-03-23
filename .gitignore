@@ -85,3 +85,7 @@ stress-test.log
 stress-test-reports/
 stress-test-simulations.js
 scripts/test_tts.py
+
+# Build artifacts
+/build/
+*.png
