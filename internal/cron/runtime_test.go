@@ -3,6 +3,7 @@ package cron
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/kocar/aurelia/internal/agent"
@@ -25,6 +26,10 @@ func (f *fakeCronAgentExecutor) Execute(ctx context.Context, systemPrompt string
 	return nil, f.finalAnswer, f.err
 }
 
+func (f *fakeCronAgentExecutor) RunCommand(ctx context.Context, command string) (string, error) {
+	return "75, 50, 250, 4000", nil
+}
+
 func TestCronRuntime_ExecuteJob_RunsAgentWithPromptAndContext(t *testing.T) {
 	t.Parallel()
 
@@ -43,11 +48,11 @@ func TestCronRuntime_ExecuteJob_RunsAgentWithPromptAndContext(t *testing.T) {
 		Active:       true,
 	}
 
-	answer, err := runtime.ExecuteJob(context.Background(), job)
+	answer, _, err := runtime.ExecuteJob(context.Background(), job)
 	if err != nil {
 		t.Fatalf("ExecuteJob() error = %v", err)
 	}
-	if answer != "daily summary ready" {
+	if !strings.Contains(answer, "daily summary ready") || !strings.Contains(answer, "Grafana Dashboard") {
 		t.Fatalf("unexpected final answer: %q", answer)
 	}
 	if executor.lastCtx == nil {
@@ -62,7 +67,7 @@ func TestCronRuntime_ExecuteJob_RunsAgentWithPromptAndContext(t *testing.T) {
 	if len(executor.lastHistory) != 1 {
 		t.Fatalf("expected one synthetic user message, got %d", len(executor.lastHistory))
 	}
-	if executor.lastHistory[0].Role != "user" || executor.lastHistory[0].Content != "Me entregue o resumo diario" {
+	if executor.lastHistory[0].Role != "user" || !strings.Contains(executor.lastHistory[0].Content, "Me entregue o resumo diario") {
 		t.Fatalf("unexpected synthetic history: %#v", executor.lastHistory)
 	}
 
@@ -93,7 +98,7 @@ func TestCronRuntime_ExecuteJob_PropagatesExecutorError(t *testing.T) {
 		Active:       true,
 	}
 
-	_, err := runtime.ExecuteJob(context.Background(), job)
+	_, _, err := runtime.ExecuteJob(context.Background(), job)
 	if !errors.Is(err, expectedErr) {
 		t.Fatalf("expected executor error %v, got %v", expectedErr, err)
 	}
@@ -119,20 +124,19 @@ func TestCronRuntime_ExecuteJob_RebuildsPromptPerExecution(t *testing.T) {
 		ID:           "job-3",
 		OwnerUserID:  "user-99",
 		TargetChatID: 777,
-		ScheduleType: "cron",
-		CronExpr:     "0 8 * * *",
+		ScheduleType: "once",
 		Prompt:       "Pesquisar noticias de hoje",
 		Active:       true,
 	}
 
-	if _, err := runtime.ExecuteJob(context.Background(), job); err != nil {
+	if _, _, err := runtime.ExecuteJob(context.Background(), job); err != nil {
 		t.Fatalf("first ExecuteJob() error = %v", err)
 	}
 	if executor.lastSystemPrompt != "prompt build #1" {
 		t.Fatalf("expected first rebuilt prompt, got %q", executor.lastSystemPrompt)
 	}
 
-	if _, err := runtime.ExecuteJob(context.Background(), job); err != nil {
+	if _, _, err := runtime.ExecuteJob(context.Background(), job); err != nil {
 		t.Fatalf("second ExecuteJob() error = %v", err)
 	}
 	if executor.lastSystemPrompt != "prompt build #2" {

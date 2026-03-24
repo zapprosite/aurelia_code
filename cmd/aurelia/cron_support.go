@@ -15,6 +15,11 @@ func (a *loopExecutorAdapter) Execute(ctx context.Context, systemPrompt string, 
 	return a.loop.Run(ctx, systemPrompt, history, allowedTools)
 }
 
+func (a *loopExecutorAdapter) RunCommand(ctx context.Context, command string) (string, error) {
+	// Reusando a lógica de execução de comando do loop
+	return a.loop.Registry().Execute(ctx, "run_command", map[string]any{"command": command})
+}
+
 func loadCronPromptConfig(canonicalPromptLoader interface {
 	BuildPrompt(ctx context.Context, userID, conversationID string) (string, []string, error)
 }) (string, []string) {

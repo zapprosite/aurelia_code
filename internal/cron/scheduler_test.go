@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"github.com/kocar/aurelia/internal/agent"
 )
 
 type fakeCronStore struct {
@@ -92,12 +93,12 @@ type fakeCronRuntime struct {
 	seen    []string
 }
 
-func (f *fakeCronRuntime) ExecuteJob(ctx context.Context, job CronJob) (string, error) {
+func (f *fakeCronRuntime) ExecuteJob(ctx context.Context, job CronJob) (string, []agent.ContentPart, error) {
 	f.seen = append(f.seen, job.ID)
 	if err := f.errors[job.ID]; err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return f.results[job.ID], nil
+	return f.results[job.ID], nil, nil
 }
 
 type staticClock struct {

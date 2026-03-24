@@ -16,10 +16,10 @@ var systemCronDefs = []cron.CronJob{
 	{
 		ScheduleType: "cron",
 		CronExpr:     "*/5 * * * *",
-		Prompt: "[sys:sentinel-watchdog] Você é o Sentinel, monitor do homelab." +
-			" Execute o watchdog: bash /home/will/aurelia/scripts/homelab-watchdog.sh" +
-			" Reporte em até 3 linhas: containers unhealthy, status GPU, Ollama e ZFS." +
-			" Só notifique se houver anomalia.",
+		Prompt: "[sys:sentinel-watchdog] Você é o Sentinel. Monitore a saúde crítica." +
+			" **Ações**: 1. Execute 'nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader'. 2. Verifique 'docker ps'." +
+			" **Análise**: Use o motor local gemma3:12b. Se temp > 75°C, execute 'docker stop $(docker ps --format \"{{.ID}}\")' e ALERTE IMEDIATAMENTE." +
+			" Se tudo estiver OK, NÃO envie mensagem (STAY SILENT).",
 	},
 	{
 		ScheduleType: "cron",
@@ -37,11 +37,11 @@ var systemCronDefs = []cron.CronJob{
 	},
 	{
 		ScheduleType: "cron",
-		CronExpr:     "0 9 * * *",
-		Prompt: "[sys:gpu-report] Você é o Sentinel, monitor de GPU." +
-			" Relatório diário: execute nvidia-smi --query-gpu=name,memory.used,memory.free,utilization.gpu --format=csv,noheader" +
-			" e curl -s localhost:11434/api/tags para modelos Ollama carregados." +
-			" Alerte se VRAM usada > 80%.",
+		CronExpr:     "0 */5 * * *",
+		Prompt: "[sys:gpu-report] Você é o Sentinel, monitor industrial de GPU." +
+			" **Ação**: Execute 'node scripts/grafana-capture.mjs'." +
+			" **Análise**: Use o motor local gemma3:12b para analisar o dashboard de métricas." +
+			" Envie o resumo executivo de 5 horas. Se tudo estiver estável, apenas confirme: '✓ Homelab Industrial Estável'.",
 	},
 	{
 		ScheduleType: "cron",

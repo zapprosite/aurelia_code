@@ -12,6 +12,8 @@ Habilita o Antigravity a adaptar tom, estilo e prioridades com base no históric
 - **Tom**: Profissional, técnico (Dev-to-Dev), direto.
 - **Prioridade**: Estabilidade do Homelab e Soberania de Dados.
 - **Style**: Prefere explicações arquiteturais (ADRs) antes de mudanças em massa.
+- **Lifestyle**: Atleta (treino e dieta rigorosos) — focado em performance e consistência.
+- **Business**: Proprietário de empresa de HVAC-R (Climatização/Refrigeração) no Brasil.
 
 ## 📍 Quando usar
 - Para calibrar a persona da Aurélia no Telegram.

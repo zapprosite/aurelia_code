@@ -91,14 +91,36 @@ func (s *MasterTeamService) summarizeLeadUpdates(ctx context.Context, teamID, te
 	var lines []string
 	for _, update := range updates {
 		switch update.Kind {
-		case "result", "status_update":
-			lines = append(lines, fmt.Sprintf("- %s: %s", update.FromAgent, update.Body))
 		case "blocker":
-			lines = append(lines, fmt.Sprintf("- %s encontrou um bloqueio: %s", update.FromAgent, update.Body))
+			lines = append(lines, fmt.Sprintf("🧱 %s encontrou um bloqueio: %s", update.FromAgent, update.Body))
 			s.scheduleRecoveryTask(ctx, teamID, teamKey, update)
+		default:
+			body := cleanUpdateBody(update.Body)
+			if body != "" {
+				lines = append(lines, fmt.Sprintf("%s: %s", update.FromAgent, body))
+			}
 		}
 	}
 	return lines, s.resolveRunIDFromUpdates(ctx, teamID, updates)
+}
+
+func cleanUpdateBody(body string) string {
+	body = strings.TrimSpace(body)
+
+	// Oculta logs de ferramentas e mídias binárias brutas
+	if strings.Contains(body, "Executando tool") ||
+		strings.Contains(body, "tool_code") ||
+		strings.Contains(body, "Base64 encoded data") ||
+		(strings.HasPrefix(body, "{") && strings.HasSuffix(body, "}")) {
+		return ""
+	}
+
+	// Limita o tamanho do texto para manter o Telegram "clean"
+	if len(body) > 300 {
+		return body[:297] + "..."
+	}
+
+	return body
 }
 
 func (s *MasterTeamService) resolveRunIDFromUpdates(ctx context.Context, teamID string, updates []MailMessage) string {
