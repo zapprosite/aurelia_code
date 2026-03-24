@@ -78,6 +78,8 @@ type Provider struct {
 	remoteCheapVision closableProvider
 	remoteStructured  closableProvider
 	remotePremium     closableProvider
+	miniMaxDirect     closableProvider
+	judge             Judge
 
 	mu       sync.Mutex
 	budgets  map[string]laneBudget
@@ -90,12 +92,12 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		return nil, fmt.Errorf("config is required")
 	}
 	lowTemp := 0.1
-	localFast := llm.NewOllamaProviderWithOptions(defaultLocalFastModel, llm.OpenAICompatibleRequestOptions{
+	localFast := llm.NewOllamaProviderWithOptions(modelGemma3, llm.OpenAICompatibleRequestOptions{
 		MaxTokens:   192,
 		Temperature: &lowTemp,
 		ExtraFields: map[string]any{"think": false},
 	})
-	localBalanced := llm.NewOllamaProviderWithOptions(defaultLocalBalancedModel, llm.OpenAICompatibleRequestOptions{
+	localBalanced := llm.NewOllamaProviderWithOptions(modelLlama3, llm.OpenAICompatibleRequestOptions{
 		MaxTokens:   384,
 		Temperature: &lowTemp,
 		ExtraFields: map[string]any{"think": false},
@@ -103,7 +105,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 
 	var groqText closableProvider
 	if cfg.GroqAPIKey != "" {
-		groqText = llm.NewGroqProviderWithOptions(cfg.GroqAPIKey, defaultGroqTextModel, llm.OpenAICompatibleRequestOptions{
+		groqText = llm.NewOpenRouterProviderWithOptions(cfg.GroqAPIKey, modelGroq70b, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   512,
 			Temperature: &lowTemp,
 		})
@@ -114,23 +116,33 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 	var remoteStructured closableProvider
 	var remotePremium closableProvider
 	if cfg.OpenRouterAPIKey != "" {
-		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, defaultRemoteCheapLongModel, llm.OpenAICompatibleRequestOptions{
+		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelQwenNext, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   384,
 			Temperature: &lowTemp,
 		})
-		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, defaultRemoteVisionModel, llm.OpenAICompatibleRequestOptions{
+		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelKimiK25, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   384,
 			Temperature: &lowTemp,
 		})
-		remoteStructured = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, defaultRemoteStructuredModel, llm.OpenAICompatibleRequestOptions{
+		remoteStructured = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelDeepSeekChat, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   256,
 			Temperature: &lowTemp,
 		})
-		remotePremium = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, defaultRemotePremiumModel, llm.OpenAICompatibleRequestOptions{
+		remotePremium = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelMiniMaxM27, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   640,
 			Temperature: &lowTemp,
 		})
 	}
+
+	var miniMaxDirect closableProvider
+	if cfg.MiniMaxAPIKey != "" {
+		miniMaxDirect = llm.NewMiniMaxProviderWithOptions(cfg.MiniMaxAPIKey, "minimax-m2.7", llm.OpenAICompatibleRequestOptions{
+			MaxTokens:   1024,
+			Temperature: &lowTemp,
+		})
+	}
+
+	judge := NewGemmaJudge("gemma3:12b")
 
 	provider := &Provider{
 		planner:           NewPlanner(),
@@ -143,6 +155,8 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		remoteCheapVision: remoteCheapVision,
 		remoteStructured:  remoteStructured,
 		remotePremium:     remotePremium,
+		miniMaxDirect:     miniMaxDirect,
+		judge:             judge,
 		budgets: map[string]laneBudget{
 			"local":             {Soft: 1000000, Hard: 1000000},
 			"groq_text":         {Soft: 600, Hard: 1000, CostHardUSD: 0.50},
@@ -193,6 +207,7 @@ func (p *Provider) Close() {
 		p.remoteCheapVision,
 		p.remoteStructured,
 		p.remotePremium,
+		p.miniMaxDirect,
 	} {
 		if provider != nil {
 			provider.Close()
@@ -201,7 +216,7 @@ func (p *Provider) Close() {
 }
 
 func (p *Provider) PrimaryLLMDescription() string {
-	return "gateway/" + defaultLocalBalancedModel
+	return "gateway/" + modelLlama3
 }
 
 // modelSupportsTools returns whether the model supports OpenAI-style tool calling.
@@ -217,7 +232,43 @@ func modelSupportsTools(model string) bool {
 
 func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (*agent.ModelResponse, error) {
 	opts, _ := agent.RunOptionsFromContext(ctx)
-	req := buildDryRunRequest(systemPrompt, history, tools)
+	
+	// Ensure system instructions are applied to all requests
+	const mandatoryInstruction = "Be concise. Avoid unnecessary explanations. Output minimal sufficient answer."
+	if !strings.Contains(systemPrompt, mandatoryInstruction) {
+		systemPrompt = mandatoryInstruction + "\n" + systemPrompt
+	}
+
+	// Calculate context size roughly
+	contextSize := len(systemPrompt)
+	for _, m := range history {
+		contextSize += len(m.Content)
+	}
+
+	// 1. Call Judge for classification
+	var latestUser string
+	for i := len(history) - 1; i >= 0; i-- {
+		if history[i].Role == "user" {
+			latestUser = history[i].Content
+			break
+		}
+	}
+	
+	judgeRes, err := p.judge.Judge(ctx, latestUser, history)
+	if err != nil {
+		// Fallback to default classification if judge fails
+		observability.Logger("gateway.provider").Warn("judge failed, using default coding_main", slog.String("error", err.Error()))
+		judgeRes = &JudgeResult{Class: "coding_main", Confidence: 0.5, Reason: "judge error fallback"}
+	}
+
+	req := DryRunRequest{
+		Task:            latestUser,
+		JudgeClass:      judgeRes.Class,
+		JudgeConfidence: judgeRes.Confidence,
+		ContextSize:     contextSize,
+		RequiresVision:  hasVisionParts(history),
+		// Add other flags if needed
+	}
 	
 	if opts.LocalOnly {
 		req.LocalOnly = true
@@ -232,9 +283,9 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 
 	logger := observability.Logger("gateway.provider")
 	logger.Info("gateway routing attempt",
+		slog.String("class", judgeRes.Class),
+		slog.Float64("confidence", judgeRes.Confidence),
 		slog.Int("candidates", len(candidates)),
-		slog.Bool("degraded", degraded.Active),
-		slog.Bool("remote_disabled", degraded.RemoteDisabled),
 	)
 
 	var lastErr error
@@ -286,8 +337,8 @@ func (p *Provider) StatusSnapshot() StatusSnapshot {
 	}
 
 	return StatusSnapshot{
-		PrimaryLane: "local-balanced",
-		PrimaryMode: defaultLocalBalancedModel,
+		PrimaryLane: "local",
+		PrimaryMode: modelLlama3,
 		Budgets:     budgets,
 		Routes:      routes,
 		Degraded:    p.degraded,
@@ -349,7 +400,7 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 		return nil, fmt.Errorf("cost limit exceeded for %s", decision.BudgetLane)
 	}
 
-	provider := p.providerFor(decision)
+	provider := p.providerFor(decision.Lane)
 	if provider == nil {
 		p.observeResult(decision, "provider_unavailable", time.Since(startedAt))
 		return nil, fmt.Errorf("provider unavailable for %s", providerKey)
@@ -403,25 +454,41 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 	return resp, nil
 }
 
-func (p *Provider) providerFor(decision DryRunDecision) closableProvider {
-	switch decision.Lane {
+func (p *Provider) providerFor(lane string) agent.LLMProvider {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	switch lane {
 	case "local-fast":
 		return p.localFast
 	case "local-balanced":
 		return p.localBalanced
 	case "groq-text":
 		return p.groqText
-	case "remote-cheap-long-context":
+	case "remote-cheap-long":
 		return p.remoteCheapLong
 	case "remote-cheap-vision":
 		return p.remoteCheapVision
-	case "remote-tool-long-output":
-		return p.remoteStructured
-	case "remote-premium-workflow":
+	case "remote-premium":
+		if p.miniMaxDirect != nil {
+			return p.miniMaxDirect
+		}
 		return p.remotePremium
 	default:
 		return p.localBalanced
 	}
+}
+
+func hasVisionParts(history []agent.Message) bool {
+	for _, m := range history {
+		// This depends on how agent.Message is structured. 
+		// Assuming for now it's simple string content check or metadata.
+		// If agent.Message has a structured content type, check it here.
+		if strings.Contains(m.Content, "[image]") || strings.Contains(m.Content, "base64,") {
+			return true
+		}
+	}
+	return false
 }
 
 func buildDryRunRequest(systemPrompt string, history []agent.Message, tools []agent.Tool) DryRunRequest {

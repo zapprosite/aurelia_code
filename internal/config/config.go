@@ -65,6 +65,7 @@ type AppConfig struct {
 	OpenAIAPIKey             string
 	OpenAIAuthMode           string
 	GroqAPIKey               string
+	MiniMaxAPIKey            string
 	MaxIterations            int
 	DBPath                   string
 	MemoryWindowSize         int
@@ -121,6 +122,7 @@ type fileConfig struct {
 	OpenAIAPIKey             string  `json:"openai_api_key"`
 	OpenAIAuthMode           string  `json:"openai_auth_mode"`
 	GroqAPIKey               string  `json:"groq_api_key"`
+	MiniMaxAPIKey            string  `json:"minimax_api_key"`
 	MaxIterations            int     `json:"max_iterations"`
 	DBPath                   string  `json:"db_path"`
 	MemoryWindowSize         int     `json:"memory_window_size"`
@@ -176,6 +178,7 @@ type EditableConfig struct {
 	OpenAIAPIKey             string
 	OpenAIAuthMode           string
 	GroqAPIKey               string
+	MiniMaxAPIKey            string
 	MaxIterations            int
 	MemoryWindowSize         int
 	HeartbeatEnabled         bool
@@ -248,6 +251,9 @@ func applyEnvOverrides(cfg *fileConfig) {
 	}
 	if env := os.Getenv("OLLAMA_URL"); env != "" {
 		cfg.OllamaURL = env
+	}
+	if env := os.Getenv("MINIMAX_API_KEY"); env != "" {
+		cfg.MiniMaxAPIKey = env
 	}
 }
 
@@ -356,6 +362,7 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		OpenAIAPIKey:             cfg.OpenAIAPIKey,
 		OpenAIAuthMode:           cfg.OpenAIAuthMode,
 		GroqAPIKey:               cfg.GroqAPIKey,
+		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
 		MaxIterations:            cfg.MaxIterations,
 		MemoryWindowSize:         cfg.MemoryWindowSize,
 		HeartbeatEnabled:         cfg.HeartbeatEnabled,
@@ -392,6 +399,7 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.OpenAIAPIKey = editable.OpenAIAPIKey
 	cfg.OpenAIAuthMode = editable.OpenAIAuthMode
 	cfg.GroqAPIKey = editable.GroqAPIKey
+	cfg.MiniMaxAPIKey = editable.MiniMaxAPIKey
 	cfg.MaxIterations = editable.MaxIterations
 	cfg.MemoryWindowSize = editable.MemoryWindowSize
 	cfg.HeartbeatEnabled = editable.HeartbeatEnabled
@@ -569,6 +577,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		OpenAIAPIKey:             cfg.OpenAIAPIKey,
 		OpenAIAuthMode:           cfg.OpenAIAuthMode,
 		GroqAPIKey:               cfg.GroqAPIKey,
+		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
 		MaxIterations:            cfg.MaxIterations,
 		DBPath:                   cfg.DBPath,
 		MemoryWindowSize:         cfg.MemoryWindowSize,
@@ -623,6 +632,7 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.OpenAIAPIKey != b.OpenAIAPIKey ||
 		a.OpenAIAuthMode != b.OpenAIAuthMode ||
 		a.GroqAPIKey != b.GroqAPIKey ||
+		a.MiniMaxAPIKey != b.MiniMaxAPIKey ||
 		a.MaxIterations != b.MaxIterations ||
 		a.DBPath != b.DBPath ||
 		a.MemoryWindowSize != b.MemoryWindowSize ||
