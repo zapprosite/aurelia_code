@@ -5,12 +5,10 @@ import "strings"
 const (
 	// Models requested by the user
 	modelDeepSeekChat = "deepseek/deepseek-chat-v3.1"
-	modelQwenNext     = "qwen/qwen3-coder-next"
-	modelMiniMaxM27   = "minimax-m2.7-direct"
+	modelMiniMaxM27   = "MiniMax-M2.7"
 	modelKimiK25      = "moonshotai/kimi-k2.5"
 
 	modelGemma3 = "gemma3:12b"
-	modelLlama3 = "llama3.2:3b"
 	modelGroq70b = "llama-3.3-70b-versatile"
 
 	// Existing static defaults
@@ -112,13 +110,13 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Confidence: req.JudgeConfidence,
 			},
 			{
-				Lane:       "remote-cheap-fallback",
-				Provider:   "openrouter",
-				Model:      modelQwenNext,
-				UseRemote:  true,
-				Reason:     "simple_short: qwen fallback.",
+				Lane:       "local-balanced",
+				Provider:   "local",
+				Model:      modelGemma3,
+				UseRemote:  false,
+				Reason:     "simple_short: gemma3 fallback (local).",
 				Guards:     guardsFor(req.OutputMode, true),
-				BudgetLane: "remote_cheap",
+				BudgetLane: "local",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},
@@ -138,11 +136,11 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Confidence: req.JudgeConfidence,
 			},
 			{
-				Lane:       "remote-cheap-fallback",
+				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      modelQwenNext,
+				Model:      modelDeepSeekChat,
 				UseRemote:  true,
-				Reason:     "coding_main: qwen fallback.",
+				Reason:     "coding_main: deepseek fallback.",
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -153,11 +151,22 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	case "long_context_or_multimodal":
 		return []RouteCandidate{
 			{
+				Lane:       "local-vision",
+				Provider:   "local",
+				Model:      modelGemma3,
+				UseRemote:  false,
+				Reason:     "long_context_or_multimodal: gemma3 12b is the primary local multimodal model.",
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "local",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
+			{
 				Lane:       "remote-long-context",
 				Provider:   "openrouter",
 				Model:      modelKimiK25,
 				UseRemote:  true,
-				Reason:     "long_context_or_multimodal: kimi is specialized for long context/vision.",
+				Reason:     "long_context_or_multimodal: kimi fallback for long context/complex vision.",
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_vision",
 				Class:      taskClass,

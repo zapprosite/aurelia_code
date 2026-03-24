@@ -79,6 +79,7 @@ type Provider struct {
 	remoteStructured  closableProvider
 	remotePremium     closableProvider
 	miniMaxDirect     closableProvider
+	localVision       closableProvider
 	judge             Judge
 
 	mu       sync.Mutex
@@ -97,10 +98,14 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		Temperature: &lowTemp,
 		ExtraFields: map[string]any{"think": false},
 	})
-	localBalanced := llm.NewOllamaProviderWithOptions(modelLlama3, llm.OpenAICompatibleRequestOptions{
+	localBalanced := llm.NewOllamaProviderWithOptions(modelGemma3, llm.OpenAICompatibleRequestOptions{
 		MaxTokens:   384,
 		Temperature: &lowTemp,
 		ExtraFields: map[string]any{"think": false},
+	})
+	localVision := llm.NewOllamaProviderWithOptions(modelGemma3, llm.OpenAICompatibleRequestOptions{
+		MaxTokens:   512,
+		Temperature: &lowTemp,
 	})
 
 	var groqText closableProvider
@@ -116,8 +121,8 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 	var remoteStructured closableProvider
 	var remotePremium closableProvider
 	if cfg.OpenRouterAPIKey != "" {
-		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelQwenNext, llm.OpenAICompatibleRequestOptions{
-			MaxTokens:   384,
+		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelDeepSeekChat, llm.OpenAICompatibleRequestOptions{
+			MaxTokens:   512,
 			Temperature: &lowTemp,
 		})
 		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelKimiK25, llm.OpenAICompatibleRequestOptions{
@@ -150,6 +155,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		store:             newSQLiteStateStore(cfg.DBPath),
 		localFast:         localFast,
 		localBalanced:     localBalanced,
+		localVision:       localVision,
 		groqText:          groqText,
 		remoteCheapLong:   remoteCheapLong,
 		remoteCheapVision: remoteCheapVision,
@@ -208,6 +214,7 @@ func (p *Provider) Close() {
 		p.remoteStructured,
 		p.remotePremium,
 		p.miniMaxDirect,
+		p.localVision,
 	} {
 		if provider != nil {
 			provider.Close()
@@ -216,7 +223,7 @@ func (p *Provider) Close() {
 }
 
 func (p *Provider) PrimaryLLMDescription() string {
-	return "gateway/" + modelLlama3
+	return "gateway/" + modelGemma3
 }
 
 // modelSupportsTools returns whether the model supports OpenAI-style tool calling.
@@ -338,7 +345,7 @@ func (p *Provider) StatusSnapshot() StatusSnapshot {
 
 	return StatusSnapshot{
 		PrimaryLane: "local",
-		PrimaryMode: modelLlama3,
+		PrimaryMode: modelGemma3,
 		Budgets:     budgets,
 		Routes:      routes,
 		Degraded:    p.degraded,
@@ -461,14 +468,18 @@ func (p *Provider) providerFor(lane string) agent.LLMProvider {
 	switch lane {
 	case "local-fast":
 		return p.localFast
-	case "local-balanced":
+	case "local-vision":
+		return p.localVision
+	case "local-balanced", "local":
 		return p.localBalanced
-	case "groq-text":
+	case "groq-text", "groq":
 		return p.groqText
-	case "remote-cheap-long":
+	case "remote-cheap", "remote-cheap-long", "remote-cheap-fallback":
 		return p.remoteCheapLong
-	case "remote-cheap-vision":
+	case "remote-long-context", "remote-cheap-vision":
 		return p.remoteCheapVision
+	case "remote-structured":
+		return p.remoteStructured
 	case "remote-premium":
 		if p.miniMaxDirect != nil {
 			return p.miniMaxDirect
