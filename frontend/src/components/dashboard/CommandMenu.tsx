@@ -28,14 +28,6 @@ const COMMANDS: CommandOption[] = [
     params: { model: "gemma3:12b" }
   },
   {
-    id: "qwen",
-    label: "Set Model: Qwen 2.5",
-    description: "Switch primary LLM to Qwen 2.5 7B (Local)",
-    icon: Cpu,
-    action: "set_model",
-    params: { model: "qwen2.5:7b" }
-  },
-  {
     id: "flush",
     label: "Flush Agent Memory",
     description: "Clear current conversation and task context",

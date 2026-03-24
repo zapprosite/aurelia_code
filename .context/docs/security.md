@@ -6,7 +6,7 @@ Security in this repository is a mix of runtime constraints and workflow governa
 
 Authentication is provider-specific and configured through [`config.AppConfig`](../../internal/config/config.go). The runtime can authenticate against Telegram, remote LLM providers, Groq STT and optional MCP servers. The local Ollama provider is the main exception: it uses the loopback endpoint and does not require an API key. Telegram access is constrained by `telegram_allowed_user_ids`, which acts as the primary authorization boundary for chat-driven control.
 
-OpenAI also supports a separate auth mode field, `openai_auth_mode`, which distinguishes direct API key usage from Codex CLI-based flows.
+OpenAI also supports a separate auth mode field, `openai_auth_mode`, which manages direct API key usage.
 
 ## Secrets & Sensitive Data
 

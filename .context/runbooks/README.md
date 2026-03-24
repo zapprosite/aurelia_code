@@ -15,9 +15,9 @@ Procedimentos operacionais e playbooks para automação, monitoramento e respost
 
 **Fases:**
 - **Fase 1 (CRITICAL):** Humano — criar vault KeePassXC, migração secrets, shred plaintext
-- **Fase 2 (HIGH):** Codex — deletar backups, refatorar MCP, schema registry
-- **Fase 3 (MEDIUM):** Codex — health checks, backup verification, incident playbook
-- **Fase 4 (LOW):** Codex — cleanup, UFW, compliance matrix
+- **Fase 2 (HIGH):** antigravity — deletar backups, refatorar MCP, schema registry
+- **Fase 3 (MEDIUM):** antigravity — health checks, backup verification, incident playbook
+- **Fase 4 (LOW):** antigravity — cleanup, UFW, compliance matrix
 
 **Invocação:** `/governance-polish --phase 1 --show-checklist`
 
@@ -79,7 +79,7 @@ Skills **orquestram**, runbooks **executam**.
    # Runbook: My Runbook
 
    **Status:** 🟡 Proposto
-   **Responsável:** [humano|codex|gemini|aurelia]
+   **Responsável:** [humano|antigravity|gemini|aurelia]
    **Logs:** ~/.aurelia/logs/my-runbook.log
 
    ---
