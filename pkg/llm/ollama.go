@@ -9,18 +9,29 @@ import (
 	"strings"
 )
 
-const (
-	ollamaChatCompletionsURL = "http://127.0.0.1:11434/v1/chat/completions"
-	ollamaModelsURL          = "http://127.0.0.1:11434/v1/models"
-)
+const defaultOllamaBaseURL = "http://127.0.0.1:11434"
 
-func NewOllamaProvider(model string) *OpenAICompatibleProvider {
-	return NewOllamaProviderWithOptions(model, OpenAICompatibleRequestOptions{})
+func ollamaChatURL(baseURL string) string {
+	if baseURL == "" {
+		baseURL = defaultOllamaBaseURL
+	}
+	return strings.TrimRight(baseURL, "/") + "/v1/chat/completions"
 }
 
-func NewOllamaProviderWithOptions(model string, request OpenAICompatibleRequestOptions) *OpenAICompatibleProvider {
+func ollamaModelsURL(baseURL string) string {
+	if baseURL == "" {
+		baseURL = defaultOllamaBaseURL
+	}
+	return strings.TrimRight(baseURL, "/") + "/v1/models"
+}
+
+func NewOllamaProvider(baseURL, model string) *OpenAICompatibleProvider {
+	return NewOllamaProviderWithOptions(baseURL, model, OpenAICompatibleRequestOptions{})
+}
+
+func NewOllamaProviderWithOptions(baseURL, model string, request OpenAICompatibleRequestOptions) *OpenAICompatibleProvider {
 	return NewOpenAICompatibleProvider(OpenAICompatibleConfig{
-		BaseURL:   ollamaChatCompletionsURL,
+		BaseURL:   ollamaChatURL(baseURL),
 		Model:     model,
 		UserAgent: "Aurelia/1.0",
 		Request:   request,

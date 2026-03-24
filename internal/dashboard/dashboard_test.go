@@ -14,7 +14,7 @@ func TestUltratrinkE2E(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 	// Dado que o servidor do ULTRATRINK está integrado e serve os arquivos do Vite
-	err := StartServer(logger)
+	err := StartServer(logger, 3333)
 	if err != nil {
 		t.Fatalf("falha severa ao instanciar servidor em memória: %v", err)
 	}

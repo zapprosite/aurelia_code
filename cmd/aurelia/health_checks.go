@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/kocar/aurelia/internal/config"
@@ -59,7 +60,11 @@ func buildPrimaryLLMHealthCheck(cfg *config.AppConfig, provider any) func() heal
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1:11434/v1/models", nil)
+		ollamaURL := cfg.OllamaURL
+		if ollamaURL == "" {
+			ollamaURL = "http://127.0.0.1:11434"
+		}
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(ollamaURL, "/")+"/v1/models", nil)
 		if err != nil {
 			return health.CheckResult{Status: "error", Message: "failed to build ollama health request"}
 		}

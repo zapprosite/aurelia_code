@@ -24,10 +24,10 @@ type GemmaJudge struct {
 	provider agent.LLMProvider
 }
 
-func NewGemmaJudge(model string) *GemmaJudge {
+func NewGemmaJudge(baseURL, model string) *GemmaJudge {
 	lowTemp := 0.1
 	// Usamos o provedor Ollama diretamente para o Gemma 3
-	provider := llm.NewOllamaProviderWithOptions(model, llm.OpenAICompatibleRequestOptions{
+	provider := llm.NewOllamaProviderWithOptions(baseURL, model, llm.OpenAICompatibleRequestOptions{
 		Temperature: &lowTemp,
 		MaxTokens:   256,
 		ExtraFields: map[string]any{
