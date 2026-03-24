@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"sync"
 )
 
@@ -46,8 +47,12 @@ func Publish(e Event) {
 	}
 }
 
-// StartServer inicia o servidor Web do Dashboard ULTRATRINK na porta 3333.
-func StartServer(logger *slog.Logger) error {
+// StartServer inicia o servidor Web do Dashboard ULTRATRINK na porta configurada.
+// Se port <= 0, usa o padrão 3334.
+func StartServer(logger *slog.Logger, port int) error {
+	if port <= 0 {
+		port = 3334
+	}
 	subFS, err := fs.Sub(content, "dist")
 	if err != nil {
 		logger.Error("erro ao carregar arquivos estáticos do dashboard", slog.Any("err", err))
@@ -99,9 +104,10 @@ func StartServer(logger *slog.Logger) error {
 	}
 	customRoutesMu.Unlock()
 
+	addr := ":" + strconv.Itoa(port)
 	go func() {
-		logger.Info("ULTRATRINK Dashboard Online", slog.String("url", "http://localhost:3334"))
-		if err := http.ListenAndServe(":3334", mux); err != nil {
+		logger.Info("ULTRATRINK Dashboard Online", slog.String("url", "http://localhost:"+strconv.Itoa(port)))
+		if err := http.ListenAndServe(addr, mux); err != nil {
 			logger.Error("servidor do dashboard parou", slog.Any("err", err))
 		}
 	}()

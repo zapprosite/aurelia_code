@@ -8,7 +8,7 @@ import (
 
 func TestGemmaJudge_JudgeReal(t *testing.T) {
 	// Este teste requer o Ollama rodando localmente com o modelo gemma3:12b
-	judge := NewGemmaJudge("gemma3:12b")
+	judge := NewGemmaJudge("", "gemma3:12b")
 
 	tests := []struct {
 		prompt string

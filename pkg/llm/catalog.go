@@ -63,7 +63,7 @@ func ListModels(ctx context.Context, provider string, creds ModelCatalogCredenti
 		}
 		return fallbackModels("google"), nil
 	case "ollama":
-		models, err := listOllamaModels(ctx, ollamaModelsURL, http.DefaultClient)
+		models, err := listOllamaModels(ctx, ollamaModelsURL(""), http.DefaultClient)
 		if err == nil && len(models) != 0 {
 			return models, nil
 		}

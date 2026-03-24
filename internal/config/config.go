@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/kocar/aurelia/internal/runtime"
 )
@@ -12,8 +13,8 @@ import (
 const (
 	defaultMaxIterations        = 500
 	defaultMemoryWindowSize     = 20
-	defaultLLMProvider          = "groq"
-	defaultLLMModel             = "llama-3.3-70b-versatile"
+	defaultLLMProvider          = "ollama"
+	defaultLLMModel             = "gemma3:12b"
 	defaultSTTProvider          = "groq"
 	defaultTTSProvider          = "openai_compatible"
 	defaultLocalTTSBaseURL = "http://127.0.0.1:8012" // Kokoro TTS (CPU, < 1.5GB VRAM)
@@ -36,6 +37,8 @@ const (
 	defaultGroqHardCapDaily     = 1200
 	defaultQdrantCollection     = "conversation_memory"
 	defaultQdrantEmbeddingModel = "bge-m3"
+	defaultDashboardPort        = 3334
+	defaultHealthPort           = 8484
 )
 
 // AppConfig holds all runtime configuration needed for the application.
@@ -63,7 +66,6 @@ type AppConfig struct {
 	GoogleAPIKey             string
 	OpenRouterAPIKey         string
 	OpenAIAPIKey             string
-	OpenAIAuthMode           string
 	GroqAPIKey               string
 	MiniMaxAPIKey            string
 	MaxIterations            int
@@ -94,6 +96,8 @@ type AppConfig struct {
 	QdrantCollection         string
 	QdrantEmbeddingModel     string
 	OllamaURL                string
+	DashboardPort            int
+	HealthPort               int
 }
 
 type fileConfig struct {
@@ -120,7 +124,6 @@ type fileConfig struct {
 	GoogleAPIKey             string  `json:"google_api_key"`
 	OpenRouterAPIKey         string  `json:"openrouter_api_key"`
 	OpenAIAPIKey             string  `json:"openai_api_key"`
-	OpenAIAuthMode           string  `json:"openai_auth_mode"`
 	GroqAPIKey               string  `json:"groq_api_key"`
 	MiniMaxAPIKey            string  `json:"minimax_api_key"`
 	MaxIterations            int     `json:"max_iterations"`
@@ -151,6 +154,8 @@ type fileConfig struct {
 	QdrantCollection         string  `json:"qdrant_collection"`
 	QdrantEmbeddingModel     string  `json:"qdrant_embedding_model"`
 	OllamaURL                string  `json:"ollama_url"`
+	DashboardPort            int     `json:"dashboard_port"`
+	HealthPort               int     `json:"health_port"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
@@ -176,7 +181,6 @@ type EditableConfig struct {
 	GoogleAPIKey             string
 	OpenRouterAPIKey         string
 	OpenAIAPIKey             string
-	OpenAIAuthMode           string
 	GroqAPIKey               string
 	MiniMaxAPIKey            string
 	MaxIterations            int
@@ -228,6 +232,16 @@ func Load(r *runtime.PathResolver) (*AppConfig, error) {
 }
 
 func applyEnvOverrides(cfg *fileConfig) {
+	if env := os.Getenv("DASHBOARD_PORT"); env != "" {
+		if v, err := strconv.Atoi(env); err == nil && v > 0 {
+			cfg.DashboardPort = v
+		}
+	}
+	if env := os.Getenv("HEALTH_PORT"); env != "" {
+		if v, err := strconv.Atoi(env); err == nil && v > 0 {
+			cfg.HealthPort = v
+		}
+	}
 	if env := os.Getenv("TELEGRAM_BOT_TOKEN"); env != "" {
 		cfg.TelegramBotToken = env
 	}
@@ -261,7 +275,6 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 	return fileConfig{
 		LLMProvider:              defaultLLMProvider,
 		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
-		OpenAIAuthMode:           "api_key",
 		STTProvider:              defaultSTTProvider,
 		TTSProvider:              defaultTTSProvider,
 		TTSBaseURL:               defaultLocalTTSBaseURL,        // Kokoro (CPU, < 1.5GB VRAM)
@@ -297,6 +310,8 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		QdrantCollection:         defaultQdrantCollection,
 		QdrantEmbeddingModel:     defaultQdrantEmbeddingModel,
 		OllamaURL:                "http://127.0.0.1:11434",
+		DashboardPort:            defaultDashboardPort,
+		HealthPort:               defaultHealthPort,
 	}
 }
 
@@ -305,7 +320,6 @@ func DefaultEditableConfig() EditableConfig {
 	return EditableConfig{
 		LLMProvider:              defaultLLMProvider,
 		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
-		OpenAIAuthMode:           "api_key",
 		STTProvider:              defaultSTTProvider,
 		TTSProvider:              defaultTTSProvider,
 		TTSBaseURL:               defaultTTSBaseURLForProvider(defaultTTSProvider),
@@ -360,7 +374,6 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		GoogleAPIKey:             cfg.GoogleAPIKey,
 		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
 		OpenAIAPIKey:             cfg.OpenAIAPIKey,
-		OpenAIAuthMode:           cfg.OpenAIAuthMode,
 		GroqAPIKey:               cfg.GroqAPIKey,
 		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
 		MaxIterations:            cfg.MaxIterations,
@@ -397,7 +410,6 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.GoogleAPIKey = editable.GoogleAPIKey
 	cfg.OpenRouterAPIKey = editable.OpenRouterAPIKey
 	cfg.OpenAIAPIKey = editable.OpenAIAPIKey
-	cfg.OpenAIAuthMode = editable.OpenAIAuthMode
 	cfg.GroqAPIKey = editable.GroqAPIKey
 	cfg.MiniMaxAPIKey = editable.MiniMaxAPIKey
 	cfg.MaxIterations = editable.MaxIterations
@@ -424,9 +436,6 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	}
 	if cfg.LLMModel == "" {
 		cfg.LLMModel = defaultLLMModelForProvider(cfg.LLMProvider)
-	}
-	if cfg.OpenAIAuthMode == "" {
-		cfg.OpenAIAuthMode = defaults.OpenAIAuthMode
 	}
 	if cfg.STTProvider == "" {
 		cfg.STTProvider = defaults.STTProvider
@@ -526,6 +535,12 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.OllamaURL == "" {
 		cfg.OllamaURL = defaults.OllamaURL
 	}
+	if cfg.DashboardPort <= 0 {
+		cfg.DashboardPort = defaults.DashboardPort
+	}
+	if cfg.HealthPort <= 0 {
+		cfg.HealthPort = defaults.HealthPort
+	}
 	return cfg
 }
 
@@ -575,7 +590,6 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		GoogleAPIKey:             cfg.GoogleAPIKey,
 		OpenRouterAPIKey:         cfg.OpenRouterAPIKey,
 		OpenAIAPIKey:             cfg.OpenAIAPIKey,
-		OpenAIAuthMode:           cfg.OpenAIAuthMode,
 		GroqAPIKey:               cfg.GroqAPIKey,
 		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
 		MaxIterations:            cfg.MaxIterations,
@@ -606,6 +620,8 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		QdrantCollection:         cfg.QdrantCollection,
 		QdrantEmbeddingModel:     cfg.QdrantEmbeddingModel,
 		OllamaURL:                cfg.OllamaURL,
+		DashboardPort:            cfg.DashboardPort,
+		HealthPort:               cfg.HealthPort,
 	}
 }
 
@@ -630,7 +646,6 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.GoogleAPIKey != b.GoogleAPIKey ||
 		a.OpenRouterAPIKey != b.OpenRouterAPIKey ||
 		a.OpenAIAPIKey != b.OpenAIAPIKey ||
-		a.OpenAIAuthMode != b.OpenAIAuthMode ||
 		a.GroqAPIKey != b.GroqAPIKey ||
 		a.MiniMaxAPIKey != b.MiniMaxAPIKey ||
 		a.MaxIterations != b.MaxIterations ||
