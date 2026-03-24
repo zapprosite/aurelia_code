@@ -47,7 +47,7 @@ func TestBuildLLMProvider_Google(t *testing.T) {
 func TestBuildLLMProvider_Ollama(t *testing.T) {
 	cfg := &config.AppConfig{
 		LLMProvider: "ollama",
-		LLMModel:    "qwen3.5:9b",
+		LLMModel:    "gemma3:12b",
 	}
 
 	provider, err := buildLLMProvider(cfg, nil)

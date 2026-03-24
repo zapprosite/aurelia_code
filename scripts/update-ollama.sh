@@ -3,8 +3,8 @@ set -euo pipefail
 
 echo "🤖 Atualizando kit local do Ollama..."
 
-MAIN_MODEL="${MAIN_MODEL:-qwen3.5:9b}"
-LIGHT_MODEL="${LIGHT_MODEL:-qwen3.5:4b}"
+MAIN_MODEL="${MAIN_MODEL:-gemma3:12b}"
+LIGHT_MODEL="${LIGHT_MODEL:-gemma3:4b}"
 EMBED_MODEL="${EMBED_MODEL:-bge-m3:latest}"
 OPTIONAL_MODEL="${OPTIONAL_MODEL:-gemma3:27b-it-q4_K_M}"
 

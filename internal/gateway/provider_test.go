@@ -189,7 +189,7 @@ func TestSQLiteStateStore_PersistsAcrossReload(t *testing.T) {
 		ConsecutiveFails:  1,
 		BreakerState:      "half-open",
 		LastError:         "boom",
-		LastDecisionModel: "qwen3.5:9b",
+		LastDecisionModel: "gemma3:12b",
 	}
 	if err := store.Save("remote_structured", state); err != nil {
 		t.Fatalf("Save() error = %v", err)

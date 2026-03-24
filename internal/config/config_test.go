@@ -66,7 +66,7 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 
 	input := fileConfig{
 		LLMProvider:            "ollama",
-		LLMModel:               "qwen3.5:9b",
+		LLMModel:               "gemma3:12b",
 		STTProvider:            "groq",
 		TTSProvider:            "openai_compatible",
 		TTSBaseURL:             "http://127.0.0.1:8011",
@@ -216,7 +216,7 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 
 	if err := SaveEditable(r, EditableConfig{
 		LLMProvider:            "ollama",
-		LLMModel:               "qwen3.5:9b",
+		LLMModel:               "gemma3:12b",
 		STTProvider:            "groq",
 		TelegramBotToken:       "telegram-token",
 		TelegramAllowedUserIDs: []int64{7, 8},
@@ -239,7 +239,7 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 	if cfg.DBPath != filepath.Join(tmpDir, "data", "aurelia.db") {
 		t.Fatalf("DBPath = %q, want managed default", cfg.DBPath)
 	}
-	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "qwen3.5:9b" || cfg.STTProvider != "groq" {
+	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "gemma3:12b" || cfg.STTProvider != "groq" {
 		t.Fatalf("unexpected providers llm=%q model=%q stt=%q", cfg.LLMProvider, cfg.LLMModel, cfg.STTProvider)
 	}
 	if cfg.MCPConfigPath != filepath.Join(tmpDir, "config", "mcp_servers.json") {
