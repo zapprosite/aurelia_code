@@ -1,26 +1,44 @@
 ---
-description: Define o stack canônico de LLMs do projeto e proíbe regressão para modelos legados sem ADR aprovado.
+description: Define o motor de inferência canônico da Aurélia e proíbe regressão para modelos legados sem ADR aprovado.
 id: 13-model-stack-policy
 ---
 
-# 🔒 Regra 13: Política de Model Stack (IMUTÁVEL SEM ADR)
+# 🔒 Regra 13: Motor de Inferência da Aurélia (IMUTÁVEL SEM ADR)
 
-Esta regra define o stack oficial de modelos do projeto Aurélia.
-**Nenhum agente pode alterar o model stack sem ADR aprovado registrado em `docs/adr/`.**
+Esta regra define o **motor interno** do daemon Go `aurelia`.
+**Nenhum agente pode alterar este stack sem ADR aprovado registrado em `docs/adr/`.**
+
+> **IMPORTANTE:** Claude, Antigravity e OpenCode são **orquestradores externos** controlados por Will.
+> Eles NÃO são modelos internos da Aurélia. O motor de inferência da Aurélia é exclusivamente o stack abaixo.
 
 ---
 
-## Stack Canônico (2026)
+## Motor de Inferência da Aurélia (2026)
 
-| Camada | Modelo | Provedor | Alterável? |
-|--------|--------|----------|-----------|
-| **Local residente** | `gemma3:12b` | Ollama local | ❌ Apenas via ADR |
-| **Local laboratório** | `gemma3:27b-it-q4_K_M` | Ollama local | ❌ Apenas via ADR |
-| **Cloud rápido** | `google/gemini-2.5-flash` | OpenRouter | ❌ Apenas via ADR |
-| **Cloud profundo** | `google/gemini-2.5-pro` | OpenRouter | ❌ Apenas via ADR |
-| **Embedding** | `bge-m3` | Ollama local | ❌ Apenas via ADR |
-| **STT** | Groq | Remote | ❌ Apenas via ADR |
-| **TTS** | Kokoro / voice-proxy | Local CPU | ❌ Apenas via ADR |
+| Tier | Modelo | Provedor | Uso |
+|------|--------|----------|-----|
+| **Tier 0 — Local** | `gemma3:12b` | Ollama local (RTX 4090) | Fallback universal, custo zero |
+| **Tier 0 — Local Lab** | `gemma3:27b-it-q4_K_M` | Ollama local | Raciocínio profundo, uso manual |
+| **Tier 1 — Cheap Remote** | `deepseek/deepseek-chat-v3.1` | OpenRouter | Curation, structured output, routing barato |
+| **Tier 2 — Premium Remote** | `minimax/minimax-m2.7` | MiniMax direct | coding_main, critical, execução principal |
+| **Tier 2 — Long Context** | `moonshotai/kimi-k2.5` | OpenRouter | Contexto longo, multimodal, análise profunda |
+| **Embedding** | `bge-m3` | Ollama local | Qdrant, sempre local, multilingual |
+| **STT** | `whisper-large-v3-turbo` | Groq | Transcrição rápida PT-BR |
+| **TTS** | Kokoro / voice-proxy | Local CPU | Voz oficial Aurélia |
+
+**Fonte de verdade do roteamento:** `internal/gateway/policy.go`
+
+---
+
+## Orquestradores Externos (NÃO são motor da Aurélia)
+
+| Motor | Papel | Controlado por |
+|-------|-------|----------------|
+| **Claude Code** | IDE/CLI de desenvolvimento | Will |
+| **Antigravity** | IDE de interface e coordenação | Will |
+| **OpenCode** | Executor de implementação | Will |
+
+→ Estes motores **nunca** devem aparecer em `internal/config/config.go`, `internal/gateway/cost.go` ou qualquer config de runtime.
 
 ---
 
@@ -30,11 +48,12 @@ Esta regra define o stack oficial de modelos do projeto Aurélia.
 qwen3.5:9b        ← removido em 2026-03-24, substituído por gemma3:12b
 qwen3.5:4b        ← removido em 2026-03-24
 qwen/qwen3.5-*    ← removido do Tier 1/2
+google/gemini-*   ← removido do motor interno (era placeholder, substituído por DeepSeek/MiniMax/Kimi)
 codex             ← CLI auth removida, não reintroduzir
 ```
 
-Ao encontrar qualquer referência a esses modelos no código, docs ou configs:
-→ **Substituir por `gemma3:12b` (local) ou `google/gemini-2.5-flash` (cloud)**
+Ao encontrar qualquer referência a esses modelos no código de runtime:
+→ **Substituir pelo tier equivalente da tabela acima**
 → **Nunca restaurar silenciosamente**
 
 ---

@@ -13,29 +13,35 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 
 ---
 
-## Stack Canônico Vigente
+## Motor de Inferência da Aurélia (Stack Canônico Vigente)
 
-| Camada | Modelo | Provedor | Motivo |
-|--------|--------|----------|--------|
-| **Local residente** | `gemma3:12b` | Ollama (localhost:11434) | Melhor custo/qualidade local com 8GB VRAM |
-| **Local laboratório** | `gemma3:27b-it-q4_K_M` | Ollama | Raciocínio profundo, uso manual |
+> Claude, Antigravity e OpenCode são **orquestradores externos** controlados por Will — não são modelos internos da Aurélia.
+
+| Tier | Modelo | Provedor | Uso |
+|------|--------|----------|-----|
+| **Tier 0 — Local** | `gemma3:12b` | Ollama (RTX 4090) | Fallback universal, custo zero |
+| **Tier 0 — Local Lab** | `gemma3:27b-it-q4_K_M` | Ollama | Raciocínio profundo, uso manual |
+| **Tier 1 — Cheap Remote** | `deepseek/deepseek-chat-v3.1` | OpenRouter | Curation, structured output, routing |
+| **Tier 2 — Premium Remote** | `minimax/minimax-m2.7` | MiniMax direct | coding_main, critical, execução principal |
+| **Tier 2 — Long Context** | `moonshotai/kimi-k2.5` | OpenRouter | Contexto longo, multimodal |
 | **Embedding** | `bge-m3` | Ollama | Qdrant, sempre local, multilingual |
-| **Cloud rápido** | `google/gemini-2.5-flash` | OpenRouter | Baixo custo, alta velocidade |
-| **Cloud profundo** | `google/gemini-2.5-pro` | OpenRouter | Análise longa, raciocínio avançado |
 | **STT** | `whisper-large-v3-turbo` | Groq | Transcrição rápida PT-BR |
 | **TTS** | Kokoro / voice-proxy | Local CPU | Voz oficial Aurélia, sem custo |
 
+**Fonte de verdade do roteamento:** `internal/gateway/policy.go`
+
 ---
 
-## Modelos Removidos (PROIBIDO reintroduzir)
+## Modelos Removidos do Runtime (PROIBIDO reintroduzir)
 
-| Modelo | Removido em | Substituto |
-|--------|------------|-----------|
+| Modelo | Removido em | Substituto no Runtime |
+|--------|------------|----------------------|
 | `qwen3.5:9b` | 2026-03-24 | `gemma3:12b` |
 | `qwen3.5:4b` | 2026-03-24 | `gemma3:12b` |
-| `qwen/qwen3.5-flash-02-23` | 2026-03-24 | `google/gemini-2.5-flash` |
-| `qwen/qwen3.5-9b` | 2026-03-24 | `google/gemini-flash-1.5` |
-| Codex CLI auth | 2026-02 | API key direto (openai provider) |
+| `qwen/qwen3.5-*` | 2026-03-24 | `deepseek/deepseek-chat-v3.1` |
+| `google/gemini-2.5-flash` | 2026-03-25 | `deepseek/deepseek-chat-v3.1` (Tier 1) |
+| `google/gemini-2.5-pro` | 2026-03-25 | `minimax/minimax-m2.7` (Tier 2) |
+| Codex CLI auth | 2026-02 | OpenCode (orquestrador externo) |
 
 ---
 
@@ -65,8 +71,11 @@ scripts/update-ollama.sh           ← MAIN_MODEL / LIGHT_MODEL
 
 ## Detecção de regressão
 
-Se um agente reintroduzir modelo proibido, o sinal aparece em:
+Se um agente reintroduzir modelo proibido ou confundir orquestrador com motor interno:
 ```bash
-grep -r "qwen3.5\|codex" internal/ cmd/ scripts/ .agents/ .opencode/
+# Detectar modelos legados no runtime
+grep -r "qwen3\.5\|gemini-2\.5\|gemini-flash\|gemini-pro\|google/gemini" internal/ cmd/ scripts/
+# Detectar orquestradores no runtime (não deveriam estar aqui)
+grep -r "anthropic/claude\|opencode\|antigravity" internal/gateway/ internal/config/
 ```
 Se retornar algo além de docs históricos → **reverter imediatamente**.

@@ -14,20 +14,16 @@ var modelCosts = map[string]ModelCost{
 	"gemma3:27b-it-q4_K_M": {InputPerMToken: 0, OutputPerMToken: 0},
 
 	// Tier 1 — Remote Cheap (OpenRouter)
-	"google/gemini-flash-1.5": {InputPerMToken: 0.075, OutputPerMToken: 0.30},
+	"deepseek/deepseek-chat-v3.1": {InputPerMToken: 0.014, OutputPerMToken: 0.14},
 
-	// Tier 2 — Remote Structured (OpenRouter)
-	"google/gemini-2.5-flash": {InputPerMToken: 0.10, OutputPerMToken: 0.40},
+	// Tier 2 — Remote Premium
+	"minimax/minimax-m2.7": {InputPerMToken: 0.30, OutputPerMToken: 0.60},
 
-	// Tier 3 — Remote Premium (OpenRouter)
-	"minimax/minimax-m2.7":        {InputPerMToken: 0.30, OutputPerMToken: 0.60},
-	"google/gemini-2.5-pro":       {InputPerMToken: 1.25, OutputPerMToken: 10.00},
+	// Tier 2 — Long Context / Multimodal (OpenRouter)
+	"moonshotai/kimi-k2.5": {InputPerMToken: 0.14, OutputPerMToken: 0.60},
 
 	// Tier 4 — Emergency
 	"anthropic/claude-haiku-4.5": {InputPerMToken: 0.80, OutputPerMToken: 4.00},
-
-	// Vision / Multimodal (OpenRouter)
-	"google/gemini-flash-1.5-8b": {InputPerMToken: 0.0375, OutputPerMToken: 0.15},
 
 	// Audio (Groq STT)
 	"whisper-large-v3-turbo": {InputPerMToken: 0, OutputPerMToken: 0},

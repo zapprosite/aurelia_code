@@ -43,8 +43,8 @@ func TestCalculateCostUSD_UnknownModelFree(t *testing.T) {
 
 func TestLookupCost_KnownModel(t *testing.T) {
 	t.Parallel()
-	cost := LookupCost("google/gemini-2.5-flash")
-	if cost.InputPerMToken != 0.10 || cost.OutputPerMToken != 0.40 {
+	cost := LookupCost("deepseek/deepseek-chat-v3.1")
+	if cost.InputPerMToken != 0.014 || cost.OutputPerMToken != 0.14 {
 		t.Fatalf("cost = %+v", cost)
 	}
 }
