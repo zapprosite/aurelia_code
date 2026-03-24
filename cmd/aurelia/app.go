@@ -281,6 +281,8 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	a.cronCtx = cronCtx
 	a.cronCancel = cronCancel
 
+	seedSystemCrons(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
+
 	a.heartbeat = heartbeat.NewHeartbeatService(
 		a.resolver.Root(),
 		a.cfg.HeartbeatIntervalMinutes,
