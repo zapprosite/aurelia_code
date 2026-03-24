@@ -1,7 +1,7 @@
 # Runbook: Systemd Timers — Memory Sync Fiscal
 
 **Status:** ✅ Ativo
-**Responsável:** codex
+**Responsável:** antigravity
 **Data:** 2026-03-19
 
 ---

@@ -66,3 +66,7 @@
 {"timestamp":"2026-03-24T15:11:44.141Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"docs"},"result":{"success":true}}}
 {"timestamp":"2026-03-24T15:12:08.062Z","tool":"sync","action":"exportContext","status":"success","details":{"params":{"action":"exportContext","force":true,"skipAgents":true,"skipSkills":true,"repoPath":"/home/will/aurelia"},"result":{"success":true}}}
 {"timestamp":"2026-03-24T15:12:21.985Z","tool":"context","action":"getMap","status":"success","details":{"params":{"action":"getMap","section":"stats"},"result":{"success":true}}}
+{"timestamp":"2026-03-24T15:37:44.101Z","tool":"context","action":"check","status":"success","details":{"params":{"action":"check","repoPath":"/home/will/aurelia"}}}
+{"timestamp":"2026-03-24T15:37:46.487Z","tool":"context","action":"listToFill","status":"success","details":{"params":{"action":"listToFill","target":"docs"},"result":{"success":true}}}
+{"timestamp":"2026-03-24T15:37:49.548Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"docs"},"result":{"success":true}}}
+{"timestamp":"2026-03-24T15:38:26.442Z","tool":"sync","action":"exportContext","status":"success","details":{"params":{"action":"exportContext","force":true,"docsIndexMode":"readme","repoPath":"/home/will/aurelia"},"result":{"success":true}}}

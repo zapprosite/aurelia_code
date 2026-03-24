@@ -38,7 +38,7 @@ Criar uma base profissional para a Aurelia operar como tutor do homelab com:
 Install target:
 
 - `~/.agents/skills/`
-- sincronizado para Antigravity, Codex, Claude Code e Gemini CLI
+- sincronizado para Antigravity, antigravity, Claude Code e Gemini CLI
 
 ## Local Tutor Structure Created
 
@@ -210,7 +210,7 @@ Direcao registrada:
 - a skill do projeto fica no path real carregado pela Aurelia
 - a skill tambem fica espelhada em `.agents/skills/` para governanca versionada
 - Gemini Flash / Minimax 2.7 no Antigravity vira executor de microtarefas
-- Codex / CLI continua como executor principal, validador e agente de commit
+- antigravity / CLI continua como executor principal, validador e agente de commit
 
 ## Telegram Light Delegation Slice
 
@@ -250,8 +250,8 @@ Direcao registrada:
 - `openWakeWord` + `Silero VAD` no CPU
 - `Groq whisper-large-v3-turbo` para STT
 - `gemma3:27b-it-q4_K_M` como cerebro local padrao
-- `qwen3.5:27b-q4_K_M` como alternativa tecnica
-- `qwen3-coder:30b` apenas para escalonamento manual
+- `gemma3:12b:27b-q4_K_M` como alternativa tecnica
+- `gemma3:27b-coder:30b` apenas para escalonamento manual
 - `bge-m3` como contrato unico de embedding
 - `Supabase + Qdrant` como memoria/persistencia
 - `agent-browser` primeiro e `browser-use` como camada avancada
@@ -392,16 +392,16 @@ Foi consolidada uma revisao final de budget de VRAM para o host com `RTX 4090`:
 
 - uso base do desktop/lab: ~`4810 MiB`
 - VRAM livre em idle: ~`19238 MiB`
-- `qwen3.5:9b` carregado deixa ~`10.5 GiB` livres
-- `qwen3.5:9b + qwen3.5:4b` juntos deixam so ~`3.8 GiB` livres
+- `gemma3:12b:9b` carregado deixa ~`10.5 GiB` livres
+- `gemma3:12b:9b + gemma3:12b:4b` juntos deixam so ~`3.8 GiB` livres
 - um `27B` de ~`17 GiB`, somado ao uso base do host, deixa folga perto de `2 GiB`
 
 Decisao arquitetural registrada:
 
 - `Groq` segue como escolha correta para `STT` porque tira o audio do budget de VRAM local
 - o runtime ativo da Aurelia/Jarvis deve operar com `1` modelo local residente por vez
-- `qwen3.5:9b` vira o default local recomendado para o caminho ativo do bot
-- `qwen3.5:4b` entra apenas frio ou aquecido sob demanda
+- `gemma3:12b:9b` vira o default local recomendado para o caminho ativo do bot
+- `gemma3:12b:4b` entra apenas frio ou aquecido sob demanda
 - `gemma3:27b-it-q4_K_M` sai do caminho ativo e fica como modelo manual/offline de laboratorio
 
 Documentos atualizados:
@@ -419,8 +419,8 @@ Foi registrada uma matriz unica de roteamento para custo, qualidade e estabilida
 
 Decisao operacional:
 
-- `qwen3.5:9b` como cerebro local do bot
-- `qwen3.5:4b` apenas para triagem/fallback curto
+- `gemma3:12b:9b` como cerebro local do bot
+- `gemma3:12b:4b` apenas para triagem/fallback curto
 - `Groq` isolado no lane de audio
 - `OpenRouter` so por capacidade explicita
 - `Gemini web` como fonte de pesquisa profunda e ingestao curada para o RAG
@@ -436,8 +436,8 @@ Achados principais:
 
 - `minimax-m2.7` foi o mais polido em resposta operacional livre
 - `deepseek-v3.2` foi o melhor em JSON curto e curadoria compacta para RAG
-- `qwen3.5-flash` foi bom e disciplinado, mas mais lento nesta rodada
-- `minimax-m2.7` e `qwen3.5:9b` mostraram consumo agressivo de `reasoning` em prompts estruturados curtos quando o budget estava baixo
+- `gemma3:12b-flash` foi bom e disciplinado, mas mais lento nesta rodada
+- `minimax-m2.7` e `gemma3:12b:9b` mostraram consumo agressivo de `reasoning` em prompts estruturados curtos quando o budget estava baixo
 
 Decisao implicita para o roteamento:
 
@@ -635,7 +635,7 @@ Objetivo:
 
 - abrir slice com ADR + JSON de continuidade
 - manter smoke/simulações/curl já previstos
-- permitir handoff entre Codex, Claude e Gemini sem perda de contexto
+- permitir handoff entre antigravity, Claude e Gemini sem perda de contexto
 
 Prova:
 

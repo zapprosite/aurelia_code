@@ -6,7 +6,7 @@
 
 # Documentation Index
 
-Este diretório é a memória técnica curta do repositório. Use-o como ponto de entrada para entender a forma atual do código, o fluxo de desenvolvimento e as decisões operacionais que aparecem em `AGENTS.md`, `.agents/rules/` e nos artefatos de workflow em `.context/workflow/`.
+Este diretório é a memória técnica curta do repositório. Use-o como ponto de entrada para entender a forma atual do código, o fluxo de desenvolvimento e as decisões operacionais que aparecem em `AGENTS.md`, `.agent/rules/` e nos artefatos de workflow em `.context/workflow/`.
 
 ## Core Guides
 
@@ -32,8 +32,8 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 
 ## Repository Map
 
-- `.agents/` — autoridade operacional local, regras, workflows e skills do workspace
-- `.agents/skills/aurelia-media-voice/` — transcript de mídia e governança da voz oficial da Aurelia
+- `.agent/` — autoridade operacional local, regras, workflows e skills do workspace
+- `.agent/skills/aurelia-media-voice/` — transcript de mídia e governança da voz oficial da Aurelia
 - `.context/` — memória operacional, docs sintéticos e estado de workflow
 - `.context/plans/` — implementation plans e task boards por slice, fora da raiz
 - `cmd/` — entrypoints do binário e onboarding
@@ -50,7 +50,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 | --- | --- | --- |
 | `project-overview.md` | posicionamento do projeto, entrypoints e stack | `README.md`, `go.mod`, `cmd/aurelia/*` |
 | `architecture.md` | shape do sistema e limites entre módulos | `docs/ARCHITECTURE.md`, `cmd/aurelia/app.go`, `internal/*` |
-| `development-workflow.md` | ciclo de trabalho, branching e revisão | `AGENTS.md`, `.agents/rules/`, scripts, CI |
+| `development-workflow.md` | ciclo de trabalho, branching e revisão | `AGENTS.md`, `.agent/rules/`, scripts, CI |
 | `testing-strategy.md` | estratégia de testes e gates | `*_test.go`, `e2e/`, `.github/workflows/` |
 | `glossary.md` | termos, tipos e conceitos recorrentes | `internal/agent`, `internal/persona`, `internal/runtime` |
 | `data-flow.md` | entrada, raciocínio, ferramentas e persistência | `internal/telegram`, `internal/agent`, `internal/memory`, `internal/health` |
@@ -61,12 +61,12 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 
 - adapters finos por motor: [`CLAUDE.md`](../../CLAUDE.md), [`GEMINI.md`](../../GEMINI.md), [`MODEL.md`](../../MODEL.md)
 - ADR obrigatória por slice estrutural: [`docs/adr/README.md`](../../docs/adr/README.md)
-- modo nonstop para slices longas: [`/adr-semparar`](../../.agents/workflows/adr-semparar.md)
+- modo nonstop para slices longas: [`/adr-semparar`](../../.agent/workflows/adr-semparar.md)
 - comando canônico de continuidade: [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh)
 - higiene da raiz: contratos e docs de entrada ficam na raiz; blueprints/ADRs/planos de slice não
 - política da voz oficial: [`docs/aurelia_voice_profile_20260319.md`](../../docs/aurelia_voice_profile_20260319.md)
-- **motor de inferência da Aurélia** (IMUTÁVEL): [`docs/governance/MODEL-STACK-POLICY.md`](../../docs/governance/MODEL-STACK-POLICY.md) — `gemma3:12b` (local Tier 0) + `deepseek/deepseek-chat-v3.1` (Tier 1) + `minimax/minimax-m2.7` (Tier 2) + `moonshotai/kimi-k2.5` (long context); Claude/Antigravity/OpenCode são orquestradores externos controlados por Will; mudança só via ADR; rule: [`.agents/rules/13-model-stack-policy.md`](../../.agents/rules/13-model-stack-policy.md)
-- **governança de rede/portas/subdomínios**: ler [`/srv/ops/ai-governance/NETWORK_MAP.md`](/srv/ops/ai-governance/NETWORK_MAP.md) antes de qualquer mudança; adicionar subdomínio via skill [`/add-subdomain`](../../.agents/skills/add-subdomain/SKILL.md); Cloudflare Access gerenciado por Terraform em [`/srv/ops/terraform/cloudflare/access.tf`](/srv/ops/terraform/cloudflare/access.tf) — ver [`docs/governance/S-23-cloudflare-access.md`](../../docs/governance/S-23-cloudflare-access.md); regra completa: [`.agents/rules/12-network-governance.md`](../../.agents/rules/12-network-governance.md)
+- **motor de inferência da Aurélia** (IMUTÁVEL): [`docs/governance/MODEL-STACK-POLICY.md`](../../docs/governance/MODEL-STACK-POLICY.md) — `gemma3:12b` (local Tier 0) + `deepseek/deepseek-chat-v3.1` (Tier 1) + `minimax/minimax-m2.7` (Tier 2) + `moonshotai/kimi-k2.5` (long context); Claude/Antigravity/OpenCode são orquestradores externos controlados por Will; mudança só via ADR; rule: [`.agent/rules/13-model-stack-policy.md`](../../.agent/rules/13-model-stack-policy.md)
+- **governança de rede/portas/subdomínios**: ler [`/srv/ops/ai-governance/NETWORK_MAP.md`](/srv/ops/ai-governance/NETWORK_MAP.md) antes de qualquer mudança; adicionar subdomínio via skill [`/add-subdomain`](../../.agent/skills/add-subdomain/SKILL.md); Cloudflare Access gerenciado por Terraform em [`/srv/ops/terraform/cloudflare/access.tf`](/srv/ops/terraform/cloudflare/access.tf) — ver [`docs/governance/S-23-cloudflare-access.md`](../../docs/governance/S-23-cloudflare-access.md); regra completa: [`.agent/rules/12-network-governance.md`](../../.agent/rules/12-network-governance.md)
 
 ## Related Resources
 

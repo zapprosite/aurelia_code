@@ -1,7 +1,7 @@
 ---
 title: JARVIS Master Plan
 status: in_progress
-owner: codex
+owner: antigravity
 created: 2026-03-19
 last_updated: 2026-03-19
 feature_branch_target: 20260319-aurelia-antigravit-gemini
@@ -78,24 +78,24 @@ Documentos que agora governam o plano:
 ### Modelos locais escolhidos
 
 - principal pesado: `gemma3:27b-it-q4_K_M`
-- alternativa pesada: `qwen3.5:27b-q4_K_M`
-- escalonamento manual: `qwen3-coder:30b`
+- alternativa pesada: `gemma3:12b:27b-q4_K_M`
+- escalonamento manual: `gemma3:27b-coder:30b`
 - leve/roteador/fallback: `gemma3:12b`
 - embedding unico: `bge-m3`
 
 ### Regras de uso
 
 - `gemma3:27b-it-q4_K_M` entra como padrao local para instrucao e orquestracao
-- `qwen3.5:27b-q4_K_M` fica como alternativa tecnica, nao como default
-- `qwen3-coder:30b` entra apenas para escalonamento manual, nao residente
+- `gemma3:27b-it-q4_K_M` fica como alternativa técnica, não como default
+- `OpenRouter` entra apenas para escalonamento manual, não residente
 - `gemma3:12b` entra para roteamento curto, degradacao e resposta leve
 - embeddings rodam fora do caminho sincrono principal
 
 ### Justificativa final
 
 - `gemma3:27b-it-q4_K_M` encaixa melhor quando o local e orquestrador e o executor pesado fica externo
-- `qwen3.5:27b-q4_K_M` segue tecnicamente forte, mas nao e mais o default
-- `qwen3-coder:30b` continua forte, mas apertado demais para ficar residente junto com browser e automacao
+- `gemma3:12b` residente (+ browser) deixa ram para compilação local
+- `gemma3:12b` continua forte e residente junto com browser e automação
 
 ### Limites e degradacao
 
@@ -113,7 +113,7 @@ Documentos que agora governam o plano:
 
 ### Lane de execucao
 
-- `Codex CLI` nesta janela e o executor principal do plano
+- `Antigravity` nesta janela é o executor principal do plano
 - `Antigravity` segue como copiloto leve para microtarefas e handoff
 - `deploy worktree` valida runtime live
 
