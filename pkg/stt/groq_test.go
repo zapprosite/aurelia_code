@@ -11,10 +11,10 @@ import (
 )
 
 func TestGroqTranscriberIsAvailable(t *testing.T) {
-	if NewGroqTranscriber("").IsAvailable() {
+	if NewGroqTranscriber("", "", "", "").IsAvailable() {
 		t.Fatal("expected transcriber without api key to be unavailable")
 	}
-	if !NewGroqTranscriber("secret").IsAvailable() {
+	if !NewGroqTranscriber("secret", "", "", "").IsAvailable() {
 		t.Fatal("expected transcriber with api key to be available")
 	}
 }
@@ -36,8 +36,7 @@ func TestGroqTranscriberTranscribeSuccess(t *testing.T) {
 		t.Fatalf("WriteFile returned error: %v", err)
 	}
 
-	transcriber := NewGroqTranscriber("secret")
-	transcriber.apiBase = server.URL
+	transcriber := NewGroqTranscriber("secret", server.URL, "", "")
 
 	result, err := transcriber.Transcribe(context.Background(), audioPath)
 	if err != nil {
@@ -59,8 +58,7 @@ func TestGroqTranscriberTranscribeAPIError(t *testing.T) {
 		t.Fatalf("WriteFile returned error: %v", err)
 	}
 
-	transcriber := NewGroqTranscriber("secret")
-	transcriber.apiBase = server.URL
+	transcriber := NewGroqTranscriber("secret", server.URL, "", "")
 
 	_, err := transcriber.Transcribe(context.Background(), audioPath)
 	if err == nil {

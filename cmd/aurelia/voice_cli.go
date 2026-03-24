@@ -188,7 +188,7 @@ func runVoiceProcessOnce(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	transcriber, err := buildTranscriber(cfg)
+	transcriber, err := stt.NewTranscriber(cfg.STTProvider, cfg.GroqAPIKey, cfg.STTBaseURL, cfg.STTModel, cfg.STTLanguage)
 	if err != nil {
 		return err
 	}

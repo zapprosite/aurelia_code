@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	defaultLocalSTTBaseURL  = "http://localhost:8020"
 	defaultLocalSTTModel    = "Systran/faster-whisper-large-v3"
 	defaultLocalSTTLanguage = "pt"
 )
@@ -26,20 +27,26 @@ const (
 type LocalTranscriber struct {
 	baseURL    string
 	model      string
+	language   string
 	httpClient *http.Client
 }
 
 // NewLocalTranscriber creates a transcriber pointed at a local Whisper API.
-func NewLocalTranscriber(baseURL, model string) *LocalTranscriber {
+// Pass empty strings for baseURL, model, language to use defaults.
+func NewLocalTranscriber(baseURL, model, language string) *LocalTranscriber {
 	if baseURL == "" {
-		baseURL = "http://localhost:8020"
+		baseURL = defaultLocalSTTBaseURL
 	}
 	if model == "" {
 		model = defaultLocalSTTModel
 	}
+	if language == "" {
+		language = defaultLocalSTTLanguage
+	}
 	return &LocalTranscriber{
-		baseURL: baseURL,
-		model:   model,
+		baseURL:  baseURL,
+		model:    model,
+		language: language,
 		httpClient: &http.Client{
 			Timeout: 120 * time.Second,
 		},
@@ -70,7 +77,7 @@ func (t *LocalTranscriber) Transcribe(ctx context.Context, audioFilePath string)
 	if err := w.WriteField("model", t.model); err != nil {
 		return "", fmt.Errorf("failed to write model field: %w", err)
 	}
-	if err := w.WriteField("language", defaultLocalSTTLanguage); err != nil {
+	if err := w.WriteField("language", t.language); err != nil {
 		return "", fmt.Errorf("failed to write language field: %w", err)
 	}
 	if err := w.WriteField("response_format", "json"); err != nil {
