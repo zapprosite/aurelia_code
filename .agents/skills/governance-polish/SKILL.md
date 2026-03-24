@@ -1,58 +1,50 @@
 ---
 type: skill
 name: Governance Polish — Industrial Homelab Governance
-description: Orquestra o polish de governança do homelab em fases incrementais.
+description: Orquestra o polish de governança do homelab em fases incrementais (Sovereign 2026).
 skillSlug: governance-polish
 phases: [P, E, V]
 generated: 2026-03-19
-updated: 2026-03-21
+updated: 2026-03-24
 status: active
 scaffoldVersion: "2.0.0"
 ---
 
-# Skill: governance-polish
+# 🛡️ Governance Polish: Sovereign Guard 2026
 
-## Propósito
+Esta skill governa a evolução da infraestrutura e segurança da Aurélia, garantindo que o ambiente permaneça robusto, observável e em conformidade com o **Plano Mestre 2026**.
 
-Orquestrar a implementação de governança industrial do homelab:
-- **Secrets:** Consolidar `secrets.env` com systemd `EnvironmentFile`, env overrides em Go
-- **Vault:** KeePassXC com masterkey em hardware token (deadline: 2026-03-27)
-- **Auditoria:** secret-audit.sh semanal via crontab
-- **Documentação:** Roadmap, links, índice de ADRs sincronizados
+## 🏗️ Fases de Governança (Triple-Tier)
 
-## Status Atual
+### 1. Hardening de Infra (Sudo=1)
+- **Secrets**: Migração total para `EnvironmentFile` do systemd e auditoria semanal via `scripts/secret-audit.sh`.
+- **Vault**: Consolidação do KeePassXC (deadline: 2026-03-27).
+- **Observabilidade**: Dashboards de saúde via tRPC refletindo o status real da CPU/GPU.
 
-| Fase | Status |
-|------|--------|
-| Secrets.env + systemd EnvironmentFile | ✅ Concluído |
-| Env Overrides em `internal/config/config.go` | ✅ Concluído |
-| Roadmap mestre sincronizado | ✅ Concluído |
-| Links verificados no REPOSITORY_CONTRACT | ✅ Concluído |
-| Índice de ADRs (`docs/adr/README.md`) | ✅ Concluído |
-| KeePassXC vault | ⏳ Aguardando humano (2026-03-27) |
-| Secret-audit no crontab semanal | ✅ Concluído |
+### 2. Soberania de Modelos
+- **Tiering**: Fiscalização do uso correto de MiniMax (Arquitetura) vs DeepSeek (Roteamento) vs Gemma3 (Local).
+- **VRAM**: Manutenção do teto de memória para evitar pânico de kernel ou OOM na RTX 4090.
 
-## Referência
+### 3. Documentação e Evolução
+- **Slices**: Garantir que todo novo "slice" tenha ADR, Plano e Walkthrough.
+- **Contexto**: Uso obrigatório da skill `/sync-ai-context` após mudanças estruturais.
 
-- Roadmap Mestre: [ADR-20260320-roadmap-mestre-slices.md](../../docs/adr/ADR-20260320-roadmap-mestre-slices.md)
-- Secrets: [SECRETS.md](../../docs/governance/SECRETS.md)
-- Authority: [AURELIA-AUTHORITY-DECLARATION.md](../../docs/governance/AURELIA-AUTHORITY-DECLARATION.md)
+## 📊 Status de Implementação (Roadmap)
 
-## Integrações
+| Marco | Status | Obs |
+|-------|--------|-----|
+| Secrets Env Overrides | ✅ | Implementado em `internal/config` |
+| Roadmap Mestre Sincronizado | ✅ | Ver docs/adr/README.md |
+| Secret Audit (Crontab) | ✅ | Ativo |
+| Vault KeePassXC | ⏳ | Blocked: Humano (Março 27) |
+| Triple-Tier Router | ✅ | Estabilizado Março 24 |
 
-- AGENTS.md: Respeitar hierarquia de autoridade
-- GEMINI.md: Coordenar handoff entre agentes
-- REPOSITORY_CONTRACT.md: Índice de governança
+## 📍 Quando usar
+- Para auditar a segurança do Homelab.
+- Para verificar o progresso do roadmap mestre de desenvolvimento.
+- Antes de grandes atualizações de sistema operacional ou drivers.
 
-## Smoke Tests
-
-```bash
-# Links verificados
-grep -r '\[.*\](.*\.md)' docs/governance/ | head -5
-
-# Secret-audit
-bash scripts/secret-audit.sh  # exit 0
-
-# Binários na raiz
-ls aurelia-elite 2>/dev/null && echo "FAIL" || echo "OK"
-```
+## 🛡️ Referências Obrigatórias
+- [AGENTS.md](../../AGENTS.md)
+- [AURELIA-AUTHORITY-DECLARATION.md](../../docs/governance/AURELIA-AUTHORITY-DECLARATION.md)
+- [ADR-20260320-plano-mestre-jarvis-local-first.md](../../docs/adr/ADR-20260320-plano-mestre-jarvis-local-first.md)

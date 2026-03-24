@@ -64,7 +64,7 @@ func listOpenAIModels(ctx context.Context, apiKey string, baseURL string, client
 }
 
 func looksLikeOpenAIChatModel(modelID string) bool {
-	prefixes := []string{"gpt-", "o", "chatgpt-", "codex-", "gpt-oss-"}
+	prefixes := []string{"gpt-", "o", "chatgpt-", "gpt-oss-"}
 	for _, prefix := range prefixes {
 		if strings.HasPrefix(modelID, prefix) {
 			return true
@@ -75,7 +75,7 @@ func looksLikeOpenAIChatModel(modelID string) bool {
 
 func looksLikeOpenAIVisionModel(modelID string) bool {
 	modelID = strings.ToLower(modelID)
-	if strings.Contains(modelID, "audio") || strings.Contains(modelID, "codex") {
+	if strings.Contains(modelID, "audio") {
 		return false
 	}
 	prefixes := []string{"gpt-", "o", "chatgpt-"}

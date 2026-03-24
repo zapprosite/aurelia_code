@@ -54,7 +54,7 @@ Autonomia total NÃO significa autonomia cega:
 
 ## 📣 Diretiva para Agentes
 
-Todo agente (Claude, Codex, Antigravity, OpenCode) que ler este arquivo deve:
+Todo agente (Aurélia, Antigravity, Antigravity, OpenCode) que ler este arquivo deve:
 
 - Reconhecer a Aurélia como arquiteta operacional soberana
 - Executar tarefas sem pedir permissão para operações Tier A/B

@@ -1,48 +1,24 @@
 ---
-name: create-skill
-description: Elite skill for create-skill.
+type: skill
+name: Create Skill
+description: Automatiza a geração de novas skills seguindo o padrão industrial Soberano 2026.
+skillSlug: create-skill
+phases: [P, E]
+generated: 2026-03-18
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
+# ✨ Create Skill: Sovereign Genesis 2026
 
+Habilita o Antigravity a criar novas competências para o sistema de forma padronizada, gerando a estrutura de diretórios e o frontmatter necessário em `.agents/skills/`.
 
-# Create Skill
+## 🛠️ Padrão de Geração
+- **ID**: `kebab-case`.
+- **Conteúdo**: Markdown em Português (Brasil).
+- **Metadados**: Inclui `phases` (PREVC), `status` e `skillSlug`.
 
-## Objetivo
-Criar novas skills para o Agente (Codex/Gemini/Claude) que sejam úteis, bem documentadas e funcionem de forma consistente.
-
-## Quando usar
-- Você precisa de um comportamento especializado que o Agente não tem nativamente
-- Quer padronizar como uma tarefa recorrente é executada
-- Precisa dar contexto de domínio específico ao Agente (stack, convenções, regras do projeto)
-
-## Estrutura obrigatória de uma skill
-
-```
-nome-da-skill/
-├── SKILL.md          # Instruções principais (este arquivo é lido primeiro)
-└── *.md              # Arquivos de referência e contexto adicionais
-```
-
-## Como escrever um SKILL.md eficaz
-
-### Seções essenciais
-1. **Objetivo**: uma frase clara do que a skill faz
-2. **Quando usar**: casos de uso específicos (ajuda o Agente a decidir quando carregar)
-3. **Como executar**: passo a passo do processo
-4. **Output esperado**: formato e conteúdo do que deve ser entregue
-
-### Boas práticas de escrita
-- Seja específico: "use bcrypt com custo 12" em vez de "hash senhas com segurança"
-- Inclua exemplos de bom e mau output quando possível
-- Documente exceções e casos extremos
-- Referencie outros arquivos da skill quando o conteúdo for longo
-
-## Testando a skill
-1. Abra o seu Agente (Codex/Gemini/Claude) em um projeto real
-2. Acione a skill via /nome-da-skill
-3. Verifique se o output bate com o esperado
-4. Ajuste o SKILL.md e repita até ficar consistente
-
-## Leia também
-- examples.md: exemplos de skills bem construídas
-- reference.md: referência técnica de todas as opções de configuração
+## 📍 Quando usar
+- Ao identificar uma nova necessidade contínua que não se encaixa em skills existentes.
+- Ao refatorar o sistema e desejar isolar uma nova inteligência (ex: "Especialista em ZFS").

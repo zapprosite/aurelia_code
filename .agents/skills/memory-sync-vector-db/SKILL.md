@@ -1,253 +1,44 @@
 ---
-type: skill
-name: Memory Sync — Vector DB Architecture
-description: Sincronizar memória do repositório (markdown) → Qdrant (embeddings) + Postgres (metadata). Permite Aurelia bot trabalhar com LLMs pequenas sem web.
-skillSlug: memory-sync-vector-db
-phases: [E, V]
-generated: 2026-03-19
-status: unfilled
-scaffoldVersion: "2.0.0"
+name: memory-sync-vector-db
+description: Sincroniza a memória do repositório (markdown) -> Qdrant (embeddings) + Postgres (metadata) para acesso semântico local.
 ---
 
-# Skill: memory-sync-vector-db
+# 🧠 Memory Sync: Sovereign Vector Architecture
 
-## Propósito
+Esta skill governa o fluxo de persistência e recuperação de memória semântica da Aurélia, permitindo que LLMs locais (Gemma 3) ou remotas (MiniMax 2.7) acessem o histórico de decisões e código sem depender de busca textual pura.
 
-**Arquitetura de Memory Sync para Aurelia Bot**
+## 🏗️ Arquitetura de Memória (2026)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Repositório Aurelia — Code History + Context               │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ~/.claude/projects/.../memory/    (markdown files)        │
-│  docs/adr/                         (decisões arquiteto)    │
-│  .context/runbooks/                (procedimentos)         │
-│         │                                                  │
-│         ├──→ [SYNC CRON] ────────────────────────┐        │
-│         │                                         │        │
-│         ├─→ Qdrant (conversation_memory)         │        │
-│         │   ├─ collection: "repository_memory"   │        │
-│         │   ├─ embedding: bge-m3                 │        │
-│         │   └─ payload: {memory_id, path, ...}  │        │
-│         │                                        ↓        │
-│         └─→ Postgres (ai_context schema)         │        │
-│             ├─ table: memory_entries             │        │
-│             ├─ table: adr_registry               │        │
-│             └─ table: code_history               │        │
-│                                                  ↓        │
-│         Aurelia Bot ← Acesso local, LLM pequena           │
-│         (sem web, sem Anthropic API)                      │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+### 1. Camada de Embeddings (Local Only)
+- **Modelo**: `bge-multilingual-gemma` ou `bge-m3` via Ollama/Local Server.
+- **Dimensão**: 1024 (ou conforme configurado no Qdrant).
+- **Soberania**: O processamento vetorial nunca sai do Home Lab.
 
-## Fluxo de Sincronização
+### 2. Camada Vetorial (Qdrant)
+- **Engine**: Qdrant operando em container Docker.
+- **Coleção**: `aurelia_semantic_index`.
+- **Ação**: Inserção de chunks de arquivos `.md`, `docs/`, `.context/` e `logs/`.
 
-1. **Coleta (Fiscal - 5min):**
-   - Varrer `~/.claude/projects/-home-will-aurelia/memory/`
-   - Varrer `docs/adr/`
-   - Varrer `.context/` (runbooks, plans)
-   - Detectar novos/modificados (mtime, hash)
+### 3. Camada de Metadados (Postgres)
+- **Engine**: PostgreSQL local.
+- **Função**: Armazenar timestamps, referências de arquivos, `conversation_id` e tags de governança.
+- **Join**: Consultas semânticas via Qdrant retornam IDs que são resolvidos no Postgres para contexto completo.
 
-2. **Embedding (10min):**
-   - Enviar textos para bge-m3 (local)
-   - Gerar embeddings 384-dim
-   - Armazenar no Qdrant
+## 🔄 Fluxo de Sincronização (Automático)
+- **Trigger**: Script `scripts/memory-sync-vector-db.sh` ou tool `sync-ai-context`.
+- **Frequência**: A cada commit relevante ou via crontab diário.
+- **Higiene**: Deduplicação automática de vetores baseada no hash do conteúdo original.
 
-3. **Indexação (Postgres - 15min):**
-   - Registrar metadata (caminho, tipo, owner, tags)
-   - Criar referências cruzadas
-   - Atualizar full-text search index
+## 🛠️ Comandos de Troubleshooting
+- `curl http://localhost:6333/collections`: Verificar coleções no Qdrant.
+- `psql -U aurelia -c "SELECT count(*) FROM memory_metadata;"`: Contagem de registros.
+- `docker logs memory-sync-worker`: Debugar falhas de sincronização.
 
-4. **Validação (diária - 6am):**
-   - Verificar integridade Qdrant ↔ Postgres
-   - Limpar duplicatas
-   - Gerar relatório de cobertura
+## 📍 Quando usar
+- Quando a Aurélia precisa "lembrar" de uma decisão de ADR de meses atrás.
+- Antes de iniciar um novo slice complexo para resgatar padrões similares.
+- Para gerar relatórios de evolução do projeto baseados em semântica.
 
-## Invocações
-
-```bash
-# Trigger manual de sync
-/memory-sync-vector-db --sync-now
-
-# Status da sincronização
-/memory-sync-vector-db --status
-
-# Validar integridade
-/memory-sync-vector-db --validate
-
-# Listar embeddings recentes
-/memory-sync-vector-db --list-recent --limit 10
-```
-
-## Crons Aurelia (Fiscal Automático)
-
-```bash
-# A cada 5 min: coleta + embedding (incremental)
-*/5 * * * * /home/will/aurelia/scripts/memory-sync-fiscal.sh --mode fast
-
-# A cada 15 min: indexação Postgres (atualizar metadata)
-*/15 * * * * /home/will/aurelia/scripts/memory-sync-fiscal.sh --mode postgres-index
-
-# Diariamente 6am: validação + relatório
-0 6 * * * /home/will/aurelia/scripts/memory-sync-fiscal.sh --mode validate
-
-# Semanalmente (segunda): compactação + cleanup
-0 2 * * 1 /home/will/aurelia/scripts/memory-sync-fiscal.sh --mode compact
-```
-
-## Integração com Aurelia Bot
-
-```go
-// aurelia/internal/vector/memory_sync.go (pseudocódigo)
-
-type MemorySyncFiscal struct {
-    qdrantClient *qdrant.Client
-    postgresDB   *sql.DB
-    watchDir     string
-    lastSync     time.Time
-}
-
-func (m *MemorySyncFiscal) SyncMemory() error {
-    // 1. Varrer filesystem
-    files := m.scanMemoryFiles()
-
-    // 2. Para cada arquivo: gerar embedding
-    for _, file := range files {
-        content := readFile(file)
-        embedding := m.embedWithBgeM3(content)
-
-        // 3. Salvar no Qdrant
-        m.qdrant.Upsert("repository_memory", &Point{
-            ID:      hashID(file),
-            Vector:  embedding,
-            Payload: map[string]any{
-                "path":      file,
-                "type":      getType(file),
-                "modified":  file.ModTime(),
-                "owner":     extractOwner(content),
-            },
-        })
-
-        // 4. Registrar no Postgres
-        m.postgres.Exec(`
-            INSERT INTO memory_entries (id, path, type, embedding_id, synced_at)
-            VALUES ($1, $2, $3, $4, NOW())
-            ON CONFLICT(path) DO UPDATE SET synced_at = NOW()
-        `)
-    }
-
-    m.lastSync = time.Now()
-    return nil
-}
-
-// Aurelia bot pode consultar sem web:
-func (a *AureliaBot) QueryMemory(ctx context.Context, question string) ([]string, error) {
-    // 1. Embedar pergunta localmente
-    questionEmbedding := a.embedWithBgeM3(question)
-
-    // 2. Buscar no Qdrant (semantic search)
-    results := a.qdrant.Search("repository_memory", questionEmbedding, limit: 5)
-
-    // 3. Enriquecer com Postgres metadata
-    for _, result := range results {
-        meta := a.postgres.QueryRow(`
-            SELECT owner, type, created_at FROM memory_entries WHERE id = $1
-        `, result.ID).Scan(...)
-        result.Metadata = meta
-    }
-
-    return results, nil
-}
-```
-
-## Dados Armazenados
-
-### Qdrant Collection: `repository_memory`
-
-```json
-{
-  "id": "mem_adr_polish_governance",
-  "vector": [0.123, 0.456, ...],  // 384-dim bge-m3
-  "payload": {
-    "path": "~/.claude/projects/-home-will-aurelia/memory/adr_polish_governance_all.md",
-    "type": "project_memory",
-    "owner": "codex",
-    "tags": ["governance", "homelab", "critical"],
-    "created_at": "2026-03-19T23:45:00Z",
-    "modified_at": "2026-03-19T23:50:00Z",
-    "size_bytes": 2048
-  }
-}
-```
-
-### Postgres Schema
-
-```sql
--- Tabela: ai_context.memory_entries
-CREATE TABLE memory_entries (
-    id VARCHAR PRIMARY KEY,
-    path TEXT UNIQUE,
-    type VARCHAR,  -- project_memory, adr, runbook, plan
-    owner VARCHAR,
-    tags TEXT[],
-    embedding_id VARCHAR,
-    content_hash VARCHAR,
-    created_at TIMESTAMP,
-    modified_at TIMESTAMP,
-    synced_at TIMESTAMP,
-    size_bytes INT
-);
-
--- Tabela: ai_context.adr_registry
-CREATE TABLE adr_registry (
-    id VARCHAR PRIMARY KEY,
-    slug VARCHAR UNIQUE,
-    title TEXT,
-    status VARCHAR,  -- proposed, in_progress, accepted
-    owner VARCHAR,
-    memory_entry_id VARCHAR REFERENCES memory_entries(id),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-
--- Tabela: ai_context.sync_log
-CREATE TABLE sync_log (
-    id SERIAL PRIMARY KEY,
-    sync_type VARCHAR,  -- fast, postgres_index, validate, compact
-    started_at TIMESTAMP,
-    completed_at TIMESTAMP,
-    files_processed INT,
-    embeddings_created INT,
-    errors INT,
-    status VARCHAR  -- success, failed, partial
-);
-```
-
-## Fiscal: Monitoramento Contínuo
-
-Cron executa `memory-sync-fiscal.sh` em diferentes frequências:
-
-- **`--mode fast` (5min):** Detecção rápida de novos arquivos + embedding
-- **`--mode postgres-index` (15min):** Atualizar índices no Postgres
-- **`--mode validate` (diária 6am):** Verificar integridade + relatório
-- **`--mode compact` (semanal segunda):** Limpeza + otimização
-
-Logs em `~/.aurelia/logs/memory-sync-fiscal.log`
-
-## Benefícios para Aurelia
-
-1. **Sem Web:** Aurelia consulta Qdrant localmente (não precisa Anthropic API)
-2. **LLMs Pequenas:** Embedding local (bge-m3) + retrieval semântico
-3. **Code History:** Contexto completo do repositório sempre disponível
-4. **Histórico de Decisões:** ADRs e memória sincronizados automaticamente
-5. **Escalável:** Crons distribuem carga (5min, 15min, diária, semanal)
-
-## Referências
-
-- [ADR-20260319-Polish-Governance-All](../../docs/adr/ADR-20260319-Polish-Governance-All.md)
-- [Memory Architecture Doc](../../docs/memory-sync-architecture.md) (será criado)
-- [Aurelia Internal: vector](../../internal/vector/)
-- [Qdrant API](https://qdrant.tech/documentation/)
-- BGE-M3: Local embedding model
+## 🛡️ Guardrails
+- **Não vaze segredos**: O sync deve ignorar `.env` e arquivos ignorados pelo `.gitignore`.
+- **Custo Computacional**: Evite re-indexar todo o repo sem necessidade (use diffs).

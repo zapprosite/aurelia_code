@@ -1,52 +1,49 @@
 ---
 name: aurelia-media-voice
-description: Extrai transcript de video/link/audio e governa a voz oficial da Aurelia em PT-BR formal via MiniMax Audio.
+description: Governa a identidade auditiva da Aurélia e o processamento de mídias ricas (Transcript, TTS, Voice Cloning).
 ---
 
-# Aurelia Media Voice
+# 🎙️ Aurelia Media Voice: Sovereign 2026
 
-## Objetivo
+Esta skill habilita o Antigravity a gerenciar a voz oficial da Aurélia e o processamento de mídias (áudio/vídeo), garantindo uma identidade auditiva premium e soberana.
 
-Padronizar duas tarefas recorrentes:
+## 🏛️ Estratégia de Voz (2026)
 
-1. extrair texto de audio, video local ou link de video
-2. preparar e operar a voz oficial da Aurelia em portugues formal, feminina, doce e profissional
+### 1. Motor Principal (Sovereign Local)
+- **Engine**: `Kokoro-TTS` (ou Kodoro) rodando localmente via GPU/CPU.
+- **Voz**: Feminina brasileira, formal, doce e profissional.
+- **Uso**: Respostas rápidas no Telegram e notificações do sistema.
 
-## Quando usar
+### 2. Motor Premium (Cloud Fallback)
+- **Engine**: `MiniMax Audio (m2.7)`.
+- **Voz**: Clonagem oficial e alta fidelidade (Hi-Fi).
+- **Uso**: Conteúdo de marca, mensagens de boas-vindas e síntese de textos longos.
 
-- quando houver um link de video e for preciso transcript rapido
-- quando houver audio/video local e for preciso texto
-- quando for escolher, validar ou trocar a voz oficial da Aurelia
-- quando for usar MiniMax Audio para benchmark, listagem de vozes ou TTS premium
+### 3. Inteligência Auditiva (STT)
+- **Primário**: `Groq` (Whisper-v3) para transcrição instantânea com baixíssima latência.
+- **Auxiliar**: `MiniMax Audio` para transcrições técnicas complexas.
 
-## Contrato
+## 🛠️ Operações de Mídia (Industrial)
 
-- `Groq` continua sendo o lane de STT
-- `Kokoro (Kodoro) Local GPU` é o motor principal e padrão de TTS 2026
-- `MiniMax Audio` permanece como fallback premium de nuvem
-- link publico de terceiro pode ser usado para transcript e estudo de estilo
-- link publico de terceiro **nao** deve ser usado como base de clonagem sem autorizacao explicita
-- a clonagem oficial da Aurelia exige amostra autorizada/licenciada
+### 1. Transcrição de Vídeos e Links
+- **Ferramenta**: `scripts/media-transcript.sh`.
+- **Processo**: Download via `yt-dlp` -> Extração de áudio via `ffmpeg` -> STT via Groq/MiniMax.
+- **Guardrail**: Evite o processamento de vídeos > 500MB no host principal se a carga de inferência estiver alta.
 
-## Como executar
+### 2. Gestão de Identidade (Voice Profile)
+- Consulte `docs/aurelia_voice_profile_20260319.md` para diretrizes de tom e estilo.
+- **Proibição**: Nunca utilize gírias ou tons informais na voz oficial, a menos que solicitado para uma persona específica de teste.
 
-1. Para transcript de link/audio/video:
-   - rode `scripts/media-transcript.sh --input <arquivo-ou-url>`
-   - use `--dry-run` primeiro se faltar `yt-dlp` ou `ffmpeg`
-2. Para descobrir vozes MiniMax na conta:
-   - rode `scripts/minimax-voice-list.sh --type all`
-3. Para validar uma voz MiniMax:
-   - rode `scripts/minimax-tts-smoke.sh --voice-id <voice_id> --output /tmp/aurelia.mp3`
-4. Para a voz oficial da Aurelia:
-   - siga o perfil em `docs/aurelia_voice_profile_20260319.md`
-   - use referencia feminina brasileira autorizada, sem girias, com fala calma e clara
-5. Ao fechar a slice:
-   - atualize ADR/JSON
-   - rode `./scripts/sync-ai-context.sh`
+### 3. Hardware Awareness (7900x / RTX 4090)
+- O processamento de áudio local deve ser pinado nos núcleos de performance do 7900x para evitar jitter.
+- Monitore a VRAM se o Kokoro estiver rodando via CUDA.
 
-## Output esperado
+## 📍 Quando usar
+- Para transcrever vídeos do YouTube ou áudios do Telegram.
+- Para gerar respostas em voz (TTS) para o usuário.
+- Para realizar clonagem ou benchmark de novas vozes.
 
-- transcript em texto claro
-- voz/voice_id candidata documentada
-- perfil de voz alinhado ao contrato do repositorio
-- evidencias de smoke com scripts e/ou testes
+## 🚫 Anti-Padrões
+- Clonar vozes de terceiros sem autorização.
+- Usar motores de nuvem caros para mensagens triviais de sistema.
+- Ignorar o tratamento de ruído de fundo em transcrições.

@@ -50,3 +50,4 @@
 {"timestamp":"2026-03-24T02:28:31.570Z","tool":"context","action":"fillSingle","status":"success","details":{"params":{"action":"fillSingle","filePath":"/home/will/aurelia/.context/docs/architecture.md"},"result":{"success":true}}}
 {"timestamp":"2026-03-24T02:28:31.822Z","tool":"context","action":"fillSingle","status":"success","details":{"params":{"action":"fillSingle","filePath":"/home/will/aurelia/.context/docs/testing-strategy.md"},"result":{"success":true}}}
 {"timestamp":"2026-03-24T02:28:31.969Z","tool":"context","action":"fillSingle","status":"success","details":{"params":{"action":"fillSingle","filePath":"/home/will/aurelia/.context/docs/tooling.md"},"result":{"success":true}}}
+{"timestamp":"2026-03-24T02:44:18.591Z","tool":"sync","action":"exportContext","status":"success","details":{"params":{"action":"exportContext","preset":"claude"},"result":{"success":true}}}

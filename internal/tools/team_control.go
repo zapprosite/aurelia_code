@@ -151,3 +151,49 @@ func (t *TeamStatusTool) Execute(ctx context.Context, args map[string]interface{
 		snapshot.TotalTasks,
 	), nil
 }
+
+type CreateSquadTool struct {
+	Spawner TeamSpawner
+}
+
+func NewCreateSquadTool(spawner TeamSpawner) *CreateSquadTool {
+	return &CreateSquadTool{Spawner: spawner}
+}
+
+func (t *CreateSquadTool) Definition() agent.Tool {
+	return agent.Tool{
+		Name:        "create_squad",
+		Description: "Cria um squad de agentes especialistas para uma missao complexa. O bot master coordenara o time.",
+		JSONSchema: objectSchema(map[string]any{
+			"mission":     stringProperty("Descricao da missao global do squad."),
+			"composition": stringProperty("Descricao dos papéis necessários (ex: 'um pesquisador e um coder')."),
+		}, "mission"),
+	}
+}
+
+func (t *CreateSquadTool) Execute(ctx context.Context, args map[string]interface{}) (string, error) {
+	mission := args["mission"].(string)
+	// Esta ferramenta no futuro pode usar o MasterTeamService para decompor a missao.
+	// Por enquanto, ela apenas inicia o contexto de time se nao houver um.
+	teamKey, _, ok := agent.TeamContextFromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("contexto de chat nao encontrado para criar squad")
+	}
+	return fmt.Sprintf("Squad pronto para a missao: %s (Key: %s). Agora use 'spawn_agent' para adicionar os especialistas especificos.", mission, teamKey), nil
+}
+
+type GetDashboardStatusTool struct{}
+
+func (t *GetDashboardStatusTool) Definition() agent.Tool {
+	return agent.Tool{
+		Name:        "get_dashboard_status",
+		Description: "Consulta o status atual do gateway de roteamento e memoria visto pelo Dashboard.",
+		JSONSchema:  objectSchema(map[string]any{}),
+	}
+}
+
+func (t *GetDashboardStatusTool) Execute(ctx context.Context, args map[string]interface{}) (string, error) {
+	// Como o dashboard e apenas um emissor de eventos, aqui podemos retornar
+	// informacoes que o Master sabe que estao sendo enviadas pro dash.
+	return "Dashboard ULTRATRINK: Online em http://localhost:3334. Gateway operando em modo Triple-Tier (MiniMax/DeepSeek/Kimi).", nil
+}

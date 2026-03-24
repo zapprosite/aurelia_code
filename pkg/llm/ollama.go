@@ -86,10 +86,6 @@ func rankOllamaModel(modelID string) int {
 		return 0
 	case strings.HasPrefix(modelID, "gemma3:12b"):
 		return 1
-	case strings.HasPrefix(modelID, "qwen3.5:27b"):
-		return 2
-	case strings.HasPrefix(modelID, "qwen3-coder:30b"):
-		return 3
 	default:
 		return 10
 	}

@@ -1,38 +1,28 @@
 ---
-name: self-healing
-description: Elite skill for self-healing.
+type: skill
+name: Self-Healing
+description: Habilita a detecção e correção automática de falhas de sistema e binários zumbis.
+skillSlug: self-healing
+phases: [O]
+generated: 2026-03-20
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
+# 🩹 Self-Healing: Sovereign Watchdog 2026
 
+Capacita a Aurélia a detectar "loops" de erro, pânicos de kernel ou travamentos de serviços e aplicar correções automáticas (Self-Correction) baseadas em heurísticas e logs.
 
-# Self-Healing Skill
+## 🛠️ Heurísticas de Correção
+1. **Docker Down**: Se um container essencial cair, a skill tenta um `docker compose up -d` após limpar volumes temporários se necessário.
+2. **Git Zombie**: Invoca automaticamente a skill `/git-unblocker` se detectar locks ativos.
+3. **Gateway Memory**: Se o Ollama estourar a VRAM, a skill reinicia o daemon local com parâmetros de memória otimizados.
 
-## Objetivo
-Fazer o Agente aprender com erros, criar novas skills automaticamente quando identifica padrões recorrentes e melhorar sua própria performance ao longo do tempo.
+## 🛡️ Guardrail de Segurança
+- **Backoff**: Após 3 tentativas falhas de correção automática, o sistema deve parar, entrar em modo de pânico (Logs Críticos) e notificar o humano no Telegram com o status `EMERGENCY`.
 
-## Quando usar
-- Após resolver um problema complexo que provavelmente vai se repetir
-- Quando o Agente percebe que está usando o mesmo padrão em múltiplas situações
-- Para criar documentação automaticamente de decisões técnicas tomadas
-
-## Como executar
-
-### Detectar padrão
-1. Leia pattern-recognition.md para identificar se o problema atual é recorrente
-2. Verifique se já existe skill para esse tipo de problema
-3. Se não existe e o padrão é recorrente: crie a skill
-
-### Criar skill automaticamente
-1. Leia skill-creation-guide.md para o processo de criação
-2. Extraia o aprendizado da sessão atual em formato de skill
-3. Salve no diretório correto com nome descritivo
-
-### Gerenciar memória
-1. Leia memory-management.md para como persistir aprendizados
-2. Documente decisões importantes para referência futura
-3. Atualize skills existentes quando o aprendizado as contradiz
-
-## Output esperado
-- Nova skill criada quando padrão recorrente identificado
-- Decisões técnicas documentadas automaticamente
-- Melhoria progressiva: a segunda vez que o mesmo problema aparece, resolve mais rápido e melhor
+## 📍 Quando usar
+- Quando o daemon principal começar a reportar erros cíclicos.
+- Quando ferramentas dependentes de hardware falharem em cascata.
+- Durante a manutenção de madrugada para garantir que o sistema acorde saudável.

@@ -73,10 +73,8 @@ type Provider struct {
 
 	localFast         closableProvider
 	localBalanced     closableProvider
-	groqText          closableProvider
 	remoteCheapLong   closableProvider
 	remoteCheapVision closableProvider
-	remoteStructured  closableProvider
 	remotePremium     closableProvider
 	miniMaxDirect     closableProvider
 	localVision       closableProvider
@@ -108,17 +106,8 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		Temperature: &lowTemp,
 	})
 
-	var groqText closableProvider
-	if cfg.GroqAPIKey != "" {
-		groqText = llm.NewOpenRouterProviderWithOptions(cfg.GroqAPIKey, modelGroq70b, llm.OpenAICompatibleRequestOptions{
-			MaxTokens:   512,
-			Temperature: &lowTemp,
-		})
-	}
-
 	var remoteCheapLong closableProvider
 	var remoteCheapVision closableProvider
-	var remoteStructured closableProvider
 	var remotePremium closableProvider
 	if cfg.OpenRouterAPIKey != "" {
 		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelDeepSeekChat, llm.OpenAICompatibleRequestOptions{
@@ -126,22 +115,18 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 			Temperature: &lowTemp,
 		})
 		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelKimiK25, llm.OpenAICompatibleRequestOptions{
-			MaxTokens:   384,
-			Temperature: &lowTemp,
-		})
-		remoteStructured = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelDeepSeekChat, llm.OpenAICompatibleRequestOptions{
-			MaxTokens:   256,
+			MaxTokens:   512,
 			Temperature: &lowTemp,
 		})
 		remotePremium = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelMiniMaxM27, llm.OpenAICompatibleRequestOptions{
-			MaxTokens:   640,
+			MaxTokens:   1024,
 			Temperature: &lowTemp,
 		})
 	}
 
 	var miniMaxDirect closableProvider
 	if cfg.MiniMaxAPIKey != "" {
-		miniMaxDirect = llm.NewMiniMaxProviderWithOptions(cfg.MiniMaxAPIKey, "minimax-m2.7", llm.OpenAICompatibleRequestOptions{
+		miniMaxDirect = llm.NewMiniMaxProviderWithOptions(cfg.MiniMaxAPIKey, modelMiniMaxDirect, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
 		})
@@ -156,19 +141,15 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		localFast:         localFast,
 		localBalanced:     localBalanced,
 		localVision:       localVision,
-		groqText:          groqText,
 		remoteCheapLong:   remoteCheapLong,
 		remoteCheapVision: remoteCheapVision,
-		remoteStructured:  remoteStructured,
 		remotePremium:     remotePremium,
 		miniMaxDirect:     miniMaxDirect,
 		judge:             judge,
 		budgets: map[string]laneBudget{
 			"local":             {Soft: 1000000, Hard: 1000000},
-			"groq_text":         {Soft: 600, Hard: 1000, CostHardUSD: 0.50},
 			"remote_cheap":      {Soft: 400, Hard: 800, CostHardUSD: 0.50},
 			"remote_vision":     {Soft: 120, Hard: 240, CostHardUSD: 0.25},
-			"remote_structured": {Soft: 200, Hard: 400, CostHardUSD: 1.00},
 			"remote_premium":    {Soft: 80, Hard: 160, CostHardUSD: 2.00},
 			"audio":             {Soft: 800, Hard: 1200},
 			"research":          {Soft: 40, Hard: 80},
@@ -208,13 +189,11 @@ func (p *Provider) Close() {
 	for _, provider := range []closableProvider{
 		p.localFast,
 		p.localBalanced,
-		p.groqText,
+		p.localVision,
 		p.remoteCheapLong,
 		p.remoteCheapVision,
-		p.remoteStructured,
 		p.remotePremium,
 		p.miniMaxDirect,
-		p.localVision,
 	} {
 		if provider != nil {
 			provider.Close()
@@ -280,6 +259,7 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 	if opts.LocalOnly {
 		req.LocalOnly = true
 	}
+	req.OutputMode = opts.OutputMode
 
 	degraded := p.IsDegraded()
 	if degraded.Active && degraded.RemoteDisabled {
@@ -442,6 +422,11 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 		p.observeResult(decision, "error", time.Since(startedAt))
 		return nil, err
 	}
+
+	// Clean up thought tags for local models that might mix them in.
+	if resp != nil {
+		resp.Content = stripThoughtTags(resp.Content)
+	}
 	// Se tools foram stripped para modelo local e a resposta tem conteudo, aceitar sem guard.
 	if toolsStripped && resp != nil && strings.TrimSpace(resp.Content) != "" {
 		p.markSuccess(providerKey)
@@ -472,14 +457,10 @@ func (p *Provider) providerFor(lane string) agent.LLMProvider {
 		return p.localVision
 	case "local-balanced", "local":
 		return p.localBalanced
-	case "groq-text", "groq":
-		return p.groqText
-	case "remote-cheap", "remote-cheap-long", "remote-cheap-fallback":
+	case "remote-cheap":
 		return p.remoteCheapLong
 	case "remote-long-context", "remote-cheap-vision":
 		return p.remoteCheapVision
-	case "remote-structured":
-		return p.remoteStructured
 	case "remote-premium":
 		if p.miniMaxDirect != nil {
 			return p.miniMaxDirect
@@ -563,18 +544,46 @@ func responseSatisfies(decision DryRunDecision, resp *agent.ModelResponse) bool 
 	if len(resp.ToolCalls) > 0 {
 		return true
 	}
-	// Se tem conteúdo textual, é válida.
-	if strings.TrimSpace(resp.Content) != "" {
+	
+	content := strings.TrimSpace(resp.Content)
+	reasoning := strings.TrimSpace(resp.ReasoningContent)
+
+	// Se tem conteúdo textual final, é válida.
+	if content != "" {
 		return true
 	}
+
 	// Se o modo é 'minimize', exigimos conteúdo textual final (Content).
-	// Sem conteúdo, consideramos insatisfatória.
-	if decision.Guards.ReasoningMode == "minimize" {
+	// No entanto, se o modelo for local (Gemma 3), aceitamos o ReasoningContent 
+	// como resposta se ele não estiver vazio (às vezes o provider falha em separar).
+	if decision.Guards.ReasoningMode == "minimize" && decision.UseRemote {
 		return false
 	}
-	// Em outros modos (default, require), permitimos que a resposta contenha apenas raciocínio
-	// caso o modelo tenha falhado em separar o pensamento da resposta final.
-	return strings.TrimSpace(resp.ReasoningContent) != ""
+	
+	// Permitimos que a resposta contenha apenas raciocínio se o modelo for local
+	// ou se o modo não for estrito.
+	return reasoning != ""
+}
+
+// stripThoughtTags removes <thought>...</thought> blocks from the text.
+func stripThoughtTags(s string) string {
+	for {
+		start := strings.Index(s, "<thought>")
+		if start == -1 {
+			break
+		}
+		end := strings.Index(s, "</thought>")
+		if end == -1 {
+			// If tag is not closed, strip until the end of string? 
+			// Or just the tag itself. Let's strip the tag and keep the rest.
+			return strings.Replace(s, "<thought>", "", 1)
+		}
+		s = s[:start] + s[end+10:]
+	}
+	// Also handle the case where it might use markdown-like variations or just the tags
+	s = strings.ReplaceAll(s, "<thought>", "")
+	s = strings.ReplaceAll(s, "</thought>", "")
+	return strings.TrimSpace(s)
 }
 
 func (p *Provider) markRequest(budgetLane, providerKey, model string) {

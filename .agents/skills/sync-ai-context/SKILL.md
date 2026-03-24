@@ -1,55 +1,25 @@
 ---
+type: skill
 name: sync-ai-context
-description: Sincroniza o ai-context do repositório via MCP tools — padrão 2026.
+description: Sincroniza o ai-context via MCP tools e regenera o codebase-map — padrão atual 2026
+skillSlug: sync-ai-context
+phases: [C]
+generated: 2026-03-18
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
-# Skill: Sync AI Context
+# 🔄 Sync AI Context: Sovereign Coherence 2026
 
-## Quando usar
+Skill crítica de manutenção de estado que garante que todos os agentes compartilhem da mesma visão do repositório (Codebase Map).
 
-- Após mudanças em `cmd/`, `internal/`, `pkg/`, `scripts/` ou `docs/`
-- Antes de handoff entre agentes ou merge final
-- Quando `.context/docs/codebase-map.json` estiver desatualizado
+## 🛠️ Workflow de Sincronismo
+1. **Scan**: Faz o rastreio de novos arquivos e mudanças estruturais.
+2. **Map**: Regenera o `codebase-map.json` e o `README.md` do contexto.
+3. **Commit**: Realiza o commit de manutenção com a tag `chore(context): sync ai-context`.
 
-## Quando dispensar
-
-- Typo ou comentário sem impacto estrutural
-- Rename local sem drift semântico
-
----
-
-## Execução via MCP (padrão)
-
-O agente executa as tools do MCP `ai-context` diretamente — sem shell:
-
-```
-1. context({ action: "check", repoPath: "<repo>" })
-   → confirmar initialized: true
-
-2. context({ action: "listToFill", target: "docs" })
-   → ver quais .md precisam atualização
-
-3. context({ action: "fill", target: "docs" })
-   → regenerar codebase-map.json e docs curados
-   (ou fillSingle para um arquivo específico)
-
-4. context({ action: "getMap", section: "stats" })
-   → validar mapPath e lastUpdated
-```
-
-Se houver drift real, commitar:
-```bash
-git add .context/ && git commit --no-verify -m "chore(context): sync ai-context pos-<slug>"
-```
-
-## Fallback (MCP indisponível)
-
-```bash
-./scripts/sync-ai-context.sh
-```
-
-## Output esperado
-
-- `.context/docs/codebase-map.json` atualizado (data recente)
-- `.context/docs/*.md` coerentes com o checkout
-- Commit registrado se houve drift real
+## 📍 Quando usar
+- Após completar qualquer tarefa de implementação (`E`).
+- Antes de iniciar o handoff para outro agente ou para o humano.
+- Ao detectar que a busca semântica está retornando resultados obsoletos.

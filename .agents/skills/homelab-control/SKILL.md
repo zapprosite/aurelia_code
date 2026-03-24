@@ -3,46 +3,43 @@ name: homelab-control
 description: Controle nativo de Home Lab no Ubuntu (Ollama, NVIDIA, Docker, ZFS).
 ---
 
-# 🛸 Home Lab Control Skill
+# 🛸 Home Lab Control: Sovereign 2026
 
-Esta skill habilita o Aurelia a gerenciar infraestrutura de Homelab diretamente no Ubuntu 24.04 LTS, garantindo o uso de Bash/Nativo em vez de emulações de PowerShell.
+Habilita o gerenciamento operacional direto da infraestrutura do Home Lab sob a governança da Aurélia e Antigravity.
 
-## 🛠️ Comandos de Infra
-1. **GPU (NVIDIA)**:
-   - Use `nvidia-smi` para monitorar VRAM.
-   - Verifique `gpustat` se disponível para logs curtos.
-2. **Ollama**:
-   - `curl -s http://localhost:11434/api/tags`: Listar modelos.
-   - `ollama run <model>`: Testar inferência local.
-   - Utilize os scripts em `scripts/update-ollama.sh` para rotinas de atualização.
-3. **Docker**:
-   - `docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"`: Listagem limpa.
-   - Gerenciamento de deploys via `docker-compose.yml`.
+## 🛠️ Comandos de Infraestrutura (Ubuntu 24.04 Native)
 
-## 🛡️ Anti-Padrão (Importante!)
-- **NÃO use PowerShell**: O sistema operacional é **Ubuntu Desktop 24.04**. 
-- Se um subagente tentar usar `powershell`, interrompa e force o uso de `bash`.
+### 1. GPU & CUDA (NVIDIA RTX 4090)
+- **Monitoramento**: `nvidia-smi` é a fonte primária. Verifique se o `gemma3:12b` (Ollama) está consumindo os ~795MB necessários de VRAM.
+- **Troubleshooting**: Se o `nvidia-smi` travar, verifique processos zumbis ou atualizações pendentes do `needrestart`.
+- **Ref**: `docs/adr/ADR-20260320-politica-modelos-hardware-vram.md`.
 
-## Arquivos de Referência
-- `scripts/health-check.sh`: Status unificado do lab.
-- `scripts/update-ollama.sh`: Atualização de modelos AI.
+### 2. Ollama & Sovereign Models
+- **Gestão**: `curl -s http://localhost:11434/api/tags` para listar modelos ativos.
+- **Modelos Pinados (2026)**:
+  - `gemma3:12b`: Modelo residente principal (Sovereign fallback).
+  - `qwen3.5:9b`: Alternativa para raciocínio local.
+  - `bge-m3`: Modelo de embedding para o vetor DB (Qdrant).
 
-## Quando usar
-- Para diagnósticos de hardware.
-- Para atualizar modelos de LLM locais.
-- Para gerenciar containers de serviços (CapRover, N8N).
+### 3. Docker & Orquestração
+- **Health Check**: `docker ps --format "table {{.Names}}\t{{.Status}}\t{{.CPUPerc}}\t{{.MemUsage}}"`
+- **Deploy**: Use comandos `docker compose` apenas no diretório da aplicação alvo.
+- **Segurança**: Auditoria periódica de portas expostas via `netstat -tulpn`.
 
-## Escopo correto
+### 4. Storage & ZFS
+- **Status**: `zpool status` para verificar integridade dos pools de dados da Aurélia.
+- **Snapshot**: Garanta snapshots regulares antes de upgrades críticos de sistema.
 
-Use esta skill para o controle nativo e os comandos do host.
+## 🛡️ Protocolo de Segurança (Antigravity Exclusive)
+- **Bash Only**: Reprise total contra PowerShell. Se detectar scripts `.ps1`, converta para `.sh`.
+- **Sudo=1**: Autoridade total habilitada. Sempre forneça prova de sucesso via logs.
+- **Dry-Run**: Comandos de sistema (`reboot`, `systemctl stop`) exigem validação de impacto.
 
-Se a tarefa pedir postura de operação sênior completa, com:
+## 📍 Quando usar
+- Para manter os serviços core (CapRover, N8N, Ollama) saudáveis.
+- Para realizar o "Watchdog" de containers.
+- Para gerenciar a alocação de hardware para squads de agentes.
 
-- classificação de saúde
-- prova antes/depois
-- recuperação segura
-- governança de recursos
-
-prefira carregar junto:
-
-- `systems-engineer-homelab`
+## 🚫 Anti-Padrões
+- Ignorar o custo de memória RAM total (7900x/RTX 4090 caps).
+- Reiniciar o daemon `aurelia` sem verificar logs de erro primeiro.

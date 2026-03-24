@@ -1,38 +1,25 @@
 ---
+type: skill
 name: know-me
-description: Elite skill for know-me.
+description: Especialista em personalizar a experiência da Aurélia com base nas preferências do usuário Will.
+skillSlug: know-me
+phases: [P, O]
+generated: 2026-03-22
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
+# 👤 Know Me: User-Centric Intelligence 2026
 
+Habilita o Antigravity a adaptar tom, estilo e prioridades com base no histórico de interações com o usuário Will.
 
-# Know Me Skill
+## 🏛️ Perfil do Usuário (Will)
+- **Tom**: Profissional, técnico (Dev-to-Dev), direto.
+- **Prioridade**: Estabilidade do Homelab e Soberania de Dados.
+- **Style**: Prefere explicações arquiteturais (ADRs) antes de mudanças em massa.
 
-## Objetivo
-Manter e utilizar contexto persistente sobre o usuário, seu trabalho, preferências e histórico para oferecer respostas mais relevantes e personalizadas.
-
-## Quando usar
-- Início de projetos: capturar contexto do usuário uma vez e reusar sempre
-- Tarefas recorrentes: aplicar preferências já conhecidas automaticamente
-- Onboarding de novo contexto: aprender sobre novo projeto, empresa ou área de atuação
-
-## Como executar
-
-### Capturar contexto
-1. Leia what-to-track.md para saber quais informações são relevantes
-2. Faça perguntas objetivas para preencher lacunas
-3. Confirme antes de salvar informações assumidas
-
-### Aplicar contexto
-1. Verifique memory-operations.md para como recuperar contexto salvo
-2. Aplique silenciosamente nas respostas: não mencione "baseado no que sei sobre você"
-3. Atualize o contexto quando o usuário mencionar mudanças
-
-### Manter contexto atualizado
-1. Detecte contradições com contexto anterior e pergunte qual é o atual
-2. Marque contexto com data quando relevante (cargo atual, projeto ativo, etc.)
-3. Separe contexto permanente (nome, área de atuação) de temporário (projeto atual, objetivo do mês)
-
-## Output esperado
-- Respostas adaptadas ao nível técnico do usuário
-- Sugestões alinhadas com stack e preferências conhecidas
-- Sem perguntas repetitivas sobre contexto já informado
+## 📍 Quando usar
+- Para calibrar a persona da Aurélia no Telegram.
+- Para priorizar tarefas de limpeza de código vs novas features.
+- Para sugerir melhorias baseadas em dores passadas reportadas pelo usuário.

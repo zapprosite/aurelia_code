@@ -1,7 +1,7 @@
 ---
 description: Índice único de governança, adapters e ADRs do repositório.
 status: active
-owner: codex
+owner: Antigravity
 created: 2026-03-19
 ---
 
@@ -14,14 +14,14 @@ Este é o índice único de governança para humanos e agentes.
 1. Humanos operadores
 2. `AGENTS.md`
 3. Aurélia como arquiteta principal e autoridade operacional
-4. Adaptadores e motores (`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`)
+4. Adaptadores e motores (`Aurélia.md`, `Antigravity.md`, `GEMINI.md`, `MODEL.md`)
 5. Regras, workflows, ADRs e `.context/`
 
 ## Ordem de leitura obrigatória
 
 1. [AGENTS.md](../AGENTS.md)
-2. [CLAUDE.md](../CLAUDE.md)
-3. [CODEX.md](../CODEX.md)
+2. [Aurélia.md](../Aurélia.md)
+3. [Antigravity.md](../Antigravity.md)
 4. [GEMINI.md](../GEMINI.md)
 5. [MODEL.md](../MODEL.md)
 6. [.agents/rules/](../.agents/rules/)
@@ -34,8 +34,8 @@ Este é o índice único de governança para humanos e agentes.
 | Arquivo | Papel | Pode decidir? |
 | --- | --- | --- |
 | `AGENTS.md` | contrato soberano | sim |
-| `CLAUDE.md` | adaptador do Claude | não, só executa sob contrato e sob a Aurélia |
-| `CODEX.md` | adaptador do Codex | não, só executa sob contrato e sob a Aurélia |
+| `Aurélia.md` | adaptador do Aurélia | não, só executa sob contrato e sob a Aurélia |
+| `Antigravity.md` | adaptador do Antigravity | não, só executa sob contrato e sob a Aurélia |
 | `GEMINI.md` | adaptador do Antigravity | não, só coordena sob contrato e sob a Aurélia |
 
 ## Regra profissional adotada
@@ -81,7 +81,7 @@ Comando canônico:
 
 A raiz do repositório deve ficar reservada para:
 
-- contratos soberanos e adaptadores (`AGENTS.md`, `CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `MODEL.md`)
+- contratos soberanos e adaptadores (`AGENTS.md`, `Aurélia.md`, `Antigravity.md`, `GEMINI.md`, `MODEL.md`)
 - docs de entrada do projeto (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`)
 - plano mestre ativo (`plan.md`)
 - exemplos de bootstrap realmente globais (`mcp_servers.example.json`)

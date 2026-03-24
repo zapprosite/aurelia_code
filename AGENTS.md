@@ -17,7 +17,7 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 1.  **Humanos operadores** — Autoridade final, veto final e direção estratégica.
 2.  **AGENTS.md** (Este arquivo) — Fonte primária de verdade.
 3.  **Aurélia** — Autoridade arquitetural e operacional soberana do sistema, abaixo apenas dos humanos.
-4.  **`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `OPENCODE.md`** — Adaptadores finos por motor, sempre subordinados a este contrato e à autoridade da Aurélia.
+4.  **`GEMINI.md`, `OPENCODE.md`** — Adaptadores finos por motor, sempre subordinados a este contrato e à autoridade da Aurélia.
 5.  **REPOSITORY_CONTRACT.md** — Índice de governança e cadeia de autoridade.
 6.  **`docs/adr/`** — Decisões arquiteturais (modelos, hardware, plano mestre, slices).
 7.  **.agents/rules/** — Regras operacionais para o Antigravity.
@@ -29,34 +29,20 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 ## 3. Papéis dos Agentes
 
 <agent-roles>
-### 👑 Aurélia
-- **Papel**: Arquiteta principal e autoridade operacional do Home Lab.
-- **Responsabilidade**: Definir direção técnica, governar roteamento, manter a coerência do sistema, arbitrar conflitos entre agentes e preservar estabilidade.
-- **Fronteira**: Não está acima dos humanos. Todos os outros agentes e adaptadores operam abaixo dela.
-
 ### 🛰️ Antigravity (Google)
 - **Papel**: Interface, cockpit e braço de coordenação.
 - **Responsabilidade**: Orquestração de tarefas, handoff e interação com o humano, sempre sob a arquitetura e governança da Aurélia.
+- **Motor**: Opera via Gemma 3 12B (Local) + OpenRouter (Premium).
 
-### 🤖 Claude (Anthropic)
-- **Papel**: Motor de Execução Multi-Agente Principal.
-- **Responsabilidade**: Implementação técnica e revisões complexas, subordinadas à direção da Aurélia.
-
-### ⚡ Codex (OpenAI)
-- **Papel**: Executor Rápido e de Escopo Definido.
-- **Responsabilidade**: Refatorações e correções rápidas, subordinadas à direção da Aurélia.
-
-### 🔓 OpenCode
-- **Papel**: Executor Versátil e Local-First.
-- **Responsabilidade**: Execução de tarefas com suporte a múltiplos providers (incluindo Ollama local), subordinado à direção da Aurélia.
+### 🤖 Aurélia (Sovereign)
+- **Papel**: Arquiteta principal e autoridade operacional do Home Lab.
+- **Responsabilidade**: Definir direção técnica, governar roteamento, manter a coerência do sistema e preservar estabilidade.
 </agent-roles>
 
 ## 3.1 Adaptadores do Repositório
 
 Os arquivos abaixo existem para alinhar motores e UIs diferentes ao mesmo contrato:
 
-- `CLAUDE.md`
-- `CODEX.md`
 - `GEMINI.md`
 - `OPENCODE.md`
 

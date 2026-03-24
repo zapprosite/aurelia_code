@@ -12,20 +12,20 @@ func TestPlannerDecide_MaintenancePrefersOpenRouterWithOllamaFallback(t *testing
 		RequiresTools: true,
 	})
 
-	// Primary should be OpenRouter minimax
+	// Primary should be local-balanced for maintenance
 	if len(opts) == 0 {
 		t.Fatalf("expected at least one candidate")
 	}
-	if opts[0].Provider != "openrouter" || opts[0].Model != defaultRemotePremiumModel {
-		t.Fatalf("unexpected primary route: %+v", opts[0])
+	if opts[0].Provider != "local" || opts[0].Model != modelGemma3 {
+		t.Fatalf("unexpected primary route for maintenance: %+v", opts[0])
 	}
 	if !opts[0].UseTools {
 		t.Fatalf("expected tools enabled: %+v", opts[0])
 	}
 
-	// Fallback should include local-balanced
-	if len(opts) < 2 || opts[1].Provider != "ollama" || opts[1].Model != defaultLocalBalancedModel {
-		t.Fatalf("expected ollama fallback, got: %+v", opts)
+	// Fallback should include remote-premium
+	if len(opts) < 2 || opts[1].Provider != "minimax" || opts[1].Model != modelMiniMaxM27 {
+		t.Fatalf("expected minimax fallback for maintenance, got: %+v", opts)
 	}
 }
 
@@ -37,7 +37,7 @@ func TestPlannerDecide_StructuredUsesDeepSeek(t *testing.T) {
 		OutputMode: "structured_json",
 	})
 
-	if got.Provider != "openrouter" || got.Model != defaultRemoteStructuredModel {
+	if got.Provider != "openrouter" || got.Model != modelDeepSeekChat {
 		t.Fatalf("unexpected route: %+v", got)
 	}
 	if got.Guards.ReasoningMode != "minimize" {
@@ -53,7 +53,7 @@ func TestPlannerDecide_VisionUsesRemoteVisionLane(t *testing.T) {
 		RequiresVision: true,
 	})
 
-	if got.Lane != "remote-cheap-vision" || got.Model != defaultRemoteVisionModel {
+	if got.Lane != "local-vision" || got.Model != modelGemma3 {
 		t.Fatalf("unexpected route: %+v", got)
 	}
 }
@@ -63,7 +63,7 @@ func TestPlannerDecide_AudioUsesGroq(t *testing.T) {
 
 	got := NewPlanner().Decide(DryRunRequest{TaskClass: "audio"})
 
-	if got.Provider != "groq" || got.Model != defaultAudioModel {
+	if got.Provider != "minimax" || (got.Model != modelMiniMaxM27 && got.Model != modelMiniMaxDirect) {
 		t.Fatalf("unexpected route: %+v", got)
 	}
 }
@@ -77,7 +77,7 @@ func TestPlannerDecide_LocalOnlyStructuredStaysLocal(t *testing.T) {
 		LocalOnly:  true,
 	})
 
-	if got.Provider != "ollama" || got.Model != defaultLocalBalancedModel {
+	if got.Provider != "local" || got.Model != modelGemma3 {
 		t.Fatalf("unexpected route: %+v", got)
 	}
 }

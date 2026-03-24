@@ -24,7 +24,8 @@ const (
 )
 
 type RunOptions struct {
-	LocalOnly bool
+	LocalOnly  bool
+	OutputMode string
 }
 
 func WithTeamContext(ctx context.Context, teamKey, userID string) context.Context {

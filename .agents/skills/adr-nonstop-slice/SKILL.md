@@ -1,52 +1,25 @@
 ---
-name: adr-nonstop-slice
-description: Abre e mantém um slice em modo nonstop com ADR + JSON de continuidade estilo taskmaster.
+type: skill
+name: ADR Nonstop Slice
+description: Fluxo de desenvolvimento ininterrupto baseado em ADRs dinâmicos e sessões de trabalho contínuas.
+skillSlug: adr-nonstop-slice
+phases: [P, E, V, C]
+generated: 2026-03-20
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
-# ADR Nonstop Slice
+# 🍕 ADR Nonstop Slice: Sovereign Workflow 2026
 
-## Objetivo
+Esta skill otimiza o desenvolvimento de grandes funcionalidades através do fatiamento em "slices" independentes, mantendo o contexto vivo através de ADRs (Architectural Decision Records) incrementais.
 
-Criar e manter slices que não morrem no meio do caminho, com:
+## 🚀 Protocolo "Nonstop"
+1. **Arquitetura Dinâmica**: O ADR não é estático. Ele evolui conforme descobrimos novas restrições técnicas (MiniMax Feedback).
+2. **Ciclo de Trabalho**: `Plano -> ADR -> Implementação -> Teste -> Sincronismo -> Próxima Slice`.
+3. **Autoridade do ADR**: O arquivo `docs/adr/README.md` é a bússola oficial. Se não está lá, não é oficial.
 
-- ADR do slice
-- JSON de continuidade estilo taskmaster
-- comandos de simulação/smoke já previstos
-- handoff claro para Codex, Claude ou Gemini
-
-## Quando usar
-
-- quando uma slice estrutural precisa continuar entre sessões/agentes
-- quando o trabalho depende de smoke com `curl`, `go test`, scripts ou simuladores
-- quando o usuário quer "ativar" um modo que empurre a slice até o fim com menos perda de contexto
-
-## Como executar
-
-1. Criar o par de artefatos do slice com `./scripts/adr-slice-init.sh`.
-2. Preencher o ADR `.md` com contexto, decisão, testes, rollout e rollback.
-3. Preencher o `.json` com:
-   - estado atual
-   - próximos comandos
-   - smoke commands
-   - simulações
-   - evidências
-   - bloqueios
-4. Durante a execução, atualizar o `.json` sempre que o próximo passo mudar.
-5. Ao fechar a slice:
-   - atualizar o ADR
-   - atualizar o `.json`
-   - rodar `./scripts/sync-ai-context.sh`
-
-## Contrato
-
-- o `.md` é a decisão humana legível
-- o `.json` é a memória operacional para continuidade
-- nenhum slice estrutural em modo nonstop existe sem os dois
-- o nome canônico de novos slices é `ADR-YYYYMMDD-slug`
-
-## Output esperado
-
-- `docs/adr/ADR-YYYYMMDD-slug.md`
-- `docs/adr/taskmaster/ADR-YYYYMMDD-slug.json`
-- comandos de smoke/simulação preenchidos
-- continuação clara para qualquer agente
+## 📍 Quando usar
+- No desenvolvimento de grandes módulos (ex: Sistema de Visão, OCR, Dashboards novos).
+- Quando a tarefa exigir mais de 4h de foco contínuo.
+- Para manter o rastreio de decisões complexas entre sessões.

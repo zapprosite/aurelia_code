@@ -23,7 +23,7 @@ func NewSpawnAgentTool(spawner TeamSpawner) *SpawnAgentTool {
 func (t *SpawnAgentTool) Definition() agent.Tool {
 	return agent.Tool{
 		Name:        "spawn_agent",
-		Description: "Cria uma task para um worker especialista dentro da equipe liderada pelo master. O master continua sendo o lider e acompanha os resultados.",
+		Description: "Cria uma task para um worker especialista dentro da equipe. Use esta ferramenta para DELEGAR sub-tarefas de forma autonoma quando uma missao puder ser dividida. O master (voce) coordena e recebe os resultados no mailbox.",
 		JSONSchema: objectSchema(
 			map[string]any{
 				"agent_name":       stringProperty("Nome do agente especialista."),

@@ -1,43 +1,18 @@
 ---
 name: trigger-dev
-description: Elite skill for trigger-dev.
+description: Automação de gatilhos (triggers) e webhooks para integração contínua (CI/CD) e notificações.
 ---
 
+# ⚡ Trigger-Dev: Sovereign Automation 2026
 
+Habilita a orquestração de gatilhos que disparam ações automáticas no sistema, desde notificações no Telegram até deploys automáticos em CapRover.
 
-# Trigger.dev Skill
+## 🛠️ Padrões de Automação
+1. **GitHub Actions**: Automatize linting e testes de gateway no push.
+2. **Local Hooks**: Use `git hooks` para rodar o `secret-audit.sh` antes de cada commit.
+3. **tRPC Triggers**: Dispare atualizações no dashboard `ULTRATRINK` ao detectar mudanças de estado na infraestrutura.
 
-## Objetivo
-Criar, configurar e depurar jobs em background usando Trigger.dev. Cobre desde tasks simples até workflows complexos com retry, concurrency e scheduling.
-
-## Quando usar
-- Processar tarefas pesadas fora do ciclo de request/response
-- Agendar jobs recorrentes
-- Orquestrar sequências de operações com retry automático
-- Substituir cron jobs frágeis por jobs confiáveis com observabilidade
-
-## Como executar
-1. Leia core-reference.md para entender estrutura base de tasks e runs
-2. Leia config-reference.md para configuração do projeto e variáveis de ambiente
-3. Leia advanced-reference.md para concurrency, batching e workflows complexos
-4. Implemente a task com tipagem correta e retry strategy adequada
-5. Teste localmente com Trigger.dev CLI antes de deployar
-
-## Estrutura básica
-```typescript
-import { task } from "@trigger.dev/sdk/v3";
-
-export const meuJob = task({
-  id: "meu-job",
-  run: async (payload: { userId: string }) => {
-    // lógica aqui
-    return { sucesso: true };
-  },
-});
-```
-
-## Output esperado
-- Task com tipagem correta no payload
-- Retry e timeout configurados adequadamente para o caso de uso
-- Logs estruturados dentro da task
-- Documentação de como acionar (trigger) a task
+## 📍 Quando usar
+- Para automatizar rotinas de backup.
+- Para criar integrações entre o Bot e serviços externos.
+- Para gerenciar ciclos de vida de build e deploy.
