@@ -25,9 +25,25 @@ type ollamaResult struct {
 	Error   string `json:"error,omitempty"`
 }
 
-const ollamaAPI = "http://localhost:11434"
+const defaultOllamaAPI = "http://localhost:11434"
 
+// NewOllamaControlHandler returns an OllamaControlHandler bound to the given baseURL.
+// If baseURL is empty, it falls back to the default localhost address.
+func NewOllamaControlHandler(baseURL string) func(ctx context.Context, args map[string]interface{}) (string, error) {
+	if baseURL == "" {
+		baseURL = defaultOllamaAPI
+	}
+	return func(ctx context.Context, args map[string]interface{}) (string, error) {
+		return ollamaControlHandle(ctx, args, baseURL)
+	}
+}
+
+// OllamaControlHandler is the legacy handler that uses the default Ollama URL.
 func OllamaControlHandler(ctx context.Context, args map[string]interface{}) (string, error) {
+	return ollamaControlHandle(ctx, args, defaultOllamaAPI)
+}
+
+func ollamaControlHandle(ctx context.Context, args map[string]interface{}, baseURL string) (string, error) {
 	action := optionalStringArg(args, "action")
 	if action == "" {
 		action = "status"
@@ -37,15 +53,15 @@ func OllamaControlHandler(ctx context.Context, args map[string]interface{}) (str
 
 	switch ollamaAction(action) {
 	case ollamaActionStatus:
-		result = ollamaStatus(ctx)
+		result = ollamaStatus(ctx, baseURL)
 	case ollamaActionList:
-		result = ollamaListModels(ctx)
+		result = ollamaListModels(ctx, baseURL)
 	case ollamaActionPull:
 		model := optionalStringArg(args, "model")
 		if model == "" {
 			result.Error = "model name required for pull"
 		} else {
-			result = olllamaPull(ctx, model)
+			result = ollamaPull(ctx, baseURL, model)
 		}
 	case ollamaActionRun:
 		model := optionalStringArg(args, "model")
@@ -53,7 +69,7 @@ func OllamaControlHandler(ctx context.Context, args map[string]interface{}) (str
 		if model == "" || prompt == "" {
 			result.Error = "model and prompt required for run"
 		} else {
-			result = ollamaRun(ctx, model, prompt)
+			result = ollamaRun(ctx, baseURL, model, prompt)
 		}
 	default:
 		result.Error = "unknown action: " + action
@@ -63,13 +79,13 @@ func OllamaControlHandler(ctx context.Context, args map[string]interface{}) (str
 	return string(payload), nil
 }
 
-func ollamaStatus(ctx context.Context) ollamaResult {
+func ollamaStatus(ctx context.Context, baseURL string) ollamaResult {
 	result := ollamaResult{Action: "status"}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	resp, err := http.Get(ollamaAPI + "/api/tags")
+	resp, err := http.Get(baseURL + "/api/tags")
 	if err != nil {
 		result.Error = "Ollama not available: " + err.Error()
 		return result
@@ -86,13 +102,13 @@ func ollamaStatus(ctx context.Context) ollamaResult {
 	return result
 }
 
-func ollamaListModels(ctx context.Context) ollamaResult {
+func ollamaListModels(ctx context.Context, baseURL string) ollamaResult {
 	result := ollamaResult{Action: "list"}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	resp, err := http.Get(ollamaAPI + "/api/tags")
+	resp, err := http.Get(baseURL + "/api/tags")
 	if err != nil {
 		result.Error = "Failed to list models: " + err.Error()
 		return result
@@ -105,13 +121,13 @@ func ollamaListModels(ctx context.Context) ollamaResult {
 	return result
 }
 
-func olllamaPull(ctx context.Context, model string) ollamaResult {
+func ollamaPull(ctx context.Context, baseURL, model string) ollamaResult {
 	result := ollamaResult{Action: "pull"}
 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	req, _ := http.NewRequestWithContext(ctx, "POST", ollamaAPI+"/api/pull", strings.NewReader(`{"name":"`+model+`"}`))
+	req, _ := http.NewRequestWithContext(ctx, "POST", baseURL+"/api/pull", strings.NewReader(`{"name":"`+model+`"}`))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
@@ -130,14 +146,14 @@ func olllamaPull(ctx context.Context, model string) ollamaResult {
 	return result
 }
 
-func ollamaRun(ctx context.Context, model, prompt string) ollamaResult {
+func ollamaRun(ctx context.Context, baseURL, model, prompt string) ollamaResult {
 	result := ollamaResult{Action: "run"}
 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	payloadStr := `{"model":"` + model + `","prompt":"` + strings.TrimSpace(prompt) + `","stream":false}`
-	req, _ := http.NewRequestWithContext(ctx, "POST", ollamaAPI+"/api/generate", strings.NewReader(payloadStr))
+	req, _ := http.NewRequestWithContext(ctx, "POST", baseURL+"/api/generate", strings.NewReader(payloadStr))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)

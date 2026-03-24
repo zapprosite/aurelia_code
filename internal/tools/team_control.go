@@ -195,5 +195,5 @@ func (t *GetDashboardStatusTool) Definition() agent.Tool {
 func (t *GetDashboardStatusTool) Execute(ctx context.Context, args map[string]interface{}) (string, error) {
 	// Como o dashboard e apenas um emissor de eventos, aqui podemos retornar
 	// informacoes que o Master sabe que estao sendo enviadas pro dash.
-	return "Dashboard ULTRATRINK: Online em http://localhost:3334. Gateway operando em modo Triple-Tier (MiniMax/DeepSeek/Kimi).", nil
+	return "Dashboard ULTRATRINK: Online (porta configurada via DASHBOARD_PORT, padrão 3334). Gateway operando em modo Triple-Tier (MiniMax/DeepSeek/Kimi).", nil
 }

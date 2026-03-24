@@ -22,6 +22,7 @@ import (
 	"github.com/kocar/aurelia/internal/heartbeat"
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/metrics"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/runtime"
@@ -360,7 +361,7 @@ func (a *app) initVoice(logger *slog.Logger) error {
 }
 
 func (a *app) initServers(logger *slog.Logger) {
-	healthSrv := health.NewServer(8484)
+	healthSrv := health.NewServer(a.cfg.HealthPort)
 	registerAuxiliaryHealthChecks(healthSrv, a.cfg, a.resolver, a.llmProvider)
 
 	healthSrv.RegisterRoute("/metrics", promhttp.Handler())
@@ -390,7 +391,7 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 	case "google":
 		return llm.NewGeminiProvider(context.Background(), cfg.GoogleAPIKey, cfg.LLMModel)
 	case "ollama":
-		return llm.NewOllamaProvider(cfg.LLMModel), nil
+		return llm.NewOllamaProvider(cfg.OllamaURL, cfg.LLMModel), nil
 	case "openrouter":
 		return llm.NewOpenRouterProvider(cfg.OpenRouterAPIKey, cfg.LLMModel), nil
 	case "openai":
@@ -447,7 +448,8 @@ func (a *app) start() {
 		})
 	}
 	dashboard.RegisterRoute("/api/commands", dashboard.HandleCommands)
-	_ = dashboard.StartServer(logger)
+	dashboard.RegisterRoute("/api/metrics", metrics.Handler())
+	_ = dashboard.StartServer(logger, a.cfg.DashboardPort)
 	go a.bot.Start()
 }
 
