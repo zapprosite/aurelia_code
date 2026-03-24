@@ -99,8 +99,8 @@ A Aurelia deve transicionar do estado de assistente para um sistema de engenhari
 - [ ] **RouterStatus.tsx**: Visualização gráfica do orçamento e latência de Tiers.
 - [ ] **SquadLoadMap**: Mapa de calor da carga de trabalho dos agentes.
 - [ ] **Live Logs Visualizer**: Filtro semântico de logs estruturados em tempo real.
-- [ ] **S-22 Squad Live Load**: Barras de carga com dados reais (CPU, jobs, probe HTTP).
-- [ ] **S-26 Brain Search**: Input semântico + cards Qdrant na aba The Brain.
+- [x] **S-22 Squad Live Load**: Barras de carga com dados reais (CPU, jobs, probe HTTP). ✅ 2026-03-24
+- [x] **S-26 Brain Search**: Input semântico + cards Qdrant na aba The Brain. ✅ 2026-03-24
 
 ---
 *Referência obrigatória para o início de toda nova tarefa no ecossistema Aurélia.*
