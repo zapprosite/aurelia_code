@@ -1,56 +1,48 @@
-# S-23: Cloudflare Access — Cloud-Only Configuration
+# S-23: Cloudflare Access — Zero Trust via Terraform
 
-**Status:** Cloud-only config. No code implementation required in this repository.
+**Status:** ✅ Implementado via IaC
+**Terraform:** `/srv/ops/terraform/cloudflare/access.tf`
 
-## Overview
+## Recursos criados
 
-Cloudflare Access protects the Aurelia dashboard endpoint (`https://aurelia.kocar.dev` or equivalent)
-behind Cloudflare Zero Trust, requiring authentication before traffic reaches the origin.
+- `cloudflare_access_application` — uma aplicação Zero Trust por serviço (n8n, qdrant, caprover, supabase, studio, monitor, aurelia)
+- `cloudflare_access_policy` — política `owners` com `decision = allow` por email
 
-## Setup Steps (Manual, Cloudflare Dashboard)
+## Como usar
 
-1. **Create an Application** in Cloudflare Zero Trust > Access > Applications.
-   - Type: Self-hosted
-   - Application domain: `aurelia.yourdomain.com`
-   - Session duration: 24h (recommended)
+```bash
+cd /srv/ops/terraform/cloudflare
 
-2. **Create a Policy** tied to the application:
-   - Policy name: `aurelia-owners`
-   - Action: Allow
-   - Include rule: Emails → `your@email.com`
+# 1. Adicionar email autorizado no terraform.tfvars:
+# allowed_emails = ["will@example.com"]
 
-3. **Add a Service Token** (optional, for API access):
-   - Zero Trust > Access > Service Auth > Service Tokens
-   - Use `CF-Access-Client-Id` + `CF-Access-Client-Secret` headers in automated requests.
+# 2. Aplicar
+terraform plan
+terraform apply
+```
 
-4. **DNS & Tunnel** (if using Cloudflare Tunnel):
-   ```bash
-   cloudflared tunnel create aurelia
-   cloudflared tunnel route dns aurelia aurelia.yourdomain.com
-   ```
-   Configure `~/.cloudflared/config.yml`:
-   ```yaml
-   tunnel: <tunnel-id>
-   credentials-file: /home/user/.cloudflared/<tunnel-id>.json
-   ingress:
-     - hostname: aurelia.yourdomain.com
-       service: http://localhost:3334
-     - service: http_status:404
-   ```
+## Variável
 
-5. **Origin validation** (optional hardening):
-   - In the dashboard Go backend, verify `Cf-Access-Jwt-Assertion` header against Cloudflare public keys.
-   - Library: `github.com/cloudflare/cloudflare-go` or manual JWT validation.
+```hcl
+variable "allowed_emails" {
+  type    = list(string)
+  default = []
+}
+```
 
-## No Backend Code Needed
+## Serviços protegidos
 
-The protection is enforced at the Cloudflare edge. The Go backend at `localhost:3334` does not need
-to implement any authentication logic for Cloudflare Access to work.
+| Serviço   | Domínio                |
+|-----------|------------------------|
+| aurelia   | aurelia.zappro.site    |
+| n8n       | n8n.zappro.site        |
+| qdrant    | qdrant.zappro.site     |
+| caprover  | cap.zappro.site        |
+| supabase  | supabase.zappro.site   |
+| studio    | studio.zappro.site     |
+| monitor   | monitor.zappro.site    |
 
-If origin validation is desired in the future, add middleware in `internal/dashboard/dashboard.go`
-to verify the CF-Access JWT assertion before serving routes.
+## Sem código no backend
 
-## References
-
-- https://developers.cloudflare.com/cloudflare-one/applications/configure-apps/self-hosted-apps/
-- https://developers.cloudflare.com/cloudflare-one/identity/service-tokens/
+A proteção é enforced na edge Cloudflare. O backend Go não precisa de middleware de auth.
+Se no futuro quiser validação de JWT CF-Access, adicionar middleware em `internal/dashboard/dashboard.go`.
