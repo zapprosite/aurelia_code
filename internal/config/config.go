@@ -16,6 +16,9 @@ const (
 	defaultLLMProvider          = "ollama"
 	defaultLLMModel             = "gemma3:12b"
 	defaultSTTProvider          = "groq"
+	defaultSTTLanguage          = "pt"
+	defaultGroqSTTBaseURL       = "https://api.groq.com/openai/v1"
+	defaultGroqSTTModel         = "whisper-large-v3-turbo"
 	defaultTTSProvider          = "openai_compatible"
 	defaultLocalTTSBaseURL = "http://127.0.0.1:8012" // Kokoro TTS (CPU, < 1.5GB VRAM)
 	defaultLocalTTSModel   = "kokoro"
@@ -48,6 +51,7 @@ type AppConfig struct {
 	STTProvider              string
 	STTBaseURL               string
 	STTModel                 string
+	STTLanguage              string
 	TTSProvider              string
 	TTSBaseURL               string
 	TTSModel                 string
@@ -106,6 +110,7 @@ type fileConfig struct {
 	STTProvider              string  `json:"stt_provider"`
 	STTBaseURL               string  `json:"stt_base_url"`
 	STTModel                 string  `json:"stt_model"`
+	STTLanguage              string  `json:"stt_language"`
 	TTSProvider              string  `json:"tts_provider"`
 	TTSBaseURL               string  `json:"tts_base_url"`
 	TTSModel                 string  `json:"tts_model"`
@@ -163,6 +168,7 @@ type EditableConfig struct {
 	LLMProvider              string
 	LLMModel                 string
 	STTProvider              string
+	STTLanguage              string
 	TTSProvider              string
 	TTSBaseURL               string
 	TTSModel                 string
@@ -276,6 +282,9 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		LLMProvider:              defaultLLMProvider,
 		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
 		STTProvider:              defaultSTTProvider,
+		STTBaseURL:               defaultGroqSTTBaseURL,
+		STTModel:                 defaultGroqSTTModel,
+		STTLanguage:              defaultSTTLanguage,
 		TTSProvider:              defaultTTSProvider,
 		TTSBaseURL:               defaultLocalTTSBaseURL,        // Kokoro (CPU, < 1.5GB VRAM)
 		TTSModel:                 defaultLocalTTSModel,           // kokoro
@@ -321,6 +330,7 @@ func DefaultEditableConfig() EditableConfig {
 		LLMProvider:              defaultLLMProvider,
 		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
 		STTProvider:              defaultSTTProvider,
+		STTLanguage:              defaultSTTLanguage,
 		TTSProvider:              defaultTTSProvider,
 		TTSBaseURL:               defaultTTSBaseURLForProvider(defaultTTSProvider),
 		TTSModel:                 defaultTTSModelForProvider(defaultTTSProvider),
@@ -356,6 +366,7 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		LLMProvider:              cfg.LLMProvider,
 		LLMModel:                 cfg.LLMModel,
 		STTProvider:              cfg.STTProvider,
+		STTLanguage:              cfg.STTLanguage,
 		TTSProvider:              cfg.TTSProvider,
 		TTSBaseURL:               cfg.TTSBaseURL,
 		TTSModel:                 cfg.TTSModel,
@@ -392,6 +403,7 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.LLMProvider = editable.LLMProvider
 	cfg.LLMModel = editable.LLMModel
 	cfg.STTProvider = editable.STTProvider
+	cfg.STTLanguage = editable.STTLanguage
 	cfg.TTSProvider = editable.TTSProvider
 	cfg.TTSBaseURL = editable.TTSBaseURL
 	cfg.TTSModel = editable.TTSModel
@@ -439,6 +451,9 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	}
 	if cfg.STTProvider == "" {
 		cfg.STTProvider = defaults.STTProvider
+	}
+	if cfg.STTLanguage == "" {
+		cfg.STTLanguage = defaults.STTLanguage
 	}
 	if cfg.TTSProvider == "" {
 		cfg.TTSProvider = defaults.TTSProvider
@@ -572,6 +587,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		STTProvider:              cfg.STTProvider,
 		STTBaseURL:               cfg.STTBaseURL,
 		STTModel:                 cfg.STTModel,
+		STTLanguage:              cfg.STTLanguage,
 		TTSProvider:              cfg.TTSProvider,
 		TTSBaseURL:               cfg.TTSBaseURL,
 		TTSModel:                 cfg.TTSModel,
@@ -630,6 +646,7 @@ func sameFileConfig(a, b fileConfig) bool {
 		a.LLMProvider != b.LLMProvider ||
 		a.LLMModel != b.LLMModel ||
 		a.STTProvider != b.STTProvider ||
+		a.STTLanguage != b.STTLanguage ||
 		a.TTSProvider != b.TTSProvider ||
 		a.TTSBaseURL != b.TTSBaseURL ||
 		a.TTSModel != b.TTSModel ||

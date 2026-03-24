@@ -26,20 +26,35 @@ type Transcriber interface {
 type GroqTranscriber struct {
 	apiKey     string
 	apiBase    string
+	model      string
+	language   string
 	httpClient *http.Client
 }
 
 const (
+	defaultGroqSTTBaseURL     = "https://api.groq.com/openai/v1"
 	defaultGroqSTTModel       = "whisper-large-v3-turbo"
 	defaultGroqSTTLanguage    = "pt"
 	defaultGroqSTTTemperature = "0"
 )
 
-// NewGroqTranscriber creates a new Groq STT client
-func NewGroqTranscriber(apiKey string) *GroqTranscriber {
+// NewGroqTranscriber creates a new Groq STT client.
+// Pass empty strings for baseURL, model, language to use defaults.
+func NewGroqTranscriber(apiKey, baseURL, model, language string) *GroqTranscriber {
+	if baseURL == "" {
+		baseURL = defaultGroqSTTBaseURL
+	}
+	if model == "" {
+		model = defaultGroqSTTModel
+	}
+	if language == "" {
+		language = defaultGroqSTTLanguage
+	}
 	return &GroqTranscriber{
-		apiKey:  apiKey,
-		apiBase: "https://api.groq.com/openai/v1",
+		apiKey:   apiKey,
+		apiBase:  baseURL,
+		model:    model,
+		language: language,
 		httpClient: &http.Client{
 			Timeout: 60 * time.Second,
 		},
@@ -70,11 +85,11 @@ func (t *GroqTranscriber) Transcribe(ctx context.Context, audioFilePath string) 
 		return "", fmt.Errorf("failed to copy file content: %w", err)
 	}
 
-	if err := writer.WriteField("model", defaultGroqSTTModel); err != nil {
+	if err := writer.WriteField("model", t.model); err != nil {
 		return "", fmt.Errorf("failed to write model field: %w", err)
 	}
 
-	if err := writer.WriteField("language", defaultGroqSTTLanguage); err != nil {
+	if err := writer.WriteField("language", t.language); err != nil {
 		return "", fmt.Errorf("failed to write language field: %w", err)
 	}
 
