@@ -1,7 +1,7 @@
 ---
 title: Antigravity Gemini Operator Integration
 status: in_progress
-owner: codex
+owner: antigravity
 created: 2026-03-19
 ---
 

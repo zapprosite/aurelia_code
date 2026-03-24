@@ -22,8 +22,8 @@
 - Initial boot logs also showed `gkr-pam: no password is available for user` and `gkr-pam: couldn't unlock the login keyring.` under `gdm-autologin`.
 - The login keyring contained 6 items used by GitHub and Chromium/Chrome safe storage.
 - A backup of the original keyring files was stored at:
-  - `/home/will/.local/share/keyrings/backup-codex-20260319T015938`
-  - `/home/will/.local/share/keyrings/backup-codex-files-20260319T020104`
+  - `/home/will/.local/share/keyrings/backup-antigravity-20260319T015938`
+  - `/home/will/.local/share/keyrings/backup-antigravity-files-20260319T020104`
 - The keyring was migrated to a no-password `login.keyring`, preserving all 6 items.
 - `default` and `login` now both resolve to `/org/freedesktop/secrets/collection/login` after restarting `gnome-keyring-daemon.service`.
 - Post-fix validation showed the standard Secret Service `Unlock` call returned `prompt=/`, confirming unlock without a password dialog.
@@ -36,8 +36,8 @@
 ## Reversal - 2026-03-19 02:12 -03
 
 - On user request, the no-password keyring change was reverted before the next reboot.
-- Restored files from `/home/will/.local/share/keyrings/backup-codex-20260319T015938`.
-- Created a rollback safety copy at `/home/will/.local/share/keyrings/backup-codex-restore-20260319T021237`.
+- Restored files from `/home/will/.local/share/keyrings/backup-antigravity-20260319T015938`.
+- Created a rollback safety copy at `/home/will/.local/share/keyrings/backup-antigravity-restore-20260319T021237`.
 - Removed the temporary `default` alias file created during the no-password migration.
 - After restart, `login.keyring` is back to the original password-protected GNOME keyring format.
 - Validation after the restore showed:
@@ -57,10 +57,10 @@
   - `gkr-pam: couldn't unlock the login keyring`
 - Root cause remained unchanged: GDM autologin does not provide a login password to PAM, so a password-protected GNOME login keyring cannot unlock automatically during session start.
 - Applied the smallest known-good correction by restoring the previously validated no-password keyring state from:
-  - `/home/will/.local/share/keyrings/backup-codex-restore-20260319T021237/login.keyring.before-restore`
-  - `/home/will/.local/share/keyrings/backup-codex-restore-20260319T021237/default.before-restore`
+  - `/home/will/.local/share/keyrings/backup-antigravity-restore-20260319T021237/login.keyring.before-restore`
+  - `/home/will/.local/share/keyrings/backup-antigravity-restore-20260319T021237/default.before-restore`
 - Created a fresh rollback backup before reapplying:
-  - `/home/will/.local/share/keyrings/backup-codex-reapply-20260319T022047`
+  - `/home/will/.local/share/keyrings/backup-antigravity-reapply-20260319T022047`
 - Post-fix validation after restarting `gnome-keyring-daemon.service` showed:
   - `login.keyring` is now the ASCII no-password format again
   - `default` and `login` aliases both resolve to `/org/freedesktop/secrets/collection/login`
