@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kocar/aurelia/internal/dashboard"
 )
 
 type Scheduler struct {
@@ -36,6 +37,24 @@ func NewScheduler(store Store, runtime Runtime, clock Clock, config SchedulerCon
 		clock:   clock,
 		config:  config,
 	}, nil
+}
+
+// ActiveCount returns the number of currently active (enabled) cron jobs.
+// It satisfies the agent.CronActiveCounter interface.
+func (s *Scheduler) ActiveCount() int {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	jobs, err := s.store.ListDueJobs(ctx, s.clock.Now().UTC().Add(24*time.Hour), 200)
+	if err != nil {
+		return 0
+	}
+	count := 0
+	for _, j := range jobs {
+		if j.Active {
+			count++
+		}
+	}
+	return count
 }
 
 func (s *Scheduler) RunDueJobs(ctx context.Context) (int, error) {
@@ -115,6 +134,23 @@ func (s *Scheduler) runSingleJob(ctx context.Context, now time.Time, job CronJob
 	if err := s.store.UpdateJob(ctx, job); err != nil {
 		return err
 	}
+
+	// S-25: publish cron completion event to dashboard SSE
+	status := "ok"
+	if runErr != nil {
+		status = "error"
+	}
+	dashboard.Publish(dashboard.Event{
+		Type:   "agent_comms",
+		Agent:  "cronus",
+		Action: "cron_complete",
+		Payload: map[string]string{
+			"job":    job.ID,
+			"status": status,
+		},
+		Timestamp: finishedAt.Format("15:04:05"),
+	})
+
 	return nil
 }
 

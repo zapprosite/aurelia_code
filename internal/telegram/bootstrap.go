@@ -10,6 +10,12 @@ import (
 )
 
 func (bc *BotController) handleStatus(c telebot.Context) error {
+	// S-27: If squad reporter is available, show rich status
+	if bc.squadReporter != nil {
+		return bc.handleSquadStatus(c)
+	}
+
+	// Fallback to gateway status
 	if bc.healthReporter == nil {
 		return SendContextText(c, "Diagnostico indisponivel neste runtime.")
 	}
@@ -24,7 +30,7 @@ func (bc *BotController) handleStatus(c telebot.Context) error {
 	}
 
 	reply := "Gateway Status:\n```json\n" + string(data) + "\n```"
-	
+
 	// Persistir a resposta da assistente
 	bc.persistAssistantAnswer(session, reply)
 
