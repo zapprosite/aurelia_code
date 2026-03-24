@@ -47,10 +47,11 @@ type Store interface {
 
 type AgentExecutor interface {
 	Execute(ctx context.Context, systemPrompt string, history []agent.Message, allowedTools []string) ([]agent.Message, string, error)
+	RunCommand(ctx context.Context, command string) (string, error)
 }
 
 type Runtime interface {
-	ExecuteJob(ctx context.Context, job CronJob) (string, error)
+	ExecuteJob(ctx context.Context, job CronJob) (string, []agent.ContentPart, error)
 }
 
 type Clock interface {

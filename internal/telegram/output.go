@@ -9,9 +9,96 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/pkg/tts"
 	"gopkg.in/telebot.v3"
 )
+
+func SendMediaParts(bot *telebot.Bot, chat *telebot.Chat, parts []agent.ContentPart) error {
+	if len(parts) == 0 {
+		return nil
+	}
+
+	var textParts []string
+	var imageParts []agent.ContentPart
+
+	for _, p := range parts {
+		if p.Type == agent.ContentPartText && p.Text != "" {
+			textParts = append(textParts, p.Text)
+		} else if p.Type == agent.ContentPartImage {
+			imageParts = append(imageParts, p)
+		}
+	}
+
+	fullText := strings.Join(textParts, "\n\n")
+
+	if len(imageParts) == 0 {
+		if fullText != "" {
+			return SendText(bot, chat, fullText)
+		}
+		return nil
+	}
+
+	// Handle first image with the full text as caption if it fits
+	firstImage := imageParts[0]
+	remainingImages := imageParts[1:]
+
+	tmpFile, err := os.CreateTemp(os.TempDir(), "aurelia-media-*.jpg")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmpFile.Name()
+	defer os.Remove(tmpPath)
+
+	if _, err := tmpFile.Write(firstImage.Data); err != nil {
+		_ = tmpFile.Close()
+		return err
+	}
+	_ = tmpFile.Close()
+
+	if len(fullText) > 1024 {
+		// Telegram caption limit is 1024. If it's longer, send text separately.
+		if _, err := bot.Send(chat, &telebot.Photo{File: telebot.FromDisk(tmpPath)}); err != nil {
+			return err
+		}
+		if err := SendText(bot, chat, fullText); err != nil {
+			return err
+		}
+	} else {
+		photo := &telebot.Photo{
+			File:    telebot.FromDisk(tmpPath),
+			Caption: MarkdownToHTML(fullText),
+		}
+		if _, err := bot.Send(chat, photo, &telebot.SendOptions{ParseMode: telebot.ModeHTML}); err != nil {
+			// Fallback to plain text caption if HTML fails
+			photo.Caption = fullText
+			if _, err := bot.Send(chat, photo); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Send remaining images
+	for _, img := range remainingImages {
+		_ = func() error {
+			t, e := os.CreateTemp(os.TempDir(), "aurelia-media-*.jpg")
+			if e != nil {
+				return e
+			}
+			p := t.Name()
+			defer os.Remove(p)
+			if _, e := t.Write(img.Data); e != nil {
+				_ = t.Close()
+				return e
+			}
+			_ = t.Close()
+			_, e = bot.Send(chat, &telebot.Photo{File: telebot.FromDisk(p)})
+			return e
+		}()
+	}
+
+	return nil
+}
 
 type ttsAsyncResult struct {
 	audio tts.Audio

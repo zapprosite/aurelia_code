@@ -71,19 +71,50 @@ func sanitizeUserVisibleErrorMessage(errMsg string) string {
 }
 
 func sanitizeAssistantOutputForUser(text string) string {
-	trimmed := strings.TrimSpace(strings.ReplaceAll(text, "\x00", ""))
+	text = strings.ReplaceAll(text, "\x00", "")
+	
+	// Remove tags de pensamento/raciocínio interno (padrão DeepSeek/Claude/Gemma)
+	text = removeTag(text, "thought")
+	
+	trimmed := strings.TrimSpace(text)
 	if trimmed == "" {
 		return genericResponseGuardMessage
 	}
 
 	lower := strings.ToLower(trimmed)
-	if strings.HasPrefix(lower, "{\"skillname\"") || strings.HasPrefix(lower, "```json\n{\"skillname\"") {
+	
+	// Se a resposta for puramente JSON de roteamento, é um erro de escape do LLM
+	if strings.HasPrefix(lower, "{\"skillname\"") || 
+	   strings.HasPrefix(lower, "```json\n{\"skillname\"") ||
+	   strings.HasPrefix(lower, "{\"tool_code\"") {
 		return genericResponseGuardMessage
 	}
+
 	if containsAny(lower, internalOutputMarkers...) {
 		return genericResponseGuardMessage
 	}
+
 	return trimmed
+}
+
+func removeTag(text, tag string) string {
+	startTag := "<" + tag + ">"
+	endTag := "</" + tag + ">"
+	
+	for {
+		startIdx := strings.Index(text, startTag)
+		if startIdx == -1 {
+			break
+		}
+		endIdx := strings.Index(text, endTag)
+		if endIdx == -1 {
+			// Tag não fechada, removemos do início até o fim
+			return strings.TrimSpace(text[:startIdx])
+		}
+		// Remove a tag e o conteúdo interno
+		text = text[:startIdx] + text[endIdx+len(endTag):]
+	}
+	return text
 }
 
 func containsAny(text string, markers ...string) bool {

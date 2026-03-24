@@ -338,7 +338,7 @@ func TestMasterTeamService_Spawn_NotifiesMasterLeadWhenWorkerFinishes(t *testing
 		if notification == "" {
 			t.Fatalf("expected non-empty master notification")
 		}
-		if !strings.Contains(notification, "pending=") {
+		if !strings.Contains(notification, "Aurelia Sovereign 2026") && !strings.Contains(notification, "Missão Concluída") {
 			t.Fatalf("expected master notification to include team snapshot, got %q", notification)
 		}
 	case <-time.After(2 * time.Second):
@@ -739,7 +739,7 @@ func TestMasterTeamService_OnRepeatedFailure_EscalatesAfterRetryLimit(t *testing
 	for !sawEscalation {
 		select {
 		case msg := <-notifications:
-			if strings.Contains(strings.ToLower(msg), "escalated") {
+			if strings.Contains(strings.ToLower(msg), "escalonamento crítico") {
 				sawEscalation = true
 			}
 		case <-deadline:
@@ -774,7 +774,7 @@ func TestMasterTeamService_OnFailure_NotifiesMasterAboutReplanning(t *testing.T)
 	for {
 		select {
 		case msg := <-notifications:
-			if strings.Contains(strings.ToLower(msg), "replanejamento") {
+			if strings.Contains(strings.ToLower(msg), "auto-healing") || strings.Contains(strings.ToLower(msg), "anomalia detectada") {
 				return
 			}
 		case <-deadline:
@@ -1047,13 +1047,13 @@ func TestMasterTeamService_FinalNotification_WhenTeamConverges(t *testing.T) {
 	waitForCondition(t, 8*time.Second, func() (bool, string) {
 		select {
 		case msg := <-notifications:
-			if !strings.Contains(strings.ToLower(msg), "fechei este ciclo do time") {
+			if !strings.Contains(strings.ToLower(msg), "missão concluída") {
 				return false, "expected final master response"
 			}
-			if !strings.Contains(msg, "completed=1") {
+			if !strings.Contains(msg, "1 concluídas") {
 				return false, "expected final snapshot in message"
 			}
-			if !strings.Contains(strings.ToLower(msg), "encerrando a operacao deste ciclo") {
+			if !strings.Contains(strings.ToLower(msg), "ciclo encerrado") {
 				return false, "expected final message to mention cycle cleanup"
 			}
 			return true, ""
@@ -1196,7 +1196,7 @@ func TestMasterTeamService_FormatMasterNotification_ClassifiesTotalSuccess(t *te
 	if !strings.Contains(strings.ToLower(msg), "sucesso total") {
 		t.Fatalf("expected total success classification, got %q", msg)
 	}
-	if !strings.Contains(strings.ToLower(msg), "limpei o estado transitorio") {
+	if !strings.Contains(strings.ToLower(msg), "recursos transientes liberados") {
 		t.Fatalf("expected final message to mention cleanup, got %q", msg)
 	}
 }
@@ -1222,7 +1222,7 @@ func TestMasterTeamService_FormatMasterNotification_ClassifiesPartialCompletion(
 	if !strings.Contains(strings.ToLower(msg), "conclusao parcial") {
 		t.Fatalf("expected partial classification, got %q", msg)
 	}
-	if !strings.Contains(strings.ToLower(msg), "parei os workers") {
+	if !strings.Contains(strings.ToLower(msg), "ciclo encerrado") {
 		t.Fatalf("expected partial final message to mention workers shutdown, got %q", msg)
 	}
 }
@@ -1248,7 +1248,7 @@ func TestMasterTeamService_FormatMasterNotification_ClassifiesTerminalBlock(t *t
 	if !strings.Contains(strings.ToLower(msg), "bloqueio terminal") {
 		t.Fatalf("expected terminal classification, got %q", msg)
 	}
-	if !strings.Contains(strings.ToLower(msg), "encerrando a operacao deste ciclo") {
+	if !strings.Contains(strings.ToLower(msg), "ciclo encerrado") {
 		t.Fatalf("expected terminal final message to mention cycle closure, got %q", msg)
 	}
 }

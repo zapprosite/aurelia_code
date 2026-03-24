@@ -64,7 +64,7 @@ func (s *MasterTeamService) prepareRecoveryBaseTask(ctx context.Context, teamID,
 	defer s.mu.Unlock()
 	attempts := s.recoveryCount[baseTask.ID]
 	if attempts >= s.maxRecoveryAttempts {
-		s.notifyMaster(teamKey, fmt.Sprintf("Task `%s` escalated after %d failed recovery attempt(s). Tentei replanejar isso algumas vezes, mas o time nao conseguiu se recuperar sozinho. Vou parar por aqui e esperar sua orientacao.", baseTask.Title, attempts))
+		s.notifyMaster(teamKey, fmt.Sprintf("🛑 **Escalonamento Crítico**: A task `%s` falhou após %d tentativas de recuperação automática. O time não conseguiu se auto-corrigir. Interrompendo para intervenção humana.", baseTask.Title, attempts))
 		return nil, 0, false
 	}
 	s.recoveryCount[baseTask.ID] = attempts + 1
@@ -79,18 +79,12 @@ func (s *MasterTeamService) notifyRecoveryPlanning(ctx context.Context, teamKey,
 	}
 
 	s.notifyMaster(teamKey, fmt.Sprintf(
-		"O especialista `%s` falhou em `%s`, entao eu iniciei o replanejamento da equipe e abri uma tentativa %d.\n%s\nEquipe em `%s`: %d pendente(s), %d em andamento, %d bloqueada(s), %d concluida(s), %d com falha e %d cancelada(s).",
+		"⚠️ **Anomalia Detectada**: O especialista `%s` falhou em `%s`.\n\n🔄 **Auto-Healing**: Iniciando tentativa de recuperação %d.\n%s\n\n%s",
 		failedAgent,
 		baseTask.Title,
 		attempt,
 		classicStatusLine(snapshot),
-		fallbackTeamStatus(snapshot.TeamStatus),
-		snapshot.Pending,
-		snapshot.Running,
-		snapshot.Blocked,
-		snapshot.Completed,
-		snapshot.Failed,
-		snapshot.Cancelled,
+		s.formatHumanStatus(snapshot),
 	))
 }
 

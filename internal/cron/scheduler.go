@@ -93,7 +93,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 func (s *Scheduler) runSingleJob(ctx context.Context, now time.Time, job CronJob) error {
 	startedAt := now
-	output, runErr := s.runtime.ExecuteJob(ctx, job)
+	output, _, runErr := s.runtime.ExecuteJob(ctx, job)
 	finishedAt := s.clock.Now().UTC()
 
 	exec := CronExecution{

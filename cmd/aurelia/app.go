@@ -583,10 +583,13 @@ func buildCronScheduler(
 		},
 	)
 
-	notifyingRuntime := cron.NewNotifyingRuntime(cronRuntime, func(ctx context.Context, job cron.CronJob, output string, execErr error) error {
+	notifyingRuntime := cron.NewNotifyingRuntime(cronRuntime, func(ctx context.Context, job cron.CronJob, output string, parts []agent.ContentPart, execErr error) error {
 		chat := &telebot.Chat{ID: job.TargetChatID}
 		if execErr != nil {
 			return telegram.SendText(bot.GetBot(), chat, "Falha na rotina agendada:\n"+execErr.Error())
+		}
+		if len(parts) > 0 {
+			return telegram.SendMediaParts(bot.GetBot(), chat, parts)
 		}
 		return telegram.SendText(bot.GetBot(), chat, output)
 	})
