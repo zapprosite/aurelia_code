@@ -4,12 +4,13 @@ import { Sidebar, type TabId } from "./components/sidebar/Sidebar";
 import { Header } from "./components/dashboard/Header";
 import { FeedItem, type FeedItemProps } from "./components/dashboard/FeedItem";
 import { AgentDesktop } from "./components/dashboard/AgentDesktop";
+import { AgentComms } from "./components/dashboard/AgentComms";
 import { CommandMenu } from "./components/dashboard/CommandMenu";
 import { PlanViewer, type ActionPlan } from "./components/dashboard/PlanViewer";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Card, CardHeader, CardTitle } from "./components/ui/Card";
 import { Badge } from "./components/ui/Badge";
-import { Brain, Layout } from "lucide-react";
+import { Brain, Layout, Server } from "lucide-react";
 import { useSystemMetrics } from "./hooks/useSystemMetrics";
 import { type SquadAgent } from "./components/dashboard/SquadGrid";
 
@@ -108,6 +109,7 @@ function App() {
       case "squad": return "Squad View — Agent Status";
       case "brain": return "The Brain — Semantic Context";
       case "roadmap": return "Master Plan — Feature Roadmap";
+      case "homelab": return "Homelab — VRV Dashboard";
       default: return "Dashboard";
     }
   };
@@ -181,6 +183,7 @@ function App() {
                         </Card>
                      </div>
                      <AgentDesktop />
+                     <AgentComms />
                   </div>
                 )}
 
@@ -192,6 +195,23 @@ function App() {
                     <h3 className="text-xl font-bold text-white/80 mb-2 uppercase tracking-tight">Semantic Cortex</h3>
                     <p className="text-sm text-white/30 max-w-md">em desenvolvimento (S-18)</p>
                     <Badge variant="outline" className="mt-6 uppercase text-[10px] tracking-widest">Integrating with Local Vector DB</Badge>
+                  </div>
+                )}
+
+                {activeTab === "homelab" && (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-2 text-white/40">
+                      <Server className="w-4 h-4" />
+                      <span className="text-xs font-mono uppercase tracking-widest">VRV — Homelab Monitor</span>
+                    </div>
+                    <div className="rounded-xl overflow-hidden border border-white/10" style={{ height: "75vh" }}>
+                      <iframe
+                        src="/api/vrv/"
+                        className="w-full h-full"
+                        style={{ border: "none", background: "#0a0a0a" }}
+                        title="VRV Homelab Dashboard"
+                      />
+                    </div>
                   </div>
                 )}
 
