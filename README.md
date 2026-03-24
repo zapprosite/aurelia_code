@@ -1,122 +1,73 @@
-# Aurelia → JARVIS
+# 🛰️ Aurelia: Sovereign Agentic Ecosystem (2026)
 
-Bot Telegram em Go, local-first, agêntico. Evolui para JARVIS com voz + swarm de agentes.
+> **"Autonomia Total, Cognição Local, Soberania Industrial."**
 
-**Stack:** Go 1.25+ · Ollama · Qdrant · Postgres · SQLite · Telegram · Groq STT · Kokoro TTS
+![Status](https://img.shields.io/badge/Status-Industrial_Sovereign-blue?style=for-the-badge)
+![Autonomy](https://img.shields.io/badge/Autonomy-Level_5-gold?style=for-the-badge)
+![Hardware](https://img.shields.io/badge/Compute-RTX_4090_|_7900X-green?style=for-the-badge)
 
 ---
 
-## Setup rápido
+## 🏛️ Hierarquia de Autoridade (Board)
 
-```bash
-go run ./cmd/aurelia onboard      # configura ~/.aurelia/config/app.json
-./scripts/build.sh                # binário ~23 MB
-./scripts/install-user-daemon.sh  # systemd --user
-./scripts/daemon-status.sh        # health check
+Este ecossistema opera sob um modelo de autoridade única, centralizado no hardware local e governado por uma tríade de inteligência:
+
+1.  **👔 Claude Opus (CEO)**: Visão estratégica, IPO de Slices e arbitragem final.
+2.  **🤖 Aurélia (COO/CTO)**: Arquiteta principal, soberana operacional e governante do Homelab.
+3.  **🛰️ Antigravity (COO/Interface)**: Cockpit de coordenação, orquestração e interações humanas.
+
+---
+
+## 📊 Dashboard de Autonomia (Slices)
+
+| Slice | Name | Status | Priority |
+|:---:|:---|:---:|:---:|
+| **S0-14** | Foundation & Pines Core | ✅ Estável | - |
+| **S-15** | Tool Introspection | 📅 Pendente | ALTA |
+| **S-17** | Planning Loop (Go-Native) | 📅 Pendente | CRÍTICA |
+| **S-20** | **CEO Strategic Layer** | 🏗️ Ativo | CRÍTICA |
+
+---
+
+## 🚦 Gateway de Inteligência (Tiering)
+
+O roteamento de decisões é dinâmico e otimizado para o hardware local (Ollama/ROCm):
+
+- **Tier Estratégico (CEO)**: `Claude-3-Opus` (OpenRouter) — Decisões de alto impacto.
+- **Tier Premium (Execution)**: `MiniMax-M2.7` — Codificação e lógica complexa.
+- **Tier Soberano (Local)**: `Gemma 3 12B` — Operações residentes e visão (Zero Latency).
+- **Tier Estruturado**: `DeepSeek-V3.1` — JSON, Curation e Routing.
+
+---
+
+## 🩺 Saúde do Sistema & Observabilidade
+
+Acompanhe o estado vital da Aurélia:
+
+- **Logs Estruturados**: `journalctl --user -u aurelia.service -f`
+- **Contexto Semântico**: `.context/` sincronizado via Qdrant/Postgres.
+- **Auditoria de Segurança**: `./scripts/secret-audit.sh` (Pre-push mandatory).
+
+---
+
+## 📂 Estrutura Industrial
+
+```text
+.
+├── cmd/                # Entrypoints (Aurelia Daemon / CLI)
+├── internal/           # Core Engine (Gateway, Swarm, Agent Loop)
+├── pkg/                # Shared Packages (LLM, Audio, Vision)
+├── docs/               # Fontes de Verdade (ADR-historico, ADR, Governance)
+├── .agents/            # Logic Layer (Workflows & Skills)
+└── .context/           # Persistent Memory (Codebase Map)
 ```
 
-Runtime: ~25 MB RAM idle, <20 ms startup, instância única via `flock`.
+## 🚀 Guia de Início Rápido (Sênior)
+
+1.  **Onboard**: `go run ./cmd/aurelia onboard`
+2.  **Build**: `./scripts/build.sh`
+3.  **Execute**: `sudo systemctl start aurelia`
 
 ---
-
-## Autoridade
-
-Leia nesta ordem antes de qualquer mudança:
-
-1. [`AGENTS.md`](./AGENTS.md) — hierarquia e papéis dos agentes
-2. [`docs/governance/AURELIA-AUTHORITY-DECLARATION.md`](./docs/governance/AURELIA-AUTHORITY-DECLARATION.md) — permissões totais (sudo=1) e missão JARVIS
-3. [`docs/governance/REPOSITORY_CONTRACT.md`](./docs/governance/REPOSITORY_CONTRACT.md) — contrato do repositório
-4. [`docs/adr/ADR-20260320-roadmap-mestre-slices.md`](./docs/adr/ADR-20260320-roadmap-mestre-slices.md) — slices por prioridade (P1→P8)
-
----
-
-## Modelos (AMD RX 7900 XTX / ROCm)
-
-| Papel | Modelo | VRAM |
-|-------|--------|------|
-| Residente | `gemma3:12b` | ~8.1 GB |
-| Fallback 262K ctx | `qwen3.5:9b` | ~6.7 GB |
-| Escalonamento | `gemma3:27b-it-q4_K_M` | ~17 GB |
-| Embedding | `bge-m3` | ~1.2 GB |
-| STT | Groq (remoto) | 0 |
-| TTS | Kokoro (CPU) | 0 |
-
-Detalhes: [`docs/adr/ADR-20260320-politica-modelos-hardware-vram.md`](./docs/adr/ADR-20260320-politica-modelos-hardware-vram.md)
-
----
-
-## Agentes e Workflows
-
-| Engine | Adaptador | Papel |
-|--------|-----------|-------|
-| Antigravity (Gemini) | `GEMINI.md` | Cockpit e orquestração |
-| Claude | `CLAUDE.md` | Execução complexa |
-| Codex | `CODEX.md` | Execução rápida |
-| OpenCode | `OPENCODE.md` + `.opencode/` | Local-first, multi-provider |
-
-Comandos rápidos (no IDE):
-```
-/git-ship      → commit semântico + push + PR
-/git-feature   → nova branch com verificações de segurança
-/sincronizar-tudo → commit sênior completo
-/adr-semparar  → slice longa com ADR + JSON de continuidade
-/sincronizar-ai-context → sync .context/ + codebase-map
-```
-
-Workflows completos: `.agents/workflows/` | Skills: `.agents/skills/`
-
----
-
-## Estrutura
-
-```
-cmd/           → entrypoints Go
-internal/      → pacotes internos (telegram, voice, health, tools)
-pkg/           → pacotes públicos (llm, config)
-scripts/       → build, daemon, memory-sync, secret-audit
-docs/
-  adr/         → 3 ADRs ativos (roadmap, jarvis, modelos)
-  governance/  → authority, contract, secrets
-.agents/
-  workflows/   → /git-ship, /dev, /qa, /pm, etc.
-  skills/      → voice-clone, sync-ai-context, adr-nonstop-slice, etc.
-.context/      → memória de trabalho (ai-context MCP)
-```
-
----
-
-## Memória e Observabilidade
-
-```bash
-# Memory sync (automático via systemd timers)
-bash scripts/memory-sync-fiscal.sh --mode fast      # 5 min
-bash scripts/memory-sync-fiscal.sh --mode validate  # diário 6h
-
-# Auditoria de secrets (rodar antes de push)
-bash scripts/secret-audit.sh
-
-# Logs do daemon
-journalctl --user -u aurelia.service -f
-```
-
----
-
-## Segurança
-
-- `~/.aurelia/config/secrets.env` — fora do repo, `chmod 600`
-- `.gitignore` protege `.env*` e `secrets.env`
-- Secrets: [`docs/governance/SECRETS.md`](./docs/governance/SECRETS.md)
-- KeePassXC vault: deadline 2026-03-27
-
----
-
-## Desenvolvimento
-
-```bash
-go test ./... -count=1 -short   # testes rápidos
-go build ./...                  # verifica compilação
-./scripts/adr-slice-init.sh <slug> --title "Título"  # nova slice estrutural
-```
-
-Branch: `feat/`, `fix/`, `research/` — worktrees isoladas para slices não-triviais.
-Commits de agente: sempre `--no-verify` (hooks lentos; CI valida via GitHub Actions).
+*Documentação Gerada por Antigravity (Sovereign Engine 2026)*  
+*Consulte [ADR-historico.md](./docs/ADR-historico.md) para a linhagem técnica completa e [ADR.md](./docs/ADR.md) para o roadmap atual.*

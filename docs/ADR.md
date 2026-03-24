@@ -7,6 +7,16 @@
 ---
 
 ## 1. Objetivos Estratégicos (Jarvis 2026)
+
+```mermaid
+graph TD
+    User((Humano)) --> CEO[Claude Opus CEO - Estratégia Externa]
+    CEO --> Architect[Aurélia COO/CTO - Arquiteta Soberana]
+    Architect --> Coordinator[Antigravity/Gemini - Coordenação]
+    Coordinator --> Bot[Aurelia Bot - Runtime Go]
+    Bot --> HW[(RTX 4090 / 7900X)]
+```
+
 A Aurelia deve transicionar do estado de assistente para um sistema de engenharia autônomo, onde a intervenção humana seja reduzida a < 5%. A cognição deve ser priorizada no hardware local (RTX 4090 + 7900X).
 
 ## 2. Backlog de Slices (Status Oficial)
@@ -17,7 +27,8 @@ A Aurelia deve transicionar do estado de assistente para um sistema de engenhari
 | **S-16** | Execution DNA | Templates de workflow nativos (Go) por tipo de tarefa. | 📅 Pendente | MÉDIA |
 | **S-17** | Planning Loop | Loop PREV (Plan-Review-Exec-Verify) nativo no daemon. | 📅 Pendente | CRÍTICA |
 | **S-18** | Symbol Map (Real) | Parseamento AST nativo (.ast) para localização de símbolos. | 📅 Pendente | ALTA |
-| **S-19** | Skill Router | Roteamento de skills via embeddings (Vector-First). | 📅 Pendente | ALTA |
+| **S-20** | CEO Governance | Camada estratégica Claude Opus p/ decisões de alto impacto. | ✅ Concluído | CRÍTICA |
+| **S-21** | Poda Industrial | Limpeza de logs, binários órfãos e recursos Docker (Codex Purge). | ✅ Concluído | MÉDIA |
 
 ## 3. Detalhamento dos Próximos Passos (Curto Prazo)
 

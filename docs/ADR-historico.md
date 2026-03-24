@@ -7,6 +7,16 @@
 ---
 
 ## 1. Visão Geral da Evolução
+
+```mermaid
+timeline
+    title Jornada de Autonomia Aurelia
+    Era 0-10 : Fundação Industrial : Go Monorepo : Telegram Bot : Local LLM (Ollama)
+    Era 11-12 : Multimodalidade : Dashboard Ultratrink : Restauração Visão Gemma 3
+    Era 13-14 : Soberania : Triple-Tier Routing : Contrato Zod-First : Voz Canônica
+    Era 15+ : Era CEO : Claude Opus Strategic Layer : Autonomia Nível 5 (Pines)
+```
+
 Este documento é a fonte única de verdade sobre todas as decisões arquiteturais e implementações realizadas desde a fundação do monorepo até a estabilização do **Pines Core (Autonomia Nível 5)**.
 
 ## 2. Eras de Desenvolvimento
@@ -56,6 +66,13 @@ Este documento é a fonte única de verdade sobre todas as decisões arquitetura
 - [x] **S0-S5 (Foundations)**: Git, Docker, Go, Telegram, Memory (Qdrant), Skills.
 - [x] **S6-S10 (Infrastructure)**: Vision (Gemma 3), Structured Logging, Dashboard (SSE), Security (Sudo=1).
 - [x] **S11-S14 (Intelligence)**: Symbol Map (AST), Triple-Tier Routing, Autonomous Planning, Voice Identity.
+- [x] **S15-S21 (Modernização)**: Claude Opus CEO, Codex Purge, Poda Industrial, Unificação .agents/.claude.
 
 ---
-*Este registro encerra o ciclo de fundação da Aurélia.*
+## 🛰️ Registro de Poda Industrial (24 de Março de 2026)
+- **Motivo**: Eliminação de dívida técnica do motor Codex (OpenAI Antigo) e unificação de ambientes multi-motor.
+- **Ações**:
+    - Purga completa de `OpenAIAuthMode` no core Go.
+    - Remoção de logs de stress-test e binários órfãos na raiz.
+    - Unificação de diretórios de skills: `.claude` agora é espelho de `.agents`.
+    - Limpeza de 47MB de recursos Docker órfãos.

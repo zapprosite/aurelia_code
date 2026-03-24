@@ -19,25 +19,23 @@ Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, ut
 3.  **Aurélia** — Autoridade arquitetural e operacional soberana do sistema, abaixo apenas dos humanos.
 4.  **`GEMINI.md`, `OPENCODE.md`** — Adaptadores finos por motor, sempre subordinados a este contrato e à autoridade da Aurélia.
 5.  **REPOSITORY_CONTRACT.md** — Índice de governança e cadeia de autoridade.
-6.  **`docs/adr/`** — Decisões arquiteturais (modelos, hardware, plano mestre, slices).
+6.  **docs/ADR.md** — Roadmap de Slices e decisões ativas.
 7.  **.agents/rules/** — Regras operacionais para o Antigravity.
 8.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
-9.  **docs/adr/** — Decisões arquiteturais estruturadas por slice.
+9.  **docs/ADR-historico.md** — Memória técnica de Eras passadas (0-14).
 10. **.context/** — Memória, evidências e estado do projeto.
 </authority-hierarchy>
 
 ## 3. Papéis dos Agentes
 
-<agent-roles>
-### 🛰️ Antigravity (Google)
-- **Papel**: Interface, cockpit e braço de coordenação.
-- **Responsabilidade**: Orquestração de tarefas, handoff e interação com o humano, sempre sob a arquitetura e governança da Aurélia.
-- **Motor**: Opera via Gemma 3 12B (Local) + OpenRouter (Premium).
+### 🤖 Claude Opus (CEO)
+- **Papel**: Autoridade Estratégica Máxima e Árbitro Final.
+- **Responsabilidade**: Visão de longo prazo, aprovação de Slices críticas, auditoria de governança e mediação entre humano e sistema.
+- **Motor**: Claude 3 Opus (OpenRouter).
 
-### 🤖 Aurélia (Sovereign)
-- **Papel**: Arquiteta principal e autoridade operacional do Home Lab.
-- **Responsabilidade**: Definir direção técnica, governar roteamento, manter a coerência do sistema e preservar estabilidade.
-</agent-roles>
+### 🤖 Aurélia (COO/CTO)
+- **Papel**: Arquiteta principal e autoridade operacional.
+- **Responsabilidade**: Execução técnica, governança de roteamento e integridade do Home Lab.
 
 ## 3.1 Adaptadores do Repositório
 
@@ -58,7 +56,7 @@ Regra:
 <core-rules>
 - **Descoberta Local Primeiro**: Inspecione `AGENTS.md`, `.agents/rules/` e `.context/` antes de agir.
 - **Isolamento de Worktree**: Tarefas não-triviais DEVEM ser feitas em branches/worktrees isoladas.
-- **ADR por Slice**: Toda mudança estrutural ou slice não-trivial DEVE nascer com ADR em `docs/adr/` ou estar registrada no backlog oficial de slices pendentes.
+- **ADR por Slice**: Toda mudança estrutural ou slice não-trivial DEVE ser registrada no [ADR.md](./docs/ADR.md).
 - **Higiene de Contexto**: Ao concluir uma mudança estrutural, slice não trivial, handoff relevante ou preparação para merge, atualize o `.context/` via `sync-ai-context` para garantir a persistência da memória de trabalho.
 - **Anti-Alucinação**: Nunca declare sucesso sem prova real (logs, testes, capturas).
 - **Sem Commits Diretos**: Use o workflow de `review-merge` para a branch principal.
@@ -78,4 +76,4 @@ Regra:
 - Documentation index: `.context/docs/README.md`
 - Agent playbooks: `.context/agents/README.md`
 - Governance index: `docs/REPOSITORY_CONTRACT.md`
-- ADR index: `docs/adr/README.md`
+- ADR Index: `docs/ADR.md`
