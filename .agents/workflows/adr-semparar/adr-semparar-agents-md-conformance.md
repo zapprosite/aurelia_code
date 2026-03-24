@@ -77,7 +77,7 @@ bash scripts/adr-slice-init.sh <slug>
 ## Slice
 
 - slug: <nome-da-slice>
-- owner: codex|claude|antigravity
+- owner: opencode|claude|antigravity
 - branch/worktree: `branch-name` em `/caminho/worktree`
 - json de continuidade: docs/adr/taskmaster/...
 ```
@@ -234,7 +234,7 @@ Cada slice tem status que reflete decisão de Aurélia:
 ```json
 {
   "handoff": {
-    "owner_engine": "codex|claude|antigravity",
+    "owner_engine": "opencode|claude|antigravity",
     "resume_prompt": "Estruturado para retomada sem contexto",
     "last_updated": "ISO 8601 timestamp"
   }
@@ -259,12 +259,12 @@ Cada slice tem status que reflete decisão de Aurélia:
 
 ---
 
-### Codex — Executor Rápido
+### OpenCode — Executor Rápido
 **Responsabilidade:** "Refatorações e correções rápidas."
 
 **Implementação em /adr-semparar:**
 ```markdown
-- owner: codex → Slices de suporte, voice, deploy, testes rápidos
+- owner: opencode → Slices de suporte, voice, deploy, testes rápidos
 - progress: Pode ir de 0 a 100% rapidamente
 - fallback_commands: Sempre presentes para contingência
 ```
@@ -348,7 +348,7 @@ git commit -m "feat(adr): abrir slice feature-x"
 - `.agents/rules/` — Regras do Antigravity
 - `AGENTS.md` (você está aqui) — Autoridade central
 - `CLAUDE.md` — Adaptador Claude
-- `CODEX.md` — Adaptador Codex
+- `CODEX.md` — Adaptador OpenCode
 
 ---
 

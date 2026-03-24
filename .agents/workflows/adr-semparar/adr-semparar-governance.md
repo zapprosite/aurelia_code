@@ -10,7 +10,7 @@
 
 ## Objetivo
 
-O workflow `/adr-semparar` padroniza a abertura e execução de **slices nonstop** — trabalhos estruturais longos que envolvem múltiplos agentes (Codex, Claude, Antigravity) e requerem continuidade sem perda de contexto.
+O workflow `/adr-semparar` padroniza a abertura e execução de **slices nonstop** — trabalhos estruturais longos que envolvem múltiplos agentes (OpenCode, Claude, Antigravity) e requerem continuidade sem perda de contexto.
 
 Cada slice nasce com:
 - ✅ ADR em `docs/adr/ADR-YYYYMMDD-slug.md`
@@ -62,7 +62,7 @@ Todos os 12 JSONs DEVEM ter:
 - `goal`: Objetivo em uma frase
 - `next_actions`: Lista de próximos passos
 - `handoff.resume_prompt`: Prompt estruturado para retomada
-- `handoff.owner_engine`: Motor proprietário (codex|claude|antigravity)
+- `handoff.owner_engine`: Motor proprietário (opencode|claude|antigravity)
 - `handoff.last_updated`: ISO 8601 timestamp
 
 ### 4. Smoke Tests Obrigatórios

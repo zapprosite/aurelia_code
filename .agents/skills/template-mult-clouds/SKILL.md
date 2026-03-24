@@ -1,16 +1,17 @@
 ---
 name: template-mult-clouds
-description: Bootstrap universal do repositório multi-agente com Antigravity + Claude + Codex + OpenCode.
+description: Bootstrap universal do repositório multi-agente com Antigravity + Claude + OpenCode.
 ---
 
 # 🚀 Template Mult-Clouds: Sovereign Infrastructure 2026
 
-Skill estratégica para orquestrar a colaboração entre múltiplos provedores de nuvem (Cloud) e o host local (Sovereign), garantindo redundância e performance.
+Skill estratégica para orquestrar a colaboração entre múltiplos provedores de nuvem (Cloud) e o host local (Sovereign) com Antigravity + Claude + OpenCode, garantindo redundância e performance.
 
 ## 🏛️ Estratégia de Provedores (Soberana)
-- **Primary Inference**: OpenRouter (MiniMax/DeepSeek/Kimi).
-- **Secondary / Backup**: Claude (Anthropic) / Gemini (Google).
-- **Sovereign Host**: Ollama (Gemma 3) rodando na RTX 4090 local.
+- **Sovereign Host**: Ollama `gemma3:12b` rodando na RTX 4090 local (Tier 0 — custo zero).
+- **Cloud Rápido**: OpenRouter `google/gemini-2.5-flash` (Tier 1 — baixo custo).
+- **Cloud Profundo**: OpenRouter `google/gemini-2.5-pro` (Tier 2 — raciocínio avançado).
+- **Orquestração**: Antigravity + Claude + OpenCode como motores de execução.
 
 ## 🏗️ Padrões de Integração
 1. **Contexto Unificado**: Uso do `ai-context` para manter a memória síncrona entre provedores.

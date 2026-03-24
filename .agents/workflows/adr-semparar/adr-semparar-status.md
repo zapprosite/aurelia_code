@@ -13,7 +13,7 @@
 
 | Slice | Motor | Status | Progress | Bloqueador | Resumo |
 | :--- | :---: | :---: | :---: | :--- | :--- |
-| **voice-e2e-proof-live** | Codex | 🔵 Exec | 25% | Prova humana | Wake→STT→resposta |
+| **voice-e2e-proof-live** | OpenCode | 🔵 Exec | 25% | Prova humana | Wake→STT→resposta |
 | **aurelia-media-voice** | Claude | 🔵 Exec | 85% | Voice ID | Transcript + TTS |
 | **aurelia-authorized-voice-clone** | Claude | 🔵 Exec | 25% | Áudio autorizado | Clone com consentimento |
 
@@ -56,11 +56,11 @@
 
 | Slice | Motor | Status | Progress | Bloqueador | Resumo |
 | :--- | :---: | :---: | :---: | :--- | :--- |
-| **voice-capture-runtime** | Codex | ✅ Aceito | 100% | — | Captura contínua |
-| **state-memory-runtime** | Codex | ✅ Aceito | 100% | — | Persistência SQLite |
-| **deploy-gateway-voice** | Codex | ✅ Aceito | 100% | — | Rollout 24x7 |
+| **voice-capture-runtime** | OpenCode | ✅ Aceito | 100% | — | Captura contínua |
+| **state-memory-runtime** | OpenCode | ✅ Aceito | 100% | — | Persistência SQLite |
+| **deploy-gateway-voice** | OpenCode | ✅ Aceito | 100% | — | Rollout 24x7 |
 | **extensions-governance** | — | ✅ Aceito | 100% | — | Política final |
-| **offline-homelab-manual-qdrant** | Codex | 🟡 Prop | 10% | Struct docs/ | Manual offline |
+| **offline-homelab-manual-qdrant** | OpenCode | 🟡 Prop | 10% | Struct docs/ | Manual offline |
 
 **Status de suporte:** 🟢 SAUDÁVEL — 4/5 aceito, 1 proposto com handoff claro
 
@@ -112,10 +112,10 @@ Capture evidência em `health`, `voice_status` e `voice_events`."
 
 ## Próximas Ações Imediatas
 
-1. **Onda 1 (Codex):** Fazer prova humana live de wake word → STT → resposta
+1. **Onda 1 (OpenCode):** Fazer prova humana live de wake word → STT → resposta
 2. **Onda 2 (Claude):** Validar E2E de handoff Antigravity + fechar login browser
-3. **Support (Codex):** Deploy no `/home/will/aurelia-24x7` com voice ativo
-4. **Manual (Codex/Claude):** Criar `docs/homelab/manual/` com 7 documentos
+3. **Support (OpenCode):** Deploy no `/home/will/aurelia-24x7` com voice ativo
+4. **Manual (OpenCode/Claude):** Criar `docs/homelab/manual/` com 7 documentos
 
 ---
 

@@ -1,6 +1,6 @@
 # Workflows — Padrões Operacionais Reutilizáveis
 
-Este diretório contém workflows documentados que padronizam como Codex, Claude e Antigravity devem operar em tarefas recorrentes e estruturais.
+Este diretório contém workflows documentados que padronizam como OpenCode, Claude e Antigravity devem operar em tarefas recorrentes e estruturais.
 
 ## Workflows Disponíveis
 
@@ -14,7 +14,7 @@ Abre slices estruturais longas com ADR + JSON taskmaster, garantindo continuidad
 
 **Quando usar:**
 - Tarefa estrutural > 30 minutos de execução
-- Envolve múltiplos agentes (Codex, Claude, Antigravity)
+- Envolve múltiplos agentes (OpenCode, Claude, Antigravity)
 - Precisa de handoff explícito
 
 **Como começar:**
