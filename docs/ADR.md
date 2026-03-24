@@ -6,6 +6,17 @@
 
 ---
 
+## 0. Políticas Imutáveis (ler antes de qualquer slice)
+
+| Política | Arquivo | Regra |
+|----------|---------|-------|
+| **Model Stack** | [`docs/governance/MODEL-STACK-POLICY.md`](./governance/MODEL-STACK-POLICY.md) | Stack canônico: gemma3:12b local + OpenRouter cloud. Nenhum modelo proibido pode ser reintroduzido. |
+| **Rede/Portas** | [`docs/governance/S-23-cloudflare-access.md`](./governance/S-23-cloudflare-access.md) | Subdomínios via Terraform + rule 12 |
+
+> **Agentes:** Leia as políticas acima ANTES de sugerir ou alterar qualquer modelo, porta ou subdomínio.
+
+---
+
 ## 1. Objetivos Estratégicos (Jarvis 2026)
 
 ```mermaid
