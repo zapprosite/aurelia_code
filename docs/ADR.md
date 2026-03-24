@@ -47,6 +47,7 @@ A Aurelia deve transicionar do estado de assistente para um sistema de engenhari
 | **S-26** | The Brain (Qdrant) | Busca semântica de memórias e ADRs via Qdrant local na aba "The Brain". | 📅 Aprovado | ESTRATÉGICA |
 | **S-27** | Telegram /status | Comando `/status` retornando squad, crons pendentes e uptime no chat. | 📅 Aprovado | MÉDIA |
 | **S-28** | VRV Auto-Refresh | Botão de refresh manual para o iframe VRV no dashboard (substituir meta-refresh). | 📅 Aprovado | BAIXA |
+| **S-29** | Tavily Web Search | Substituição do DuckDuckGo pela API Tavily no daemon e Claude Code. | ✅ Concluído (ADR) | ALTA |
 
 ## 3. Detalhamento dos Próximos Passos (Curto Prazo)
 
@@ -90,6 +91,11 @@ A Aurelia deve transicionar do estado de assistente para um sistema de engenhari
 - Botão `[↺ atualizar]` no header da aba Homelab
 - `iframeRef.current.src = iframeRef.current.src` força reload
 - Remove dependência do `meta http-equiv="refresh"` do VRV
+
+### S-29: Tavily Web Search 🔎 [CONCLUÍDO 2026-03-24]
+- Ref: [`docs/adr/20260324-install-tavily-web-search.md`](./adr/20260324-install-tavily-web-search.md)
+- Integração de API oficial via Tavily para o daemon e configuração de MCP para o Claude Code.
+- Chave de API persistida em `secrets.env`.
 
 ### S-17: Planning Loop (Caminho Crítico)
 - Mover a lógica de orquestração do Antigravity/Aurélia para dentro do binário `aurelia` em Go.
