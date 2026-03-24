@@ -3,7 +3,7 @@
 **ADR:** [ADR-20260319-Polish-Governance-All](../../docs/adr/ADR-20260319-Polish-Governance-All.md)
 **Skill:** `/governance-polish`
 **Status:** 🟡 Proposto (Fase 1 pendente)
-**Owner:** humano (Fase 1) + codex (Fases 2-4)
+**Owner:** humano (Fase 1) + antigravity (Fases 2-4)
 
 ---
 
@@ -41,10 +41,10 @@ Quando concluir, notifique via mensagem ou comentário:
 
 ---
 
-## Fase 2: HIGH (Codex)
+## Fase 2: HIGH (Antigravity)
 
 **Duração:** ~2 horas
-**Owner:** codex
+**Owner:** antigravity
 **Pré-requisito:** Fase 1 ✅
 
 ### Tarefas
@@ -93,10 +93,10 @@ Atualizar JSON taskmaster com:
 
 ---
 
-## Fase 3: MEDIUM (Codex)
+## Fase 3: MEDIUM (Antigravity)
 
 **Duração:** ~3 horas
-**Owner:** codex
+**Owner:** antigravity
 **Pré-requisito:** Fase 2 ✅
 
 ### Tarefas
@@ -144,10 +144,10 @@ curl -s localhost:9090/api/v1/rules | jq '.data.groups | length'  # > 0
 
 ---
 
-## Fase 4: LOW + HARDENING (Codex)
+## Fase 4: LOW + HARDENING (Antigravity)
 
 **Duração:** ~1-2 horas
-**Owner:** codex + humano (UFW approval)
+**Owner:** antigravity + humano (UFW approval)
 **Pré-requisito:** Fase 3 ✅
 
 ### Tarefas
@@ -191,7 +191,7 @@ bash scripts/governance-audit.sh  # exit 0
 
 **Próximo:**
 1. Humano: Completar Fase 1 (vault, secrets, shred)
-2. Codex: Executar Fases 2-4 com `/governance-polish --phase 2 --execute`
+2. Antigravity: Executar Fases 2-4 com `/governance-polish --phase 2 --execute`
 3. Todos: Validate com `bash scripts/governance-audit.sh`
 
 **Escalation:**

@@ -22,7 +22,7 @@ Key scripts shipped in the repository:
 - [`scripts/health-check.sh`](../../scripts/health-check.sh) — homelab/system health snapshot
 - [`scripts/gemini-smoke.sh`](../../scripts/gemini-smoke.sh) — validates the local Gemini API key, lists available models and performs a minimal generate-content check without changing the active provider
 - [`scripts/update-ollama.sh`](../../scripts/update-ollama.sh) — pulls the active local model kit (`gemma3:12b`, `gemma3:4b`, `bge-m3`) and keeps `gemma3:27b-it-q4_K_M` as optional laboratory model
-- [`scripts/ollama-local-kit-smoke.sh`](../../scripts/ollama-local-kit-smoke.sh) — validates the local Qwen kit against the Ollama API with `num_ctx=8192`
+- [`scripts/ollama-local-kit-smoke.sh`](../../scripts/ollama-local-kit-smoke.sh) — validates the local Gemma kit against the Ollama API with `num_ctx=8192`
 - [`aurelia voice enqueue`](../../cmd/aurelia/voice_cli.go) — queues an audio file into the local voice spool for controlled processing
 - local TTS defaults now target `voice-proxy` on `127.0.0.1:8011` with `chatterbox` + `Aurelia.wav` (PT-BR) in `opus` for Telegram voice replies
 - [`scripts/smoke-test-homelab.sh`](../../scripts/smoke-test-homelab.sh) — smoke guidance for end-to-end validation

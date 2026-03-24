@@ -827,7 +827,7 @@ func matchesCapabilityFilter(option llm.ModelOption, capability modelCapabilityF
 }
 
 func runOpenAIDeviceAuthCommand(_ io.Reader, _ io.Writer) error {
-	return fmt.Errorf("codex CLI auth has been removed; use the openai provider with an API key instead")
+	return fmt.Errorf("this CLI auth has been removed; use the openai provider with an API key instead")
 }
 
 func promptString(reader *bufio.Reader, stdout io.Writer, label, current string, secret bool) (string, error) {
