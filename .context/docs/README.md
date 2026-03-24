@@ -59,6 +59,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 - comando canônico de continuidade: [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh)
 - higiene da raiz: contratos e docs de entrada ficam na raiz; blueprints/ADRs/planos de slice não
 - política da voz oficial: [`docs/aurelia_voice_profile_20260319.md`](../../docs/aurelia_voice_profile_20260319.md)
+- **governança de rede/portas/subdomínios**: ler [`/srv/ops/ai-governance/NETWORK_MAP.md`](/srv/ops/ai-governance/NETWORK_MAP.md) antes de qualquer mudança; adicionar subdomínio via skill [`/add-subdomain`](../../.agents/skills/add-subdomain/SKILL.md); Cloudflare Access gerenciado por Terraform em [`/srv/ops/terraform/cloudflare/access.tf`](/srv/ops/terraform/cloudflare/access.tf) — ver [`docs/governance/S-23-cloudflare-access.md`](../../docs/governance/S-23-cloudflare-access.md); regra completa: [`.agents/rules/12-network-governance.md`](../../.agents/rules/12-network-governance.md)
 
 ## Related Resources
 
