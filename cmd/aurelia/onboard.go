@@ -25,8 +25,6 @@ type onboardStep int
 
 const (
 	stepLLMProvider onboardStep = iota
-	stepOpenAIAuthMode
-	stepOpenAICodexLogin
 	stepLLMKey
 	stepLLMModel
 	stepSTTProvider
@@ -126,21 +124,11 @@ func runOnboardPrompt(stdin io.Reader, stdout io.Writer, resolver *runtime.PathR
 	}
 
 	current.LLMProvider, _ = promptChoice(reader, stdout, "LLM provider", current.LLMProvider, llmProviderChoices())
-	if current.LLMProvider == "openai" {
-		current.OpenAIAuthMode, _ = promptChoice(reader, stdout, "OpenAI auth mode", current.OpenAIAuthMode, []string{"api_key", "codex"})
-	}
 	if err := writef(stdout, "STT provider [%s]: %s\n\n", current.STTProvider, "Groq"); err != nil {
 		return err
 	}
 
-	if usesOpenAICodex(*current) {
-		if err := writef(stdout, "OpenAI auth mode: codex CLI (experimental). Starting device auth now.\n\n"); err != nil {
-			return err
-		}
-		if err := runOpenAIDeviceAuthCommand(stdin, stdout); err != nil {
-			return err
-		}
-	} else if providerRequiresLLMKey(*current) {
+	if providerRequiresLLMKey(*current) {
 		currentKey := currentLLMKey(*current)
 		currentKey, _ = promptString(reader, stdout, llmKeyLabel(current.LLMProvider), currentKey, true)
 		setCurrentLLMKey(current, currentKey)
@@ -200,21 +188,7 @@ func runOnboardTUI(stdin *os.File, stdout *os.File, resolver *runtime.PathResolv
 			return renderSavedSummary(stdout, resolver, &ui.cfg)
 		}
 		if action := ui.consumePendingAction(); action != "" {
-			switch action {
-			case "openai_codex_login":
-				if err := term.Restore(int(stdin.Fd()), oldState); err != nil {
-					return fmt.Errorf("restore terminal mode: %w", err)
-				}
-				clearScreen(stdout)
-				if err := runOpenAIDeviceAuthCommand(stdin, stdout); err != nil {
-					ui.message = err.Error()
-				}
-				oldState, err = term.MakeRaw(int(stdin.Fd()))
-				if err != nil {
-					return fmt.Errorf("re-enable raw terminal mode: %w", err)
-				}
-				reader = bufio.NewReader(stdin)
-			}
+			// No actions pending for now
 		}
 	}
 }
@@ -225,9 +199,6 @@ func newOnboardingUI(cfg config.EditableConfig) *onboardingUI {
 	}
 	if cfg.LLMModel == "" {
 		cfg.LLMModel = config.DefaultEditableConfig().LLMModel
-	}
-	if cfg.OpenAIAuthMode == "" {
-		cfg.OpenAIAuthMode = "api_key"
 	}
 	if cfg.STTProvider == "" {
 		cfg.STTProvider = "groq"
@@ -253,23 +224,12 @@ func (u *onboardingUI) View(resolver *runtime.PathResolver) string {
 		b.WriteString(colorize("! "+u.message, colorBlue))
 		b.WriteString("\n\n")
 	}
-
 	switch u.step {
 	case stepLLMProvider:
 		b.WriteString("LLM Provider\n")
 		b.WriteString("Select the main chat model provider.\n\n")
 		b.WriteString(renderMenu(llmProviderLabels(), u.menuIndex))
 		b.WriteString("\nUse ↑/↓ and Enter.\n")
-	case stepOpenAIAuthMode:
-		b.WriteString("OpenAI Auth Mode\n")
-		b.WriteString("Choose whether OpenAI should use an API key or the local Codex CLI.\n\n")
-		b.WriteString(renderMenu([]string{"API key", "Codex CLI (experimental)"}, u.menuIndex))
-		b.WriteString("\nUse arrows and Enter. Use left to go back.\n")
-	case stepOpenAICodexLogin:
-		b.WriteString("OpenAI Codex Login\n")
-		b.WriteString("Launch the Codex device-auth flow now to get the link and verification code.\n\n")
-		b.WriteString(renderMenu([]string{"Launch login now", "Skip for now", "Back"}, u.menuIndex))
-		b.WriteString("\nUse arrows and Enter.\n")
 	case stepLLMKey:
 		b.WriteString(u.renderInputStep(llmKeyLabel(u.cfg.LLMProvider), llmKeyHelp(u.cfg.LLMProvider), true))
 	case stepLLMModel:
@@ -306,13 +266,8 @@ func (u *onboardingUI) View(resolver *runtime.PathResolver) string {
 		b.WriteString("Review & Save\n")
 		b.WriteString("Check the config before saving.\n\n")
 		_, _ = fmt.Fprintf(&b, "LLM provider: %s\n", strings.ToUpper(u.cfg.LLMProvider))
-		if u.cfg.LLMProvider == "openai" {
-			_, _ = fmt.Fprintf(&b, "OpenAI auth mode: %s\n", u.cfg.OpenAIAuthMode)
-		}
 		_, _ = fmt.Fprintf(&b, "LLM model: %s\n", u.cfg.LLMModel)
-		if usesOpenAICodex(u.cfg) {
-			_, _ = fmt.Fprintf(&b, "OpenAI Codex login: run `aurelia auth openai`\n")
-		} else if !providerRequiresLLMKey(u.cfg) {
+		if !providerRequiresLLMKey(u.cfg) {
 			_, _ = fmt.Fprintf(&b, "LLM access: local Ollama endpoint (127.0.0.1:11434)\n")
 		} else {
 			_, _ = fmt.Fprintf(&b, "%s: %s\n", llmKeyLabel(u.cfg.LLMProvider), maskSecret(currentLLMKey(u.cfg)))
@@ -352,10 +307,6 @@ func (u *onboardingUI) HandleKey(ev keyEvent) (saved bool, cancelled bool, err e
 	switch u.step {
 	case stepLLMProvider:
 		return u.handleMenuKey(ev, llmProviderChoices(), nextOnboardStep(u.cfg, stepLLMProvider), stepLLMProvider)
-	case stepOpenAIAuthMode:
-		return u.handleOpenAIAuthModeMenuKey(ev)
-	case stepOpenAICodexLogin:
-		return u.handleOpenAICodexLoginKey(ev)
 	case stepLLMModel:
 		return u.handleModelMenuKey(ev)
 	case stepSTTProvider:
@@ -393,52 +344,7 @@ func (u *onboardingUI) handleMenuKey(ev keyEvent, values []string, next onboardS
 	return false, false, nil
 }
 
-func (u *onboardingUI) handleOpenAIAuthModeMenuKey(ev keyEvent) (bool, bool, error) {
-	options := []string{"api_key", "codex"}
-	switch ev.code {
-	case keyUp:
-		u.menuIndex = wrapIndex(u.menuIndex-1, len(options))
-	case keyDown:
-		u.menuIndex = wrapIndex(u.menuIndex+1, len(options))
-	case keyEnter:
-		u.cfg.OpenAIAuthMode = options[u.menuIndex]
-		u.setStep(nextOnboardStep(u.cfg, stepOpenAIAuthMode))
-	case keyLeft:
-		u.setStep(stepLLMProvider)
-		u.menuIndex = selectedProviderIndex(u.cfg.LLMProvider)
-	case keyQuit:
-		return false, true, nil
-	}
-	return false, false, nil
-}
 
-func (u *onboardingUI) handleOpenAICodexLoginKey(ev keyEvent) (bool, bool, error) {
-	options := []string{"launch", "skip", "back"}
-	switch ev.code {
-	case keyUp:
-		u.menuIndex = wrapIndex(u.menuIndex-1, len(options))
-	case keyDown:
-		u.menuIndex = wrapIndex(u.menuIndex+1, len(options))
-	case keyEnter:
-		switch options[u.menuIndex] {
-		case "launch":
-			u.pendingAction = "openai_codex_login"
-			u.setStep(stepLLMModel)
-		case "skip":
-			u.setStep(stepLLMModel)
-		case "back":
-			u.setStep(stepOpenAIAuthMode)
-			u.menuIndex = 1
-			return false, false, nil
-		}
-	case keyLeft:
-		u.setStep(stepOpenAIAuthMode)
-		u.menuIndex = 1
-	case keyQuit:
-		return false, true, nil
-	}
-	return false, false, nil
-}
 
 func (u *onboardingUI) handleModelMenuKey(ev keyEvent) (bool, bool, error) {
 	if len(u.modelOptions) == 0 {
@@ -575,20 +481,10 @@ func (u *onboardingUI) currentInputValue() string {
 func nextOnboardStep(cfg config.EditableConfig, step onboardStep) onboardStep {
 	switch step {
 	case stepLLMProvider:
-		if cfg.LLMProvider == "openai" {
-			return stepOpenAIAuthMode
-		}
 		if cfg.LLMProvider == "ollama" {
 			return stepLLMModel
 		}
 		return stepLLMKey
-	case stepOpenAIAuthMode:
-		if usesOpenAICodex(cfg) {
-			return stepOpenAICodexLogin
-		}
-		return stepLLMKey
-	case stepOpenAICodexLogin:
-		return stepLLMModel
 	case stepLLMKey:
 		return stepLLMModel
 	case stepLLMModel:
@@ -612,19 +508,9 @@ func nextOnboardStep(cfg config.EditableConfig, step onboardStep) onboardStep {
 
 func previousOnboardStep(cfg config.EditableConfig, step onboardStep) onboardStep {
 	switch step {
-	case stepOpenAIAuthMode:
-		return stepLLMProvider
-	case stepOpenAICodexLogin:
-		return stepOpenAIAuthMode
 	case stepLLMKey:
-		if cfg.LLMProvider == "openai" {
-			return stepOpenAIAuthMode
-		}
 		return stepLLMProvider
 	case stepLLMModel:
-		if cfg.LLMProvider == "openai" && usesOpenAICodex(cfg) {
-			return stepOpenAICodexLogin
-		}
 		if cfg.LLMProvider == "ollama" {
 			return stepLLMProvider
 		}
@@ -709,14 +595,7 @@ func llmKeyLabel(provider string) string {
 	}
 }
 
-func usesOpenAICodex(cfg config.EditableConfig) bool {
-	return cfg.LLMProvider == "openai" && cfg.OpenAIAuthMode == "codex"
-}
-
 func providerRequiresLLMKey(cfg config.EditableConfig) bool {
-	if usesOpenAICodex(cfg) {
-		return false
-	}
 	return cfg.LLMProvider != "ollama"
 }
 
@@ -856,7 +735,6 @@ func modelCatalogCredentials(cfg config.EditableConfig) llm.ModelCatalogCredenti
 		GoogleAPIKey:     cfg.GoogleAPIKey,
 		OpenRouterAPIKey: cfg.OpenRouterAPIKey,
 		OpenAIAPIKey:     cfg.OpenAIAPIKey,
-		OpenAIAuthMode:   cfg.OpenAIAuthMode,
 	}
 }
 
@@ -1175,21 +1053,12 @@ func renderSavedSummary(stdout io.Writer, resolver *runtime.PathResolver, curren
 		return err
 	}
 	if current.LLMProvider == "openai" {
-		if err := writef(stdout, "OpenAI auth mode: %s\n", current.OpenAIAuthMode); err != nil {
-			return err
-		}
 	}
 	if err := writef(stdout, "LLM model: %s\n", current.LLMModel); err != nil {
 		return err
 	}
-	if usesOpenAICodex(*current) {
-		if err := writef(stdout, "OpenAI Codex login: run `aurelia auth openai`\n"); err != nil {
-			return err
-		}
-	} else {
-		if err := writef(stdout, "%s: %s\n", llmKeyLabel(current.LLMProvider), maskSecret(currentLLMKey(*current))); err != nil {
-			return err
-		}
+	if err := writef(stdout, "%s: %s\n", llmKeyLabel(current.LLMProvider), maskSecret(currentLLMKey(*current))); err != nil {
+		return err
 	}
 	if err := writef(stdout, "STT provider: %s\n", strings.ToUpper(current.STTProvider)); err != nil {
 		return err

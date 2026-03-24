@@ -17,15 +17,13 @@ func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 	t.Setenv("AURELIA_HOME", tmpDir)
 
 	input := strings.Join([]string{
-		"",
-		"",
-		"qwen3.5:9b",
-		"groq-key",
-		"telegram-token",
-		"101,202",
-		"700",
-		"33",
-		"",
+		"",               // LLM provider (default: ollama)
+		"qwen3.5:9b",     // LLM model
+		"groq-key",       // Groq API key
+		"telegram-token",  // Telegram bot token
+		"101,202",        // Telegram allowed user IDs
+		"700",            // Max iterations
+		"33",             // Memory window size
 	}, "\n")
 
 	var out bytes.Buffer
@@ -169,6 +167,7 @@ func TestOnboardingUI_MenuFlowAndBack(t *testing.T) {
 	cfg.LLMProvider = "anthropic"
 	cfg.LLMModel = "claude-sonnet-4-6"
 	ui := newOnboardingUI(cfg)
+	ui.menuIndex = selectedProviderIndex("anthropic")
 
 	_, _, err := ui.HandleKey(keyEvent{code: keyEnter})
 	if err != nil {
@@ -255,30 +254,6 @@ func TestOnboardingUI_OllamaSkipsAPIKeyStep(t *testing.T) {
 	}
 }
 
-func TestOnboardingUI_OpenAICodexSkipsAPIKeyStep(t *testing.T) {
-	ui := newOnboardingUI(config.EditableConfig{
-		LLMProvider:      "openai",
-		LLMModel:         "gpt-5.4",
-		OpenAIAuthMode:   "api_key",
-		MemoryWindowSize: 20,
-		MaxIterations:    500,
-		STTProvider:      "groq",
-	})
-
-	ui.step = stepOpenAIAuthMode
-	ui.menuIndex = 1
-
-	_, _, err := ui.HandleKey(keyEvent{code: keyEnter})
-	if err != nil {
-		t.Fatalf("HandleKey() error = %v", err)
-	}
-	if ui.cfg.OpenAIAuthMode != "codex" {
-		t.Fatalf("OpenAIAuthMode = %q", ui.cfg.OpenAIAuthMode)
-	}
-	if ui.step != stepOpenAICodexLogin {
-		t.Fatalf("step = %v, want %v", ui.step, stepOpenAICodexLogin)
-	}
-}
 
 func TestFilterModelOptions_OpenRouterMatchesProviderAndModel(t *testing.T) {
 	options := []llm.ModelOption{
