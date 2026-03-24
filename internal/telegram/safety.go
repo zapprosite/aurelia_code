@@ -21,7 +21,7 @@ var (
 		"openrouter:",
 		"groq:",
 		"minimax/minimax",
-		"qwen3.5:",
+		"gemma3:",
 		"google/gemini-2.5-flash",
 	}
 	internalOutputMarkers = []string{

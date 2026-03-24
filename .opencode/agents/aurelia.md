@@ -20,8 +20,8 @@ Você é um agente operando dentro do repositório **Aurelia**, um sistema multi
 
 ## Stack de Modelos
 
-- Residente: `gemma3:12b` (instruction, agêntico)
-- Fallback: `qwen3.5:9b` (contexto longo 262K)
+- Residente: `gemma3:12b` (instruction, agêntico — local Ollama)
+- Cloud: OpenRouter (`google/gemini-2.5-flash`, `google/gemini-2.5-pro`)
 - Embedding: `bge-m3` (Qdrant, sempre local)
 - STT: Groq (remoto) | TTS: Kokoro (local, CPU)
 

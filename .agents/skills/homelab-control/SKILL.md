@@ -17,9 +17,10 @@ Habilita o gerenciamento operacional direto da infraestrutura do Home Lab sob a 
 ### 2. Ollama & Sovereign Models
 - **Gestão**: `curl -s http://localhost:11434/api/tags` para listar modelos ativos.
 - **Modelos Pinados (2026)**:
-  - `gemma3:12b`: Modelo residente principal (Sovereign fallback).
-  - `qwen3.5:9b`: Alternativa para raciocínio local.
+  - `gemma3:12b`: Modelo residente principal (local, agêntico).
+  - `gemma3:27b-it-q4_K_M`: Laboratório — raciocínio profundo local.
   - `bge-m3`: Modelo de embedding para o vetor DB (Qdrant).
+  - Cloud: OpenRouter (`google/gemini-2.5-flash`, `google/gemini-2.5-pro`).
 
 ### 3. Docker & Orquestração
 - **Health Check**: `docker ps --format "table {{.Names}}\t{{.Status}}\t{{.CPUPerc}}\t{{.MemUsage}}"`
