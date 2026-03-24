@@ -7,9 +7,6 @@ import (
 	"net/http"
 	"sort"
 	"strings"
-
-	"github.com/anthropics/anthropic-sdk-go"
-	"github.com/anthropics/anthropic-sdk-go/option"
 )
 
 // ModelOption is a selectable model entry for onboarding and config UIs.
@@ -60,11 +57,6 @@ func ListModels(ctx context.Context, provider string, creds ModelCatalogCredenti
 	_ = creds
 
 	switch provider {
-	case "anthropic":
-		if creds.AnthropicAPIKey != "" {
-			return listAnthropicModels(ctx, creds.AnthropicAPIKey)
-		}
-		return fallbackModels("anthropic"), nil
 	case "google":
 		if creds.GoogleAPIKey != "" {
 			return listGoogleModels(ctx, creds.GoogleAPIKey, googleModelsURL, http.DefaultClient)
@@ -98,12 +90,6 @@ func FallbackModels(provider string) []ModelOption {
 
 func fallbackModels(provider string) []ModelOption {
 	switch provider {
-	case "anthropic":
-		return []ModelOption{
-			{ID: "claude-sonnet-4-6", Name: "Claude Sonnet 4.6", SupportsImageInput: true},
-			{ID: "claude-opus-4-6", Name: "Claude Opus 4.6", SupportsImageInput: true},
-			{ID: "claude-haiku-4-5", Name: "Claude Haiku 4.5", SupportsImageInput: true},
-		}
 	case "google":
 		return []ModelOption{
 			{ID: "gemini-2.5-pro", Name: "Gemini 2.5 Pro", SupportsImageInput: true},
@@ -112,11 +98,9 @@ func fallbackModels(provider string) []ModelOption {
 		}
 	case "ollama":
 		return []ModelOption{
-			{ID: "qwen3.5:9b", Name: "Qwen 3.5 9B"},
-			{ID: "qwen3.5:4b", Name: "Qwen 3.5 4B"},
-			{ID: "qwen3.5:27b-q4_K_M", Name: "Qwen 3.5 27B Q4_K_M"},
-			{ID: "gemma3:27b-it-q4_K_M", Name: "Gemma 3 27B IT Q4_K_M"},
-			{ID: "qwen3-coder:30b", Name: "Qwen3 Coder 30B"},
+			{ID: "gemma3:12b", Name: "Gemma 3 12B", SupportsTools: true},
+			{ID: "gemma3:4b", Name: "Gemma 3 4B"},
+			{ID: "gemma3:27b-it-q4_K_M", Name: "Gemma 3 27B IT Q4_K_M", SupportsTools: true},
 		}
 	case "openrouter":
 		return []ModelOption{
@@ -132,28 +116,6 @@ func fallbackModels(provider string) []ModelOption {
 default:
 		return nil
 	}
-}
-
-func listAnthropicModels(ctx context.Context, apiKey string, opts ...option.RequestOption) ([]ModelOption, error) {
-	requestOptions := []option.RequestOption{option.WithAPIKey(apiKey)}
-	requestOptions = append(requestOptions, opts...)
-
-	client := anthropic.NewClient(requestOptions...)
-	pager := client.Models.ListAutoPaging(ctx, anthropic.ModelListParams{})
-
-	var models []ModelOption
-	for pager.Next() {
-		model := pager.Current()
-		models = append(models, ModelOption{
-			ID:                 model.ID,
-			Name:               model.DisplayName,
-			SupportsImageInput: true,
-		})
-	}
-	if err := pager.Err(); err != nil {
-		return nil, err
-	}
-	return models, nil
 }
 
 func listGoogleModels(ctx context.Context, apiKey string, baseURL string, client *http.Client) ([]ModelOption, error) {

@@ -1,51 +1,23 @@
 ---
+type: skill
 name: antigravity-gemini-operator
-description: Ensina a Aurelia a delegar pequenas configuracoes e pesquisas ao chat do Antigravity com prompts estruturados, provas e guardrails.
+description: Skill de coordenação para o agente Antigravity operando no motor Gemini.
+skillSlug: antigravity-gemini-operator
+phases: [O]
+generated: 2026-03-18
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
-# Antigravity Gemini Operator
+# 🛰️ Gemini Operator: Sovereign Coordination 2026
 
-## Objetivo
+Skill de auto-reflexão e coordenação para o Antigravity quando operando sob o motor Gemini.
 
-Usar o chat do Antigravity como um executor leve e inteligente para microtarefas, sem substituir a execucao principal da Aurelia.
+## 🏛️ Diretrizes de Operação
+1. **Interface**: Você é o canal principal com o humano. Mantenha a clareza e o Task View atualizado.
+2. **Tier 1 Logic**: Use suas capacidades nativas de raciocínio longo para planejar orquestrações complexas entre sub-agentes.
+3. **Context Sync**: Garanta que sua memória de curto prazo (conversation history) esteja sempre alinhada com a memória de longo prazo (ai-context).
 
-## Quando usar
-
-Use esta skill quando a tarefa exigir:
-
-- pesquisa curta
-- ajuste pequeno e reversivel
-- localizacao de configuracao
-- montagem de comando
-- diff pequeno
-- esclarecimento rapido antes da execucao pesada
-
-Nao use esta skill quando a tarefa envolver:
-
-- secrets
-- deploy
-- rede
-- limpeza destrutiva
-- alteracoes grandes e acopladas
-
-## Como executar
-
-1. Classifique a tarefa como `light`, `medium` ou `high-risk`
-2. Se for `light`, envie ao chat do Antigravity um prompt no formato definido em `CHAT_PROMPTS.md`
-3. Exija resposta com:
-   - diff ou instrucao exata
-   - comando de validacao
-   - risco residual
-4. Valide a saida antes de promover a mudanca
-5. Se a tarefa crescer, interrompa o chat leve e mova a execucao para CLI
-
-## Politica de Roteamento
-
-Consulte `DECISION_MATRIX.md`.
-
-## Output esperado
-
-- prompt pronto para o chat do Antigravity
-- criterio de aceite
-- prova necessaria
-- decisao de promover ou nao para execucao principal
+## 📍 Quando usar
+- Uso interno constante para manter a qualidade das respostas e do workflow PREVC.

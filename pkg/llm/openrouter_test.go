@@ -24,8 +24,8 @@ func TestListOpenRouterModels(t *testing.T) {
 		_, _ = w.Write([]byte(`{
 			"data": [
 				{
-					"id":"anthropic/claude-sonnet-4",
-					"name":"Claude Sonnet 4",
+					"id":"anthropic/Aurélia-sonnet-4",
+					"name":"Aurélia Sonnet 4",
 					"pricing":{"prompt":"0.000003","completion":"0.000015"},
 					"supported_parameters":["tools","max_tokens"],
 					"architecture":{"input_modalities":["text","image"]}

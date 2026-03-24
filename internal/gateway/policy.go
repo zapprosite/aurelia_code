@@ -1,15 +1,18 @@
 package gateway
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// Models requested by the user
 	modelDeepSeekChat = "deepseek/deepseek-chat-v3.1"
-	modelMiniMaxM27   = "MiniMax-M2.7"
+	modelMiniMaxM27   = "minimax/minimax-m2.7"
+	modelMiniMaxDirect = "MiniMax-M2"
 	modelKimiK25      = "moonshotai/kimi-k2.5"
 
 	modelGemma3 = "gemma3:12b"
-	modelGroq70b = "llama-3.3-70b-versatile"
 
 	// Existing static defaults
 	defaultAudioModel        = "whisper-large-v3-turbo"
@@ -64,29 +67,40 @@ func NewPlanner() *Planner {
 	return &Planner{}
 }
 
-// Decide maintains compatibility for tests/handlers that expect a single primary candidate
+// Decide selects the best candidate for the request, honoring constraints like LocalOnly.
 func (p *Planner) Decide(req DryRunRequest) DryRunDecision {
 	opts := p.Plan(req)
+	if req.LocalOnly {
+		for _, opt := range opts {
+			if !opt.UseRemote {
+				return opt
+			}
+		}
+	}
 	if len(opts) > 0 {
 		return opts[0]
 	}
-	return DryRunDecision{} // Fallback if somehow empty
+	return DryRunDecision{}
 }
 
 func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	// 1. Initial Classification
 	taskClass := req.JudgeClass
 	if taskClass == "" {
-		taskClass = "coding_main" // Default
+		if req.TaskClass != "" {
+			taskClass = req.TaskClass
+		} else {
+			taskClass = classifyTask(req)
+		}
 	}
 
 	// 2. Override Rules
-	// If input contains image / screenshot / PDF: force long_context_or_multimodal
+	// If input contains image: force long_context_or_multimodal
 	if req.RequiresVision {
-		taskClass = "long_context_or_multimodal"
+		taskClass = "vision"
 	}
 	// If context is large: force long_context_or_multimodal
-	if req.ContextSize > 12000 { // Threshold for "large" context
+	if req.ContextSize > 12000 {
 		taskClass = "long_context_or_multimodal"
 	}
 	// If judge confidence < 0.6: route to coding_main
@@ -95,15 +109,18 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	}
 
 	// 3. Routing Policy Mapping
+	candidates := make([]RouteCandidate, 0)
+	isStructured := req.OutputMode == "structured_json"
+
 	switch taskClass {
-	case "simple_short":
-		return []RouteCandidate{
+	case "curation", "simple_short":
+		candidates = []RouteCandidate{
 			{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
 				Model:      modelDeepSeekChat,
 				UseRemote:  true,
-				Reason:     "simple_short: deepseek-chat is cost-efficient.",
+				Reason:     fmt.Sprintf("%s: deepseek-chat is cost-efficient for curation.", taskClass),
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -114,49 +131,104 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Provider:   "local",
 				Model:      modelGemma3,
 				UseRemote:  false,
-				Reason:     "simple_short: gemma3 fallback (local).",
-				Guards:     guardsFor(req.OutputMode, true),
+				Reason:     fmt.Sprintf("%s: gemma3 local fallback.", taskClass),
+				Guards:     guardsFor(req.OutputMode, false),
 				BudgetLane: "local",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},
 		}
 
-	case "coding_main":
-		return []RouteCandidate{
+	case "maintenance":
+		candidates = []RouteCandidate{
+			{
+				Lane:       "local-balanced",
+				Provider:   "local",
+				Model:      modelGemma3,
+				UseRemote:  false,
+				Reason:     "maintenance: local-balanced preferred for homelab stability.",
+				Guards:     guardsFor(req.OutputMode, false),
+				BudgetLane: "local",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
 			{
 				Lane:       "remote-premium",
 				Provider:   "minimax",
 				Model:      modelMiniMaxM27,
 				UseRemote:  true,
-				Reason:     "coding_main: minimax-m2.7 is the primary execution model.",
+				Reason:     "maintenance fallback: minimax-m2.7.",
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_premium",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},
-			{
+		}
+
+	case "coding_main", "routing":
+		// Prefer DeepSeek for structured output even in coding_main
+		if isStructured {
+			candidates = append(candidates, RouteCandidate{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
 				Model:      modelDeepSeekChat,
 				UseRemote:  true,
-				Reason:     "coding_main: deepseek fallback.",
+				Reason:     fmt.Sprintf("%s: deepseek preferred for structured output.", taskClass),
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
-			},
+			})
 		}
 
-	case "long_context_or_multimodal":
-		return []RouteCandidate{
+		candidates = append(candidates, RouteCandidate{
+			Lane:       "remote-premium",
+			Provider:   "minimax",
+			Model:      modelMiniMaxM27,
+			UseRemote:  true,
+			Reason:     fmt.Sprintf("%s: minimax-m2.7 is the primary execution model.", taskClass),
+			Guards:     guardsFor(req.OutputMode, true),
+			BudgetLane: "remote_premium",
+			Class:      taskClass,
+			Confidence: req.JudgeConfidence,
+		})
+
+		if !isStructured {
+			candidates = append(candidates, RouteCandidate{
+				Lane:       "remote-cheap",
+				Provider:   "openrouter",
+				Model:      modelDeepSeekChat,
+				UseRemote:  true,
+				Reason:     fmt.Sprintf("%s: deepseek fallback.", taskClass),
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "remote_cheap",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			})
+		}
+
+		// Local fallback
+		candidates = append(candidates, RouteCandidate{
+			Lane:       "local-balanced",
+			Provider:   "local",
+			Model:      modelGemma3,
+			UseRemote:  false,
+			Reason:     fmt.Sprintf("%s: gemma3 local fallback.", taskClass),
+			Guards:     guardsFor(req.OutputMode, false),
+			BudgetLane: "local",
+			Class:      taskClass,
+			Confidence: req.JudgeConfidence,
+		})
+
+	case "long_context_or_multimodal", "vision":
+		candidates = []RouteCandidate{
 			{
 				Lane:       "local-vision",
 				Provider:   "local",
 				Model:      modelGemma3,
 				UseRemote:  false,
-				Reason:     "long_context_or_multimodal: gemma3 12b is the primary local multimodal model.",
-				Guards:     guardsFor(req.OutputMode, true),
+				Reason:     "long_context_or_multimodal: gemma3 12b local multimodal.",
+				Guards:     guardsFor(req.OutputMode, false),
 				BudgetLane: "local",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
@@ -166,27 +238,16 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Provider:   "openrouter",
 				Model:      modelKimiK25,
 				UseRemote:  true,
-				Reason:     "long_context_or_multimodal: kimi fallback for long context/complex vision.",
+				Reason:     "long_context_or_multimodal: kimi for deep analysis/long context.",
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_vision",
-				Class:      taskClass,
-				Confidence: req.JudgeConfidence,
-			},
-			{
-				Lane:       "remote-premium",
-				Provider:   "minimax",
-				Model:      modelMiniMaxM27,
-				UseRemote:  true,
-				Reason:     "long_context_or_multimodal: minimax fallback.",
-				Guards:     guardsFor(req.OutputMode, true),
-				BudgetLane: "remote_premium",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},
 		}
 
 	case "critical":
-		return []RouteCandidate{
+		candidates = []RouteCandidate{
 			{
 				Lane:       "remote-premium",
 				Provider:   "minimax",
@@ -199,21 +260,20 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Confidence: req.JudgeConfidence,
 			},
 			{
-				Lane:       "remote-long-context",
-				Provider:   "openrouter",
-				Model:      modelKimiK25,
-				UseRemote:  true,
-				Reason:     "critical: kimi fallback.",
-				Guards:     guardsFor(req.OutputMode, true),
-				BudgetLane: "remote_vision",
+				Lane:       "local-balanced",
+				Provider:   "local",
+				Model:      modelGemma3,
+				UseRemote:  false,
+				Reason:     "critical: gemma3 local emergency fallback.",
+				Guards:     guardsFor(req.OutputMode, false),
+				BudgetLane: "local",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},
 		}
 
 	default:
-		// Default to coding_main
-		return []RouteCandidate{
+		candidates = []RouteCandidate{
 			{
 				Lane:      "remote-premium",
 				Provider:  "minimax",
@@ -223,8 +283,22 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Guards:    guardsFor(req.OutputMode, true),
 				Class:     "coding_main",
 			},
+			{
+				Lane:      "local-balanced",
+				Provider:  "local",
+				Model:     modelGemma3,
+				UseRemote: false,
+				Reason:    "default: local fallback.",
+				Guards:    guardsFor(req.OutputMode, false),
+				Class:     "coding_main",
+			},
 		}
 	}
+
+	for i := range candidates {
+		candidates[i].UseTools = req.RequiresTools
+	}
+	return candidates
 }
 
 // classifyRule maps keyword patterns to a task class with a weight.
@@ -242,7 +316,7 @@ var classifyRules = []classifyRule{
 	{Class: "routing", Keywords: []string{"roteamento", "classifier", "classify", "categorize", "categorizar", "route"}, Weight: 6},
 	{Class: "curation", Keywords: []string{"curadoria", "facts", "tags", "resumo curto", "fatos curtos", "bullet points", "curate"}, Weight: 6},
 	{Class: "browser_workflow", Keywords: []string{"browser", "navigate", "navegar", "web page", "pagina web"}, Weight: 7},
-	{Class: "workflow_premium", Keywords: []string{"workflow complexo", "agentico", "multi-step", "complex workflow", "minimax", "poderoso", "openai", "claude"}, Weight: 10},
+	{Class: "workflow_premium", Keywords: []string{"workflow complexo", "agentico", "multi-step", "complex workflow", "minimax", "poderoso"}, Weight: 10},
 	{Class: "maintenance", Keywords: []string{"maint", "homelab", "runbook", "reboot", "nvidia-gpu", "servidor", "deploy"}, Weight: 5},
 	{Class: "general", Keywords: []string{}, Weight: 0},
 }

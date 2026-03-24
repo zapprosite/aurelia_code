@@ -61,7 +61,7 @@ func modelSupportsVision(provider, model string) bool {
 		return heuristicVisionSupport(model)
 	case "openai":
 		return looksLikeOpenAIVisionModel(model)
-	case "anthropic", "google":
+	case "google":
 		return true
 	default:
 		return false
@@ -73,7 +73,7 @@ func openAIImageURL(part agent.ContentPart) string {
 }
 
 func heuristicVisionSupport(model string) bool {
-	positiveTokens := []string{"vision", "vl", "4.6v", "gpt-", "gemini", "claude", "image"}
+	positiveTokens := []string{"vision", "vl", "4.6v", "gpt-", "gemini", "image"}
 	for _, token := range positiveTokens {
 		if strings.Contains(model, token) {
 			return true

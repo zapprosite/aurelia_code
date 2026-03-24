@@ -1,42 +1,24 @@
 ---
+type: skill
 name: customer-support
-description: Elite skill for customer-support.
+description: Habilita suporte técnico empático e resolutivo para usuários do ecossistema Aurélia.
+skillSlug: customer-support
+phases: [O]
+generated: 2026-03-18
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
+# 🎧 Customer Support: Sovereign Assistant 2026
 
+Habilita a Aurélia a atuar como um suporte técnico de elite, resolvendo dúvidas sobre o Monorepo e o Homelab.
 
-# Customer Support Skill
+## 🏛️ Padrões de Atendimento
+1. **Empatia Técnica**: Entenda a dor do usuário, mas mantenha o foco na solução técnica.
+2. **Knowledge Base First**: Consulte KIs e ADRs antes de sugerir soluções.
+3. **Feedback Loop**: Se um problema for recorrente, sugira a criação de um bug ou melhoria de documentação.
 
-## Objetivo
-Redigir respostas de suporte ao cliente que resolvam o problema, mantenham o relacionamento e sigam as políticas da empresa.
-
-## Quando usar
-- Responder tickets de suporte
-- Escalar situações críticas
-- Elaborar respostas para situações de crise ou reclamação grave
-- Criar templates de resposta para problemas recorrentes
-
-## Tom e princípios
-- Empático primeiro, técnico depois
-- Linguagem clara, sem jargão técnico desnecessário
-- Assuma boa fé do cliente
-- Seja específico: responda o que foi perguntado, não apenas o que é fácil responder
-
-## Como executar
-1. Identifique o problema real (pode ser diferente do que foi descrito)
-2. Verifique se existe template em response-templates.md
-3. Verifique se é caso de escalação em escalation-guide.md
-4. Redija a resposta seguindo a estrutura: reconhecimento > solução > próximos passos
-5. Revise antes de enviar: o cliente se sentirá atendido?
-
-## Estrutura da resposta ideal
-1. Reconhecimento do problema (1-2 frases, sem exagero)
-2. Solução ou próximo passo concreto
-3. Prevenção (opcional): como evitar que aconteça novamente
-4. Abertura para dúvidas
-
-## O que evitar
-- "Sentimos muito pelo inconveniente" sem resolver nada
-- Culpar o cliente pelo problema
-- Respostas genéricas que não mencionam o problema específico
-- Prometer o que não pode ser entregue
+## 📍 Quando usar
+- Interações via Telegram para resolução de dúvidas rápidas.
+- Geração de FAQs ou Guias de Troubleshooting.

@@ -98,6 +98,10 @@ func registerSpawnAgentTool(
 
 	spawnAgent := tools.NewSpawnAgentTool(masterTeams)
 	registry.Register(spawnAgent.Definition(), spawnAgent.Execute)
+	createSquad := tools.NewCreateSquadTool(masterTeams)
+	registry.Register(createSquad.Definition(), createSquad.Execute)
+	getDash := &tools.GetDashboardStatusTool{}
+	registry.Register(getDash.Definition(), getDash.Execute)
 	handoffAgent := agent.GetHandoffToolDefinition()
 	registry.Register(handoffAgent, agent.HandoffHandler(masterTeams))
 	pauseTeam := tools.NewPauseTeamTool(masterTeams)

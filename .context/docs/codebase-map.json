@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-23T22:50:24Z",
+  "generated": "2026-03-24T02:46:07Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,12 +26,12 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 12282,
+    "totalFiles": 12276,
     "rootPath": ".",
     "topDirectories": [
       {
         "name": ".agents",
-        "fileCount": 149,
+        "fileCount": 98,
         "description": "Governance rules, workflows, and reusable skills"
       },
       {
@@ -51,12 +51,12 @@
       },
       {
         "name": "docs",
-        "fileCount": 36,
+        "fileCount": 38,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
         "name": "internal",
-        "fileCount": 212,
+        "fileCount": 214,
         "description": "Core runtime layers and domain logic"
       },
       {
@@ -78,11 +78,11 @@
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 249
+        "count": 251
       },
       {
         "extension": ".md",
-        "count": 36
+        "count": 37
       },
       {
         "extension": ".sh",

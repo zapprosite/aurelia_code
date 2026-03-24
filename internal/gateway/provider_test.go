@@ -26,6 +26,15 @@ func (f *fakeProvider) GenerateContent(ctx context.Context, systemPrompt string,
 
 func (f *fakeProvider) Close() {}
 
+type fakeJudge struct {
+	res *JudgeResult
+	err error
+}
+
+func (f *fakeJudge) Judge(ctx context.Context, task string, history []agent.Message) (*JudgeResult, error) {
+	return f.res, f.err
+}
+
 func newTestGatewayProvider() *Provider {
 	return &Provider{
 		planner: NewPlanner(),
@@ -38,7 +47,12 @@ func newTestGatewayProvider() *Provider {
 			"audio":             {Soft: 800, Hard: 1200},
 			"research":          {Soft: 40, Hard: 80},
 		},
-		states: make(map[string]*routeState),
+		states:            make(map[string]*routeState),
+		judge:             &fakeJudge{res: &JudgeResult{Class: "coding_main", Confidence: 0.9}},
+		localBalanced:     &fakeProvider{response: &agent.ModelResponse{Content: "ok local"}},
+		remoteCheapLong:   &fakeProvider{response: &agent.ModelResponse{Content: "ok deepseek"}},
+		remotePremium:    &fakeProvider{response: &agent.ModelResponse{Content: "ok minimax"}},
+		remoteCheapVision: &fakeProvider{response: &agent.ModelResponse{Content: "ok vision"}},
 	}
 }
 
@@ -47,6 +61,7 @@ func TestProviderGenerateContent_MaintenancePrefersLocalBalanced(t *testing.T) {
 
 	localBalanced := &fakeProvider{response: &agent.ModelResponse{Content: "ok local"}}
 	provider := newTestGatewayProvider()
+	provider.judge = &fakeJudge{res: &JudgeResult{Class: "maintenance", Confidence: 0.9}}
 	provider.localBalanced = localBalanced
 
 	resp, err := provider.GenerateContent(context.Background(), "system", []agent.Message{{
@@ -62,7 +77,8 @@ func TestProviderGenerateContent_MaintenancePrefersLocalBalanced(t *testing.T) {
 	if len(localBalanced.prompts) != 1 {
 		t.Fatalf("local balanced calls = %d", len(localBalanced.prompts))
 	}
-	state := provider.StatusSnapshot().Routes["ollama:"+defaultLocalBalancedModel]
+
+	state := provider.StatusSnapshot().Routes["local:"+modelGemma3]
 	if state.Requests != 1 {
 		t.Fatalf("requests = %d", state.Requests)
 	}
@@ -71,18 +87,24 @@ func TestProviderGenerateContent_MaintenancePrefersLocalBalanced(t *testing.T) {
 func TestProviderGenerateContent_FallsBackWhenGuardedResponseIsEmpty(t *testing.T) {
 	t.Parallel()
 
-	// Na nova política, curadoria prioriza remoteStructured (Gemini).
-	// Vamos fazer o Gemini falhar na guarda (só reasoning) para testar o fallback pro local.
-	remoteStructured := &fakeProvider{response: &agent.ModelResponse{ReasoningContent: "gemini analyzing..."}}
+	// Na nova política, simple_short prioriza remote-cheap (DeepSeek).
+	// Vamos fazer o DeepSeek falhar na guarda (só reasoning) para testar o fallback pro local.
+	remoteCheap := &fakeProvider{response: &agent.ModelResponse{ReasoningContent: "deepseek thinking..."}}
 	localBalanced := &fakeProvider{response: &agent.ModelResponse{Content: "{\"status\":\"ok\"}"}}
 
 	provider := newTestGatewayProvider()
+	provider.judge = &fakeJudge{res: &JudgeResult{Class: "simple_short", Confidence: 0.9}}
+	provider.remoteCheapLong = remoteCheap
 	provider.localBalanced = localBalanced
-	provider.remoteStructured = remoteStructured
 
-	resp, err := provider.GenerateContent(context.Background(), "system", []agent.Message{{
+	// Adicionamos context com structured_json para ativar a guarda 'minimize'
+	ctxStructured := agent.WithRunOptions(context.Background(), agent.RunOptions{
+		OutputMode: "structured_json",
+	})
+
+	resp, err := provider.GenerateContent(ctxStructured, "system", []agent.Message{{
 		Role:    "user",
-		Content: "validar homelab e resumir fatos curtos",
+		Content: "oi",
 	}}, nil)
 	if err != nil {
 		t.Fatalf("GenerateContent() error = %v", err)
@@ -93,15 +115,12 @@ func TestProviderGenerateContent_FallsBackWhenGuardedResponseIsEmpty(t *testing.
 	if len(localBalanced.prompts) != 1 {
 		t.Fatalf("local balanced calls = %d", len(localBalanced.prompts))
 	}
-	if len(remoteStructured.prompts) != 1 {
-		t.Fatalf("remote structured calls = %d", len(remoteStructured.prompts))
+	if len(remoteCheap.prompts) != 1 {
+		t.Fatalf("remote cheap calls = %d", len(remoteCheap.prompts))
 	}
-	if !strings.Contains(remoteStructured.prompts[0], "# RESPONSE GUARD") {
-		t.Fatalf("expected response guard in gemini prompt, got %q", remoteStructured.prompts[0])
-	}
-	state := provider.StatusSnapshot().Routes["openrouter:"+defaultRemoteStructuredModel]
+	state := provider.StatusSnapshot().Routes["openrouter:"+modelDeepSeekChat]
 	if state.Failures != 1 {
-		t.Fatalf("gemini failures = %d", state.Failures)
+		t.Fatalf("deepseek failures = %d", state.Failures)
 	}
 }
 
@@ -111,7 +130,7 @@ func TestProviderHealthCheck_WarnsOnOpenBreakerAndBudget(t *testing.T) {
 	provider := newTestGatewayProvider()
 	provider.budgets["remote_premium"] = laneBudget{Soft: 1, Hard: 1}
 	provider.states["remote_premium"] = &routeState{Requests: 1, BreakerState: "closed"}
-	provider.states["openrouter:"+defaultRemotePremiumModel] = &routeState{
+	provider.states["openrouter:"+modelMiniMaxM27] = &routeState{
 		BreakerState:     "open",
 		BreakerOpenUntil: time.Now().Add(time.Minute),
 	}
@@ -123,7 +142,7 @@ func TestProviderHealthCheck_WarnsOnOpenBreakerAndBudget(t *testing.T) {
 	if !strings.Contains(check.Message, "remote_premium budget-hard") {
 		t.Fatalf("message = %q", check.Message)
 	}
-	if !strings.Contains(check.Message, "openrouter:"+defaultRemotePremiumModel+" open") {
+	if !strings.Contains(check.Message, "openrouter:"+modelMiniMaxM27+" open") {
 		t.Fatalf("message = %q", check.Message)
 	}
 }
@@ -147,7 +166,7 @@ func TestProviderStatusHandler_ReturnsSnapshot(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
 		t.Fatalf("Decode() error = %v", err)
 	}
-	if payload.PrimaryMode != defaultLocalBalancedModel {
+	if payload.PrimaryMode != modelGemma3 {
 		t.Fatalf("primary_mode = %q", payload.PrimaryMode)
 	}
 	if payload.Routes["local"].Requests != 2 {

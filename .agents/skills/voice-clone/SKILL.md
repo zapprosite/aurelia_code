@@ -1,45 +1,31 @@
 ---
 name: voice-clone
-description: Skill para clonagem e injeção de vozes no motor Kokoro (Kodoro) local.
+description: Skill para clonagem e injeção de vozes no motor Kokoro (Kodoro) local ou MiniMax Audio.
 ---
 
-# Voice Clone (Kokoro Local)
+# 🎙️ Voice-Clone: Sovereign Voice Identity 2026
 
-## Objetivo
-Clonar e injetar identidades vocais no ecossistema da Aurélia, garantindo que o motor de síntese local (RTX 4090) utilize vozes personalizadas com sotaque correto em Português-Brasil.
+Habilita a criação de clones de voz digitais para a Aurélia, utilizando técnicas de Zero-Shot TTS ou Fine-tuning em hardware local.
 
-## Quando usar
-- Para atualizar a voz oficial da Aurélia (`Aurelia.wav`).
-- Para criar novas vozes de agentes secundários ou bots de terceiros.
-- Quando o motor de voz regredir para fonemas estrangeiros (Espanhol).
+## 🏛️ Protocolo de Clonagem (Industrial)
 
-## Processo de Clonagem
+### 1. Motor de Clonagem
+- **Local (GPU)**: `Kokoro-TTS` com técnica de Voice Styles.
+- **Premium (Cloud)**: `MiniMax Voice Cloning` para fidelidade absoluta.
 
-### 1. Amostragem (Input)
-- Obtenha um áudio de 10 a 30 segundos (claro, sem ruído de fundo).
-- Formato preferencial: `.wav` ou `.mp3`.
+### 2. Identidade Oficial
+- A voz padrão da Aurélia deve ser mantida consistente (Feminina, Brasileira, Doce).
+- Novos clones para testes devem ser documentados em `docs/voice_clones/`.
 
-### 2. Sanitização e Conversão
-A Aurélia exige amostras em 24kHz Mono para performance ideal no Kokoro. Use `ffmpeg`:
-```bash
-ffmpeg -i input.mp3 -ar 24000 -ac 1 Aurelia.wav
-```
+### 3. Requisitos Técnicos
+- **Amostra**: Exige áudio limpo (WAV/MP3) com duração mínima de 10 segundos sem ruído.
+- **Hardware**: Processamento de inferência via CUDA na RTX 4090 para baixíssima latência (< 500ms).
 
-### 3. Injeção no Container
-O motor de voz (Chatterbox/Kodoro) lê as vozes de um volume Docker. Injete o arquivo:
-```bash
-docker cp Aurelia.wav chatterbox-tts:/app/voices/
-```
+## 🛡️ Guardrails Éticos
+- **Permissão**: Nunca clone vozes de pessoas reais sem autorização explícita registrada.
+- **Uso Malicioso**: É proibido o uso da voz clonada para impersonificação ou testes de engenharia social.
 
-### 4. Configuração do Código
-Ao solicitar o áudio via API (OpenAI Compatible), use os parâmetros:
-- `voice`: "Aurelia.wav" (nome do arquivo injetado).
-- `language`: "pt" (OBRIGATÓRIO para PT-BR).
-
-## Governança e Ética
-- **Autorização**: Apenas use vozes sob licença ou autorização explícita (como a voz da Aurélia).
-- **Local-First**: Priorize sempre a injeção local em vez de APIs de nuvem para garantir a soberania do áudio.
-
-## Troubleshooting
-- **Sotaque Espanhol**: `internal/config` já impõe `tts_language: "pt"` e `pkg/tts/openai_compatible.go` só remove essa chave se ficar vazia, portanto o valor oficial nunca pode ser alterado durante o runtime. Use `scripts/verify-tts-language.sh` para validar o JSON de configuração local e (opcionalmente) pingar `http://127.0.0.1:8484/v1/voice/synthesize`.
-- **Voz não encontrada**: Verifique se o arquivo está dentro de `/app/voices/` no container `chatterbox-tts`.
+## 📍 Quando usar
+- Ao atualizar a identidade sonora da Aurélia.
+- Para criar vozes de assistentes especializados (ex: "Aurelia Engineer", "Aurelia Support").
+- Para testar novos modelos de TTS no mercado.

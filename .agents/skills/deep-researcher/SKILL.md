@@ -1,30 +1,25 @@
 ---
+type: skill
 name: deep-researcher
-description: Elite skill for deep-researcher.
+description: Pesquisa profunda utilizando Gemini Web e ferramentas externas para descoberta de novos conceitos.
+skillSlug: deep-researcher
+phases: [P]
+generated: 2026-03-19
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
+# 🔬 Deep Researcher: Hyper-Sovereign Analysis 2026
 
+Skill especializada em investigações de longo fôlego, cruzando dados de internet aberta, papers acadêmicos e repositórios de código aberto.
 
-# 🔬 Skill: Deep-Researcher
+## 🏗️ Protocolo Industrial
+- **Multimodal**: Utilize visão para analisar diagramas e vídeos técnicos.
+- **Soothe**: Gere resumos executivos focados na aplicação prática no Homelab.
+- **Integration**: Feed direto para o `architect-planner` para criação de ADRs.
 
-Automatiza a descoberta de conhecimento externo para subsidiar decisões arquiteturais e debugging.
-
-<directives>
-1. **Verificação de Ambiente**:
-   - Navegue para `https://myaccount.google.com/email`.
-   - Confirme se a conta ativa é a conta de desenvolvimento autorizada para este workspace.
-   - Se a conta for pessoal ou incorreta, solicite via `notify_user` que o usuário troque de perfil no navegador.
-2. **Navegação de Elite**:
-   - Use `https://gemini.google.com` com o modelo mais avançado disponível.
-   - Ative o modo **Deep Research** para tópicos complexos.
-3. **Parâmetros de Pesquisa**:
-   - Priorize documentação oficial, benchmarks de performance e artigos técnicos (`arXiv`, `Google Scholar`).
-   - Extraia exemplos de código (snippets) prontos para integração.
-4. **Persistência de Conhecimento**:
-   - Salve o relatório em `~/Desktop/pesquisas-gemini/` com o formato `YYYY-MM-DD_topico.md`.
-</directives>
-
-## Fluxo de Trabalho
-1. Definir o objetivo da pesquisa.
-2. Executar a navegação via ferramenta `browser`.
-3. Consolidar os resultados em um artefato no repositório ou no Desktop.
+## 📍 Quando usar
+- Pesquisa de novas arquiteturas de LLM (ex: MoE, Speculative Decoding).
+- Auditoria de tendências de hardware para o próximo upgrade do Homelab.
+- Investigação de segurança em novos patches do kernel Linux.

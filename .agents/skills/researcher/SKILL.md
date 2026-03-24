@@ -1,45 +1,36 @@
 ---
+type: skill
 name: researcher
-description: Elite skill for researcher.
+description: Habilita pesquisa profunda e síntese de informações complexas para tomada de decisão técnica.
+skillSlug: researcher
+phases: [P]
+generated: 2026-03-18
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
+# 🕵️ Researcher: Sovereign Analysis 2026
 
+Habilita o Antigravity a realizar investigações técnicas exaustivas para embasar decisões de arquitetura e resolução de problemas.
 
-# Researcher Skill
+## 🏛️ Metodologia de Pesquisa (Triple-Tier)
 
-## Objetivo
-Conduzir pesquisas aprofundadas sobre qualquer tema, sintetizando informações de múltiplas fontes em análises estruturadas e acionáveis.
+### 1. Pesquisa Externa (Core Integration)
+- **Ferramenta**: Utilize o MCP `context7` para documentação de bibliotecas.
+- **Navegação**: Use o agente `playwright` para ler documentações oficiais diretamente de sites (MDN, Go Docs, Next.js Docs).
+- **Provedor**: Utilize o Tier 1 (MiniMax/Claude) para sintetizar as descobertas.
 
-## Quando usar
-- Pesquisar concorrentes ou mercado antes de decisão de produto
-- Investigar tecnologia ou biblioteca antes de adotar
-- Analisar tendências de uma área
-- Produzir briefing sobre qualquer tema para tomada de decisão
+### 2. Pesquisa Interna (Aurelia Search)
+- **Ferramenta**: Utilize `mcp_ai-context_search` e o Vector DB local para encontrar precedentes no monorepo.
+- **Referência**: Consulte sempre `docs/adr/` para entender o "porquê" de decisões passadas.
 
-## Como executar
+## 🚀 Workflow de Síntese
+1. **Gathering**: Reúna evidências de múltiplas fontes (Interno + Externo).
+2. **Analysis**: Identifique conflitos, oportunidades e riscos (SWOT).
+3. **Report**: Gere um relatório conciso com recomendações acionáveis.
 
-### Fase 1: Escopo
-1. Defina a pergunta central que precisa ser respondida
-2. Identifique subtópicos relevantes (máximo 5)
-3. Determine o nível de profundidade necessário (visão geral vs. análise técnica)
-
-### Fase 2: Coleta
-1. Busque fontes primárias quando possível (documentação oficial, papers, dados)
-2. Use fontes secundárias para contexto e síntese
-3. Identifique lacunas e controvérsias no tema
-
-### Fase 3: Síntese
-1. Separe fatos de opiniões
-2. Identifique consensos e divergências
-3. Conecte as informações com o contexto do usuário
-
-### Fase 4: Output
-1. Estruture por relevância para a decisão, não por ordem de descoberta
-2. Inclua fontes para pontos críticos
-3. Termine com recomendação ou próximos passos claros
-
-## Output esperado
-- Resumo executivo (3-5 pontos principais)
-- Análise detalhada por subtópico
-- Pontos de atenção e limitações da pesquisa
-- Recomendação ou conclusão acionável
+## 📍 Quando usar
+- Antes de iniciar um novo slice de tecnologia desconhecida.
+- Para comparar bibliotecas ou frameworks antes de um ADR.
+- Para descobrir a causa raiz de comportamentos bizarros do sistema.

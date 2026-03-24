@@ -1,22 +1,38 @@
 ---
+type: skill
 name: security-first
-description: Elite skill for security-first.
+description: Garante a integridade, privacidade e conformidade de segurança do Home Lab e do Monorepo.
+skillSlug: security-first
+phases: [P, E, O]
+generated: 2026-03-19
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
+# 🛡️ Security First: Sovereign Defense 2026
 
+Esta skill é o pilar de defesa da Aurélia, garantindo que a autonomia (`sudo=1`) não comprometa a segurança do sistema.
 
-# 🛡️ Skill: Security-First
+## 🧱 Pilares de Segurança
 
-Esta habilidade garante que o workspace permaneça seguro e livre de vazamentos de credenciais.
+### 1. Gestão de Segredos (Aurelia Vault)
+- **Princípio**: Zero Secret in Code. Todo commit deve ser auditado.
+- **Workflow**: Se detectar segredos expostos, aborte o push imediatamente e execute o script de revogação.
 
-<directives>
-1. **Secrets Scanning**: Antes de qualquer commit ou push, verifique se há chaves de API, tokens JWT ou senhas em texto puro.
-2. **Permissões de Arquivo**: Valide se arquivos sensíveis (como `.env`, `.key`) não estão com permissões excessivas (ex: deve ser 600 ou 400).
-3. **Auditoria de Código**: Procure padrões de risco como Injeção de SQL, XSS ou falhas de lógica em permissões.
-4. **Deny List**: Respeite rigorosamente os arquivos ignorados no `.gitignore` e as regras de segurança do sistema.
-</directives>
+### 2. Autonomia Supervisionada
+- **Auditoria de Comandos**: Monitoramento de comandos `sudo` que alteram configurações globais ou redes.
+- **Local First**: Priorize execução local para dados sensíveis ou códigos privados.
 
-## Checklist de Pré-Commit
-- [ ] Nenhum segredo detectado no `git diff --cached`.
-- [ ] `.env` e chaves privadas estão no `.gitignore`.
-- [ ] Novas dependências foram verificadas contra vulnerabilidades conhecidas.
+### 3. Firewall & Rede
+- Verifique periodicamente o `docker-compose.yml` em busca de portas expostas indevidamente (ex: Redis ou DBs abertos para o mundo).
+
+## 📍 Quando usar
+- Antes de qualquer `git push`.
+- Ao configurar novos serviços Docker.
+- Ao realizar o onboarding de novos tokens de API de terceiros.
+
+## 🚫 Anti-Padrões
+- Ignorar avisos de linter de segurança.
+- Commitar arquivos `.env` ou chaves `.pem`.
+- Rodar scripts desconhecidos com `sudo` sem inspeção prévia.

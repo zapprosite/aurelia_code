@@ -1,30 +1,25 @@
 ---
+type: skill
 name: cost-reducer
-description: Elite skill for cost-reducer.
+description: Otimiza o uso de tokens e hardware para reduzir o custo operacional do Homelab.
+skillSlug: cost-reducer
+phases: [P, O]
+generated: 2026-03-18
+updated: 2026-03-24
+status: active
+scaffoldVersion: "2.0.0"
 ---
 
+# 📉 Cost Reducer: Sovereign Economy 2026
 
+Skill estratégica faturista da Aurélia para garantir que a inteligência de nível industrial não gere custos descontrolados em provedores de nuvem.
 
-# Cost Reducer Skill
+## 🏛️ Política de Custos (Triple-Tier)
+1. **Sovereign First**: SEMPRE use o Tier 3 (Gemma3 Local) para tarefas secundárias (Resumo de logs, correção de typos, ajuda rápida).
+2. **Batch Processing**: Agrupe requisições externas para o Tier 1 (MiniMax/DeepSeek) em vez de mensagens atômicas.
+3. **Prompt Optmization**: Use a skill `/documentation` para gerar prompts mais concisos que consomem menos tokens de input/output.
 
-## Objetivo
-Analisar e reduzir custos de infraestrutura, serviços e código. Identifica gargalos financeiros e propõe otimizações concretas com estimativa de economia.
-
-## Quando usar
-- Revisar stack de infra antes de escalar
-- Auditar uso de APIs pagas
-- Identificar recursos subutilizados em cloud
-- Revisar código que gera custo desnecessário (queries N+1, chamadas redundantes, etc.)
-
-## Como executar
-1. Solicite ao usuário o contexto: cloud provider, serviços em uso, volume de requisições/mês e custo atual aproximado
-2. Leia os arquivos relevantes: `cloud-and-infra.md`, `code-level-savings.md`, `services-and-finops.md`
-3. Mapeie cada ponto de custo identificado
-4. Para cada ponto, apresente: problema, impacto estimado em $ e solução proposta
-5. Priorize por ROI (maior economia com menor esforço primeiro)
-
-## Output esperado
-Relatório estruturado com:
-- Resumo executivo (economia total estimada)
-- Lista priorizada de otimizações
-- Passos de implementação por item
+## 📍 Quando usar
+- Quando o orçamento mensal de API estiver próximo do teto.
+- Em tarefas de grande volume de dados.
+- Durante a fase de pesquisa inicial, privilegiando o Tier 3 e busca semântica local.

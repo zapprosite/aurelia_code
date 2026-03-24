@@ -64,15 +64,22 @@ func (g *GemmaJudge) Judge(ctx context.Context, task string, history []agent.Mes
 	}
 
 	var result JudgeResult
-	// Limpar possíveis markdown blocks se o modelo injetar
 	content := strings.TrimSpace(resp.Content)
-	content = strings.TrimPrefix(content, "```json")
-	content = strings.TrimSuffix(content, "```")
-	content = strings.TrimSpace(content)
+	content = extractJSON(content)
 
 	if err := json.Unmarshal([]byte(content), &result); err != nil {
 		return nil, fmt.Errorf("failed to parse judge output: %w | content: %s", err, content)
 	}
 
 	return &result, nil
+}
+
+// extractJSON finds the first '{' and last '}' to isolate a JSON block.
+func extractJSON(s string) string {
+	start := strings.Index(s, "{")
+	end := strings.LastIndex(s, "}")
+	if start == -1 || end == -1 || start >= end {
+		return s // Return original as fallback
+	}
+	return s[start : end+1]
 }

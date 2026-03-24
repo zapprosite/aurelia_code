@@ -3,50 +3,36 @@ name: frontend-design
 description: Elite skill for frontend-design.
 ---
 
+# 🎨 Frontend Design: UI Premium Estelar 2026
 
+Habilita o Antigravity a criar interfaces web deslumbrantes, modernas e altamente responsivas para o Dashboard `ULTRATRINK` da Aurélia.
 
-# Frontend Design Skill
+## 🏛️ Princípios de Design (WOW Factor)
 
-## Objetivo
-Criar interfaces de alta qualidade visual e usabilidade. Vai além do funcional: entrega componentes e telas com design profissional, consistência visual e boa experiência de uso.
+### 1. Estética Premium
+- **Aparência**: Use Glassmorphism, Neomorfismo sutil, gradientes suaves e sombras profundas para criar profundidade.
+- **Identidade**: Siga o estilo "Cyberpunk Profissional" ou "Sovereign Industrial" (Dark Mode por padrão).
+- **Tipografia**: Utilize fontes modernas (Inter, Roboto, Outfit) via Google Fonts.
 
-## Quando usar
-- Criar componentes de UI do zero
-- Revisar e melhorar interfaces existentes
-- Implementar design system
-- Converter mockups/wireframes em código
-- Criar landing pages e páginas de produto
+### 2. Tecnologia & Performance
+- **Stack**: Next.js 15+, React 19, Vanilla CSS ou Tailwind (se solicitado).
+- **Zod-First**: Integre validação de formulários via Zod consumindo os esquemas de `packages/zod-schemas/`.
+- **tRPC Hooks**: Utilize os hooks do tRPC para fetch de dados com tipagem total.
 
-## Princípios de design aplicados ao código
+### 3. Micro-interações
+- Adicione animações sutis de hover, transições de estado e esqueletos de carregamento (Skeleton Screens) para uma experiência fluida.
 
-### Hierarquia visual
-- Um elemento principal por tela (CTA, título, ação primária)
-- Tamanhos de fonte em escala (12, 14, 16, 20, 24, 32, 48)
-- Contraste mínimo WCAG AA: 4.5:1 para texto normal
+## 🛠️ Workflow de Implementação
+1. **Mockup**: Gere uma imagem da interface via `generate_image` para aprovação do Will.
+2. **Drafting**: Crie os componentes funcionais com foco em acessibilidade e semântica.
+3. **Refinery**: Aplique o polish visual (CSS custom properties, animações).
 
-### Espaçamento
-- Use escala de 4px: 4, 8, 12, 16, 24, 32, 48, 64
-- Padding interno consistente por tipo de componente
-- Whitespace generoso comunica qualidade
+## 📍 Quando usar
+- Para criar novas páginas no Dashboard.
+- Para refatorar componentes de login ou monitoramento.
+- Para gerar assets visuais e diagramas para a documentação.
 
-### Cores
-- Defina paleta: primária, secundária, neutros, semânticas (success, error, warning)
-- Nunca use preto puro (#000): prefira #0F0F0F ou #1A1A1A
-- Backgrounds: evite branco puro (#FFF), use #FAFAFA ou #F5F5F5
-
-### Tipografia
-- Máximo 2 famílias de fonte por projeto
-- Line-height: 1.5 para corpo de texto, 1.2 para títulos
-- Letter-spacing negativo em títulos grandes fica mais profissional
-
-## Stack recomendada
-- React + Tailwind CSS para a maioria dos projetos
-- Framer Motion para animações
-- Radix UI para componentes acessíveis base
-- Lucide React para ícones
-
-## Output esperado
-- Código limpo, componentizado e reutilizável
-- Responsivo por padrão (mobile-first)
-- Estados cobertos: default, hover, active, disabled, loading, error
-- Comentários em decisões de design não óbvias
+## 🚫 Anti-Padrões
+- Usar cores básicas (Red #FF0000, Blue #0000FF).
+- Criar layouts que quebram no mobile.
+- Ignorar o estado de erro e loading da UI.
