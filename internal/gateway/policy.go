@@ -3,16 +3,19 @@ package gateway
 import "strings"
 
 const (
-	defaultLocalFastModel        = "gemma3:12b"
-	defaultLocalBalancedModel    = "gemma3:12b"
-	defaultLocalVisionModel      = "gemma3:12b"
-	defaultRemoteVisionModel     = "google/gemma-3-27b-it:free"
-	defaultRemoteCheapLongModel  = "qwen/qwen3.5-flash-02-23"
-	defaultRemoteStructuredModel = "google/gemini-2.5-flash"
-	defaultRemotePremiumModel    = "minimax/minimax-m2.7"
-	defaultAudioModel            = "whisper-large-v3-turbo"
-	defaultDeepResearchModel     = "gemini-web-deep-research"
-	defaultGroqTextModel         = "llama-3.3-70b-versatile"
+	// Models requested by the user
+	modelDeepSeekChat = "deepseek/deepseek-chat-v3.1"
+	modelQwenNext     = "qwen/qwen3-coder-next"
+	modelMiniMaxM27   = "minimax-m2.7-direct"
+	modelKimiK25      = "moonshotai/kimi-k2.5"
+
+	modelGemma3 = "gemma3:12b"
+	modelLlama3 = "llama3.2:3b"
+	modelGroq70b = "llama-3.3-70b-versatile"
+
+	// Existing static defaults
+	defaultAudioModel        = "whisper-large-v3-turbo"
+	defaultDeepResearchModel = "gemini-web-deep-research"
 )
 
 type DryRunRequest struct {
@@ -25,6 +28,12 @@ type DryRunRequest struct {
 	CostSensitive   bool   `json:"cost_sensitive,omitempty"`
 	PremiumRequired bool   `json:"premium_required,omitempty"`
 	LatencyBudgetMS int    `json:"latency_budget_ms,omitempty"`
+	
+	// New fields for the Judge
+	JudgeClass      string  `json:"judge_class,omitempty"`
+	JudgeConfidence float64 `json:"judge_confidence,omitempty"`
+	ContextSize     int     `json:"context_size,omitempty"`
+	RetryCount      int     `json:"retry_count,omitempty"`
 }
 
 type ResponseGuards struct {
@@ -42,6 +51,10 @@ type RouteCandidate struct {
 	Reason     string         `json:"reason"`
 	Guards     ResponseGuards `json:"guards"`
 	BudgetLane string         `json:"budget_lane"`
+	
+	// Metadata from the judge
+	Class      string  `json:"class,omitempty"`
+	Confidence float64 `json:"confidence,omitempty"`
 }
 
 // DryRunDecision mantém compatibilidade reversa onde testes/handlers precisarem
@@ -63,222 +76,145 @@ func (p *Planner) Decide(req DryRunRequest) DryRunDecision {
 }
 
 func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
-	taskClass := classifyTask(req)
-	outputMode := strings.ToLower(strings.TrimSpace(req.OutputMode))
-	useTools := req.RequiresTools || taskClass == "maintenance" || taskClass == "browser_workflow"
-
-	// Audio
-	if taskClass == "audio" {
-		return []RouteCandidate{{
-			Lane:       "audio-stt",
-			Provider:   "groq",
-			Model:      defaultAudioModel,
-			UseRemote:  true,
-			UseTools:   false,
-			Reason:     "audio/stt e um lane isolado; Groq tira o custo de STT da GPU local.",
-			Guards:     ResponseGuards{ReasoningMode: "off", MaxOutputTokens: 64, SoftTimeoutMS: 20000},
-			BudgetLane: "audio",
-		}}
+	// 1. Initial Classification
+	taskClass := req.JudgeClass
+	if taskClass == "" {
+		taskClass = "coding_main" // Default
 	}
 
-	// Deep Research
-	if taskClass == "deep_research" {
-		return []RouteCandidate{{
-			Lane:       "deep-research",
-			Provider:   "gemini-web",
-			Model:      defaultDeepResearchModel,
-			UseRemote:  true,
-			UseTools:   false,
-			Reason:     "pesquisa profunda deve ficar fora do runtime critico e alimentar o RAG por curadoria.",
-			Guards:     ResponseGuards{ReasoningMode: "default", MaxOutputTokens: 1200, SoftTimeoutMS: 120000},
-			BudgetLane: "research",
-		}}
-	}
-
-	// Vision
+	// 2. Override Rules
+	// If input contains image / screenshot / PDF: force long_context_or_multimodal
 	if req.RequiresVision {
-		if req.LocalOnly {
-			return []RouteCandidate{{
-				Lane:       "local-vision",
-				Provider:   "ollama",
-				Model:      defaultLocalVisionModel,
-				UseRemote:  false,
-				UseTools:   useTools,
-				Reason:     "visao local usando gemma 3 multitarefa.",
-				Guards:     guardsFor(outputMode, false),
-				BudgetLane: "local",
-			}}
-		}
-		return []RouteCandidate{{
-			Lane:       "remote-cheap-vision",
-			Provider:   "openrouter",
-			Model:      defaultRemoteVisionModel,
-			UseRemote:  true,
-			UseTools:   useTools,
-			Reason:     "visao fica melhor no lane remoto barato e multimodal (Gemma 3 / Qwen).",
-			Guards:     guardsFor(outputMode, true),
-			BudgetLane: "remote_vision",
-		}}
+		taskClass = "long_context_or_multimodal"
+	}
+	// If context is large: force long_context_or_multimodal
+	if req.ContextSize > 12000 { // Threshold for "large" context
+		taskClass = "long_context_or_multimodal"
+	}
+	// If judge confidence < 0.6: route to coding_main
+	if req.JudgeConfidence > 0 && req.JudgeConfidence < 0.6 {
+		taskClass = "coding_main"
 	}
 
-	// Structured, Routing, Curation
-	if outputMode == "structured_json" || taskClass == "routing" || taskClass == "curation" {
-		if req.LocalOnly {
-			return []RouteCandidate{{
-				Lane:       "local-balanced",
-				Provider:   "ollama",
-				Model:      defaultLocalBalancedModel,
-				UseRemote:  false,
-				UseTools:   useTools,
-				Reason:     "saida estruturada local_only fica no 9b local, mas com guardas para conter reasoning.",
-				Guards:     guardsFor(outputMode, false),
-				BudgetLane: "local",
-			}}
-		}
+	// 3. Routing Policy Mapping
+	switch taskClass {
+	case "simple_short":
 		return []RouteCandidate{
 			{
-				Lane:       "remote-tool-long-output",
+				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      defaultRemoteStructuredModel,
+				Model:      modelDeepSeekChat,
 				UseRemote:  true,
-				UseTools:   useTools,
-				Reason:     "primary: JSON estruturado preferencial no gemini 2.5 flash.",
-				Guards:     guardsFor(outputMode, true),
-				BudgetLane: "remote_structured",
-			},
-			{
-				Lane:       "remote-cheap-long-context",
-				Provider:   "openrouter",
-				Model:      defaultRemoteCheapLongModel,
-				UseRemote:  true,
-				UseTools:   useTools,
-				Reason:     "fallback 1: modelo barato alternativo na nuvem.",
-				Guards:     guardsFor(outputMode, true),
+				Reason:     "simple_short: deepseek-chat is cost-efficient.",
+				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
 			},
 			{
-				Lane:       "local-balanced",
-				Provider:   "ollama",
-				Model:      defaultLocalBalancedModel,
-				UseRemote:  false,
-				UseTools:   useTools,
-				Reason:     "fallback 2: ollama local residente.",
-				Guards:     guardsFor(outputMode, false),
-				BudgetLane: "local",
+				Lane:       "remote-cheap-fallback",
+				Provider:   "openrouter",
+				Model:      modelQwenNext,
+				UseRemote:  true,
+				Reason:     "simple_short: qwen fallback.",
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "remote_cheap",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
 			},
 		}
-	}
 
-	// Premium / Browser
-	if req.PremiumRequired || taskClass == "browser_workflow" || taskClass == "workflow_premium" {
-		if req.LocalOnly {
-			return []RouteCandidate{{
-				Lane:       "local-balanced",
-				Provider:   "ollama",
-				Model:      defaultLocalBalancedModel,
-				UseRemote:  false,
-				UseTools:   useTools,
-				Reason:     "premium req localmente forçado pro 9b.",
-				Guards:     guardsFor(outputMode, false),
-				BudgetLane: "local",
-			}}
-		}
+	case "coding_main":
 		return []RouteCandidate{
 			{
-				Lane:       "remote-premium-workflow",
-				Provider:   "openrouter",
-				Model:      defaultRemotePremiumModel,
+				Lane:       "remote-premium",
+				Provider:   "minimax",
+				Model:      modelMiniMaxM27,
 				UseRemote:  true,
-				UseTools:   useTools,
-				Reason:     "primary: workflow premium e browser humano ficam polidos no lane MiniMax.",
-				Guards:     guardsFor(outputMode, true),
+				Reason:     "coding_main: minimax-m2.7 is the primary execution model.",
+				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_premium",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
 			},
 			{
-				Lane:       "remote-tool-long-output",
+				Lane:       "remote-cheap-fallback",
 				Provider:   "openrouter",
-				Model:      defaultRemoteStructuredModel,
+				Model:      modelQwenNext,
 				UseRemote:  true,
-				UseTools:   useTools,
-				Reason:     "fallback 1: gemini flash estruturado.",
-				Guards:     guardsFor(outputMode, true),
-				BudgetLane: "remote_structured",
-			},
-			{
-				Lane:       "local-balanced",
-				Provider:   "ollama",
-				Model:      defaultLocalBalancedModel,
-				UseRemote:  false,
-				UseTools:   useTools,
-				Reason:     "fallback 2: ollama local residente.",
-				Guards:     guardsFor(outputMode, false),
-				BudgetLane: "local",
+				Reason:     "coding_main: qwen fallback.",
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "remote_cheap",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
 			},
 		}
-	}
 
-	// Latency-sensitive local
-	if req.LatencyBudgetMS > 0 && req.LatencyBudgetMS <= 1500 && !useTools && !req.RequiresVision {
-		return []RouteCandidate{{
-			Lane:       "local-fast",
-			Provider:   "ollama",
-			Model:      defaultLocalFastModel,
-			UseRemote:  false,
-			UseTools:   false,
-			Reason:     "triagem curta e sensivel a latencia cabe no lane local-fast.",
-			Guards:     guardsFor(outputMode, false),
-			BudgetLane: "local",
-		}}
-	}
-
-	// Cost Sensitive
-	if req.CostSensitive && !req.LocalOnly && !useTools {
+	case "long_context_or_multimodal":
 		return []RouteCandidate{
 			{
-				Lane:       "remote-cheap-long-context",
+				Lane:       "remote-long-context",
 				Provider:   "openrouter",
-				Model:      defaultRemoteCheapLongModel,
+				Model:      modelKimiK25,
 				UseRemote:  true,
-				UseTools:   false,
-				Reason:     "primary: qwen barato para tarefas sensiveis a custo.",
-				Guards:     guardsFor(outputMode, true),
-				BudgetLane: "remote_cheap",
+				Reason:     "long_context_or_multimodal: kimi is specialized for long context/vision.",
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "remote_vision",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
 			},
 			{
-				Lane:       "local-balanced",
-				Provider:   "ollama",
-				Model:      defaultLocalBalancedModel,
-				UseRemote:  false,
-				UseTools:   false,
-				Reason:     "fallback: ollama local.",
-				Guards:     guardsFor(outputMode, false),
-				BudgetLane: "local",
+				Lane:       "remote-premium",
+				Provider:   "minimax",
+				Model:      modelMiniMaxM27,
+				UseRemote:  true,
+				Reason:     "long_context_or_multimodal: minimax fallback.",
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "remote_premium",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
 			},
 		}
-	}
 
-	// Maintenance, Local Only, General Default
-	return []RouteCandidate{
-		{
-			Lane:       "remote-premium-workflow",
-			Provider:   "openrouter",
-			Model:      defaultRemotePremiumModel,
-			UseRemote:  true,
-			UseTools:   useTools,
-			Reason:     "primary: minimax-m2.7 para respostas de chat de alta qualidade.",
-			Guards:     guardsFor(outputMode, true),
-			BudgetLane: "remote_premium",
-		},
-		{
-			Lane:       "local-balanced",
-			Provider:   "ollama",
-			Model:      defaultLocalBalancedModel,
-			UseRemote:  false,
-			UseTools:   useTools,
-			Reason:     "fallback de emergencia: gemma3 local quando OpenRouter indisponivel.",
-			Guards:     guardsFor(outputMode, false),
-			BudgetLane: "local",
-		},
+	case "critical":
+		return []RouteCandidate{
+			{
+				Lane:       "remote-premium",
+				Provider:   "minimax",
+				Model:      modelMiniMaxM27,
+				UseRemote:  true,
+				Reason:     "critical: minimax-m2.7 for high accuracy.",
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "remote_premium",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
+			{
+				Lane:       "remote-long-context",
+				Provider:   "openrouter",
+				Model:      modelKimiK25,
+				UseRemote:  true,
+				Reason:     "critical: kimi fallback.",
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "remote_vision",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
+		}
+
+	default:
+		// Default to coding_main
+		return []RouteCandidate{
+			{
+				Lane:      "remote-premium",
+				Provider:  "minimax",
+				Model:     modelMiniMaxM27,
+				UseRemote: true,
+				Reason:    "default: routing to coding_main.",
+				Guards:    guardsFor(req.OutputMode, true),
+				Class:     "coding_main",
+			},
+		}
 	}
 }
 
