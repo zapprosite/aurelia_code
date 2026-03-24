@@ -91,17 +91,17 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		return nil, fmt.Errorf("config is required")
 	}
 	lowTemp := 0.1
-	localFast := llm.NewOllamaProviderWithOptions(modelGemma3, llm.OpenAICompatibleRequestOptions{
+	localFast := llm.NewOllamaProviderWithOptions(cfg.OllamaURL, modelGemma3, llm.OpenAICompatibleRequestOptions{
 		MaxTokens:   192,
 		Temperature: &lowTemp,
 		ExtraFields: map[string]any{"think": false},
 	})
-	localBalanced := llm.NewOllamaProviderWithOptions(modelGemma3, llm.OpenAICompatibleRequestOptions{
+	localBalanced := llm.NewOllamaProviderWithOptions(cfg.OllamaURL, modelGemma3, llm.OpenAICompatibleRequestOptions{
 		MaxTokens:   384,
 		Temperature: &lowTemp,
 		ExtraFields: map[string]any{"think": false},
 	})
-	localVision := llm.NewOllamaProviderWithOptions(modelGemma3, llm.OpenAICompatibleRequestOptions{
+	localVision := llm.NewOllamaProviderWithOptions(cfg.OllamaURL, modelGemma3, llm.OpenAICompatibleRequestOptions{
 		MaxTokens:   512,
 		Temperature: &lowTemp,
 	})
@@ -132,7 +132,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		})
 	}
 
-	judge := NewGemmaJudge("gemma3:12b")
+	judge := NewGemmaJudge(cfg.OllamaURL, "gemma3:12b")
 
 	provider := &Provider{
 		planner:           NewPlanner(),

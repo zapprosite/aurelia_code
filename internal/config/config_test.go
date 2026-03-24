@@ -45,9 +45,6 @@ func TestLoad_CreatesDefaultAppConfigWhenMissing(t *testing.T) {
 	if cfg.TTSVoice != defaultLocalTTSVoice {
 		t.Fatalf("TTSVoice = %q, want %q", cfg.TTSVoice, defaultLocalTTSVoice)
 	}
-	if cfg.OpenAIAuthMode != "api_key" {
-		t.Fatalf("OpenAIAuthMode = %q, want %q", cfg.OpenAIAuthMode, "api_key")
-	}
 
 	if cfg.MemoryWindowSize != defaultMemoryWindowSize {
 		t.Fatalf("MemoryWindowSize = %d, want %d", cfg.MemoryWindowSize, defaultMemoryWindowSize)
@@ -83,7 +80,6 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 		GoogleAPIKey:           "google-key",
 		OpenRouterAPIKey:       "openrouter-key",
 		OpenAIAPIKey:           "openai-key",
-		OpenAIAuthMode:         "api_key",
 		GroqAPIKey:             "groq-key",
 		MaxIterations:          321,
 		DBPath:                 filepath.Join(tmpDir, "data", "custom.db"),
@@ -139,9 +135,6 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 	if cfg.OpenAIAPIKey != input.OpenAIAPIKey {
 		t.Fatalf("OpenAIAPIKey = %q, want %q", cfg.OpenAIAPIKey, input.OpenAIAPIKey)
 	}
-	if cfg.OpenAIAuthMode != input.OpenAIAuthMode {
-		t.Fatalf("OpenAIAuthMode = %q, want %q", cfg.OpenAIAuthMode, input.OpenAIAuthMode)
-	}
 	if cfg.AnthropicAPIKey != input.AnthropicAPIKey {
 		t.Fatalf("AnthropicAPIKey = %q, want %q", cfg.AnthropicAPIKey, input.AnthropicAPIKey)
 	}
@@ -192,9 +185,6 @@ func TestLoad_NormalizesMissingFieldsWithDefaults(t *testing.T) {
 	if cfg.LLMModel != defaultLLMModelForProvider(defaultLLMProvider) {
 		t.Fatalf("LLMModel = %q, want %q", cfg.LLMModel, defaultLLMModelForProvider(defaultLLMProvider))
 	}
-	if cfg.OpenAIAuthMode != "api_key" {
-		t.Fatalf("OpenAIAuthMode = %q", cfg.OpenAIAuthMode)
-	}
 	if cfg.STTProvider != defaultSTTProvider {
 		t.Fatalf("STTProvider = %q, want %q", cfg.STTProvider, defaultSTTProvider)
 	}
@@ -234,7 +224,6 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 		GoogleAPIKey:           "google-key",
 		OpenRouterAPIKey:       "openrouter-key",
 		OpenAIAPIKey:           "openai-key",
-		OpenAIAuthMode:         "api_key",
 		GroqAPIKey:             "groq-key",
 		MaxIterations:          900,
 		MemoryWindowSize:       25,
@@ -252,9 +241,6 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 	}
 	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "qwen3.5:9b" || cfg.STTProvider != "groq" {
 		t.Fatalf("unexpected providers llm=%q model=%q stt=%q", cfg.LLMProvider, cfg.LLMModel, cfg.STTProvider)
-	}
-	if cfg.OpenAIAuthMode != "api_key" {
-		t.Fatalf("OpenAIAuthMode = %q, want %q", cfg.OpenAIAuthMode, "api_key")
 	}
 	if cfg.MCPConfigPath != filepath.Join(tmpDir, "config", "mcp_servers.json") {
 		t.Fatalf("MCPConfigPath = %q, want managed default", cfg.MCPConfigPath)
