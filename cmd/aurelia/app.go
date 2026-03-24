@@ -240,7 +240,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		projectPlaybookPath,
 	)
 
-	transcriber, err := buildTranscriber(a.cfg)
+	transcriber, err := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.GroqAPIKey, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage)
 	if err != nil {
 		return fmt.Errorf("initialize transcriber: %w", err)
 	}
@@ -301,7 +301,7 @@ func (a *app) initVoice(logger *slog.Logger) error {
 		return fmt.Errorf("initialize voice spool: %w", err)
 	}
 
-	transcriber, _ := buildTranscriber(a.cfg)
+	transcriber, _ := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.GroqAPIKey, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage)
 	var fallback stt.Transcriber
 	if a.cfg.STTFallbackCommand != "" {
 		fallback = stt.NewCommandTranscriber(a.cfg.STTFallbackCommand)
@@ -403,16 +403,6 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 	}
 }
 
-func buildTranscriber(cfg *config.AppConfig) (stt.Transcriber, error) {
-	switch cfg.STTProvider {
-	case "local", "faster-whisper":
-		return stt.NewLocalTranscriber(cfg.STTBaseURL, cfg.STTModel), nil
-	case "", "groq":
-		return stt.NewGroqTranscriber(cfg.GroqAPIKey), nil
-	default:
-		return nil, fmt.Errorf("unsupported stt provider %q", cfg.STTProvider)
-	}
-}
 
 func (a *app) start() {
 	logger := observability.Logger("cmd.app")
