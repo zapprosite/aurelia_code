@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -441,6 +442,45 @@ func (a *app) start() {
 	}
 	dashboard.RegisterRoute("/api/commands", dashboard.HandleCommands)
 	dashboard.RegisterRoute("/api/metrics", metrics.Handler())
+
+	// Proxy VRV homelab dashboard (/api/vrv/ → http://localhost:3333/)
+	dashboard.RegisterRoute("/api/vrv/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		subPath := strings.TrimPrefix(r.URL.Path, "/api/vrv")
+		if subPath == "" || subPath == "/" {
+			subPath = "/"
+		}
+		targetURL := "http://localhost:3333" + subPath
+		if r.URL.RawQuery != "" {
+			targetURL += "?" + r.URL.RawQuery
+		}
+		resp, err := http.Get(targetURL) //nolint:noctx
+		if err != nil {
+			http.Error(w, "VRV backend unreachable: "+err.Error(), http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(w, "VRV read error: "+err.Error(), http.StatusBadGateway)
+			return
+		}
+		ct := resp.Header.Get("Content-Type")
+		if strings.Contains(ct, "text/html") {
+			body = bytes.ReplaceAll(body, []byte(`href="/`), []byte(`href="/api/vrv/`))
+			body = bytes.ReplaceAll(body, []byte(`src="/`), []byte(`src="/api/vrv/`))
+		}
+		for k, vs := range resp.Header {
+			if k == "Content-Encoding" || k == "Content-Length" || k == "Transfer-Encoding" {
+				continue
+			}
+			for _, v := range vs {
+				w.Header().Add(k, v)
+			}
+		}
+		w.WriteHeader(resp.StatusCode)
+		_, _ = w.Write(body)
+	}))
+
 	_ = dashboard.StartServer(logger, a.cfg.DashboardPort)
 	go a.bot.Start()
 }
