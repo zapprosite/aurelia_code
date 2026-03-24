@@ -1,7 +1,7 @@
 ---
 title: ADR Semparar — Executive Summary
 description: Resumo executivo do workflow de slices nonstop — estado, conformidade, próximos passos
-audience: Humanos operadores, Aurélia, Codex, Claude, Antigravity
+audience: Humanos operadores, Aurélia, OpenCode, Claude, Antigravity
 ---
 
 # ADR Semparar — Executive Summary
@@ -15,7 +15,7 @@ audience: Humanos operadores, Aurélia, Codex, Claude, Antigravity
 
 `/adr-semparar` é um **workflow operacional** que implementa as regras de `AGENTS.md` para slices estruturais longas:
 - ✅ Abertura com ADR + JSON taskmaster
-- ✅ Continuidade garantida entre agentes (Codex, Claude, Antigravity)
+- ✅ Continuidade garantida entre agentes (OpenCode, Claude, Antigravity)
 - ✅ Handoff estruturado com `resume_prompt`
 - ✅ Validação automática de conformidade
 - ✅ Sincronização de contexto obrigatória
@@ -212,7 +212,7 @@ Derivadas de `AGENTS.md`, implementadas no workflow:
 2. Leia `adr-semparar-agents-md-conformance.md`
 3. Confirme que é **conflito com AGENTS.md**, não com workflow
 4. Se for conflito com AGENTS.md → Escale para humano operador
-5. Aurélia/Codex/Claude nunca podem contrariar AGENTS.md
+5. Aurélia/OpenCode/Claude nunca podem contrariar AGENTS.md
 
 ---
 
@@ -240,7 +240,7 @@ Use este documento para:
 
 ---
 
-## Para Agentes (Codex, Claude, Antigravity)
+## Para Agentes (OpenCode, Claude, Antigravity)
 
 Use este documento para:
 - ✅ Entender o padrão de slice
