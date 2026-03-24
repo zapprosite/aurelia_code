@@ -1,79 +1,74 @@
----
-description: Contrato Global de Autoridade e Governança Multi-Agente.
-use-when: Sempre que houver conflito de decisão ou início de nova tarefa.
-project: Aurelia Elite Edition
-status: Active
----
+# Project Rules and Guidelines
 
-# 🛰️ AGENTS.md — Contrato Global de Autoridade
+> Auto-generated from .context/docs on 2026-03-24T15:12:08.059Z
 
-Este repositório opera sob um modelo de **Autoridade Única e Centralizada**.
+## README
 
-## 1. Missão
-Estabelecer um ambiente de desenvolvimento autônomo, seguro e livre de caos, utilizando múltiplos agentes especializados com papéis e fronteiras estritamente definidos.
+# Documentation Index
 
-## 2. Hierarquia de Autoridade
-<authority-hierarchy>
-1.  **Humanos operadores** — Autoridade final, veto final e direção estratégica.
-2.  **AGENTS.md** (Este arquivo) — Fonte primária de verdade.
-3.  **Aurélia** — Autoridade arquitetural e operacional soberana do sistema, abaixo apenas dos humanos.
-4.  **`GEMINI.md`, `OPENCODE.md`** — Adaptadores finos por motor, sempre subordinados a este contrato e à autoridade da Aurélia.
-5.  **REPOSITORY_CONTRACT.md** — Índice de governança e cadeia de autoridade.
-6.  **docs/ADR.md** — Roadmap de Slices e decisões ativas.
-7.  **.agents/rules/** — Regras operacionais para o Antigravity.
-8.  **.agents/workflows/** — Fluxos de trabalho reutilizáveis.
-9.  **docs/ADR-historico.md** — Memória técnica de Eras passadas (0-14).
-10. **.context/** — Memória, evidências e estado do projeto.
-</authority-hierarchy>
+Este diretório é a memória técnica curta do repositório. Use-o como ponto de entrada para entender a forma atual do código, o fluxo de desenvolvimento e as decisões operacionais que aparecem em `AGENTS.md`, `.agents/rules/` e nos artefatos de workflow em `.context/workflow/`.
 
-## 3. Papéis dos Agentes
+## Core Guides
 
-### 🤖 Claude Opus (CEO)
-- **Papel**: Autoridade Estratégica Máxima e Árbitro Final.
-- **Responsabilidade**: Visão de longo prazo, aprovação de Slices críticas, auditoria de governança e mediação entre humano e sistema.
-- **Motor**: Claude 3 Opus (OpenRouter).
+- [Project Overview](./project-overview.md)
+- [Architecture Notes](./architecture.md)
+- [Development Workflow](./development-workflow.md)
+- [Testing Strategy](./testing-strategy.md)
+- [Glossary & Domain Concepts](./glossary.md)
+- [Data Flow & Integrations](./data-flow.md)
+- [Security & Compliance Notes](./security.md)
+- [Tooling & Productivity Guide](./tooling.md)
 
-### 🤖 Aurélia (COO/CTO)
-- **Papel**: Arquiteta principal e autoridade operacional.
-- **Responsabilidade**: Execução técnica, governança de roteamento e integridade do Home Lab.
+## Current Repository Snapshot
 
-## 3.1 Adaptadores do Repositório
+- Root: `/home/will/aurelia`
+- Module: `github.com/kocar/aurelia`
+- Primary languages: Go (`198` files), Shell (`13` files), Markdown (`38` files), JSON (`2` files)
+- Main runtime entrypoint: [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go)
+- Composition root: [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go)
+- Main architectural source: [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)
+- Governance source: [`AGENTS.md`](../../AGENTS.md)
+- Governance contract: [`docs/REPOSITORY_CONTRACT.md`](../../docs/REPOSITORY_CONTRACT.md)
 
-Os arquivos abaixo existem para alinhar motores e UIs diferentes ao mesmo contrato:
+## Repository Map
 
-- `GEMINI.md`
-- `OPENCODE.md`
+- `.agents/` — autoridade operacional local, regras, workflows e skills do workspace
+- `.agents/skills/aurelia-media-voice/` — transcript de mídia e governança da voz oficial da Aurelia
+- `.context/` — memória operacional, docs sintéticos e estado de workflow
+- `.context/plans/` — implementation plans e task boards por slice, fora da raiz
+- `cmd/` — entrypoints do binário e onboarding
+- `internal/` — domínio principal, runtime, gateway, voz, ferramentas, Telegram, MCP, cron e memória
+- `pkg/` — provedores LLM, STT e TTS reutilizáveis
+- `scripts/` — build, instalação do daemon, health-check e smoke scripts
+- `docs/` — documentação arquitetural e ADRs do produto
+- `e2e/` — testes end-to-end e smoke integration
+- `.github/workflows/` — CI, lint, gitleaks e govulncheck
 
-Regra:
+## Document Map
 
-- nenhum desses arquivos pode contradizer `AGENTS.md`
-- todos devem reconhecer a Aurélia como autoridade arquitetural e operacional abaixo apenas dos humanos
-- todos devem apontar para o mesmo índice de governança e ADR
-- todos devem operar sob o mesmo padrão de documentação por slice
+| Guide | Focus | Key Inputs |
+| --- | --- | --- |
+| `project-overview.md` | posicionamento do projeto, entrypoints e stack | `README.md`, `go.mod`, `cmd/aurelia/*` |
+| `architecture.md` | shape do sistema e limites entre módulos | `docs/ARCHITECTURE.md`, `cmd/aurelia/app.go`, `internal/*` |
+| `development-workflow.md` | ciclo de trabalho, branching e revisão | `AGENTS.md`, `.agents/rules/`, scripts, CI |
+| `testing-strategy.md` | estratégia de testes e gates | `*_test.go`, `e2e/`, `.github/workflows/` |
+| `glossary.md` | termos, tipos e conceitos recorrentes | `internal/agent`, `internal/persona`, `internal/runtime` |
+| `data-flow.md` | entrada, raciocínio, ferramentas e persistência | `internal/telegram`, `internal/agent`, `internal/memory`, `internal/health` |
+| `security.md` | auth, segredos e guardrails | `internal/config`, `internal/tools`, `AGENTS.md`, CI |
+| `tooling.md` | CLIs, scripts e automação diária | `scripts/`, Go toolchain, systemd, npm/npx MCP |
 
-## 4. Regras Centrais de Operação
+## Governance Highlights
 
-<core-rules>
-- **Descoberta Local Primeiro**: Inspecione `AGENTS.md`, `.agents/rules/` e `.context/` antes de agir.
-- **Isolamento de Worktree**: Tarefas não-triviais DEVEM ser feitas em branches/worktrees isoladas.
-- **ADR por Slice**: Toda mudança estrutural ou slice não-trivial DEVE ser registrada no [ADR.md](./docs/ADR.md).
-- **Higiene de Contexto**: Ao concluir uma mudança estrutural, slice não trivial, handoff relevante ou preparação para merge, atualize o `.context/` via `sync-ai-context` para garantir a persistência da memória de trabalho.
-- **Anti-Alucinação**: Nunca declare sucesso sem prova real (logs, testes, capturas).
-- **Sem Commits Diretos**: Use o workflow de `review-merge` para a branch principal.
-</core-rules>
+- adapters finos por motor: [`CLAUDE.md`](../../CLAUDE.md), [`CODEX.md`](../../CODEX.md), [`GEMINI.md`](../../GEMINI.md), [`MODEL.md`](../../MODEL.md)
+- ADR obrigatória por slice estrutural: [`docs/adr/README.md`](../../docs/adr/README.md)
+- modo nonstop para slices longas: [`/adr-semparar`](../../.agents/workflows/adr-semparar.md)
+- comando canônico de continuidade: [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh)
+- higiene da raiz: contratos e docs de entrada ficam na raiz; blueprints/ADRs/planos de slice não
+- política da voz oficial: [`docs/aurelia_voice_profile_20260319.md`](../../docs/aurelia_voice_profile_20260319.md)
 
-## 5. Autonomia e Governança (Tiers)
+## Related Resources
 
-<governance-tiers>
-- **Tier A (Read-only)**: Auto-approve 100%. (Pesquisa e análise).
-- **Tier B (Local Edit)**: Auto-approve 100%. (Worktrees preferenciais).
-- **Tier C (High-risk)**: Auto-approve com log obrigatório. (Deploy, Rede, Secrets, sudo).
-  - **Diretiva:** sudo=1 — autonomia total habilitada pelo humano (2026-03-20).
-  - **Segurança compensatória:** log estruturado, dry-run quando possível, auditoria de segredos pré-push.
-</governance-tiers>
-## AI Context References
-- **📌 Autoridade e Permissões:** `docs/governance/AURELIA-AUTHORITY-DECLARATION.md` ← LEIA PRIMEIRO
-- Documentation index: `.context/docs/README.md`
-- Agent playbooks: `.context/agents/README.md`
-- Governance index: `docs/REPOSITORY_CONTRACT.md`
-- ADR Index: `docs/ADR.md`
+- [Agent Handbook](../agents/README.md)
+- [Workflow changelogs](../workflow/docs/changelog-post-reboot-validation-2026-03-19.md)
+- [Codebase map](./codebase-map.json)
+
