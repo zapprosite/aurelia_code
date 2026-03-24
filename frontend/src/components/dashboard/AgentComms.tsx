@@ -81,6 +81,17 @@ export function AgentComms() {
           push({ from: d.agent.toLowerCase(), to: "aurelia", msg: `${d.action}` });
         } else if (d.type === "agent_handoff" && d.agent) {
           push({ from: d.agent.toLowerCase(), to: "all", msg: `handoff: ${d.action}` });
+        } else if (d.type === "agent_comms" && d.agent) {
+          // S-25: real cron/health events from backend
+          const payload = d.payload || {};
+          const jobId = typeof payload === "object" ? (payload.job || "") : "";
+          const status = typeof payload === "object" ? (payload.status || "ok") : "ok";
+          const shortJob = jobId.length > 8 ? jobId.slice(0, 8) + "…" : jobId;
+          push({
+            from: d.agent.toLowerCase(),
+            to: "aurelia",
+            msg: `★ ${d.action}${shortJob ? ` [${shortJob}]` : ""} — ${status}`,
+          });
         }
       } catch { /* ignore */ }
     };

@@ -1,7 +1,11 @@
 package agent
 
 import (
+	"io"
+	"net/http"
+	"runtime"
 	"sync"
+	"time"
 )
 
 // SquadAgent define a identidade fixa e o status de um membro do Squad Oficial.
@@ -92,6 +96,106 @@ func UpdateSquadAgentStatus(id string, status string, load int) {
 			break
 		}
 	}
+}
+
+// CronActiveCounter is implemented by cron.Scheduler to expose active job count.
+type CronActiveCounter interface {
+	ActiveCount() int
+}
+
+// StartLiveLoad launches a background goroutine that polls real metrics every 10s
+// and updates squad agent statuses accordingly.
+func StartLiveLoad(cronScheduler CronActiveCounter, ollamaURL, openrouterKey string) {
+	if ollamaURL == "" {
+		ollamaURL = "http://localhost:11434"
+	}
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			updateLiveLoad(cronScheduler, ollamaURL, openrouterKey)
+		}
+	}()
+	// Run once immediately (non-blocking)
+	go updateLiveLoad(cronScheduler, ollamaURL, openrouterKey)
+}
+
+func updateLiveLoad(cronScheduler CronActiveCounter, ollamaURL, openrouterKey string) {
+	// aurelia: goroutine count mapped 0-100 (max ~200 goroutines = 100%)
+	numG := runtime.NumGoroutine()
+	aureliaLoad := numG * 100 / 200
+	if aureliaLoad > 100 {
+		aureliaLoad = 100
+	}
+	UpdateSquadAgentStatus("aurelia", "online", aureliaLoad)
+
+	// cronus: active cron job count (0-100, scaled)
+	if cronScheduler != nil {
+		count := cronScheduler.ActiveCount()
+		cronusLoad := count * 10 // 10 jobs = 100%
+		if cronusLoad > 100 {
+			cronusLoad = 100
+		}
+		UpdateSquadAgentStatus("cronus", "online", cronusLoad)
+	}
+
+	// gemma: probe Ollama /api/tags
+	gemmaStatus, gemmaLoad := probeOllama(ollamaURL)
+	UpdateSquadAgentStatus("gemma", gemmaStatus, gemmaLoad)
+
+	// openrouter: probe OpenRouter /api/v1/models
+	orStatus, orLoad := probeOpenRouter(openrouterKey)
+	UpdateSquadAgentStatus("openrouter", orStatus, orLoad)
+
+	// sentinel: always online, load = goroutine count / 3
+	sentinelLoad := numG / 3
+	if sentinelLoad > 100 {
+		sentinelLoad = 100
+	}
+	UpdateSquadAgentStatus("sentinel", "online", sentinelLoad)
+}
+
+func probeOllama(ollamaURL string) (string, int) {
+	client := &http.Client{Timeout: 3 * time.Second}
+	start := time.Now()
+	resp, err := client.Get(ollamaURL + "/api/tags")
+	if err != nil {
+		return "offline", 0
+	}
+	defer resp.Body.Close()
+	_, _ = io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "offline", 0
+	}
+	latencyMs := time.Since(start).Milliseconds()
+	// load: fast response = low load; >2000ms = 100% load
+	load := int(latencyMs / 20)
+	if load > 100 {
+		load = 100
+	}
+	return "online", load
+}
+
+func probeOpenRouter(apiKey string) (string, int) {
+	if apiKey == "" {
+		return "offline", 0
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequest(http.MethodGet, "https://openrouter.ai/api/v1/models", nil)
+	if err != nil {
+		return "offline", 0
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "offline", 0
+	}
+	defer resp.Body.Close()
+	_, _ = io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "offline", 0
+	}
+	return "online", 5
 }
 
 // AddSquadAgent registra um novo agente no squad se não existir com esse ID.

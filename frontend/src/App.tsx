@@ -10,7 +10,8 @@ import { PlanViewer, type ActionPlan } from "./components/dashboard/PlanViewer";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Card, CardHeader, CardTitle } from "./components/ui/Card";
 import { Badge } from "./components/ui/Badge";
-import { Brain, Layout, Server } from "lucide-react";
+import { Layout, Server } from "lucide-react";
+import { BrainSearch } from "./components/dashboard/BrainSearch";
 import { useSystemMetrics } from "./hooks/useSystemMetrics";
 import { type SquadAgent } from "./components/dashboard/SquadGrid";
 
@@ -26,6 +27,37 @@ const INITIAL_FEED: FeedItemProps[] = [
     status: "success"
   }
 ];
+
+// S-28: VRV Homelab tab with manual refresh button
+function HomelabTab() {
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2 text-white/40">
+        <Server className="w-4 h-4" />
+        <span className="text-xs font-mono uppercase tracking-widest">VRV — Homelab Monitor</span>
+        <button
+          onClick={() => {
+            if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+          }}
+          className="ml-auto font-mono text-[11px] px-2 py-0.5 rounded border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-colors"
+          title="Atualizar painel VRV"
+        >
+          [↺ atualizar]
+        </button>
+      </div>
+      <div className="rounded-xl overflow-hidden border border-white/10" style={{ height: "75vh" }}>
+        <iframe
+          ref={iframeRef}
+          src="/api/vrv/"
+          className="w-full h-full"
+          style={{ border: "none", background: "#0a0a0a" }}
+          title="VRV Homelab Dashboard"
+        />
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [activeTab, setActiveTab] = React.useState<TabId>("timeline");
@@ -188,31 +220,11 @@ function App() {
                 )}
 
                 {activeTab === "brain" && (
-                  <div className="flex flex-col items-center justify-center py-32 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center mb-6">
-                      <Brain className="w-8 h-8 text-white/20" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white/80 mb-2 uppercase tracking-tight">Semantic Cortex</h3>
-                    <p className="text-sm text-white/30 max-w-md">em desenvolvimento (S-18)</p>
-                    <Badge variant="outline" className="mt-6 uppercase text-[10px] tracking-widest">Integrating with Local Vector DB</Badge>
-                  </div>
+                  <BrainSearch />
                 )}
 
                 {activeTab === "homelab" && (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-2 text-white/40">
-                      <Server className="w-4 h-4" />
-                      <span className="text-xs font-mono uppercase tracking-widest">VRV — Homelab Monitor</span>
-                    </div>
-                    <div className="rounded-xl overflow-hidden border border-white/10" style={{ height: "75vh" }}>
-                      <iframe
-                        src="/api/vrv/"
-                        className="w-full h-full"
-                        style={{ border: "none", background: "#0a0a0a" }}
-                        title="VRV Homelab Dashboard"
-                      />
-                    </div>
-                  </div>
+                  <HomelabTab />
                 )}
 
                 {activeTab === "roadmap" && (

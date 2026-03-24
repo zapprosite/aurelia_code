@@ -263,6 +263,10 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		a.bot.SetHealthReporter(gw)
 	}
 
+	// S-27: Wire squad + cron status reporters for /status command
+	a.bot.SetSquadReporter(squadStatusAdapter{})
+	a.bot.SetCronJobReporter(&cronNextJobAdapter{store: a.cronStore})
+
 	// Wire gemma3 input guard
 	ollamaURL := a.cfg.OllamaURL
 	if ollamaURL == "" {
@@ -283,6 +287,12 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	a.cronCancel = cronCancel
 
 	seedSystemCrons(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
+
+	// S-22: Squad Live Load — updates agent metrics every 10s
+	agent.StartLiveLoad(a.cronScheduler, ollamaURL, a.cfg.OpenRouterAPIKey)
+
+	// S-24: Sentinel health probes — updates gemma/sentinel squad status every 30s
+	startSentinelHealthLoop(a.cfg)
 
 	a.heartbeat = heartbeat.NewHeartbeatService(
 		a.resolver.Root(),
@@ -442,6 +452,19 @@ func (a *app) start() {
 	}
 	dashboard.RegisterRoute("/api/commands", dashboard.HandleCommands)
 	dashboard.RegisterRoute("/api/metrics", metrics.Handler())
+
+	// S-26: The Brain — Qdrant semantic search endpoints
+	qdrantURL := a.cfg.QdrantURL
+	if qdrantURL == "" {
+		qdrantURL = "http://localhost:6333"
+	}
+	qdrantCollection := a.cfg.QdrantCollection
+	if qdrantCollection == "" {
+		qdrantCollection = "conversation_memory"
+	}
+	qdrantAPIKey := a.cfg.QdrantAPIKey
+	dashboard.RegisterRoute("/api/brain/search", buildBrainSearchHandler(qdrantURL, qdrantCollection, qdrantAPIKey))
+	dashboard.RegisterRoute("/api/brain/recent", buildBrainRecentHandler(qdrantURL, qdrantCollection, qdrantAPIKey))
 
 	// Proxy VRV homelab dashboard (/api/vrv/ → http://localhost:3333/)
 	dashboard.RegisterRoute("/api/vrv/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/health"
 	"github.com/kocar/aurelia/internal/runtime"
@@ -141,6 +142,63 @@ func buildGeminiHealthCheck(cfg *config.AppConfig, smokePath string) func() heal
 		}
 		return health.CheckResult{Status: "ok", Message: fmt.Sprintf("%s validated %s ago", status.Model, age.Round(time.Minute))}
 	}
+}
+
+// startSentinelHealthLoop runs periodic health probes and updates squad status for gemma and sentinel.
+// S-24: Sentinel→Squad Health Probes.
+func startSentinelHealthLoop(cfg *config.AppConfig) {
+	ollamaURL := cfg.OllamaURL
+	if ollamaURL == "" {
+		ollamaURL = "http://127.0.0.1:11434"
+	}
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			runSentinelProbe(ollamaURL)
+		}
+	}()
+}
+
+func runSentinelProbe(ollamaURL string) {
+	totalChecks := 2
+	passed := 0
+
+	// Probe 1: Ollama
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(ollamaURL, "/")+"/api/tags", nil)
+	if err == nil {
+		resp, err := http.DefaultClient.Do(req)
+		if err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				passed++
+				agent.UpdateSquadAgentStatus("gemma", "online", 10)
+			} else {
+				agent.UpdateSquadAgentStatus("gemma", "offline", 0)
+			}
+		} else {
+			agent.UpdateSquadAgentStatus("gemma", "offline", 0)
+		}
+	}
+
+	// Probe 2: self health endpoint
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel2()
+	req2, err2 := http.NewRequestWithContext(ctx2, http.MethodGet, "http://localhost:8080/ready", nil)
+	if err2 == nil {
+		resp2, err2 := http.DefaultClient.Do(req2)
+		if err2 == nil {
+			resp2.Body.Close()
+			if resp2.StatusCode == http.StatusOK {
+				passed++
+			}
+		}
+	}
+
+	sentinelLoad := (passed * 100) / totalChecks
+	agent.UpdateSquadAgentStatus("sentinel", "online", 100-sentinelLoad) // more checks passing = lower load
 }
 
 func readGeminiSmokeStatus(path string) (geminiSmokeStatus, error) {

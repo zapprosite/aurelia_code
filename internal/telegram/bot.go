@@ -45,6 +45,9 @@ type BotController struct {
 	personasDir      string
 	healthReporter   HealthReporter
 	inputGuard       *InputGuard
+	// S-27: Squad and Cron status reporters for /status command
+	squadReporter   SquadStatusReporter
+	cronJobReporter CronNextJobReporter
 }
 
 // SetHealthReporter wires a gateway health reporter for /status diagnostics.
