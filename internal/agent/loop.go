@@ -35,6 +35,11 @@ func (l *Loop) Registry() *ToolRegistry {
 	return l.registry
 }
 
+// GetLLMProvider returns the underlying LLM provider
+func (l *Loop) GetLLMProvider() LLMProvider {
+	return l.llm
+}
+
 // Run é a interface clássica do loop, mantida para compatibilidade
 func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, allowedTools []string) ([]Message, string, error) {
 	// Filtrar definições de tools baseado em allowedTools

@@ -25,6 +25,9 @@ func (bc *BotController) registerContentRoutes() {
 	bc.bot.Handle(telebot.OnDocument, bc.handleDocument)
 	bc.bot.Handle(telebot.OnVoice, bc.handleVoice)
 	bc.bot.Handle(telebot.OnAudio, bc.handleVoice)
+	bc.bot.Handle(telebot.OnVideo, bc.handleVideo)
+	bc.bot.Handle(telebot.OnAnimation, bc.handleVideo)
+	bc.bot.Handle("/transcrever", bc.handleTranscreverCommand)
 }
 
 

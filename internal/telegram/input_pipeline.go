@@ -42,6 +42,10 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		return bc.completeBootstrapProfile(c, state, session.text)
 	}
 
+	if bc.mediaProcessor != nil && bc.mediaProcessor.IsSupportedURL(session.text) {
+		return bc.handleMediaURL(c, session)
+	}
+
 	if handled, err := bc.handleMemoryCommand(c, session); handled {
 		return err
 	}
@@ -129,6 +133,20 @@ func newInputSessionWithContext(ctx context.Context, senderUserID int64, text st
 	}
 }
 
+type botChatSender struct {
+	bot  *telebot.Bot
+	chat *telebot.Chat
+}
+
+func (s *botChatSender) Send(what interface{}, opts ...interface{}) error {
+	_, err := s.bot.Send(s.chat, what, opts...)
+	return err
+}
+
+func (s *botChatSender) Chat() *telebot.Chat {
+	return s.chat
+}
+
 
 func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatID int64, text string, requiresAudio bool) error {
 	if bc == nil || bc.bot == nil {
@@ -142,6 +160,10 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 
 	if handled, err := bc.handleExternalMemoryCommand(chat, session); handled {
 		return err
+	}
+	if bc.mediaProcessor != nil && bc.mediaProcessor.IsSupportedURL(session.text) {
+		sender := &botChatSender{bot: bc.bot, chat: chat}
+		return bc.handleMediaURL(sender, session)
 	}
 	if bc.inputGuard != nil && !requiresAudio {
 		if blocked, reason := bc.inputGuard.Check(ctx, text); blocked {

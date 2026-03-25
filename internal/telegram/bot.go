@@ -11,6 +11,7 @@ import (
 
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/config"
+	"github.com/kocar/aurelia/internal/media"
 	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
@@ -48,6 +49,7 @@ type BotController struct {
 	// S-27: Squad and Cron status reporters for /status command
 	squadReporter   SquadStatusReporter
 	cronJobReporter CronNextJobReporter
+	mediaProcessor  *media.Processor
 }
 
 // SetHealthReporter wires a gateway health reporter for /status diagnostics.
@@ -116,6 +118,7 @@ func NewBotController(
 		pendingAlbums:    make(map[string]*pendingAlbum),
 		recentMedia:      make(map[string]recentMedia),
 		personasDir:      personasDir,
+		mediaProcessor:   media.NewProcessor(s, e.GetLoop().GetLLMProvider(), ""),
 	}
 
 	bc.setupRoutes()
