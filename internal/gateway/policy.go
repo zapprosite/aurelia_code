@@ -162,57 +162,96 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 		}
 
 	case "professional":
-		// Cascade (cheapest → most capable):
-		// 1. gemma3 local probe — judge + responder, zero cost; passes if ≥40 words + confident
-		// 2. minimax-m2.5 free — 1000 req/day free; skip if rate-limited
-		// 3. qwen3-32b — $0.08/$0.24/1M paid cheap fallback
-		// 4. minimax-m2.7 — $0.30/$1.20/1M paid premium final
-		candidates = []RouteCandidate{
-			{
-				Lane:       "local-balanced",
-				Provider:   "local",
-				Model:      modelGemma3,
-				UseRemote:  false,
-				LocalProbe: true,
-				Reason:     "professional: gemma3 judge+probe — free, zero latency cost.",
-				Guards:     guardsForProfessional(req.OutputMode, false),
-				BudgetLane: "local",
-				Class:      taskClass,
-				Confidence: req.JudgeConfidence,
-			},
-			{
-				Lane:       "remote-free",
-				Provider:   "openrouter",
-				Model:      modelMiniMaxM25Free,
-				UseRemote:  true,
-				Reason:     "professional: minimax-m2.5 free tier (1000 req/day, zero cost).",
-				Guards:     guardsForProfessional(req.OutputMode, true),
-				BudgetLane: "remote_premium",
-				Class:      taskClass,
-				Confidence: req.JudgeConfidence,
-			},
-			{
-				Lane:       "remote-cheap",
-				Provider:   "openrouter",
-				Model:      modelQwen3,
-				UseRemote:  true,
-				Reason:     "professional: qwen3-32b paid cheap fallback ($0.08/$0.24/1M).",
-				Guards:     guardsForProfessional(req.OutputMode, true),
-				BudgetLane: "remote_cheap",
-				Class:      taskClass,
-				Confidence: req.JudgeConfidence,
-			},
-			{
-				Lane:       "remote-premium",
-				Provider:   "minimax",
-				Model:      modelMiniMaxM27,
-				UseRemote:  true,
-				Reason:     "professional: minimax-m2.7 paid premium final fallback.",
-				Guards:     guardsForProfessional(req.OutputMode, true),
-				BudgetLane: "remote_premium",
-				Class:      taskClass,
-				Confidence: req.JudgeConfidence,
-			},
+		// Hard technical queries (ABNT, COP, ROI, multi-step calculations) bypass local probe
+		// and go directly to Groq (free, 0.8s) for accuracy. Soft queries still probe locally.
+		//
+		// Cascade:
+		//   hard  → Groq (free, 0.8s) → Qwen3 ($0.08/$0.24) → M2.7 ($0.30/$1.20)
+		//   soft  → gemma3 probe (free, 2s) → Groq (free) → Qwen3 → M2.7
+		if isHardProfessional(req.Task) {
+			candidates = []RouteCandidate{
+				{
+					Lane:       "remote-free",
+					Provider:   "groq",
+					Model:      "llama-3.3-70b-versatile",
+					UseRemote:  true,
+					Reason:     "professional[hard]: groq llama-3.3 free tier — fast, accurate for technical.",
+					Guards:     guardsForProfessional(req.OutputMode, true),
+					BudgetLane: "remote_free",
+					Class:      taskClass,
+					Confidence: req.JudgeConfidence,
+				},
+				{
+					Lane:       "remote-cheap",
+					Provider:   "openrouter",
+					Model:      modelQwen3,
+					UseRemote:  true,
+					Reason:     "professional[hard]: qwen3-32b paid fallback ($0.08/$0.24/1M).",
+					Guards:     guardsForProfessional(req.OutputMode, true),
+					BudgetLane: "remote_cheap",
+					Class:      taskClass,
+					Confidence: req.JudgeConfidence,
+				},
+				{
+					Lane:       "remote-premium",
+					Provider:   "openrouter",
+					Model:      modelMiniMaxM27,
+					UseRemote:  true,
+					Reason:     "professional[hard]: minimax-m2.7 premium ceiling ($0.30/$1.20/1M).",
+					Guards:     guardsForProfessional(req.OutputMode, true),
+					BudgetLane: "remote_premium",
+					Class:      taskClass,
+					Confidence: req.JudgeConfidence,
+				},
+			}
+		} else {
+			candidates = []RouteCandidate{
+				{
+					Lane:       "local-balanced",
+					Provider:   "local",
+					Model:      modelGemma3,
+					UseRemote:  false,
+					LocalProbe: true,
+					Reason:     "professional[soft]: gemma3 probe — free, zero cost if ≥80w confident.",
+					Guards:     guardsForProfessional(req.OutputMode, false),
+					BudgetLane: "local",
+					Class:      taskClass,
+					Confidence: req.JudgeConfidence,
+				},
+				{
+					Lane:       "remote-free",
+					Provider:   "groq",
+					Model:      "llama-3.3-70b-versatile",
+					UseRemote:  true,
+					Reason:     "professional[soft]: groq llama-3.3 free tier fallback (0.8s).",
+					Guards:     guardsForProfessional(req.OutputMode, true),
+					BudgetLane: "remote_free",
+					Class:      taskClass,
+					Confidence: req.JudgeConfidence,
+				},
+				{
+					Lane:       "remote-cheap",
+					Provider:   "openrouter",
+					Model:      modelQwen3,
+					UseRemote:  true,
+					Reason:     "professional[soft]: qwen3-32b paid fallback ($0.08/$0.24/1M).",
+					Guards:     guardsForProfessional(req.OutputMode, true),
+					BudgetLane: "remote_cheap",
+					Class:      taskClass,
+					Confidence: req.JudgeConfidence,
+				},
+				{
+					Lane:       "remote-premium",
+					Provider:   "openrouter",
+					Model:      modelMiniMaxM27,
+					UseRemote:  true,
+					Reason:     "professional[soft]: minimax-m2.7 premium ceiling ($0.30/$1.20/1M).",
+					Guards:     guardsForProfessional(req.OutputMode, true),
+					BudgetLane: "remote_premium",
+					Class:      taskClass,
+					Confidence: req.JudgeConfidence,
+				},
+			}
 		}
 
 	case "maintenance":
@@ -326,21 +365,21 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 		candidates = []RouteCandidate{
 			{
 				Lane:       "remote-free",
-				Provider:   "openrouter",
-				Model:      modelMiniMaxM25Free,
+				Provider:   "groq",
+				Model:      "llama-3.3-70b-versatile",
 				UseRemote:  true,
-				Reason:     "critical: minimax-m2.5 free tier first (1000 req/day).",
+				Reason:     "critical: groq llama-3.3 free tier (fast, accurate).",
 				Guards:     guardsFor(req.OutputMode, true),
-				BudgetLane: "remote_premium",
+				BudgetLane: "remote_free",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},
 			{
 				Lane:       "remote-premium",
-				Provider:   "minimax",
+				Provider:   "openrouter",
 				Model:      modelMiniMaxM27,
 				UseRemote:  true,
-				Reason:     "critical: minimax-m2.7 paid fallback for high accuracy.",
+				Reason:     "critical: minimax-m2.7 premium ceiling ($0.30/$1.20/1M).",
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_premium",
 				Class:      taskClass,
@@ -386,6 +425,47 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 		candidates[i].UseTools = req.RequiresTools
 	}
 	return candidates
+}
+
+// isHardProfessional returns true when a professional query contains signals that indicate
+// high technical complexity: specific norms, calculations, multi-criteria analysis, or
+// planning tasks. These bypass the local probe and go directly to Groq for accuracy.
+func isHardProfessional(task string) bool {
+	t := strings.ToLower(task)
+	hardSignals := []string{
+		// Technical standards and certifications
+		"abnt", "nbr", "norma", "nr-", "iso ", "pcld",
+		// Engineering metrics
+		"cop ", " cop\t", "kw", "btu", "eer", "capacidade frigorifica", "carga termica", "carga térmica",
+		// Financial analysis
+		"roi", "payback", "retorno", "tir ", " tir\t", "vpl", "fluxo de caixa",
+		// Complex planning
+		"cronograma", "matriz de", "plano de manutencao", "plano de manutenção",
+		"comissionamento", "comissionar",
+		// Multi-factor comparison
+		"comparar", "comparacao", "comparação", "vs ", " versus ", "analise", "análise",
+		// Specific technical documents
+		"script de vendas", "proposta tecnica", "proposta técnica", "memorial descritivo",
+		// Multi-unit / scale indicators
+		"unidades internas", "unidades externas",
+	}
+	hits := 0
+	for _, sig := range hardSignals {
+		if strings.Contains(t, sig) {
+			hits++
+			if hits >= 2 {
+				return true
+			}
+		}
+	}
+	// Single high-weight signal is enough
+	highWeight := []string{"abnt", "nbr", "comissionamento", "payback", "roi", "script de vendas"}
+	for _, sig := range highWeight {
+		if strings.Contains(t, sig) {
+			return true
+		}
+	}
+	return false
 }
 
 // classifyRule maps keyword patterns to a task class with a weight.

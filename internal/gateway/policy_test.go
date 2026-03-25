@@ -128,3 +128,82 @@ func TestClassifyTask_TabularCases(t *testing.T) {
 		})
 	}
 }
+
+func TestIsHardProfessional(t *testing.T) {
+	t.Parallel()
+
+	soft := []string{
+		"O que significa HVAC?",
+		"Explique diferenca entre VRF e split para cliente leigo",
+		"Quais pontos de negociacao numa proposta VRV Daikin?",
+		"Como funciona um sistema de climatizacao?",
+	}
+	hard := []string{
+		"Script de vendas com ROI e payback para VRV Daikin incorporadora",
+		"Pontos por norma ABNT para comissionamento VRV edificio comercial",
+		"Comparacao VRV vs chiller+fancoil 2000m2 analise COP custo operacional",
+		"Plano manutencao cronograma anual 20 unidades internas Daikin",
+		"Calcule carga termica e COP para edificio 500m2",
+		"Proposta tecnica completa com payback e ROI",
+	}
+
+	for _, q := range soft {
+		if isHardProfessional(q) {
+			t.Errorf("expected soft for %q, got hard", q)
+		}
+	}
+	for _, q := range hard {
+		if !isHardProfessional(q) {
+			t.Errorf("expected hard for %q, got soft", q)
+		}
+	}
+}
+
+func TestProfessionalHardRoutesToGroq(t *testing.T) {
+	t.Parallel()
+
+	hardQueries := []string{
+		"Script de vendas com ROI e payback para VRV Daikin",
+		"Pontos ABNT para comissionamento VRV edificio comercial",
+		"Analise VRV vs chiller+fancoil analise COP custo",
+	}
+
+	p := NewPlanner()
+	for _, q := range hardQueries {
+		candidates := p.Plan(DryRunRequest{
+			Task: q, JudgeClass: "professional", JudgeConfidence: 0.85,
+		})
+		if len(candidates) == 0 {
+			t.Fatalf("no candidates for %q", q)
+		}
+		first := candidates[0]
+		if first.Lane != "remote-free" || first.Provider != "groq" {
+			t.Errorf("hard query should route to groq remote-free first, got lane=%s provider=%s for %q",
+				first.Lane, first.Provider, q)
+		}
+	}
+}
+
+func TestProfessionalSoftRoutesToLocalProbe(t *testing.T) {
+	t.Parallel()
+
+	softQueries := []string{
+		"Explique diferenca entre VRF e split para cliente leigo",
+		"O que e VRV Daikin?",
+	}
+
+	p := NewPlanner()
+	for _, q := range softQueries {
+		candidates := p.Plan(DryRunRequest{
+			Task: q, JudgeClass: "professional", JudgeConfidence: 0.85,
+		})
+		if len(candidates) == 0 {
+			t.Fatalf("no candidates for %q", q)
+		}
+		first := candidates[0]
+		if first.Lane != "local-balanced" || !first.LocalProbe {
+			t.Errorf("soft query should route to local probe first, got lane=%s probe=%v for %q",
+				first.Lane, first.LocalProbe, q)
+		}
+	}
+}
