@@ -73,7 +73,7 @@ type Provider struct {
 
 	localFast         closableProvider
 	localBalanced     closableProvider
-	remoteFree        closableProvider // MiniMax M2.5 :free tier (1000 req/day, zero cost)
+	remoteFree        closableProvider // Groq Llama-3.3-70B free tier (14,400 req/day, zero cost)
 	remoteCheapLong   closableProvider // Qwen3-32B paid cheap
 	remoteCheapVision closableProvider
 	remotePremium     closableProvider // MiniMax M2.7 paid premium
@@ -111,12 +111,16 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 	var remoteCheapLong closableProvider
 	var remoteCheapVision closableProvider
 	var remotePremium closableProvider
-	if cfg.OpenRouterAPIKey != "" {
-		// Tier 0.5 — MiniMax M2.5 free (1000 req/day with $10+ credit, zero cost)
-		remoteFree = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelMiniMaxM25Free, llm.OpenAICompatibleRequestOptions{
+
+	// Tier 0.5 — Groq Llama-3.3-70B (14,400 req/day free tier, zero cost, ~1s latency)
+	if cfg.GroqAPIKey != "" {
+		remoteFree = llm.NewGroqProviderWithOptions(cfg.GroqAPIKey, "llama-3.3-70b-versatile", llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
 		})
+	}
+
+	if cfg.OpenRouterAPIKey != "" {
 		// Tier 1 — Qwen3-32B paid cheap ($0.08/$0.24 per 1M, thinking disabled)
 		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelQwen3, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
@@ -160,6 +164,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		judge:             judge,
 		budgets: map[string]laneBudget{
 			"local":             {Soft: 1000000, Hard: 1000000},
+			"remote_free":       {Soft: 10000, Hard: 14000}, // Groq free tier ~14,400 req/day
 			"remote_cheap":      {Soft: 400, Hard: 800, CostHardUSD: 0.50},
 			"remote_vision":     {Soft: 120, Hard: 240, CostHardUSD: 0.25},
 			"remote_premium":    {Soft: 80, Hard: 160, CostHardUSD: 2.00},
