@@ -1053,8 +1053,8 @@ func TestMasterTeamService_FinalNotification_WhenTeamConverges(t *testing.T) {
 			if !strings.Contains(msg, "1 concluídas") {
 				return false, "expected final snapshot in message"
 			}
-			if !strings.Contains(strings.ToLower(msg), "ciclo encerrado") {
-				return false, "expected final message to mention cycle cleanup"
+			if !strings.Contains(strings.ToLower(msg), "recursos transientes liberados") {
+				return false, "expected final message to mention resource cleanup"
 			}
 			return true, ""
 		default:
@@ -1222,8 +1222,8 @@ func TestMasterTeamService_FormatMasterNotification_ClassifiesPartialCompletion(
 	if !strings.Contains(strings.ToLower(msg), "conclusao parcial") {
 		t.Fatalf("expected partial classification, got %q", msg)
 	}
-	if !strings.Contains(strings.ToLower(msg), "ciclo encerrado") {
-		t.Fatalf("expected partial final message to mention workers shutdown, got %q", msg)
+	if !strings.Contains(strings.ToLower(msg), "recursos transientes liberados") {
+		t.Fatalf("expected partial final message to mention resource cleanup, got %q", msg)
 	}
 }
 
@@ -1248,8 +1248,8 @@ func TestMasterTeamService_FormatMasterNotification_ClassifiesTerminalBlock(t *t
 	if !strings.Contains(strings.ToLower(msg), "bloqueio terminal") {
 		t.Fatalf("expected terminal classification, got %q", msg)
 	}
-	if !strings.Contains(strings.ToLower(msg), "ciclo encerrado") {
-		t.Fatalf("expected terminal final message to mention cycle closure, got %q", msg)
+	if !strings.Contains(strings.ToLower(msg), "recursos transientes liberados") {
+		t.Fatalf("expected terminal final message to mention resource cleanup, got %q", msg)
 	}
 }
 

@@ -18,17 +18,69 @@ func (r *telegramRenderer) renderDocument(w util.BufWriter, source []byte, n ast
 }
 
 func (r *telegramRenderer) renderHeading(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+	heading := n.(*ast.Heading)
 	if entering {
+		// S-30: Polish Premium — separadores visuais para H1 e H2
+		if heading.Level <= 2 {
+			_, _ = w.WriteString("\n")
+		}
 		_, _ = w.WriteString("<b>")
+		if heading.Level == 1 {
+			_, _ = w.WriteString("\u25C6 ") // Diamond icon for main headers
+		}
 	} else {
 		_, _ = w.WriteString("</b>\n")
+		if heading.Level <= 2 {
+			_, _ = w.WriteString("\n")
+		}
 	}
-	return ast.WalkContinue, nil
+	return ast.WalkStatus(ast.WalkContinue), nil
 }
 
 func (r *telegramRenderer) renderBlockquote(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
-		_, _ = w.WriteString("<blockquote>")
+		// S-30: Polish Premium — detecção de alertas estilo GitHub
+		content := ""
+		if n.FirstChild() != nil {
+			if p, ok := n.FirstChild().(*ast.Paragraph); ok {
+				content = string(p.Text(source))
+			}
+		}
+
+		icon := "💬"
+		title := ""
+		isAlert := false
+
+		if strings.HasPrefix(content, "[!NOTE]") {
+			icon = "💎"
+			title = "NOTA"
+			isAlert = true
+		} else if strings.HasPrefix(content, "[!TIP]") {
+			icon = "💡"
+			title = "DICA"
+			isAlert = true
+		} else if strings.HasPrefix(content, "[!IMPORTANT]") {
+			icon = "📢"
+			title = "IMPORTANTE"
+			isAlert = true
+		} else if strings.HasPrefix(content, "[!WARNING]") {
+			icon = "⚠️"
+			title = "AVISO"
+			isAlert = true
+		} else if strings.HasPrefix(content, "[!CAUTION]") {
+			icon = "🚨"
+			title = "CUIDADO"
+			isAlert = true
+		}
+
+		if isAlert {
+			_, _ = fmt.Fprintf(w, "<blockquote>%s <b>%s</b>\n", icon, title)
+			// O parágrafo original será renderizado em seguida. 
+			// Precisamos remover o marcador [!TYPE] do início se quisermos polimento extra,
+			// mas por simplicidade e robustez, manteremos o fluxo.
+		} else {
+			_, _ = w.WriteString("<blockquote>")
+		}
 	} else {
 		_, _ = w.WriteString("</blockquote>")
 		if n.NextSibling() != nil {

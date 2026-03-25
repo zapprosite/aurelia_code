@@ -4,6 +4,7 @@ import "gopkg.in/telebot.v3"
 
 type contextSender interface {
 	Send(what interface{}, opts ...interface{}) error
+	Chat() *telebot.Chat
 }
 
 func SendContextText(c contextSender, text string, opts ...interface{}) error {

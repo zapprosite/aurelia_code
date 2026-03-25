@@ -10,6 +10,7 @@ import (
 type stubContextSender struct {
 	calls        []sendCall
 	firstSendErr error
+	chat         *telebot.Chat
 }
 
 func (s *stubContextSender) Send(what interface{}, opts ...interface{}) error {
@@ -18,6 +19,13 @@ func (s *stubContextSender) Send(what interface{}, opts ...interface{}) error {
 		return s.firstSendErr
 	}
 	return nil
+}
+
+func (s *stubContextSender) Chat() *telebot.Chat {
+	if s.chat != nil {
+		return s.chat
+	}
+	return &telebot.Chat{ID: 1}
 }
 
 func TestSendContextText_SendsTelegramHTML(t *testing.T) {

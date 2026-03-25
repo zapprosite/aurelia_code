@@ -54,7 +54,20 @@ func (bc *BotController) handleStart(c telebot.Context) error {
 		_ = bc.seedBootstrapIdentity(c, preset)
 	}
 
-	return SendContextText(c, "🛰️ Aurélia Elite Online. Sistema pronto e operando com Groq Llama 70b. Como posso ajudar, Master?")
+	welcome := "━━━━━━ Aurelia Sovereign 2026 ━━━━━━\n\n" +
+		"🛰️ **Soberania Ativa.**\n" +
+		"Bem-vindo ao cockpit de comando, Master. O sistema está operando em regime industrial com **Gemma 3** e **RTX 4090**.\n\n" +
+		"Toda a verbosidade técnica foi movida para o dashboard para manter este canal limpo e estratégico."
+
+	menu := &telebot.ReplyMarkup{}
+	btnDashboard := menu.URL("🛰️ Dashboard Operacional", "https://aurelia.zappro.site/")
+	btnStatus := menu.Data("📊 Status do Sistema", "btn_status")
+	menu.Inline(
+		menu.Row(btnDashboard),
+		menu.Row(btnStatus),
+	)
+
+	return c.Send(welcome, menu, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
 
 func (bc *BotController) handleBootstrapChoice(choice string) func(telebot.Context) error {

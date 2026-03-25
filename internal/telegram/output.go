@@ -116,6 +116,8 @@ func SendText(bot *telebot.Bot, chat *telebot.Chat, text string) error {
 		log.Printf("\n[LLM SWARM RESPONSE E2E]:\n%s\n\n", text)
 		return nil
 	}
+	// S-30: Polish Premium — sanitização final antes do envio
+	text = sanitizeAssistantOutputForUser(text)
 	return sendTextWithSender(bot, chat, text, telegramMessageLimit)
 }
 
