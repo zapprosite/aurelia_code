@@ -92,3 +92,11 @@ scripts/test_tts.py
 aurelia-linux-bin
 aurelia-proof
 bot_test.log
+.playwright-mcp/
+*.log
+
+# External Skills (Managed via Bibliotheca scripts)
+homelab-bibliotheca/skills/open-claw/skills/
+homelab-bibliotheca/skills/open-claw/repo/
+homelab-bibliotheca/skills/open-claw/temp/
+!homelab-bibliotheca/skills/open-claw/skills-registry.json
