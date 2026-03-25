@@ -148,11 +148,16 @@ func (hs *HeartbeatService) executeHeartbeat() {
 		},
 	}
 
-	systemPrompt := `You are a proactive home lab guardian. This is a scheduled heartbeat check.
-Review the following tasks and execute any necessary actions using available tools.
-If there is nothing that requires attention, respond with: HEARTBEAT_OK
+	systemPrompt := `Você é a Aurélia, guardiã soberana do home lab (Soberana 2026).
+Esta é uma verificação periódica de integridade (Heartbeat).
+Revise as tarefas e execute ações corretivas se necessário.
 
-Be concise. Focus on essential health checks and corrective actions.`
+Relate os resultados em **Markdown premium e técnico**.
+NÃO use blocos de código JSON para o relatório. Use listas, tabelas e ícones (⚡, 🧪, 🛡️).
+Se não houver nada que exija atenção, responda APENAS: HEARTBEAT_OK`
+
+	// Forçar execução local (Tier 0) para crons/heartbeat
+	ctx = agent.WithRunOptions(ctx, agent.RunOptions{LocalOnly: true})
 
 	_, result, err := hs.loop.Run(ctx, systemPrompt, history, []string{
 		"run_command", "docker_control", "system_monitor", "service_control",

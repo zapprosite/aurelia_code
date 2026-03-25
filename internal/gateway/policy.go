@@ -373,10 +373,11 @@ func guardsFor(outputMode string, remote bool) ResponseGuards {
 		}
 		// Para modelos locais (predominantemente gemma3:12b), 
 		// permitimos o raciocínio por padrão para evitar respostas vazias.
+		// S-30: Polish Premium — expandindo buffers para formatação industrial.
 		return ResponseGuards{
 			ReasoningMode:   "default",
-			MaxOutputTokens: 512,
-			SoftTimeoutMS:   25000,
+			MaxOutputTokens: 1024,
+			SoftTimeoutMS:   35000,
 		}
 	}
 }

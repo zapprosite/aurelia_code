@@ -280,6 +280,11 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 	var failureReasons []string
 
 	for _, candidate := range candidates {
+		// S-31: Strict Sovereignty — Skip remote models if LocalOnly is requested
+		if req.LocalOnly && candidate.UseRemote {
+			continue
+		}
+
 		if degraded.Active && degraded.RemoteDisabled && candidate.UseRemote {
 			continue
 		}

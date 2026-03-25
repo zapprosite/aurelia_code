@@ -89,3 +89,6 @@ scripts/test_tts.py
 # Build artifacts
 /build/
 *.png
+aurelia-linux-bin
+aurelia-proof
+bot_test.log

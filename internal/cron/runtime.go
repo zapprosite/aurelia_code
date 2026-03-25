@@ -60,11 +60,13 @@ func (r *AgentCronRuntime) ExecuteJob(ctx context.Context, job CronJob) (string,
 		}
 	}
 
-	// Injetar métricas reais no prompt para a Gemma 3
 	analysisPrompt := fmt.Sprintf(
-		"%s\n\n[SISTEMA: MÉTRICAS REAIS DETECTADAS]\n%s\n\nPor favor, escreva um resumo premium estilo Aurélia Soberana 2026. Use ícones sênior (🌡️, 🔥, ⚡, 💎). Fale sobre a saúde do sistema e possíveis gargalos. Seja técnico e direto (Dev-to-Dev). Se houver anomalia, destaque.",
+		"%s\n\n[SISTEMA: MÉTRICAS REAIS DETECTADAS]\n%s\n\nPor favor, escreva um resumo premium estilo Aurélia Soberana 2026. Use ícones sênior (🌡️, 🔥, ⚡, 💎). Fale sobre a saúde do sistema e possíveis gargalos. Seja técnico e direto (Dev-to-Dev). Se houver anomalia, destaque. USE APENAS MARKDOWN, NADA DE JSON.",
 		job.Prompt, metrics,
 	)
+
+	// Forçar execução em LLM Local (Tier 0) para evitar custos de nuvem em tarefas automáticas
+	ctx = agent.WithRunOptions(ctx, agent.RunOptions{LocalOnly: true})
 
 	history, finalAnswer, err := r.executor.Execute(ctx, systemPrompt, []agent.Message{{
 		Role:    "user",
