@@ -29,6 +29,7 @@ type HealthReporter interface {
 type BotController struct {
 	bot              *telebot.Bot
 	botID            string   // S-32: per-bot identity for multi-bot pool
+	personaID        string   // S-32: persona template ID (e.g. "hvac-sales", "project-manager")
 	allowedUserIDs   []int64  // S-32: per-bot override; if nil, uses config.TelegramAllowedUserIDs
 	config           *config.AppConfig
 	memory           *memory.MemoryManager
@@ -171,6 +172,7 @@ func NewBotControllerForBot(
 	bc := &BotController{
 		bot:              b,
 		botID:            botCfg.ID,
+		personaID:        botCfg.PersonaID,
 		allowedUserIDs:   allowedIDs,
 		config:           appCfg,
 		memory:           mem,

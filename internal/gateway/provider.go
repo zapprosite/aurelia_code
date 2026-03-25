@@ -236,9 +236,16 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 
 	judgeRes, err := p.judge.Judge(ctx, latestUser, history)
 	if err != nil {
-		// Fallback to default classification if judge fails
-		observability.Logger("gateway.provider").Warn("judge failed, using default coding_main", slog.String("error", err.Error()))
-		judgeRes = &JudgeResult{Class: "coding_main", Confidence: 0.5, Reason: "judge error fallback"}
+		// Judge failed (gemma3 returned non-JSON). Use keyword-based classifier as fallback.
+		fallbackClass := classifyTask(DryRunRequest{Task: latestUser})
+		if fallbackClass == "general" || fallbackClass == "" {
+			fallbackClass = "simple_short" // unknown → treat as simple, route local
+		}
+		observability.Logger("gateway.provider").Warn("judge failed, using keyword fallback",
+			slog.String("error", err.Error()),
+			slog.String("fallback_class", fallbackClass),
+		)
+		judgeRes = &JudgeResult{Class: fallbackClass, Confidence: 0.4, Reason: "keyword fallback"}
 	}
 
 	// Inject "Be concise" only for simple/curation tasks.

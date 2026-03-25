@@ -12,6 +12,7 @@ import (
 	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/observability"
+	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/skill"
 	"gopkg.in/telebot.v3"
 )
@@ -344,6 +345,20 @@ const voiceSystemPromptSuffix = "\n\nATENÇÃO — MODO VOZ: Esta mensagem chego
 func (bc *BotController) resolveExecutionPrompt(session inputSession) (string, []string) {
 	var prompt string
 	var tools []string
+
+	// S-32: Use persona template system prompt when bot has a personaID configured.
+	// This ensures ac-vendas, organizadora-obras, agenda-pessoal etc. respond as their
+	// specialized personas instead of the default Aurélia prompt.
+	if bc.personaID != "" {
+		if tmpl := persona.FindTemplate(bc.personaID); tmpl != nil && tmpl.SystemPrompt != "" {
+			prompt = tmpl.SystemPrompt
+			tools = defaultConversationTools
+			if session.voiceMode {
+				prompt += voiceSystemPromptSuffix
+			}
+			return prompt, tools
+		}
+	}
 
 	if bc.canonical == nil {
 		prompt = defaultSystemPrompt
