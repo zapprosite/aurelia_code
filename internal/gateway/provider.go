@@ -949,9 +949,10 @@ func localProbeQualityOK(query, response string) bool {
 	resp := strings.TrimSpace(response)
 	respLower := strings.ToLower(resp)
 
-	// Too short for a professional query (< 40 words is suspicious for business content)
+	// Too short for a professional query (< 80 words is suspicious for business content).
+	// Previously 40 — raised because gemma3 was passing long-but-vague responses.
 	wordCount := len(strings.Fields(resp))
-	if wordCount < 40 {
+	if wordCount < 80 {
 		return false
 	}
 
