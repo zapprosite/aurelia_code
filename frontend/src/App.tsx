@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle } from "./components/ui/Card";
 import { Badge } from "./components/ui/Badge";
 import { Layout, Server } from "lucide-react";
 import { BrainSearch } from "./components/dashboard/BrainSearch";
+import { BotsTab } from "./components/dashboard/BotsTab";
 import { useSystemMetrics } from "./hooks/useSystemMetrics";
 import { type SquadAgent } from "./components/dashboard/SquadGrid";
 
@@ -138,10 +139,11 @@ function App() {
   const getTabTitle = () => {
     switch (activeTab) {
       case "timeline": return "Main Floor — Activity Stream";
-      case "squad": return "Squad View — Agent Status";
-      case "brain": return "The Brain — Semantic Context";
-      case "roadmap": return "Master Plan — Feature Roadmap";
-      case "homelab": return "Homelab — VRV Dashboard";
+      case "bots":     return "Team Bots — Multi-Bot Manager";
+      case "squad":    return "Squad View — Agent Status";
+      case "brain":    return "The Brain — Semantic Context";
+      case "roadmap":  return "Master Plan — Feature Roadmap";
+      case "homelab":  return "Homelab — VRV Dashboard";
       default: return "Dashboard";
     }
   };
@@ -175,6 +177,10 @@ function App() {
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="min-h-full"
               >
+                {activeTab === "bots" && (
+                  <BotsTab feed={feed} />
+                )}
+
                 {activeTab === "timeline" && (
                   <div className="space-y-6">
                      <div className="flex items-center justify-between mb-2">
