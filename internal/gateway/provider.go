@@ -114,7 +114,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
 		})
-		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelKimiK25, llm.OpenAICompatibleRequestOptions{
+		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelLlama4Scout, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   512,
 			Temperature: &lowTemp,
 		})

@@ -13,15 +13,23 @@ var modelCosts = map[string]ModelCost{
 	"gemma3:12b":          {InputPerMToken: 0, OutputPerMToken: 0},
 	"gemma3:27b-it-q4_K_M": {InputPerMToken: 0, OutputPerMToken: 0},
 
-	// Tier 1 — Remote Cheap (OpenRouter) — Qwen3-32B: $0.08/$0.24 per 1M
-	"qwen/qwen3-32b":           {InputPerMToken: 0.08, OutputPerMToken: 0.24},
-	"qwen/qwen3.5-flash-02-23": {InputPerMToken: 0.065, OutputPerMToken: 0.26},
+	// Tier 1 — Remote Cheap (OpenRouter)
+	"qwen/qwen3-32b":              {InputPerMToken: 0.08, OutputPerMToken: 0.24},
+	"qwen/qwen3.5-flash-02-23":    {InputPerMToken: 0.065, OutputPerMToken: 0.26},
+	"mistralai/devstral-2512":     {InputPerMToken: 0.05, OutputPerMToken: 0.22},  // cheapest paid Tier1
+	"deepseek/deepseek-v3.2":      {InputPerMToken: 0.28, OutputPerMToken: 0.42},
+	"deepseek/deepseek-chat-v3.1": {InputPerMToken: 0.15, OutputPerMToken: 0.75},
+
+	// Tier 1 — Free (rate-limited, 1000 req/day with $10+ credit)
+	"deepseek/deepseek-r1-0528:free": {InputPerMToken: 0, OutputPerMToken: 0},
 
 	// Tier 2 — Remote Premium
-	"minimax/minimax-m2.7": {InputPerMToken: 0.30, OutputPerMToken: 0.60},
+	"minimax/minimax-m2.7": {InputPerMToken: 0.30, OutputPerMToken: 1.20},
+	"minimax/minimax-m2.5": {InputPerMToken: 0.20, OutputPerMToken: 1.17},
 
-	// Tier 2 — Long Context / Multimodal (OpenRouter)
-	"moonshotai/kimi-k2.5": {InputPerMToken: 0.14, OutputPerMToken: 0.60},
+	// Long Context (OpenRouter)
+	"meta-llama/llama-4-scout": {InputPerMToken: 0.08, OutputPerMToken: 0.30},  // 10M ctx
+	"moonshotai/kimi-k2.5":     {InputPerMToken: 0.50, OutputPerMToken: 2.00},  // vision fallback
 
 	// Tier 4 — Emergency
 	"anthropic/claude-haiku-4.5": {InputPerMToken: 0.80, OutputPerMToken: 4.00},
