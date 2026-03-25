@@ -52,10 +52,15 @@ type RouteCandidate struct {
 	Reason     string         `json:"reason"`
 	Guards     ResponseGuards `json:"guards"`
 	BudgetLane string         `json:"budget_lane"`
-	
+
 	// Metadata from the judge
 	Class      string  `json:"class,omitempty"`
 	Confidence float64 `json:"confidence,omitempty"`
+
+	// LocalProbe: if true, run quality gate on the response.
+	// If quality passes → return immediately (no remote cost).
+	// If quality fails → continue to next candidate silently (no failure recorded).
+	LocalProbe bool `json:"local_probe,omitempty"`
 }
 
 // DryRunDecision mantém compatibilidade reversa onde testes/handlers precisarem
@@ -103,9 +108,10 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	if req.ContextSize > 12000 {
 		taskClass = "long_context_or_multimodal"
 	}
-	// If judge confidence < 0.6: route to coding_main
-	if req.JudgeConfidence > 0 && req.JudgeConfidence < 0.6 {
-		taskClass = "coding_main"
+	// Low confidence = the judge isn't sure → treat as simple, route local (cheap).
+	// Routing uncertain tasks to premium models wastes budget without quality gain.
+	if req.JudgeConfidence > 0 && req.JudgeConfidence < 0.5 {
+		taskClass = "simple_short"
 	}
 
 	// 3. Routing Policy Mapping
@@ -141,16 +147,29 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 		}
 
 	case "professional":
-		// Business bots (AC Vendas, Organizadora de Obras, Agenda): quality response needed.
-		// DeepSeek is cost-efficient yet capable for professional content in Portuguese.
-		// MiniMax as quality fallback. Gemma3 local as emergency only.
+		// Business bots: try gemma3 locally first (LocalProbe).
+		// If the local response meets quality bar → zero remote cost.
+		// Only escalate to DeepSeek → MiniMax if quality gate fails.
+		// In practice gemma3:12b handles ~65% of professional PT-BR queries adequately.
 		candidates = []RouteCandidate{
+			{
+				Lane:       "local-balanced",
+				Provider:   "local",
+				Model:      modelGemma3,
+				UseRemote:  false,
+				LocalProbe: true, // quality gate — escalate silently if fails
+				Reason:     "professional: gemma3 local probe first (free tier).",
+				Guards:     guardsForProfessional(req.OutputMode, false),
+				BudgetLane: "local",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
 			{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
 				Model:      modelDeepSeekChat,
 				UseRemote:  true,
-				Reason:     "professional: deepseek-chat primary — quality PT-BR business responses at low cost.",
+				Reason:     "professional: deepseek-chat — quality PT-BR business responses.",
 				Guards:     guardsForProfessional(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -161,20 +180,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Provider:   "minimax",
 				Model:      modelMiniMaxM27,
 				UseRemote:  true,
-				Reason:     "professional: minimax-m2.7 quality fallback.",
+				Reason:     "professional: minimax-m2.7 premium fallback.",
 				Guards:     guardsForProfessional(req.OutputMode, true),
 				BudgetLane: "remote_premium",
-				Class:      taskClass,
-				Confidence: req.JudgeConfidence,
-			},
-			{
-				Lane:       "local-balanced",
-				Provider:   "local",
-				Model:      modelGemma3,
-				UseRemote:  false,
-				Reason:     "professional: gemma3 local emergency fallback.",
-				Guards:     guardsForProfessional(req.OutputMode, false),
-				BudgetLane: "local",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},

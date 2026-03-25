@@ -304,18 +304,38 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 			p.recordFallback(*previousCandidate, candidate)
 		}
 
-		resp, err := p.generateWithDecision(ctx, candidate, systemPrompt, history, tools)
+		// Trim history per tier to reduce input tokens.
+		// Local: last 6 turns (cheap, fast). Remote cheap: 12. Remote premium: 20.
+		trimmedHistory := trimHistory(history, historyWindowFor(candidate))
+
+		resp, err := p.generateWithDecision(ctx, candidate, systemPrompt, trimmedHistory, tools)
 
 		if err != nil {
 			failureReasons = append(failureReasons,
 				fmt.Sprintf("%s:%s=%s", candidate.Provider, candidate.Model, err.Error()))
 			previousCandidate = &candidate
 			lastErr = err
-			// O gateway continua e tenta o proximo candidato da fila silenciando o erro atual.
 			continue
 		}
 
-		// Se bateu aqui, retornou sucesso.
+		// LocalProbe quality gate: if this was a local probe, check if response
+		// is good enough before accepting it. If not, escalate silently (no failure).
+		if candidate.LocalProbe && resp != nil {
+			if !localProbeQualityOK(latestUser, resp.Content) {
+				logger.Info("local probe quality gate failed, escalating to remote",
+					slog.String("class", judgeRes.Class),
+					slog.Int("response_len", len(resp.Content)),
+				)
+				// Don't record as failure — probe rejection is expected behavior.
+				previousCandidate = nil
+				continue
+			}
+			logger.Info("local probe accepted — zero remote cost",
+				slog.String("class", judgeRes.Class),
+				slog.Int("response_len", len(resp.Content)),
+			)
+		}
+
 		return resp, nil
 	}
 
@@ -872,4 +892,65 @@ func (p *Provider) setBreakerMetricLocked(providerKey, state string) {
 		value = 0.5
 	}
 	p.metrics.breakers.WithLabelValues(parts[0], parts[1]).Set(value)
+}
+
+// historyWindowFor returns the max number of history turns to send based on route tier.
+// Reduces input tokens significantly for long conversations without losing context.
+func historyWindowFor(c RouteCandidate) int {
+	if !c.UseRemote {
+		return 6 // local: last 3 exchanges (6 turns) — cheap, fast
+	}
+	if c.BudgetLane == "remote_premium" {
+		return 20 // premium: larger window for complex multi-turn tasks
+	}
+	return 12 // remote cheap (DeepSeek): 6 exchanges — enough for most tasks
+}
+
+// trimHistory returns the last maxTurns messages, always preserving the last user message.
+func trimHistory(history []agent.Message, maxTurns int) []agent.Message {
+	if len(history) <= maxTurns {
+		return history
+	}
+	return history[len(history)-maxTurns:]
+}
+
+// localProbeQualityOK decides whether a local model response is good enough to send
+// without escalating to a remote model. Criteria:
+//   - Non-empty and has meaningful length relative to query complexity
+//   - Doesn't signal uncertainty or inability to help
+//   - Has substance (not just echoing back the question)
+func localProbeQualityOK(query, response string) bool {
+	if response == "" {
+		return false
+	}
+
+	resp := strings.TrimSpace(response)
+	respLower := strings.ToLower(resp)
+
+	// Too short for a professional query (< 40 words is suspicious for business content)
+	wordCount := len(strings.Fields(resp))
+	if wordCount < 40 {
+		return false
+	}
+
+	// Uncertainty / inability markers — escalate to remote for better answer
+	uncertaintyPhrases := []string{
+		"não tenho informações", "não sei", "não posso fornecer",
+		"não tenho acesso", "não estou certo", "não tenho certeza",
+		"i don't know", "i cannot", "i don't have",
+		"desculpe, mas", "lamentavelmente", "infelizmente não posso",
+	}
+	for _, phrase := range uncertaintyPhrases {
+		if strings.Contains(respLower, phrase) {
+			return false
+		}
+	}
+
+	// Response is just echoing the query (length ratio check)
+	queryWords := len(strings.Fields(strings.TrimSpace(query)))
+	if queryWords > 0 && wordCount < queryWords+10 {
+		return false
+	}
+
+	return true
 }
