@@ -425,10 +425,22 @@ func sanitizeTextForSpeech(text string) string {
 	sanitized = strings.ReplaceAll(sanitized, "..", ".")
 	sanitized = strings.TrimSpace(sanitized)
 
-	// Truncate at ~1200 runes to avoid very long TTS synthesis.
+	// Truncate at ~3000 runes for TTS synthesis.
+	// Cut at the last sentence boundary to avoid stopping mid-phrase.
 	runes := []rune(sanitized)
-	if len(runes) > 1200 {
-		sanitized = strings.TrimSpace(string(runes[:1200])) + "."
+	if len(runes) > 3000 {
+		window := string(runes[:3000])
+		// Find last sentence end within window
+		for _, sep := range []string{". ", "! ", "? ", ".\n", "!\n", "?\n"} {
+			if idx := strings.LastIndex(window, sep); idx > 500 {
+				sanitized = strings.TrimSpace(window[:idx+1])
+				break
+			}
+		}
+		if len([]rune(sanitized)) > 3000 {
+			// fallback: hard cut
+			sanitized = strings.TrimSpace(string(runes[:3000])) + "."
+		}
 	}
 	return sanitized
 }
