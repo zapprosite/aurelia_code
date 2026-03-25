@@ -114,15 +114,56 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 
 	switch taskClass {
 	case "curation", "simple_short":
+		// Local-first for cost sovereignty; remote only as fallback.
+		candidates = []RouteCandidate{
+			{
+				Lane:       "local-balanced",
+				Provider:   "local",
+				Model:      modelGemma3,
+				UseRemote:  false,
+				Reason:     fmt.Sprintf("%s: gemma3 local first (cost sovereign).", taskClass),
+				Guards:     guardsFor(req.OutputMode, false),
+				BudgetLane: "local",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
+			{
+				Lane:       "remote-cheap",
+				Provider:   "openrouter",
+				Model:      modelDeepSeekChat,
+				UseRemote:  true,
+				Reason:     fmt.Sprintf("%s: deepseek-chat remote fallback.", taskClass),
+				Guards:     guardsFor(req.OutputMode, true),
+				BudgetLane: "remote_cheap",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
+		}
+
+	case "professional":
+		// Business bots (AC Vendas, Organizadora de Obras, Agenda): quality response needed.
+		// DeepSeek is cost-efficient yet capable for professional content in Portuguese.
+		// MiniMax as quality fallback. Gemma3 local as emergency only.
 		candidates = []RouteCandidate{
 			{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
 				Model:      modelDeepSeekChat,
 				UseRemote:  true,
-				Reason:     fmt.Sprintf("%s: deepseek-chat is cost-efficient for curation.", taskClass),
-				Guards:     guardsFor(req.OutputMode, true),
+				Reason:     "professional: deepseek-chat primary — quality PT-BR business responses at low cost.",
+				Guards:     guardsForProfessional(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
+			{
+				Lane:       "remote-premium",
+				Provider:   "minimax",
+				Model:      modelMiniMaxM27,
+				UseRemote:  true,
+				Reason:     "professional: minimax-m2.7 quality fallback.",
+				Guards:     guardsForProfessional(req.OutputMode, true),
+				BudgetLane: "remote_premium",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},
@@ -131,8 +172,8 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Provider:   "local",
 				Model:      modelGemma3,
 				UseRemote:  false,
-				Reason:     fmt.Sprintf("%s: gemma3 local fallback.", taskClass),
-				Guards:     guardsFor(req.OutputMode, false),
+				Reason:     "professional: gemma3 local emergency fallback.",
+				Guards:     guardsForProfessional(req.OutputMode, false),
 				BudgetLane: "local",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
@@ -318,6 +359,15 @@ var classifyRules = []classifyRule{
 	{Class: "browser_workflow", Keywords: []string{"browser", "navigate", "navegar", "web page", "pagina web"}, Weight: 7},
 	{Class: "workflow_premium", Keywords: []string{"workflow complexo", "agentico", "multi-step", "complex workflow", "minimax", "poderoso"}, Weight: 10},
 	{Class: "maintenance", Keywords: []string{"maint", "homelab", "runbook", "reboot", "nvidia-gpu", "servidor", "deploy"}, Weight: 5},
+	// Professional: business bot responses for HVAC-R commercial and construction management.
+	{Class: "professional", Keywords: []string{
+		"proposta", "obra", "lead", "briefing", "contrato", "orcamento", "orçamento",
+		"cliente", "vendas", "hvac", "vrf", "vrv", "split", "climatizacao", "climatização",
+		"cronograma", "prazo", "entrega", "fornecedor", "fornecedores", "relatorio", "relatório",
+		"pmoc", "art", "rrt", "comissionamento", "evaporadora", "condensadora",
+		"follow-up", "fechamento", "especificacao", "especificação", "daikin",
+		"obra em andamento", "nota fiscal", "medicao", "medição",
+	}, Weight: 7},
 	{Class: "general", Keywords: []string{}, Weight: 0},
 }
 
@@ -353,6 +403,17 @@ func classifyTask(req DryRunRequest) string {
 		}
 	}
 	return bestClass
+}
+
+// guardsForProfessional returns guards for professional business responses (proposals, reports, CRM).
+// Uses larger token budgets to allow complete, structured responses.
+func guardsForProfessional(outputMode string, remote bool) ResponseGuards {
+	_ = remote // remote/local distinction doesn't change professional guards
+	return ResponseGuards{
+		ReasoningMode:   "default",
+		MaxOutputTokens: 1024,
+		SoftTimeoutMS:   45000,
+	}
 }
 
 func guardsFor(outputMode string, remote bool) ResponseGuards {

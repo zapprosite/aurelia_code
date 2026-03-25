@@ -87,17 +87,17 @@ func TestProviderGenerateContent_MaintenancePrefersLocalBalanced(t *testing.T) {
 func TestProviderGenerateContent_FallsBackWhenGuardedResponseIsEmpty(t *testing.T) {
 	t.Parallel()
 
-	// Na nova política, simple_short prioriza remote-cheap (DeepSeek).
-	// Vamos fazer o DeepSeek falhar na guarda (só reasoning) para testar o fallback pro local.
-	remoteCheap := &fakeProvider{response: &agent.ModelResponse{ReasoningContent: "deepseek thinking..."}}
-	localBalanced := &fakeProvider{response: &agent.ModelResponse{Content: "{\"status\":\"ok\"}"}}
+	// simple_short now routes local-first. Local returns empty response (guard fails),
+	// so it falls back to remote-cheap (DeepSeek) which returns valid content.
+	localBalanced := &fakeProvider{response: &agent.ModelResponse{Content: ""}}
+	remoteCheap := &fakeProvider{response: &agent.ModelResponse{Content: "{\"status\":\"ok\"}"}}
 
 	provider := newTestGatewayProvider()
 	provider.judge = &fakeJudge{res: &JudgeResult{Class: "simple_short", Confidence: 0.9}}
-	provider.remoteCheapLong = remoteCheap
 	provider.localBalanced = localBalanced
+	provider.remoteCheapLong = remoteCheap
 
-	// Adicionamos context com structured_json para ativar a guarda 'minimize'
+	// structured_json activates the 'minimize' guard which rejects reasoning-only remote responses.
 	ctxStructured := agent.WithRunOptions(context.Background(), agent.RunOptions{
 		OutputMode: "structured_json",
 	})
@@ -118,9 +118,9 @@ func TestProviderGenerateContent_FallsBackWhenGuardedResponseIsEmpty(t *testing.
 	if len(remoteCheap.prompts) != 1 {
 		t.Fatalf("remote cheap calls = %d", len(remoteCheap.prompts))
 	}
-	state := provider.StatusSnapshot().Routes["openrouter:"+modelDeepSeekChat]
+	state := provider.StatusSnapshot().Routes["local:"+modelGemma3]
 	if state.Failures != 1 {
-		t.Fatalf("deepseek failures = %d", state.Failures)
+		t.Fatalf("gemma3 failures = %d", state.Failures)
 	}
 }
 
