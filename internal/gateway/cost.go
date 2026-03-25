@@ -13,8 +13,9 @@ var modelCosts = map[string]ModelCost{
 	"gemma3:12b":          {InputPerMToken: 0, OutputPerMToken: 0},
 	"gemma3:27b-it-q4_K_M": {InputPerMToken: 0, OutputPerMToken: 0},
 
-	// Tier 1 — Remote Cheap (OpenRouter)
-	"deepseek/deepseek-chat-v3.1": {InputPerMToken: 0.014, OutputPerMToken: 0.14},
+	// Tier 1 — Remote Cheap (OpenRouter) — Qwen3-32B: $0.08/$0.24 per 1M
+	"qwen/qwen3-32b":           {InputPerMToken: 0.08, OutputPerMToken: 0.24},
+	"qwen/qwen3.5-flash-02-23": {InputPerMToken: 0.065, OutputPerMToken: 0.26},
 
 	// Tier 2 — Remote Premium
 	"minimax/minimax-m2.7": {InputPerMToken: 0.30, OutputPerMToken: 0.60},

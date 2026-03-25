@@ -62,9 +62,12 @@ Example Output:
 
 	raw := resp.Content
 
-	// Sometimes LLMs wrap json in markdown
-	raw = strings.TrimPrefix(raw, "```json")
-	raw = strings.TrimSuffix(raw, "```")
+	// Extract first JSON object — handles markdown fences, prose preamble, backticks
+	if start := strings.Index(raw, "{"); start != -1 {
+		if end := strings.LastIndex(raw, "}"); end > start {
+			raw = raw[start : end+1]
+		}
+	}
 	raw = strings.TrimSpace(raw)
 
 	var output struct {

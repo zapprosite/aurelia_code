@@ -6,12 +6,18 @@ import (
 )
 
 const (
-	// Models requested by the user
-	modelDeepSeekChat = "deepseek/deepseek-chat-v3.1"
-	modelMiniMaxM27   = "minimax/minimax-m2.7"
-	modelMiniMaxDirect = "MiniMax-M2"
-	modelKimiK25      = "moonshotai/kimi-k2.5"
+	// Tier 1 — remote cheap (was DeepSeek, now Qwen3-32B: $0.08/$0.24 per 1M, ~3x cheaper, quality PT-BR equivalent)
+	modelQwen3      = "qwen/qwen3-32b"
+	modelQwen35Flash = "qwen/qwen3.5-flash-02-23" // ultra-fast, $0.065/$0.26, 1M context
 
+	// Tier 2 — remote premium
+	modelMiniMaxM27    = "minimax/minimax-m2.7"
+	modelMiniMaxDirect = "MiniMax-M2"
+
+	// Long context
+	modelKimiK25 = "moonshotai/kimi-k2.5"
+
+	// Local
 	modelGemma3 = "gemma3:12b"
 
 	// Existing static defaults
@@ -119,7 +125,7 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	isStructured := req.OutputMode == "structured_json"
 
 	switch taskClass {
-	case "curation", "simple_short":
+	case "curation", "simple_short", "general":
 		// Local-first for cost sovereignty; remote only as fallback.
 		candidates = []RouteCandidate{
 			{
@@ -136,9 +142,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      modelDeepSeekChat,
+				Model:      modelQwen3,
 				UseRemote:  true,
-				Reason:     fmt.Sprintf("%s: deepseek-chat remote fallback.", taskClass),
+				Reason:     fmt.Sprintf("%s: qwen3-32b remote fallback.", taskClass),
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -167,9 +173,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      modelDeepSeekChat,
+				Model:      modelQwen3,
 				UseRemote:  true,
-				Reason:     "professional: deepseek-chat — quality PT-BR business responses.",
+				Reason:     "professional: qwen3-32b — quality PT-BR business responses ($0.08/$0.24 per 1M).",
 				Guards:     guardsForProfessional(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -220,9 +226,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			candidates = append(candidates, RouteCandidate{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      modelDeepSeekChat,
+				Model:      modelQwen3,
 				UseRemote:  true,
-				Reason:     fmt.Sprintf("%s: deepseek preferred for structured output.", taskClass),
+				Reason:     fmt.Sprintf("%s: qwen3-32b preferred for structured output.", taskClass),
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -246,9 +252,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			candidates = append(candidates, RouteCandidate{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      modelDeepSeekChat,
+				Model:      modelQwen3,
 				UseRemote:  true,
-				Reason:     fmt.Sprintf("%s: deepseek fallback.", taskClass),
+				Reason:     fmt.Sprintf("%s: qwen3-32b fallback.", taskClass),
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,

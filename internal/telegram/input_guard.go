@@ -60,6 +60,17 @@ func NewInputGuard(ollamaURL string) *InputGuard {
 	}
 }
 
+// CheckWithUser runs the guard but bypasses it for trusted user IDs.
+// Trusted users (the bot owner) have full freedom — no injection check.
+func (g *InputGuard) CheckWithUser(ctx context.Context, userID int64, trustedIDs []int64, text string) (blocked bool, reason string) {
+	for _, id := range trustedIDs {
+		if id == userID {
+			return false, "" // owner bypass — unconditional pass
+		}
+	}
+	return g.Check(ctx, text)
+}
+
 // Check runs the guard. Returns blocked=true and reason if suspicious.
 // On any error or timeout, it fails open (returns blocked=false).
 func (g *InputGuard) Check(ctx context.Context, text string) (blocked bool, reason string) {
