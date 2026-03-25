@@ -44,8 +44,20 @@ const (
 	defaultHealthPort           = 8484
 )
 
+// BotConfig holds per-bot Telegram configuration for multi-bot support.
+type BotConfig struct {
+	ID             string  `json:"id"`
+	Name           string  `json:"name"`
+	Token          string  `json:"token"`
+	AllowedUserIDs []int64 `json:"allowed_user_ids"`
+	PersonaID      string  `json:"persona_id"`
+	FocusArea      string  `json:"focus_area"`
+	Enabled        bool    `json:"enabled"`
+}
+
 // AppConfig holds all runtime configuration needed for the application.
 type AppConfig struct {
+	Bots []BotConfig
 	LLMProvider              string
 	LLMModel                 string
 	STTProvider              string
@@ -105,6 +117,8 @@ type AppConfig struct {
 }
 
 type fileConfig struct {
+	Bots []BotConfig `json:"bots,omitempty"`
+
 	LLMProvider              string  `json:"llm_provider"`
 	LLMModel                 string  `json:"llm_model"`
 	STTProvider              string  `json:"stt_provider"`
@@ -581,7 +595,22 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 	if heartbeatIntervalMin == 0 {
 		heartbeatIntervalMin = defaultHeartbeatIntervalMin
 	}
+	// Backward compat: if no Bots configured but primary token exists, synthesize aurelia entry.
+	bots := cfg.Bots
+	if len(bots) == 0 && cfg.TelegramBotToken != "" {
+		bots = []BotConfig{{
+			ID:             "aurelia",
+			Name:           "Aurélia",
+			Token:          cfg.TelegramBotToken,
+			AllowedUserIDs: append([]int64(nil), cfg.TelegramAllowedUserIDs...),
+			PersonaID:      "aurelia-leader",
+			FocusArea:      "COO, orquestra time, monitora saúde",
+			Enabled:        true,
+		}}
+	}
+
 	return &AppConfig{
+		Bots:                     bots,
 		LLMProvider:              cfg.LLMProvider,
 		LLMModel:                 cfg.LLMModel,
 		STTProvider:              cfg.STTProvider,
