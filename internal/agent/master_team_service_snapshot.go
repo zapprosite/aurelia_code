@@ -132,7 +132,7 @@ func (s *MasterTeamService) formatMasterNotification(snapshot TeamStatusSnapshot
 
 	if snapshot.Pending == 0 && snapshot.Running == 0 && snapshot.Blocked == 0 && snapshot.TotalTasks > 0 {
 		return fmt.Sprintf(
-			"%s\n\n%s %s\n\n%s\n\n🎯 **Resumo da Operação**\n%s\n\n*Ciclo encerrado. Recursos transientes liberados.*",
+			"%s\n\n%s %s\n\n%s\n\n🎯 **Resumo da Operação**\n%s\n\n*Recursos transientes liberados.*\n\n📊 [Acesse o Dashboard Completo](https://aurelia.zappro.site/)",
 			header,
 			statusIcons,
 			classifyFinalSnapshot(snapshot),
@@ -142,7 +142,7 @@ func (s *MasterTeamService) formatMasterNotification(snapshot TeamStatusSnapshot
 	}
 
 	return fmt.Sprintf(
-		"%s\n\n%s **Acompanhamento de Time**\n\n%s\n\n⚙️ **Ações Recentes (%d)**\n%s",
+		"%s\n\n%s **Acompanhamento de Time**\n\n%s\n\n⚙️ **Ações Recentes (%d)**\n%s\n\n🔗 [Live Script Dashboard](https://aurelia.zappro.site/)",
 		header,
 		statusIcons,
 		humanStatus,
@@ -152,15 +152,19 @@ func (s *MasterTeamService) formatMasterNotification(snapshot TeamStatusSnapshot
 }
 
 func formatStatusIcons(snapshot TeamStatusSnapshot) string {
-	res := "🛰️"
 	if snapshot.Failed > 0 {
-		res = "⚠️"
-	} else if snapshot.Blocked > 0 {
-		res = "🛑"
-	} else if snapshot.Running > 0 {
-		res = "⚡"
+		return "⚠️"
 	}
-	return res
+	if snapshot.Blocked > 0 {
+		return "🛑"
+	}
+	if snapshot.Running > 5 {
+		return "🔥" // Stress mode
+	}
+	if snapshot.Running > 0 {
+		return "⚡"
+	}
+	return "🛰️"
 }
 
 func (s *MasterTeamService) formatHumanStatus(snapshot TeamStatusSnapshot) string {

@@ -1,6 +1,9 @@
 package telegram
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 const (
 	genericExecutionFailureMessage = "Nao consegui concluir isso agora por uma falha temporaria do runtime. Tente novamente em alguns segundos."
@@ -8,6 +11,7 @@ const (
 )
 
 var (
+	reExcessiveNewlines   = regexp.MustCompile(`\n{3,}`)
 	technicalErrorMarkers = []string{
 		"provider error",
 		"openai-compatible api error",
@@ -72,10 +76,13 @@ func sanitizeUserVisibleErrorMessage(errMsg string) string {
 
 func sanitizeAssistantOutputForUser(text string) string {
 	text = strings.ReplaceAll(text, "\x00", "")
-	
+
 	// Remove tags de pensamento/raciocínio interno (padrão DeepSeek/Claude/Gemma)
 	text = removeTag(text, "thought")
-	
+
+	// S-30: Polish Premium — remoção de excesso de quebras de linha
+	text = reExcessiveNewlines.ReplaceAllString(text, "\n\n")
+
 	trimmed := strings.TrimSpace(text)
 	if trimmed == "" {
 		return genericResponseGuardMessage

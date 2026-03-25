@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
+
+	"github.com/kocar/aurelia/internal/dashboard"
 )
 
 func (s *MasterTeamService) ensureWorkerLoop(teamID, teamKey, userID, agentName, roleDescription string) {
@@ -90,6 +93,15 @@ func (s *MasterTeamService) flushLeadInbox(ctx context.Context, teamID, teamKey 
 func (s *MasterTeamService) summarizeLeadUpdates(ctx context.Context, teamID, teamKey string, updates []MailMessage) ([]string, string) {
 	var lines []string
 	for _, update := range updates {
+		// Publica tudo no Dashboard para observabilidade total (Audit Trail)
+		dashboard.Publish(dashboard.Event{
+			Type:      "agent_activity",
+			Agent:     update.FromAgent,
+			Action:    update.Kind,
+			Payload:   update.Body,
+			Timestamp: time.Now().Format("15:04:05"),
+		})
+
 		switch update.Kind {
 		case "blocker":
 			lines = append(lines, fmt.Sprintf("🧱 %s encontrou um bloqueio: %s", update.FromAgent, update.Body))
@@ -107,17 +119,18 @@ func (s *MasterTeamService) summarizeLeadUpdates(ctx context.Context, teamID, te
 func cleanUpdateBody(body string) string {
 	body = strings.TrimSpace(body)
 
-	// Oculta logs de ferramentas e mídias binárias brutas
+	// Oculta logs de ferramentas e mídias binárias brutas (já enviados pro dashboard)
 	if strings.Contains(body, "Executando tool") ||
 		strings.Contains(body, "tool_code") ||
 		strings.Contains(body, "Base64 encoded data") ||
+		strings.Contains(body, "ArtifactMetadata") ||
 		(strings.HasPrefix(body, "{") && strings.HasSuffix(body, "}")) {
 		return ""
 	}
 
-	// Limita o tamanho do texto para manter o Telegram "clean"
-	if len(body) > 300 {
-		return body[:297] + "..."
+	// Limita o tamanho do texto para manter o Telegram "clean" e apontar pro dashboard
+	if len(body) > 200 {
+		return body[:197] + "..."
 	}
 
 	return body
