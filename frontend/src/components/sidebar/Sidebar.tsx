@@ -1,10 +1,10 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
-import { Sparkles, Activity, Users, Brain, Map, Settings, ChevronLeft, ChevronRight, Server } from "lucide-react";
+import { Sparkles, Activity, Users, Brain, Map, Settings, ChevronLeft, ChevronRight, Server, Bot } from "lucide-react";
 import { Button } from "../ui/Button";
 import { motion } from "framer-motion";
 
-export type TabId = "timeline" | "squad" | "brain" | "roadmap" | "homelab";
+export type TabId = "timeline" | "bots" | "squad" | "brain" | "roadmap" | "homelab";
 
 interface SidebarProps {
   activeTab: TabId;
@@ -16,10 +16,11 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 
   const navItems = [
     { id: "timeline", label: "Timeline & Feed", icon: Activity },
-    { id: "squad", label: "Squad (Agentes)", icon: Users },
-    { id: "brain", label: "The Brain (.context)", icon: Brain },
-    { id: "roadmap", label: "Roadmap Slices", icon: Map },
-    { id: "homelab", label: "Homelab (VRV)", icon: Server },
+    { id: "bots",     label: "Team Bots",        icon: Bot },
+    { id: "squad",    label: "Squad (Agentes)",   icon: Users },
+    { id: "brain",    label: "The Brain (.context)", icon: Brain },
+    { id: "roadmap",  label: "Roadmap Slices",    icon: Map },
+    { id: "homelab",  label: "Homelab (VRV)",     icon: Server },
   ];
 
   return (
