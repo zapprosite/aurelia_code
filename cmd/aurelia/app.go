@@ -51,7 +51,8 @@ type app struct {
 	llmProvider    closableLLMProvider
 
 	// Features
-	bot            *telegram.BotController
+	pool           *telegram.BotPool          // S-32: multi-bot pool
+	primaryBot     *telegram.BotController    // S-32: primary bot reference (aurelia)
 	cronScheduler  *cron.Scheduler
 	cronCtx        context.Context
 	cronCancel     context.CancelFunc
@@ -250,35 +251,63 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	skillRouter := skill.NewRouter(a.llmProvider)
 	skillExecutor := skill.NewExecutor(loop)
 
-	bot, err := telegram.NewBotController(
+	// S-32: Build multi-bot pool
+	pool := telegram.NewBotPool(
 		a.cfg, a.mem, skillRouter, skillExecutor, skillLoader,
 		transcriber, canonicalService, a.resolver.MemoryPersonas(),
 	)
-	if err != nil {
-		return fmt.Errorf("initialize telegram: %w", err)
+	for _, botCfg := range a.cfg.Bots {
+		if err := pool.Add(botCfg); err != nil {
+			logger.Warn("failed to add bot to pool", slog.String("bot_id", botCfg.ID), slog.Any("err", err))
+		}
 	}
-	a.bot = bot
+	// Fallback: if pool is empty but primary token exists, add aurelia directly
+	if pool.Size() == 0 && a.cfg.TelegramBotToken != "" {
+		bc, err := telegram.NewBotController(
+			a.cfg, a.mem, skillRouter, skillExecutor, skillLoader,
+			transcriber, canonicalService, a.resolver.MemoryPersonas(),
+		)
+		if err != nil {
+			return fmt.Errorf("initialize telegram: %w", err)
+		}
+		_ = pool.AddController("aurelia", bc)
+	}
+	a.pool = pool
+	a.primaryBot = pool.Primary()
+
+	if a.primaryBot == nil {
+		return fmt.Errorf("no telegram bot configured (set telegram_bot_token or bots in config)")
+	}
 
 	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
-		a.bot.SetHealthReporter(gw)
+		a.primaryBot.SetHealthReporter(gw)
 	}
 
 	// S-27: Wire squad + cron status reporters for /status command
-	a.bot.SetSquadReporter(squadStatusAdapter{})
-	a.bot.SetCronJobReporter(&cronNextJobAdapter{store: a.cronStore})
+	a.primaryBot.SetSquadReporter(squadStatusAdapter{})
+	a.primaryBot.SetCronJobReporter(&cronNextJobAdapter{store: a.cronStore})
 
 	// Wire gemma3 input guard
 	ollamaURL := a.cfg.OllamaURL
 	if ollamaURL == "" {
 		ollamaURL = "http://localhost:11434"
 	}
-	a.bot.SetInputGuard(telegram.NewInputGuard(ollamaURL))
+	a.primaryBot.SetInputGuard(telegram.NewInputGuard(ollamaURL))
 
-	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, bot, a.taskStore); err != nil {
+	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, a.primaryBot, a.taskStore); err != nil {
 		return fmt.Errorf("register spawn agent tool: %w", err)
 	}
 
-	cronScheduler, cronCtx, cronCancel, err := buildCronScheduler(a.cronStore, loop, canonicalService, bot)
+	// S-32: Sync bots to squad
+	botEntries := make([]agent.BotConfigEntry, 0, len(a.cfg.Bots))
+	for _, b := range a.cfg.Bots {
+		botEntries = append(botEntries, agent.BotConfigEntry{
+			ID: b.ID, Name: b.Name, PersonaID: b.PersonaID, FocusArea: b.FocusArea,
+		})
+	}
+	agent.SyncBotsToSquad(botEntries)
+
+	cronScheduler, cronCtx, cronCancel, err := buildCronScheduler(a.cronStore, loop, canonicalService, a.primaryBot)
 	if err != nil {
 		return fmt.Errorf("initialize cron scheduler: %w", err)
 	}
@@ -332,7 +361,7 @@ func (a *app) initVoice(logger *slog.Logger) error {
 
 	a.voiceProcessor = voice.NewProcessor(
 		voiceSpool, transcriber, fallback,
-		voiceBotDispatcher{bot: a.bot},
+		voiceBotDispatcher{bot: a.primaryBot},
 		voice.Config{
 			PollInterval:       time.Duration(a.cfg.VoicePollIntervalMS) * time.Millisecond,
 			HeartbeatPath:      a.cfg.VoiceHeartbeatPath,
@@ -419,7 +448,7 @@ func (a *app) initServers(logger *slog.Logger) {
 		ctx := r.Context()
 		logger.Info("Telegram impersonation request received", slog.Int64("user_id", req.UserID), slog.String("text", req.Text))
 
-		err := a.bot.ProcessExternalInput(ctx, req.UserID, req.ChatID, req.Text, false)
+		err := a.primaryBot.ProcessExternalInput(ctx, req.UserID, req.ChatID, req.Text, false)
 		if err != nil {
 			http.Error(w, "Pipeline execution failed: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -429,6 +458,105 @@ func (a *app) initServers(logger *slog.Logger) {
 	}))
 
 	a.healthServer = healthSrv
+}
+
+// registerBotAPIRoutes registers S-32 multi-bot REST endpoints on the dashboard server.
+func (a *app) registerBotAPIRoutes(resolver *runtime.PathResolver, appCfg *config.AppConfig) {
+	corsJSON := func(w http.ResponseWriter) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	}
+
+	// GET /api/bots — list all bots with running status
+	dashboard.RegisterRoute("/api/bots", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			corsJSON(w)
+			return
+		}
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		corsJSON(w)
+		type botStatus struct {
+			config.BotConfig
+			Running bool `json:"running"`
+		}
+		cfgs := a.pool.Configs()
+		out := make([]botStatus, 0, len(cfgs))
+		for _, bc := range cfgs {
+			running := a.pool.Get(bc.ID) != nil
+			out = append(out, botStatus{BotConfig: bc, Running: running})
+		}
+		_ = json.NewEncoder(w).Encode(out)
+	}))
+
+	// POST /api/bots — create a new bot
+	dashboard.RegisterRoute("/api/bots/create", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			corsJSON(w)
+			return
+		}
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		corsJSON(w)
+		var req config.BotConfig
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid payload: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		if req.ID == "" || req.Token == "" {
+			http.Error(w, "id and token are required", http.StatusBadRequest)
+			return
+		}
+		req.Enabled = true
+		if err := a.pool.Add(req); err != nil {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		// Persist
+		all := a.pool.Configs()
+		_ = config.SaveBots(resolver, all)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(req)
+	}))
+
+	// DELETE /api/bots/remove?id=xxx
+	dashboard.RegisterRoute("/api/bots/remove", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			corsJSON(w)
+			return
+		}
+		if r.Method != http.MethodDelete {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		corsJSON(w)
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			http.Error(w, "id query param required", http.StatusBadRequest)
+			return
+		}
+		a.pool.Remove(id)
+		all := a.pool.Configs()
+		_ = config.SaveBots(resolver, all)
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"removed"}`))
+	}))
+
+	// GET /api/personas — list persona templates
+	dashboard.RegisterRoute("/api/personas", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			corsJSON(w)
+			return
+		}
+		corsJSON(w)
+		_ = json.NewEncoder(w).Encode(persona.BuiltinTemplates())
+	}))
 }
 
 func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (closableLLMProvider, error) {
@@ -541,8 +669,13 @@ func (a *app) start() {
 		_, _ = w.Write(body)
 	}))
 
+	// S-32: REST API for multi-bot management
+	resolver := a.resolver
+	appCfg := a.cfg
+	a.registerBotAPIRoutes(resolver, appCfg)
+
 	_ = dashboard.StartServer(logger, a.cfg.DashboardPort)
-	go a.bot.Start()
+	a.pool.StartAll()
 }
 
 func (a *app) shutdown(ctx context.Context) {
@@ -561,8 +694,8 @@ func (a *app) shutdown(ctx context.Context) {
 	if a.voiceCapture != nil {
 		a.voiceCapture.Stop()
 	}
-	if a.bot != nil {
-		a.bot.Stop()
+	if a.pool != nil {
+		a.pool.StopAll()
 	}
 }
 
@@ -591,7 +724,7 @@ func (a *app) close() {
 }
 
 type voiceBotDispatcher struct {
-	bot *telegram.BotController
+	bot *telegram.BotController // primary bot for voice dispatch
 }
 
 func (d voiceBotDispatcher) DispatchVoice(ctx context.Context, userID, chatID int64, text string, requiresAudio bool) error {

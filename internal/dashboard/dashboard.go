@@ -21,6 +21,7 @@ type Event struct {
 	Action    string      `json:"action"`
 	Payload   interface{} `json:"payload,omitempty"`
 	Timestamp string      `json:"timestamp"`
+	BotID     string      `json:"bot_id,omitempty"` // S-32: multi-bot source identifier
 }
 
 var (
