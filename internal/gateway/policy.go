@@ -6,12 +6,15 @@ import (
 )
 
 const (
-	// Tier 1 — remote cheap
+	// Tier 0.5 — free remote (1000 req/day with $10+ OpenRouter credit)
+	modelMiniMaxM25Free = "minimax/minimax-m2.5:free"
+
+	// Tier 1 — remote cheap (paid)
 	modelQwen3       = "qwen/qwen3-32b"               // $0.08/$0.24 per 1M, PT-BR quality
 	modelDevstral2   = "mistralai/devstral-2512"       // $0.05/$0.22, 256K ctx, coding+PT-BR
 	modelQwen35Flash = "qwen/qwen3.5-flash-02-23"      // $0.065/$0.26, 1M ctx, ultra-fast
 
-	// Tier 2 — remote premium
+	// Tier 2 — remote premium (paid)
 	modelMiniMaxM27    = "minimax/minimax-m2.7"
 	modelMiniMaxM25    = "minimax/minimax-m2.5"        // slightly cheaper than M2.7
 	modelMiniMaxDirect = "MiniMax-M2"
@@ -159,20 +162,32 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 		}
 
 	case "professional":
-		// Business bots: try gemma3 locally first (LocalProbe).
-		// If the local response meets quality bar → zero remote cost.
-		// Only escalate to DeepSeek → MiniMax if quality gate fails.
-		// In practice gemma3:12b handles ~65% of professional PT-BR queries adequately.
+		// Cascade (cheapest → most capable):
+		// 1. gemma3 local probe — judge + responder, zero cost; passes if ≥40 words + confident
+		// 2. minimax-m2.5 free — 1000 req/day free; skip if rate-limited
+		// 3. qwen3-32b — $0.08/$0.24/1M paid cheap fallback
+		// 4. minimax-m2.7 — $0.30/$1.20/1M paid premium final
 		candidates = []RouteCandidate{
 			{
 				Lane:       "local-balanced",
 				Provider:   "local",
 				Model:      modelGemma3,
 				UseRemote:  false,
-				LocalProbe: true, // quality gate — escalate silently if fails
-				Reason:     "professional: gemma3 local probe first (free tier).",
+				LocalProbe: true,
+				Reason:     "professional: gemma3 judge+probe — free, zero latency cost.",
 				Guards:     guardsForProfessional(req.OutputMode, false),
 				BudgetLane: "local",
+				Class:      taskClass,
+				Confidence: req.JudgeConfidence,
+			},
+			{
+				Lane:       "remote-free",
+				Provider:   "openrouter",
+				Model:      modelMiniMaxM25Free,
+				UseRemote:  true,
+				Reason:     "professional: minimax-m2.5 free tier (1000 req/day, zero cost).",
+				Guards:     guardsForProfessional(req.OutputMode, true),
+				BudgetLane: "remote_premium",
 				Class:      taskClass,
 				Confidence: req.JudgeConfidence,
 			},
@@ -181,7 +196,7 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				Provider:   "openrouter",
 				Model:      modelQwen3,
 				UseRemote:  true,
-				Reason:     "professional: qwen3-32b — quality PT-BR business responses ($0.08/$0.24 per 1M).",
+				Reason:     "professional: qwen3-32b paid cheap fallback ($0.08/$0.24/1M).",
 				Guards:     guardsForProfessional(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -190,20 +205,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "remote-premium",
 				Provider:   "minimax",
-				Model:      modelMiniMaxM25,
-				UseRemote:  true,
-				Reason:     "professional: minimax-m2.5 free tier (1000 req/day, falls through to m2.7).",
-				Guards:     guardsForProfessional(req.OutputMode, true),
-				BudgetLane: "remote_premium",
-				Class:      taskClass,
-				Confidence: req.JudgeConfidence,
-			},
-			{
-				Lane:       "remote-premium",
-				Provider:   "minimax",
 				Model:      modelMiniMaxM27,
 				UseRemote:  true,
-				Reason:     "professional: minimax-m2.7 paid final fallback.",
+				Reason:     "professional: minimax-m2.7 paid premium final fallback.",
 				Guards:     guardsForProfessional(req.OutputMode, true),
 				BudgetLane: "remote_premium",
 				Class:      taskClass,
@@ -321,11 +325,11 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 	case "critical":
 		candidates = []RouteCandidate{
 			{
-				Lane:       "remote-premium",
-				Provider:   "minimax",
-				Model:      modelMiniMaxM25,
+				Lane:       "remote-free",
+				Provider:   "openrouter",
+				Model:      modelMiniMaxM25Free,
 				UseRemote:  true,
-				Reason:     "critical: minimax-m2.5 free tier first.",
+				Reason:     "critical: minimax-m2.5 free tier first (1000 req/day).",
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_premium",
 				Class:      taskClass,

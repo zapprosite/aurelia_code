@@ -73,9 +73,10 @@ type Provider struct {
 
 	localFast         closableProvider
 	localBalanced     closableProvider
-	remoteCheapLong   closableProvider
+	remoteFree        closableProvider // MiniMax M2.5 :free tier (1000 req/day, zero cost)
+	remoteCheapLong   closableProvider // Qwen3-32B paid cheap
 	remoteCheapVision closableProvider
-	remotePremium     closableProvider
+	remotePremium     closableProvider // MiniMax M2.7 paid premium
 	miniMaxDirect     closableProvider
 	localVision       closableProvider
 	judge             Judge
@@ -106,23 +107,28 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		Temperature: &lowTemp,
 	})
 
+	var remoteFree closableProvider
 	var remoteCheapLong closableProvider
 	var remoteCheapVision closableProvider
 	var remotePremium closableProvider
 	if cfg.OpenRouterAPIKey != "" {
+		// Tier 0.5 — MiniMax M2.5 free (1000 req/day with $10+ credit, zero cost)
+		remoteFree = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelMiniMaxM25Free, llm.OpenAICompatibleRequestOptions{
+			MaxTokens:   1024,
+			Temperature: &lowTemp,
+		})
+		// Tier 1 — Qwen3-32B paid cheap ($0.08/$0.24 per 1M, thinking disabled)
 		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelQwen3, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
-			// Qwen3 has built-in thinking/reasoning mode — disable it for professional
-			// responses to avoid consuming output tokens on internal chain-of-thought.
-			// With thinking ON: 13s but ~40% tokens wasted on reasoning.
-			// With thinking OFF: 10s, all tokens go to the actual response.
 			ExtraFields: map[string]any{"include_reasoning": false},
 		})
+		// Long context / vision
 		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelLlama4Scout, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   512,
 			Temperature: &lowTemp,
 		})
+		// Tier 2 — MiniMax M2.7 paid premium ($0.30/$1.20 per 1M)
 		remotePremium = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelMiniMaxM27, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
@@ -146,6 +152,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		localFast:         localFast,
 		localBalanced:     localBalanced,
 		localVision:       localVision,
+		remoteFree:        remoteFree,
 		remoteCheapLong:   remoteCheapLong,
 		remoteCheapVision: remoteCheapVision,
 		remotePremium:     remotePremium,
@@ -498,6 +505,11 @@ func (p *Provider) providerFor(lane string) agent.LLMProvider {
 		return p.localVision
 	case "local-balanced", "local":
 		return p.localBalanced
+	case "remote-free":
+		if p.remoteFree != nil {
+			return p.remoteFree
+		}
+		return p.remoteCheapLong // fallback if free tier not configured
 	case "remote-cheap":
 		return p.remoteCheapLong
 	case "remote-long-context", "remote-cheap-vision":
