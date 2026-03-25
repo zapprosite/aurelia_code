@@ -67,6 +67,7 @@ Este diretório é a memória técnica curta do repositório. Use-o como ponto d
 - política da voz oficial: [`docs/aurelia_voice_profile_20260319.md`](../../docs/aurelia_voice_profile_20260319.md)
 - **motor de inferência da Aurélia** (IMUTÁVEL): [`docs/governance/MODEL-STACK-POLICY.md`](../../docs/governance/MODEL-STACK-POLICY.md) — `gemma3:12b` (local Tier 0) + `deepseek/deepseek-chat-v3.1` (Tier 1) + `minimax/minimax-m2.7` (Tier 2) + `moonshotai/kimi-k2.5` (long context); Claude/Antigravity/OpenCode são orquestradores externos controlados por Will; mudança só via ADR; rule: [`.agent/rules/13-model-stack-policy.md`](../../.agent/rules/13-model-stack-policy.md)
 - **governança de rede/portas/subdomínios**: ler [`/srv/ops/ai-governance/NETWORK_MAP.md`](/srv/ops/ai-governance/NETWORK_MAP.md) antes de qualquer mudança; adicionar subdomínio via skill [`/add-subdomain`](../../.agent/skills/add-subdomain/SKILL.md); Cloudflare Access gerenciado por Terraform em [`/srv/ops/terraform/cloudflare/access.tf`](/srv/ops/terraform/cloudflare/access.tf) — ver [`docs/governance/S-23-cloudflare-access.md`](../../docs/governance/S-23-cloudflare-access.md); regra completa: [`.agent/rules/12-network-governance.md`](../../.agent/rules/12-network-governance.md)
+- **Sovereign-Bibliotheca v2**: Unificação de Go, Node e Bash para gestão de memória e notas; ver [`.agent/rules/15-sovereign-bibliotheca.md`](../../.agent/rules/15-sovereign-bibliotheca.md)
 
 ## Related Resources
 
