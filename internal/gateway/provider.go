@@ -97,7 +97,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		ExtraFields: map[string]any{"think": false},
 	})
 	localBalanced := llm.NewOllamaProviderWithOptions(cfg.OllamaURL, modelGemma3, llm.OpenAICompatibleRequestOptions{
-		MaxTokens:   384,
+		MaxTokens:   1024,
 		Temperature: &lowTemp,
 		ExtraFields: map[string]any{"think": false},
 	})
@@ -111,7 +111,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 	var remotePremium closableProvider
 	if cfg.OpenRouterAPIKey != "" {
 		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelDeepSeekChat, llm.OpenAICompatibleRequestOptions{
-			MaxTokens:   512,
+			MaxTokens:   1024,
 			Temperature: &lowTemp,
 		})
 		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelKimiK25, llm.OpenAICompatibleRequestOptions{
@@ -218,12 +218,6 @@ func modelSupportsTools(model string) bool {
 
 func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (*agent.ModelResponse, error) {
 	opts, _ := agent.RunOptionsFromContext(ctx)
-	
-	// Ensure system instructions are applied to all requests
-	const mandatoryInstruction = "Be concise. Avoid unnecessary explanations. Output minimal sufficient answer."
-	if !strings.Contains(systemPrompt, mandatoryInstruction) {
-		systemPrompt = mandatoryInstruction + "\n" + systemPrompt
-	}
 
 	// Calculate context size roughly
 	contextSize := len(systemPrompt)
@@ -239,12 +233,22 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 			break
 		}
 	}
-	
+
 	judgeRes, err := p.judge.Judge(ctx, latestUser, history)
 	if err != nil {
 		// Fallback to default classification if judge fails
 		observability.Logger("gateway.provider").Warn("judge failed, using default coding_main", slog.String("error", err.Error()))
 		judgeRes = &JudgeResult{Class: "coding_main", Confidence: 0.5, Reason: "judge error fallback"}
+	}
+
+	// Inject "Be concise" only for simple/curation tasks.
+	// Professional and other classes get full token budget without truncation pressure.
+	const conciseInstruction = "Be concise. Avoid unnecessary explanations. Output minimal sufficient answer."
+	switch judgeRes.Class {
+	case "simple_short", "curation":
+		if !strings.Contains(systemPrompt, conciseInstruction) {
+			systemPrompt = conciseInstruction + "\n" + systemPrompt
+		}
 	}
 
 	req := DryRunRequest{
