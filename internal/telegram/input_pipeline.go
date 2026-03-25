@@ -55,7 +55,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 	// Skipped for voice messages: Telegram voice is from an authenticated user,
 	// and injection via ASR transcription is unlikely. Skipping saves 1-3s latency.
 	if bc.inputGuard != nil && !requiresAudio {
-		if blocked, reason := bc.inputGuard.Check(session.ctx, session.text); blocked {
+		if blocked, reason := bc.inputGuard.CheckWithUser(session.ctx, c.Sender().ID, bc.allowedUserIDs, session.text); blocked {
 			observability.Logger("telegram.pipeline").Warn("input blocked by guard", slog.String("reason", reason))
 			_ = SendError(bc.bot, c.Chat(), "Mensagem bloqueada pelo filtro de segurança: "+reason)
 			return nil
@@ -167,7 +167,7 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		return bc.handleMediaURL(sender, session)
 	}
 	if bc.inputGuard != nil && !requiresAudio {
-		if blocked, reason := bc.inputGuard.Check(ctx, text); blocked {
+		if blocked, reason := bc.inputGuard.CheckWithUser(ctx, userID, bc.allowedUserIDs, text); blocked {
 			observability.Logger("telegram.pipeline").Warn("external input blocked by guard", slog.String("reason", reason))
 			_ = SendError(bc.bot, chat, "Mensagem bloqueada pelo filtro de segurança: "+reason)
 			return nil

@@ -110,7 +110,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 	var remoteCheapVision closableProvider
 	var remotePremium closableProvider
 	if cfg.OpenRouterAPIKey != "" {
-		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelDeepSeekChat, llm.OpenAICompatibleRequestOptions{
+		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelQwen3, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
 		})
@@ -903,7 +903,7 @@ func historyWindowFor(c RouteCandidate) int {
 	if c.BudgetLane == "remote_premium" {
 		return 20 // premium: larger window for complex multi-turn tasks
 	}
-	return 12 // remote cheap (DeepSeek): 6 exchanges — enough for most tasks
+	return 12 // remote cheap (Qwen3): 6 exchanges — enough for most tasks
 }
 
 // trimHistory returns the last maxTurns messages, always preserving the last user message.
