@@ -7,11 +7,10 @@ import (
 
 func TestCalculateCostUSD_GroqLlama(t *testing.T) {
 	t.Parallel()
-	// 1000 input tokens + 500 output tokens on groq llama-3.3
+	// Groq Llama-3.3-70B is free tier (direct API, no per-token charge)
 	cost := CalculateCostUSD("llama-3.3-70b-versatile", 1000, 500)
-	// Expected: (1000 * 0.59 / 1M) + (500 * 0.79 / 1M) = 0.00059 + 0.000395 = 0.000985
-	if cost < 0.0009 || cost > 0.001 {
-		t.Fatalf("cost = %f, want ~0.000985", cost)
+	if cost != 0 {
+		t.Fatalf("cost = %f, want 0 for groq free tier", cost)
 	}
 }
 
