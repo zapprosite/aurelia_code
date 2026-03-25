@@ -6,16 +6,22 @@ import (
 )
 
 const (
-	// Tier 1 — remote cheap (was DeepSeek, now Qwen3-32B: $0.08/$0.24 per 1M, ~3x cheaper, quality PT-BR equivalent)
-	modelQwen3      = "qwen/qwen3-32b"
-	modelQwen35Flash = "qwen/qwen3.5-flash-02-23" // ultra-fast, $0.065/$0.26, 1M context
+	// Tier 1 — remote cheap
+	modelQwen3       = "qwen/qwen3-32b"               // $0.08/$0.24 per 1M, PT-BR quality
+	modelDevstral2   = "mistralai/devstral-2512"       // $0.05/$0.22, 256K ctx, coding+PT-BR
+	modelQwen35Flash = "qwen/qwen3.5-flash-02-23"      // $0.065/$0.26, 1M ctx, ultra-fast
 
 	// Tier 2 — remote premium
 	modelMiniMaxM27    = "minimax/minimax-m2.7"
+	modelMiniMaxM25    = "minimax/minimax-m2.5"        // slightly cheaper than M2.7
 	modelMiniMaxDirect = "MiniMax-M2"
 
-	// Long context
-	modelKimiK25 = "moonshotai/kimi-k2.5"
+	// Long context — Llama 4 Scout: 10M ctx at $0.08/$0.30 (-85% vs Kimi)
+	modelLlama4Scout = "meta-llama/llama-4-scout"
+	modelKimiK25     = "moonshotai/kimi-k2.5"          // kept as vision fallback
+
+	// Free reasoning (rate-limited: 1000 req/day with $10+ credit)
+	modelDeepSeekR1Free = "deepseek/deepseek-r1-0528:free"
 
 	// Local
 	modelGemma3 = "gemma3:12b"
@@ -291,9 +297,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "remote-long-context",
 				Provider:   "openrouter",
-				Model:      modelKimiK25,
+				Model:      modelLlama4Scout,
 				UseRemote:  true,
-				Reason:     "long_context_or_multimodal: kimi for deep analysis/long context.",
+				Reason:     "long_context_or_multimodal: llama-4-scout 10M ctx ($0.08/$0.30, -85% vs kimi).",
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_vision",
 				Class:      taskClass,
