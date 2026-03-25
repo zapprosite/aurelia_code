@@ -28,6 +28,8 @@ type HealthReporter interface {
 // BotController wires Telegram I/O to the application services.
 type BotController struct {
 	bot              *telebot.Bot
+	botID            string   // S-32: per-bot identity for multi-bot pool
+	allowedUserIDs   []int64  // S-32: per-bot override; if nil, uses config.TelegramAllowedUserIDs
 	config           *config.AppConfig
 	memory           *memory.MemoryManager
 	router           *skill.Router
@@ -50,6 +52,11 @@ type BotController struct {
 	squadReporter   SquadStatusReporter
 	cronJobReporter CronNextJobReporter
 	mediaProcessor  *media.Processor
+}
+
+// BotID returns the identifier of this bot instance.
+func (bc *BotController) BotID() string {
+	return bc.botID
 }
 
 // SetHealthReporter wires a gateway health reporter for /status diagnostics.
@@ -125,6 +132,66 @@ func NewBotController(
 	return bc, nil
 }
 
+// NewBotControllerForBot builds a BotController from a BotConfig entry (S-32 multi-bot).
+// The token and allowed users come from botCfg; shared services come from appCfg.
+func NewBotControllerForBot(
+	appCfg *config.AppConfig,
+	botCfg config.BotConfig,
+	mem *memory.MemoryManager,
+	r *skill.Router,
+	e *skill.Executor,
+	l *skill.Loader,
+	s stt.Transcriber,
+	canonical *persona.CanonicalIdentityService,
+	personasDir string,
+) (*BotController, error) {
+	token := botCfg.Token
+	if token == "" {
+		token = appCfg.TelegramBotToken
+	}
+
+	pref := telebot.Settings{
+		Token:  token,
+		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
+	}
+	if os.Getenv("RUN_SWARM_E2E") != "" {
+		pref.Offline = true
+	}
+
+	b, err := telebot.NewBot(pref)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create bot %q: %w", botCfg.ID, err)
+	}
+
+	allowedIDs := botCfg.AllowedUserIDs
+	if len(allowedIDs) == 0 {
+		allowedIDs = appCfg.TelegramAllowedUserIDs
+	}
+
+	bc := &BotController{
+		bot:              b,
+		botID:            botCfg.ID,
+		allowedUserIDs:   allowedIDs,
+		config:           appCfg,
+		memory:           mem,
+		router:           r,
+		executor:         e,
+		loader:           l,
+		stt:              s,
+		tts:              tts.NewDefaultSynthesizer(appCfg),
+		premiumTTS:       tts.NewPremiumSynthesizer(appCfg),
+		canonical:        canonical,
+		pendingBootstrap: make(map[int64]bootstrapState),
+		pendingAlbums:    make(map[string]*pendingAlbum),
+		recentMedia:      make(map[string]recentMedia),
+		personasDir:      personasDir,
+		mediaProcessor:   media.NewProcessor(s, e.GetLoop().GetLLMProvider(), ""),
+	}
+
+	bc.setupRoutes()
+	return bc, nil
+}
+
 // GetBot exposes the underlying Telebot instance.
 func (bc *BotController) GetBot() *telebot.Bot {
 	return bc.bot
@@ -145,7 +212,12 @@ func (bc *BotController) isAllowedUser(userID int64) bool {
 	if bc == nil || bc.config == nil {
 		return false
 	}
-	for _, id := range bc.config.TelegramAllowedUserIDs {
+	// Per-bot override takes precedence over global config.
+	list := bc.allowedUserIDs
+	if len(list) == 0 {
+		list = bc.config.TelegramAllowedUserIDs
+	}
+	for _, id := range list {
 		if id == userID {
 			return true
 		}

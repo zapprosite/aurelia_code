@@ -198,6 +198,51 @@ func probeOpenRouter(apiKey string) (string, int) {
 	return "online", 5
 }
 
+// BotConfigEntry is a minimal interface to avoid import cycles with config package.
+// Callers pass config.BotConfig slices cast through this helper.
+type BotConfigEntry struct {
+	ID        string
+	Name      string
+	PersonaID string
+	FocusArea string
+}
+
+// SyncBotsToSquad adds bots from the multi-bot pool as squad agents if they don't exist.
+// Icon and color are derived from PersonaID.
+func SyncBotsToSquad(bots []BotConfigEntry) {
+	for _, b := range bots {
+		icon, color := botPersonaIcon(b.PersonaID)
+		role := b.FocusArea
+		if role == "" {
+			role = "Bot Telegram"
+		}
+		AddSquadAgent(SquadAgent{
+			ID:       b.ID,
+			Name:     b.Name,
+			Role:     role,
+			Status:   "online",
+			Load:     0,
+			Color:    color,
+			IconName: icon,
+		})
+	}
+}
+
+func botPersonaIcon(personaID string) (icon, color string) {
+	switch personaID {
+	case "aurelia-leader":
+		return "Crown", "text-purple-400"
+	case "hvac-sales":
+		return "Thermometer", "text-blue-400"
+	case "project-manager":
+		return "ClipboardCheck", "text-yellow-400"
+	case "life-organizer":
+		return "Calendar", "text-green-400"
+	default:
+		return "Bot", "text-white/60"
+	}
+}
+
 // AddSquadAgent registra um novo agente no squad se não existir com esse ID.
 // Permite dinâmicamente adicionar agentes spawned pelo swarm.
 func AddSquadAgent(a SquadAgent) {
