@@ -113,6 +113,11 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelQwen3, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
+			// Qwen3 has built-in thinking/reasoning mode — disable it for professional
+			// responses to avoid consuming output tokens on internal chain-of-thought.
+			// With thinking ON: 13s but ~40% tokens wasted on reasoning.
+			// With thinking OFF: 10s, all tokens go to the actual response.
+			ExtraFields: map[string]any{"include_reasoning": false},
 		})
 		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelLlama4Scout, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   512,
