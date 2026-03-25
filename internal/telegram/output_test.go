@@ -238,3 +238,31 @@ func TestSanitizeAssistantOutputForUser_LeavesNormalAnswer(t *testing.T) {
 		t.Fatalf("unexpected sanitized output: %q", got)
 	}
 }
+
+func TestSanitizeTextForSpeech_LongTextCutsAtSentence(t *testing.T) {
+	// Build a text longer than 3000 runes with clear sentence boundaries.
+	sentence := "Este é um texto de teste com conteúdo profissional sobre HVAC-R e sistemas VRV. "
+	var sb strings.Builder
+	for sb.Len() < 3200 {
+		sb.WriteString(sentence)
+	}
+	long := sb.String()
+
+	got := sanitizeTextForSpeech(long)
+	runes := []rune(got)
+
+	if len(runes) > 3000 {
+		t.Fatalf("sanitized text exceeds 3000 runes: got %d", len(runes))
+	}
+	// Must end at a sentence boundary (period), not mid-word
+	if !strings.HasSuffix(strings.TrimSpace(got), ".") {
+		t.Fatalf("expected text to end with '.', got: %q", got[max(0, len(got)-30):])
+	}
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}

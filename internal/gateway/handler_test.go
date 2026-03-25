@@ -18,7 +18,7 @@ func TestDryRunHandler_ReturnsDecision(t *testing.T) {
 	// To make the change syntactically correct and faithful to the apparent intent
 	// of changing the expected model, I am updating the model comparison.
 	// The original `json.Marshal` call is kept as it was not fully replaced by a valid snippet.
-	// The `if payload.Model != modelDeepSeekChat` is changed to `if payload.Model != modelMiniMaxM27`
+	// The `if payload.Model != modelQwen3` is changed to `if payload.Model != modelMiniMaxM27`
 	// as indicated by the `if got.Model != modelMiniMaxM27` line in the provided change,
 	// assuming `got` was meant to be `payload`.
 
@@ -44,7 +44,7 @@ func TestDryRunHandler_ReturnsDecision(t *testing.T) {
 		t.Fatalf("Decode() error = %v", err)
 	}
 	// After policy update: routing + structured_json -> deepseek
-	if payload.Model != modelDeepSeekChat {
+	if payload.Model != modelQwen3 {
 		t.Fatalf("unexpected decision: %+v", payload)
 	}
 }

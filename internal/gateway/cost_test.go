@@ -18,10 +18,11 @@ func TestCalculateCostUSD_GroqLlama(t *testing.T) {
 func TestCalculateCostUSD_MiniMaxM2_7(t *testing.T) {
 	t.Parallel()
 	// 1000 input tokens + 500 output tokens on minimax/minimax-m2.7
+	// Pricing: $0.30/$1.20 per 1M tokens
 	cost := CalculateCostUSD("minimax/minimax-m2.7", 1000, 500)
-	// Expected: (1000 * 0.30 / 1M) + (500 * 0.60 / 1M) = 0.0003 + 0.0003 = 0.0006
-	if cost < 0.0005 || cost > 0.0007 {
-		t.Fatalf("cost = %f, want ~0.0006", cost)
+	// Expected: (1000 * 0.30 / 1M) + (500 * 1.20 / 1M) = 0.0003 + 0.0006 = 0.0009
+	if cost < 0.0008 || cost > 0.001 {
+		t.Fatalf("cost = %f, want ~0.0009", cost)
 	}
 }
 
@@ -43,8 +44,9 @@ func TestCalculateCostUSD_UnknownModelFree(t *testing.T) {
 
 func TestLookupCost_KnownModel(t *testing.T) {
 	t.Parallel()
-	cost := LookupCost("deepseek/deepseek-chat-v3.1")
-	if cost.InputPerMToken != 0.014 || cost.OutputPerMToken != 0.14 {
+	// Tier 1 — Qwen3-32B (replaced DeepSeek as primary cheap model)
+	cost := LookupCost("qwen/qwen3-32b")
+	if cost.InputPerMToken != 0.08 || cost.OutputPerMToken != 0.24 {
 		t.Fatalf("cost = %+v", cost)
 	}
 }
