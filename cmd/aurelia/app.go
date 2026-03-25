@@ -391,6 +391,43 @@ func (a *app) initServers(logger *slog.Logger) {
 		healthSrv.RegisterCheck("voice_capture", a.voiceCapture.HealthCheck)
 		healthSrv.RegisterRoute("/v1/voice/capture/status", a.voiceCapture.StatusHandler())
 	}
+
+	// S-28: Telegram Impersonation for CLI/Automation
+	healthSrv.RegisterRoute("/v1/telegram/impersonate", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		var req struct {
+			UserID int64  `json:"user_id"`
+			ChatID int64  `json:"chat_id"`
+			Text   string `json:"text"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid payload", http.StatusBadRequest)
+			return
+		}
+
+		// Fallback para o Master se omitido
+		if req.UserID == 0 {
+			req.UserID = a.cfg.VoiceReplyUserID
+		}
+		if req.ChatID == 0 {
+			req.ChatID = a.cfg.VoiceReplyChatID
+		}
+
+		ctx := r.Context()
+		logger.Info("Telegram impersonation request received", slog.Int64("user_id", req.UserID), slog.String("text", req.Text))
+
+		err := a.bot.ProcessExternalInput(ctx, req.UserID, req.ChatID, req.Text, false)
+		if err != nil {
+			http.Error(w, "Pipeline execution failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status": "ok", "message": "Pipeline processing started"}`))
+	}))
+
 	a.healthServer = healthSrv
 }
 

@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -47,6 +48,10 @@ func TestSmokeHomelabIntegration(t *testing.T) {
 
 	t.Run("IntelligentRecovery-DRValidation", func(t *testing.T) {
 		testIntelligentRecovery(t, bot, chatID)
+	})
+
+	t.Run("PremiumMonitoring-HardDataProof", func(t *testing.T) {
+		testPremiumMonitoring(t, bot, chatID)
 	})
 }
 
@@ -262,6 +267,34 @@ func testIntelligentRecovery(t *testing.T, bot *tg.BotAPI, chatID int64) {
 	}
 }
 
+// testPremiumMonitoring: Valida o fluxo de monitoramento com métricas reais e link Grafana
+func testPremiumMonitoring(t *testing.T, bot *tg.BotAPI, chatID int64) {
+	t.Logf("💎 Validando Monitoramento Premium")
+
+	// Disparamos um comando que deve forçar a execução do cron ou via prompt
+	response := sendTelegramMessage(t, bot, chatID, "status de hardware agora", 45*time.Second)
+
+	expectations := []string{
+		"━━━━━━", // Header Premium
+		"Temp", "Utilization", "GPU", // Hard Data
+		"Grafana", "monitor.zappro.site", // Link persistente
+		"🛰️", "⚡", "💎", // Ícones Sênior
+	}
+
+	found := 0
+	for _, exp := range expectations {
+		if contains(response, exp) {
+			found++
+		}
+	}
+
+	if found < 4 {
+		t.Errorf("❌ Formatação Premium incompleta: apenas %d/%d elementos encontrados", found, len(expectations))
+	} else {
+		t.Logf("✅ Monitoramento Premium validado (%d elementos)", found)
+	}
+}
+
 // ============================================================================
 // Helpers
 // ============================================================================
@@ -353,7 +386,7 @@ func checkForResponse(t *testing.T, bot *tg.BotAPI, originalMsgID int, chatID in
 // ============================================================================
 
 func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > 0)
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
 
 func containsAny(s string, substrs []string) bool {

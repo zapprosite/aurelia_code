@@ -52,7 +52,7 @@ YML_COUNT=$(count_glob '*.yml')
 YAML_COUNT=$(count_glob '*.yaml')
 PNG_COUNT=$(count_glob '*.png')
 
-AGENTS_COUNT=$(count_dir .agents)
+AGENTS_COUNT=$(count_dir .agent)
 CONTEXT_COUNT=$(count_dir .context)
 CMD_COUNT=$(count_dir cmd)
 DOCS_COUNT=$(count_dir docs)
@@ -101,7 +101,7 @@ jq -n \
       totalFiles: ($total | tonumber),
       rootPath: ".",
       topDirectories: [
-        {name: ".agents", fileCount: ($agents_count | tonumber), description: "Governance rules, workflows, and reusable skills"},
+        {name: ".agent", fileCount: ($agents_count | tonumber), description: "Governance rules, workflows, and reusable skills"},
         {name: ".context", fileCount: ($context_count | tonumber), description: "Operational memory, generated docs, and workflow state"},
         {name: ".github", fileCount: ($github_count | tonumber), description: "CI workflows and repository automation"},
         {name: "cmd", fileCount: ($cmd_count | tonumber), description: "Application entrypoints and composition root"},

@@ -64,6 +64,17 @@ func (a *loopExecutorAdapter) Execute(ctx context.Context, systemPrompt string, 
 	return a.loop.Run(ctx, systemPrompt, history, allowedTools)
 }
 
+func (a *loopExecutorAdapter) RunCommand(ctx context.Context, command string) (string, error) {
+	msgs, _, err := a.loop.Run(ctx, "Execute this command: "+command, nil, nil)
+	if err != nil {
+		return "", err
+	}
+	if len(msgs) > 0 {
+		return msgs[len(msgs)-1].Content, nil
+	}
+	return "", nil
+}
+
 func TestE2E_PersonaLoopWithRealTools(t *testing.T) {
 	t.Parallel()
 
