@@ -66,9 +66,13 @@ func (g *GemmaJudge) Judge(ctx context.Context, task string, history []agent.Mes
 
 	var result JudgeResult
 	content := strings.TrimSpace(resp.Content)
-	content = extractJSON(content)
+	jsonContent := extractJSON(content)
 
-	if err := json.Unmarshal([]byte(content), &result); err != nil {
+	if err := json.Unmarshal([]byte(jsonContent), &result); err != nil {
+		// Try to extract class from free-form text as last resort.
+		if cls := extractClassFromText(content); cls != "" {
+			return &JudgeResult{Class: cls, Confidence: 0.5, Reason: "text extraction fallback"}, nil
+		}
 		return nil, fmt.Errorf("failed to parse judge output: %w | content: %s", err, content)
 	}
 
@@ -83,4 +87,16 @@ func extractJSON(s string) string {
 		return s // Return original as fallback
 	}
 	return s[start : end+1]
+}
+
+// extractClassFromText tries to find a valid class name in free-form text from the judge.
+func extractClassFromText(s string) string {
+	lower := strings.ToLower(s)
+	classes := []string{"professional", "simple_short", "coding_main", "long_context_or_multimodal", "critical", "curation", "maintenance"}
+	for _, cls := range classes {
+		if strings.Contains(lower, cls) {
+			return cls
+		}
+	}
+	return ""
 }
