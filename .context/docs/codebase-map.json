@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-24T02:46:07Z",
+  "generated": "2026-03-24T21:07:11Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,71 +26,71 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 12276,
+    "totalFiles": 12291,
     "rootPath": ".",
     "topDirectories": [
       {
-        "name": ".agents",
-        "fileCount": 98,
+        "name": ".agent",
+        "fileCount": 135,
         "description": "Governance rules, workflows, and reusable skills"
       },
       {
         "name": ".context",
-        "fileCount": 23,
+        "fileCount": 24,
         "description": "Operational memory, generated docs, and workflow state"
       },
       {
         "name": ".github",
-        "fileCount": 6,
+        "fileCount": 7,
         "description": "CI workflows and repository automation"
       },
       {
         "name": "cmd",
-        "fileCount": 15,
+        "fileCount": 18,
         "description": "Application entrypoints and composition root"
       },
       {
         "name": "docs",
-        "fileCount": 38,
+        "fileCount": 10,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
         "name": "internal",
-        "fileCount": 214,
+        "fileCount": 216,
         "description": "Core runtime layers and domain logic"
       },
       {
         "name": "pkg",
-        "fileCount": 25,
+        "fileCount": 26,
         "description": "LLM and STT provider integrations"
       },
       {
         "name": "scripts",
-        "fileCount": 30,
+        "fileCount": 33,
         "description": "Build, daemon, and host operations"
       },
       {
         "name": "e2e",
-        "fileCount": 2,
+        "fileCount": 3,
         "description": "End-to-end and smoke tests"
       }
     ],
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 251
+        "count": 259
       },
       {
         "extension": ".md",
-        "count": 37
+        "count": 18
       },
       {
         "extension": ".sh",
-        "count": 25
+        "count": 26
       },
       {
         "extension": ".json",
-        "count": 18
+        "count": 8
       },
       {
         "extension": ".yml",
@@ -102,7 +102,7 @@
       },
       {
         "extension": ".png",
-        "count": 2
+        "count": 4
       }
     ]
   },
