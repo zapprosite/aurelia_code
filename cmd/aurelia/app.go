@@ -431,6 +431,7 @@ func (a *app) initServers(logger *slog.Logger) {
 			UserID int64  `json:"user_id"`
 			ChatID int64  `json:"chat_id"`
 			Text   string `json:"text"`
+			BotID  string `json:"bot_id"` // S-32: route to specific bot; empty = primary
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid payload", http.StatusBadRequest)
@@ -445,10 +446,18 @@ func (a *app) initServers(logger *slog.Logger) {
 			req.ChatID = a.cfg.VoiceReplyChatID
 		}
 
+		// Select target bot: named bot if bot_id provided, otherwise primary.
+		target := a.primaryBot
+		if req.BotID != "" {
+			if bc := a.pool.Get(req.BotID); bc != nil {
+				target = bc
+			}
+		}
+
 		ctx := r.Context()
 		logger.Info("Telegram impersonation request received", slog.Int64("user_id", req.UserID), slog.String("text", req.Text))
 
-		err := a.primaryBot.ProcessExternalInput(ctx, req.UserID, req.ChatID, req.Text, false)
+		err := target.ProcessExternalInput(ctx, req.UserID, req.ChatID, req.Text, false)
 		if err != nil {
 			http.Error(w, "Pipeline execution failed: "+err.Error(), http.StatusInternalServerError)
 			return
