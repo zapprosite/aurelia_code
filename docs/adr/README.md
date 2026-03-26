@@ -25,7 +25,6 @@
 ## Parcial (governança documentada, código incompleto)
 
 - [20260325-data-stack-contract-and-templates.md](20260325-data-stack-contract-and-templates.md) — contrato de camadas SQLite/Qdrant/Supabase/Obsidian; **Supabase e Obsidian não integrados ao runtime**
-- [20260325-basico-bem-feito-aurelia-team-memory-dashboard.md](20260325-basico-bem-feito-aurelia-team-memory-dashboard.md) — visão arquitetural completa; base para v2
 - [20260325-sovereign-bibliotheca-v2-and-git-cleanup.md](20260325-sovereign-bibliotheca-v2-and-git-cleanup.md) — bibliotheca v2 e limpeza de git
 
 ---

@@ -27,7 +27,7 @@
 
 - contrato central: [docs/governance/REPOSITORY_CONTRACT.md](./docs/governance/REPOSITORY_CONTRACT.md)
 - stack de modelos: [docs/governance/MODEL-STACK-POLICY.md](./docs/governance/MODEL-STACK-POLICY.md) e [.agent/rules/13-model-stack-policy.md](./.agent/rules/13-model-stack-policy.md)
-- stack de dados: [docs/governance/DATA_GOVERNANCE.md](./docs/governance/DATA_GOVERNANCE.md), [docs/governance/DATA_STACK_STANDARD.md](./docs/governance/DATA_STACK_STANDARD.md), [docs/governance/SCHEMA_REGISTRY.md](./docs/governance/SCHEMA_REGISTRY.md), [docs/governance/OBSIDIAN_VAULT_STANDARD.md](./docs/governance/OBSIDIAN_VAULT_STANDARD.md)
+- stack de dados: [docs/governance/DATA_POLICY.md](./docs/governance/DATA_POLICY.md), [docs/governance/OBSIDIAN_VAULT_STANDARD.md](./docs/governance/OBSIDIAN_VAULT_STANDARD.md)
 - rede e subdomínios: [docs/governance/S-23-cloudflare-access.md](./docs/governance/S-23-cloudflare-access.md) e [.agent/rules/12-network-governance.md](./.agent/rules/12-network-governance.md)
 - ADR por slice estrutural: [docs/adr/README.md](./docs/adr/README.md)
 - continuidade de slice: [.agent/workflows/adr-semparar.md](./.agent/workflows/adr-semparar.md) e [scripts/adr-slice-init.sh](./scripts/adr-slice-init.sh)

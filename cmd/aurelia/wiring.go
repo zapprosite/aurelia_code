@@ -4,13 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io"
+	"log"
 	"log/slog"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/cron"
+	"github.com/kocar/aurelia/internal/gateway"
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/telegram"
@@ -18,21 +22,21 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+// ── Tool registry ─────────────────────────────────────────────────────────────
+
 func buildToolRegistry() *agent.ToolRegistry {
 	registry := agent.NewToolRegistry()
 	tools.RegisterCoreTools(registry)
 	registry.RegisterPlannerTools()
 	registry.RegisterMemoryTools()
-	registry.RegisterVerifierTools() // Nova ferramenta de verificação
+	registry.RegisterVerifierTools()
 	return registry
 }
 
-// registerHomelabTool registers the homelab_status tool.
 func registerHomelabTool(cfg *config.AppConfig, registry *agent.ToolRegistry) {
 	tools.RegisterHomelabTool(registry, cfg.OllamaURL, cfg.QdrantURL)
 }
 
-// maybeRegisterObsidianTool registers the obsidian_sync tool if ObsidianSyncEnabled.
 func maybeRegisterObsidianTool(cfg *config.AppConfig, registry *agent.ToolRegistry, db *sql.DB) {
 	if !cfg.ObsidianSyncEnabled || cfg.ObsidianVaultPath == "" {
 		return
@@ -56,42 +60,32 @@ func maybeRegisterObsidianTool(cfg *config.AppConfig, registry *agent.ToolRegist
 
 func registerScheduleTools(registry *agent.ToolRegistry, cronStore *cron.SQLiteCronStore) *cron.Service {
 	cronService := cron.NewService(cronStore, nil)
-	createScheduleTool := tools.NewCreateScheduleTool(cronService)
-	registry.Register(createScheduleTool.Definition(), createScheduleTool.Execute)
-	listSchedulesTool := tools.NewListSchedulesTool(cronService)
-	registry.Register(listSchedulesTool.Definition(), listSchedulesTool.Execute)
-	pauseScheduleTool := tools.NewPauseScheduleTool(cronService)
-	registry.Register(pauseScheduleTool.Definition(), pauseScheduleTool.Execute)
-	resumeScheduleTool := tools.NewResumeScheduleTool(cronService)
-	registry.Register(resumeScheduleTool.Definition(), resumeScheduleTool.Execute)
-	deleteScheduleTool := tools.NewDeleteScheduleTool(cronService)
-	registry.Register(deleteScheduleTool.Definition(), deleteScheduleTool.Execute)
+	registry.Register(tools.NewCreateScheduleTool(cronService).Definition(), tools.NewCreateScheduleTool(cronService).Execute)
+	registry.Register(tools.NewListSchedulesTool(cronService).Definition(), tools.NewListSchedulesTool(cronService).Execute)
+	registry.Register(tools.NewPauseScheduleTool(cronService).Definition(), tools.NewPauseScheduleTool(cronService).Execute)
+	registry.Register(tools.NewResumeScheduleTool(cronService).Definition(), tools.NewResumeScheduleTool(cronService).Execute)
+	registry.Register(tools.NewDeleteScheduleTool(cronService).Definition(), tools.NewDeleteScheduleTool(cronService).Execute)
 	return cronService
 }
 
 func maybeRegisterMCPTools(cfg *config.AppConfig, registry *agent.ToolRegistry) (*mcp.Manager, error) {
-	logger := observability.Logger("cmd.wiring")
-	mcpPath := cfg.MCPConfigPath
-
-	mcpCfg, err := config.LoadMCPConfig(mcpPath)
+	mcpCfg, err := config.LoadMCPConfig(cfg.MCPConfigPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
 		}
-		return nil, loggableError("failed to load MCP config from %s: %v", mcpPath, err)
+		return nil, loggableError("failed to load MCP config from %s: %v", cfg.MCPConfigPath, err)
 	}
 	if mcpCfg == nil || !mcpCfg.Enabled {
 		return nil, nil
 	}
-
 	cwd, _ := os.Getwd()
 	mcpManager, err := mcp.NewManager(*mcpCfg, cwd)
 	if err != nil {
 		return nil, loggableError("failed to start MCP Manager: %v", err)
 	}
-
 	tools.RegisterMCPTools(registry, mcpManager)
-	logger.Info("MCP manager initialized", slog.Int("tool_count", len(mcpManager.ToolSpecs())))
+	observability.Logger("cmd.wiring").Info("MCP manager initialized", slog.Int("tool_count", len(mcpManager.ToolSpecs())))
 	return mcpManager, nil
 }
 
@@ -106,44 +100,31 @@ func registerSpawnAgentTool(
 	if err != nil {
 		return loggableError("initialize team manager: %v", err)
 	}
-
 	masterTeams, err := agent.NewMasterTeamService(
 		teamManager,
 		llmProvider,
 		registry,
 		cfg.MaxIterations,
-		func(teamKey string, message string) {
-			notifyMasterTeam(bot, teamKey, message)
-		},
+		func(teamKey string, message string) { notifyMasterTeam(bot, teamKey, message) },
 	)
 	if err != nil {
 		return loggableError("initialize master team service: %v", err)
 	}
-
 	if err := masterTeams.Rehydrate(context.Background()); err != nil {
 		observability.Logger("cmd.wiring").Warn("failed to rehydrate master teams", slog.Any("err", err))
 	}
 
-	spawnAgent := tools.NewSpawnAgentTool(masterTeams)
-	registry.Register(spawnAgent.Definition(), spawnAgent.Execute)
-	createSquad := tools.NewCreateSquadTool(masterTeams)
-	registry.Register(createSquad.Definition(), createSquad.Execute)
+	registry.Register(tools.NewSpawnAgentTool(masterTeams).Definition(), tools.NewSpawnAgentTool(masterTeams).Execute)
+	registry.Register(tools.NewCreateSquadTool(masterTeams).Definition(), tools.NewCreateSquadTool(masterTeams).Execute)
 	getDash := &tools.GetDashboardStatusTool{}
 	registry.Register(getDash.Definition(), getDash.Execute)
-	handoffAgent := agent.GetHandoffToolDefinition()
-	registry.Register(handoffAgent, agent.HandoffHandler(masterTeams))
-	pauseTeam := tools.NewPauseTeamTool(masterTeams)
-	registry.Register(pauseTeam.Definition(), pauseTeam.Execute)
-	resumeTeam := tools.NewResumeTeamTool(masterTeams)
-	registry.Register(resumeTeam.Definition(), resumeTeam.Execute)
-	cancelTeam := tools.NewCancelTeamTool(masterTeams)
-	registry.Register(cancelTeam.Definition(), cancelTeam.Execute)
-	teamStatus := tools.NewTeamStatusTool(masterTeams)
-	registry.Register(teamStatus.Definition(), teamStatus.Execute)
-	sendTeamMessage := tools.NewSendTeamMessageTool(teamManager)
-	registry.Register(sendTeamMessage.Definition(), sendTeamMessage.Execute)
-	readTeamInbox := tools.NewReadTeamInboxTool(teamManager)
-	registry.Register(readTeamInbox.Definition(), readTeamInbox.Execute)
+	registry.Register(agent.GetHandoffToolDefinition(), agent.HandoffHandler(masterTeams))
+	registry.Register(tools.NewPauseTeamTool(masterTeams).Definition(), tools.NewPauseTeamTool(masterTeams).Execute)
+	registry.Register(tools.NewResumeTeamTool(masterTeams).Definition(), tools.NewResumeTeamTool(masterTeams).Execute)
+	registry.Register(tools.NewCancelTeamTool(masterTeams).Definition(), tools.NewCancelTeamTool(masterTeams).Execute)
+	registry.Register(tools.NewTeamStatusTool(masterTeams).Definition(), tools.NewTeamStatusTool(masterTeams).Execute)
+	registry.Register(tools.NewSendTeamMessageTool(teamManager).Definition(), tools.NewSendTeamMessageTool(teamManager).Execute)
+	registry.Register(tools.NewReadTeamInboxTool(teamManager).Definition(), tools.NewReadTeamInboxTool(teamManager).Execute)
 	return nil
 }
 
@@ -154,7 +135,6 @@ func notifyMasterTeam(bot *telegram.BotController, teamKey, message string) {
 		logger.Warn("invalid team key for master notification", slog.String("team_key", teamKey), slog.Any("err", err))
 		return
 	}
-
 	if err := telegram.SendText(bot.GetBot(), &telebot.Chat{ID: chatID}, message); err != nil {
 		logger.Warn("failed to send master team update", slog.Int64("chat_id", chatID), slog.Any("err", err))
 	}
@@ -162,4 +142,137 @@ func notifyMasterTeam(bot *telegram.BotController, teamKey, message string) {
 
 func loggableError(format string, args ...any) error {
 	return fmt.Errorf(format, args...)
+}
+
+// ── Auth (legacy stub) ────────────────────────────────────────────────────────
+
+func runOpenAIAuthLogin(_ io.Reader, _ io.Writer) error {
+	return fmt.Errorf("this CLI auth has been removed; use the openai provider with an API key instead")
+}
+
+// ── Cron support ──────────────────────────────────────────────────────────────
+
+type loopExecutorAdapter struct {
+	loop *agent.Loop
+}
+
+func (a *loopExecutorAdapter) Execute(ctx context.Context, systemPrompt string, history []agent.Message, allowedTools []string) ([]agent.Message, string, error) {
+	return a.loop.Run(ctx, systemPrompt, history, allowedTools)
+}
+
+func (a *loopExecutorAdapter) RunCommand(ctx context.Context, command string) (string, error) {
+	return a.loop.Registry().Execute(ctx, "run_command", map[string]any{"command": command})
+}
+
+func loadCronPromptConfig(canonicalPromptLoader interface {
+	BuildPrompt(ctx context.Context, userID, conversationID string) (string, []string, error)
+}) (string, []string) {
+	if canonicalPromptLoader != nil {
+		prompt, tools, err := canonicalPromptLoader.BuildPrompt(context.Background(), "", "")
+		if err == nil {
+			return prompt, tools
+		}
+		log.Printf("Warning: failed to load canonical prompt for cron runtime, using default prompt: %v", err)
+	}
+	return "Voce e o agente pessoal Aurelia. Execute a tarefa agendada com precisao e retorne um resumo objetivo do resultado.", []string{"web_search", "read_file", "write_file", "list_dir", "run_command"}
+}
+
+// ── LLM runtime snapshot ──────────────────────────────────────────────────────
+
+type llmRuntimeSnapshot struct {
+	RequestedProvider string                  `json:"requested_provider"`
+	RequestedModel    string                  `json:"requested_model"`
+	EffectiveProvider string                  `json:"effective_provider"`
+	EffectiveModel    string                  `json:"effective_model"`
+	ViaGateway        bool                    `json:"via_gateway"`
+	CheckedAt         time.Time               `json:"checked_at"`
+	Gateway           *gateway.StatusSnapshot `json:"gateway,omitempty"`
+}
+
+func buildLLMRuntimeSnapshot(a *app, checkedAt time.Time) llmRuntimeSnapshot {
+	snapshot := llmRuntimeSnapshot{
+		RequestedProvider: "unconfigured",
+		EffectiveProvider: "unconfigured",
+		CheckedAt:         checkedAt,
+	}
+	if a == nil || a.cfg == nil {
+		return snapshot
+	}
+	snapshot.RequestedProvider = a.cfg.LLMProvider
+	snapshot.RequestedModel = a.cfg.LLMModel
+	snapshot.EffectiveProvider = a.cfg.LLMProvider
+	snapshot.EffectiveModel = a.cfg.LLMModel
+	if gw, ok := a.llmProvider.(*gateway.Provider); ok && gw != nil {
+		gwSnapshot := gw.StatusSnapshot()
+		snapshot.EffectiveProvider = "gateway"
+		snapshot.ViaGateway = true
+		snapshot.Gateway = &gwSnapshot
+	}
+	return snapshot
+}
+
+// ── Status adapters ───────────────────────────────────────────────────────────
+
+type squadStatusAdapter struct{}
+
+func (squadStatusAdapter) GetSquadStatus() []telegram.AgentStatus {
+	members := agent.GetFixedSquad()
+	out := make([]telegram.AgentStatus, 0, len(members))
+	for _, m := range members {
+		out = append(out, telegram.AgentStatus{
+			Name:   m.Name,
+			Icon:   m.IconName,
+			Role:   m.Role,
+			Status: m.Status,
+			Load:   m.Load,
+		})
+	}
+	return out
+}
+
+type cronNextJobAdapter struct {
+	store *cron.SQLiteCronStore
+}
+
+func (a *cronNextJobAdapter) GetNextJobs(ctx context.Context, limit int) []telegram.NextJob {
+	if a.store == nil {
+		return nil
+	}
+	now := time.Now().UTC()
+	jobs, err := a.store.ListDueJobs(ctx, now.Add(24*time.Hour), limit*5)
+	if err != nil || len(jobs) == 0 {
+		return nil
+	}
+	var result []telegram.NextJob
+	seen := 0
+	for _, j := range jobs {
+		if !j.Active || j.NextRunAt == nil {
+			continue
+		}
+		dur := j.NextRunAt.Sub(now)
+		if dur < 0 {
+			dur = 0
+		}
+		name := j.ID
+		if len(name) > 16 {
+			name = name[:16]
+		}
+		result = append(result, telegram.NextJob{Name: name, NextIn: formatDuration(dur)})
+		seen++
+		if seen >= limit {
+			break
+		}
+	}
+	return result
+}
+
+func formatDuration(d time.Duration) string {
+	d = d.Round(time.Second)
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	if d < time.Hour {
+		return fmt.Sprintf("%dmin", int(d.Minutes()))
+	}
+	return fmt.Sprintf("%dh%02dmin", int(d.Hours()), int(d.Minutes())%60)
 }
