@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/cron"
 	"github.com/kocar/aurelia/internal/observability"
 )
@@ -12,6 +13,16 @@ import (
 // systemCronDefs define os cron jobs sistêmicos gerenciados pela Aurélia.
 // Cada job é identificado por um marcador [sys:nome] no início do prompt.
 // Idempotente: jobs com o mesmo marcador não são recriados.
+// homelabMonitorCron is the cron definition for homelab health monitoring.
+// Registered separately from systemCronDefs to control the marker.
+var homelabMonitorCron = cron.CronJob{
+	ScheduleType: "cron",
+	CronExpr:     "*/15 * * * *",
+	Prompt: "[sys:homelab-monitor] Use a ferramenta homelab_status para verificar o estado do homelab." +
+		" Reporte apenas se houver componente degradado ou offline." +
+		" Se todos estiverem saudáveis, NÃO envie mensagem (STAY SILENT).",
+}
+
 var systemCronDefs = []cron.CronJob{
 	{
 		ScheduleType: "cron",
@@ -51,6 +62,66 @@ var systemCronDefs = []cron.CronJob{
 			" Responda em 1 linha com: status, LLM provider ativo e voz habilitada." +
 			" Só notifique se status != ok.",
 	},
+}
+
+// seedHomelabMonitorCron registra o cron de monitoramento do homelab (idempotente).
+func seedHomelabMonitorCron(ctx context.Context, store *cron.SQLiteCronStore, adminChatID int64) {
+	logger := observability.Logger("cmd.seed_crons")
+	svc := cron.NewService(store, nil)
+
+	existing, err := store.ListJobsByChat(ctx, adminChatID)
+	if err != nil {
+		logger.Warn("seed_homelab_monitor: failed to list jobs", slog.Any("err", err))
+		return
+	}
+	for _, j := range existing {
+		if extractSysMarker(j.Prompt) == "[sys:homelab-monitor]" {
+			return
+		}
+	}
+
+	def := homelabMonitorCron
+	def.OwnerUserID = "system"
+	def.TargetChatID = adminChatID
+	if _, err := svc.CreateJob(ctx, def); err != nil {
+		logger.Warn("seed_homelab_monitor: failed to create cron", slog.Any("err", err))
+		return
+	}
+	logger.Info("seed_homelab_monitor: cron criado", slog.String("expr", def.CronExpr))
+}
+
+// seedObsidianCron registra o cron de sync do Obsidian se habilitado.
+func seedObsidianCron(ctx context.Context, store *cron.SQLiteCronStore, cfg *config.AppConfig, adminChatID int64) {
+	if !cfg.ObsidianSyncEnabled || cfg.ObsidianVaultPath == "" {
+		return
+	}
+	logger := observability.Logger("cmd.seed_crons")
+	svc := cron.NewService(store, nil)
+
+	existing, err := store.ListJobsByChat(ctx, adminChatID)
+	if err != nil {
+		logger.Warn("seed_obsidian: failed to list jobs", slog.Any("err", err))
+		return
+	}
+	for _, j := range existing {
+		if extractSysMarker(j.Prompt) == "[sys:obsidian-sync]" {
+			return
+		}
+	}
+
+	job := cron.CronJob{
+		ScheduleType: "cron",
+		CronExpr:     "*/30 * * * *",
+		OwnerUserID:  "system",
+		TargetChatID: adminChatID,
+		Prompt: "[sys:obsidian-sync] Use a ferramenta obsidian_sync para sincronizar o vault do Obsidian com o Qdrant." +
+			" Reporte quantas notas foram indexadas. Se nenhuma mudou, responda: '✓ Obsidian vault sincronizado (sem mudanças)'.",
+	}
+	if _, err := svc.CreateJob(ctx, job); err != nil {
+		logger.Warn("seed_obsidian: failed to create cron", slog.Any("err", err))
+		return
+	}
+	logger.Info("seed_obsidian: cron criado", slog.String("vault", cfg.ObsidianVaultPath))
 }
 
 // seedSystemCrons cria os cron jobs sistêmicos caso ainda não existam.

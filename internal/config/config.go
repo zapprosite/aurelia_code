@@ -117,6 +117,10 @@ type AppConfig struct {
 	OllamaURL                string
 	DashboardPort            int
 	HealthPort               int
+	SupabaseURL              string
+	SupabaseEnabled          bool
+	ObsidianVaultPath        string
+	ObsidianSyncEnabled      bool
 }
 
 type fileConfig struct {
@@ -178,6 +182,10 @@ type fileConfig struct {
 	OllamaURL                string  `json:"ollama_url"`
 	DashboardPort            int     `json:"dashboard_port"`
 	HealthPort               int     `json:"health_port"`
+	SupabaseURL              string  `json:"supabase_url"`
+	SupabaseEnabled          bool    `json:"supabase_enabled"`
+	ObsidianVaultPath        string  `json:"obsidian_vault_path"`
+	ObsidianSyncEnabled      bool    `json:"obsidian_sync_enabled"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
@@ -291,6 +299,12 @@ func applyEnvOverrides(cfg *fileConfig) {
 	}
 	if env := os.Getenv("MINIMAX_API_KEY"); env != "" {
 		cfg.MiniMaxAPIKey = env
+	}
+	if env := os.Getenv("SUPABASE_URL"); env != "" {
+		cfg.SupabaseURL = env
+	}
+	if env := os.Getenv("OBSIDIAN_VAULT_PATH"); env != "" {
+		cfg.ObsidianVaultPath = env
 	}
 }
 
@@ -703,6 +717,10 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		OllamaURL:                cfg.OllamaURL,
 		DashboardPort:            cfg.DashboardPort,
 		HealthPort:               cfg.HealthPort,
+		SupabaseURL:              cfg.SupabaseURL,
+		SupabaseEnabled:          cfg.SupabaseEnabled,
+		ObsidianVaultPath:        cfg.ObsidianVaultPath,
+		ObsidianSyncEnabled:      cfg.ObsidianSyncEnabled,
 	}
 }
 

@@ -704,25 +704,8 @@ func (p *Provider) recordTokens(budgetLane, providerKey, model string, inputToke
 	state.TotalOutputTokens += outputTokens
 	state.TotalCostUSD += cost
 
-	// Parse Rate Limits
-	if val, ok := metadata["X-RateLimit-Limit-Requests"]; ok {
-		fmt.Sscanf(val, "%d", &state.RateLimitRequests)
-	}
-	if val, ok := metadata["X-RateLimit-Remaining-Requests"]; ok {
-		fmt.Sscanf(val, "%d", &state.RateLimitRemaining)
-	}
-	if val, ok := metadata["X-RateLimit-Reset-Requests"]; ok {
-		// Reset is usually seconds or timestamp. OpenAI uses seconds.
-		var seconds float64
-		if _, err := fmt.Sscanf(val, "%fs", &seconds); err == nil {
-			state.RateLimitReset = time.Now().Add(time.Duration(seconds * float64(time.Second)))
-		}
-	} else if val, ok := metadata["Retry-After"]; ok {
-		var seconds int
-		if _, err := fmt.Sscanf(val, "%d", &seconds); err == nil {
-			state.RateLimitReset = time.Now().Add(time.Duration(seconds) * time.Second)
-		}
-	}
+	// Parse Rate Limits — use canonical HTTP header form (net/http stores in CanonicalMIMEHeaderKey form)
+	parseRateLimitHeaders(metadata, state)
 	var toPersist []persistableRouteState
 	toPersist = append(toPersist, persistableRouteState{Key: providerKey, State: *state})
 	if budgetLane != "" {
@@ -976,4 +959,38 @@ func localProbeQualityOK(query, response string) bool {
 	}
 
 	return true
+}
+
+// parseRateLimitHeaders populates rate limit fields in state from response metadata.
+// Headers are stored in Go canonical form (e.g., "X-Ratelimit-Limit-Requests")
+// so we do a case-insensitive lookup to be provider-agnostic.
+func parseRateLimitHeaders(metadata map[string]string, state *routeState) {
+	lookup := func(key string) (string, bool) {
+		lower := strings.ToLower(key)
+		for k, v := range metadata {
+			if strings.ToLower(k) == lower {
+				return v, true
+			}
+		}
+		return "", false
+	}
+
+	if val, ok := lookup("x-ratelimit-limit-requests"); ok {
+		fmt.Sscanf(val, "%d", &state.RateLimitRequests)
+	}
+	if val, ok := lookup("x-ratelimit-remaining-requests"); ok {
+		fmt.Sscanf(val, "%d", &state.RateLimitRemaining)
+	}
+	// OpenAI/Groq reset: "6s", "60s", etc.
+	if val, ok := lookup("x-ratelimit-reset-requests"); ok {
+		var seconds float64
+		if _, err := fmt.Sscanf(val, "%fs", &seconds); err == nil {
+			state.RateLimitReset = time.Now().Add(time.Duration(seconds * float64(time.Second)))
+		}
+	} else if val, ok := lookup("retry-after"); ok {
+		var seconds int
+		if _, err := fmt.Sscanf(val, "%d", &seconds); err == nil {
+			state.RateLimitReset = time.Now().Add(time.Duration(seconds) * time.Second)
+		}
+	}
 }

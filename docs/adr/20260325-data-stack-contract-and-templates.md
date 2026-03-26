@@ -1,7 +1,7 @@
 # ADR 20260325: Data Stack Contract, Templates e Persistência de Governança
 
 ## Status
-Aprovado
+Aprovado (governança documentada; Supabase e Obsidian **não integrados** ao runtime em 25/03/2026)
 
 ## Contexto
 O repositório já tinha boas intenções sobre `Supabase`, `Qdrant`, `SQLite` e `Obsidian CLI`, mas ainda operava com drift entre ADRs, governança e runtime. O risco real não era falta de tecnologia. Era a repetição do padrão mais comum em stacks agentic: o mesmo dado aparecendo em três lugares, com nomes diferentes, sem fonte de verdade, sem lineage e sem regra de descarte.

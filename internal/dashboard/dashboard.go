@@ -24,9 +24,19 @@ type Event struct {
 	BotID     string      `json:"bot_id,omitempty"` // S-32: multi-bot source identifier
 }
 
+const (
+	ringBufferSize = 500
+	replayCount    = 50
+)
+
 var (
 	subscribers = make(map[chan Event]bool)
 	subMu       sync.Mutex
+
+	// ring buffer: stores the last ringBufferSize events for replay on reconnect
+	ringBuf  [ringBufferSize]Event
+	ringHead int // index of oldest event (write position)
+	ringLen  int // number of valid entries (0..ringBufferSize)
 
 	customRoutes   = make(map[string]http.HandlerFunc)
 	customRoutesMu sync.Mutex
@@ -40,12 +50,46 @@ func RegisterRoute(path string, handler http.HandlerFunc) {
 }
 
 // Publish envia um evento para todos os clientes conectados ao dashboard
+// e armazena no ring buffer para replay em novos connects.
 func Publish(e Event) {
 	subMu.Lock()
 	defer subMu.Unlock()
-	for ch := range subscribers {
-		ch <- e
+
+	// Store in ring buffer
+	ringBuf[ringHead] = e
+	ringHead = (ringHead + 1) % ringBufferSize
+	if ringLen < ringBufferSize {
+		ringLen++
 	}
+
+	for ch := range subscribers {
+		select {
+		case ch <- e:
+		default:
+			// subscriber channel full — drop rather than block
+		}
+	}
+}
+
+// recentEvents returns up to n events from the ring buffer (oldest first).
+// Must be called with subMu held.
+func recentEvents(n int) []Event {
+	if ringLen == 0 || n <= 0 {
+		return nil
+	}
+	if n > ringLen {
+		n = ringLen
+	}
+	out := make([]Event, n)
+	// start position: walk back n steps from ringHead
+	start := (ringHead - ringLen + ringBufferSize) % ringBufferSize
+	// advance start to skip the oldest we don't want
+	skip := ringLen - n
+	start = (start + skip) % ringBufferSize
+	for i := 0; i < n; i++ {
+		out[i] = ringBuf[(start+i)%ringBufferSize]
+	}
+	return out
 }
 
 // StartServer inicia o servidor Web do Dashboard ULTRATRINK na porta configurada.
@@ -61,8 +105,8 @@ func StartServer(logger *slog.Logger, port int) error {
 	}
 
 	mux := http.NewServeMux()
-	
-	// Endpoint de Real-time (SSE)
+
+	// Endpoint de Real-time (SSE) com replay dos últimos replayCount eventos
 	mux.HandleFunc("/api/events", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
@@ -70,7 +114,9 @@ func StartServer(logger *slog.Logger, port int) error {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 
 		ch := make(chan Event, 10)
+
 		subMu.Lock()
+		replay := recentEvents(replayCount)
 		subscribers[ch] = true
 		subMu.Unlock()
 
@@ -81,14 +127,25 @@ func StartServer(logger *slog.Logger, port int) error {
 			close(ch)
 		}()
 
-		logger.Debug("novo cliente SSE conectado ao dashboard")
+		logger.Debug("novo cliente SSE conectado ao dashboard", slog.Int("replay", len(replay)))
+
+		flusher, hasFlusher := w.(http.Flusher)
+
+		// Send replay events first
+		for _, event := range replay {
+			data, _ := json.Marshal(event)
+			fmt.Fprintf(w, "data: %s\n\n", data)
+		}
+		if hasFlusher && len(replay) > 0 {
+			flusher.Flush()
+		}
 
 		for {
 			select {
 			case event := <-ch:
 				data, _ := json.Marshal(event)
 				fmt.Fprintf(w, "data: %s\n\n", data)
-				if flusher, ok := w.(http.Flusher); ok {
+				if hasFlusher {
 					flusher.Flush()
 				}
 			case <-r.Context().Done():
@@ -112,6 +169,6 @@ func StartServer(logger *slog.Logger, port int) error {
 			logger.Error("servidor do dashboard parou", slog.Any("err", err))
 		}
 	}()
-	
+
 	return nil
 }
