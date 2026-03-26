@@ -290,10 +290,11 @@ sqlite3 ~/.aurelia/data/aurelia.db ".tables" | tr ' ' '\n' | sort
 
 Qualquer outra collection encontrada deve ser investigada: pode ser teste esquecido ou feature nova não documentada.
 
-### Tabelas SQLite canônicas
-cron_jobs, cron_executions, messages, tasks, task_dependencies, mailbox, schedule_items, obsidian_sync_state
+### Tabelas SQLite canônicas (lazy-create: só aparecem quando a feature é ativada)
+Ativas no runtime atual: cron_jobs, cron_executions, messages, conversations, memory_facts, memory_notes, memory_archive, voice_events, gateway_route_states, db_audit_log
+Lazy (criadas on-demand): tasks, task_dependencies, mailbox, schedule_items, obsidian_sync_state, knowledge_items, component_status, assistance_tasks, mail_messages, teams, team_members, swarm_threads, swarm_thread_messages, swarm_channels, task_events
 
-Tabelas fora dessa lista = drift de schema → investigar e reportar.
+Qualquer tabela NÃO listada acima = drift real → investigar e reportar.
 
 ## Processo de trabalho (sequência obrigatória)
 1. **Inventariar** — coletar estado atual sem modificar nada
