@@ -132,6 +132,21 @@ func OllamaControlDefinition() agent.Tool {
 	}
 }
 
+func CPFCNPJDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "cpf_cnpj",
+		Description: "Valida CPF ou CNPJ (algoritmo) e consulta dados de empresa pelo CNPJ via BrasilAPI (gratuito, sem autenticação). Ações: validate_cpf, validate_cnpj, lookup_cnpj.",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"action": stringProperty("validate_cpf | validate_cnpj | lookup_cnpj"),
+				"number": stringProperty("CPF (11 dígitos) ou CNPJ (14 dígitos) — aceita formatado ou só números"),
+			},
+			"action",
+			"number",
+		),
+	}
+}
+
 func RegisterCoreTools(registry *agent.ToolRegistry) {
 	if registry == nil {
 		return
@@ -146,6 +161,7 @@ func RegisterCoreTools(registry *agent.ToolRegistry) {
 	registry.Register(SystemMonitorDefinition(), SystemMonitorHandler)
 	registry.Register(ServiceControlDefinition(), ServiceControlHandler)
 	registry.Register(OllamaControlDefinition(), OllamaControlHandler)
+	registry.Register(CPFCNPJDefinition(), CPFCNPJHandler)
 
 	setPhase := NewSetPhaseTool()
 	registry.Register(setPhase.Definition(), setPhase.Execute)
