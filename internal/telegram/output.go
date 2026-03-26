@@ -220,7 +220,8 @@ func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer t
 		return nil // No audio to send, text already sent
 	}
 
-	speechText := sanitizeTextForSpeech(text)
+	limit := synthesizer.MaxChars()
+	speechText := sanitizeTextForSpeech(text, limit)
 	if speechText == "" {
 		return nil
 	}
@@ -285,7 +286,8 @@ func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer t
 func deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string) error {
 	var ttsCh chan ttsAsyncResult
 	if synthesizer != nil && synthesizer.IsAvailable() {
-		if speechText := sanitizeTextForSpeech(text); speechText != "" {
+		limit := synthesizer.MaxChars()
+		if speechText := sanitizeTextForSpeech(text, limit); speechText != "" {
 			ttsCh = make(chan ttsAsyncResult, 1)
 			go func() {
 				audio, err := synthesizer.Synthesize(context.Background(), speechText)
@@ -398,7 +400,7 @@ var (
 	)
 )
 
-func sanitizeTextForSpeech(text string) string {
+func sanitizeTextForSpeech(text string, limit int) string {
 	sanitized := strings.TrimSpace(text)
 	if sanitized == "" {
 		return ""
@@ -425,11 +427,11 @@ func sanitizeTextForSpeech(text string) string {
 	sanitized = strings.ReplaceAll(sanitized, "..", ".")
 	sanitized = strings.TrimSpace(sanitized)
 
-	// Truncate at ~3000 runes for TTS synthesis.
+	// Truncate at requested limit for TTS synthesis.
 	// Cut at the last sentence boundary to avoid stopping mid-phrase.
 	runes := []rune(sanitized)
-	if len(runes) > 3000 {
-		window := string(runes[:3000])
+	if len(runes) > limit {
+		window := string(runes[:limit])
 		// Find last sentence end within window
 		for _, sep := range []string{". ", "! ", "? ", ".\n", "!\n", "?\n"} {
 			if idx := strings.LastIndex(window, sep); idx > 500 {
@@ -437,9 +439,9 @@ func sanitizeTextForSpeech(text string) string {
 				break
 			}
 		}
-		if len([]rune(sanitized)) > 3000 {
+		if len([]rune(sanitized)) > limit {
 			// fallback: hard cut
-			sanitized = strings.TrimSpace(string(runes[:3000])) + "."
+			sanitized = strings.TrimSpace(string(runes[:limit])) + "."
 		}
 	}
 	return sanitized

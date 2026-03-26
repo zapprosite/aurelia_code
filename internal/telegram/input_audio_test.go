@@ -40,7 +40,7 @@ func TestPersistAudioTranscript_AddsArchiveEntry(t *testing.T) {
 
 	bc.persistAudioTranscriptForSender(42, "/tmp/voice.ogg", "ola teste")
 
-	entries, err := mem.ListArchiveEntries(context.Background(), "42", 10)
+	entries, err := mem.ListArchiveEntries(context.Background(), "42:aurelia", 10)
 	if err != nil {
 		t.Fatalf("ListArchiveEntries() error = %v", err)
 	}

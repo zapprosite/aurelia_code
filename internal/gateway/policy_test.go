@@ -37,7 +37,7 @@ func TestPlannerDecide_StructuredUsesDeepSeek(t *testing.T) {
 		OutputMode: "structured_json",
 	})
 
-	if got.Provider != "openrouter" || got.Model != modelQwen3 {
+	if got.Provider != "openrouter" || got.Model != modelDeepSeekV31 {
 		t.Fatalf("unexpected route: %+v", got)
 	}
 	if got.Guards.ReasoningMode != "minimize" {

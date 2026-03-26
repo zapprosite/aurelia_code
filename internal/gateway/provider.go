@@ -30,19 +30,19 @@ type laneBudget struct {
 }
 
 type routeState struct {
-	Day               string    `json:"day,omitempty"`
-	Requests          int       `json:"requests"`
-	Failures          int       `json:"failures"`
-	ConsecutiveFails  int       `json:"consecutive_failures"`
-	BreakerState      string    `json:"breaker_state"`
-	BreakerOpenUntil  time.Time `json:"breaker_open_until,omitempty"`
-	LastError         string    `json:"last_error,omitempty"`
-	LastDecisionModel string    `json:"last_decision_model,omitempty"`
-	TotalInputTokens  int       `json:"total_input_tokens"`
-	TotalOutputTokens int       `json:"total_output_tokens"`
-	TotalCostUSD      float64   `json:"total_cost_usd"`
-	RateLimitRequests int       `json:"ratelimit_requests"`
-	RateLimitRemaining int      `json:"ratelimit_remaining"`
+	Day                string    `json:"day,omitempty"`
+	Requests           int       `json:"requests"`
+	Failures           int       `json:"failures"`
+	ConsecutiveFails   int       `json:"consecutive_failures"`
+	BreakerState       string    `json:"breaker_state"`
+	BreakerOpenUntil   time.Time `json:"breaker_open_until,omitempty"`
+	LastError          string    `json:"last_error,omitempty"`
+	LastDecisionModel  string    `json:"last_decision_model,omitempty"`
+	TotalInputTokens   int       `json:"total_input_tokens"`
+	TotalOutputTokens  int       `json:"total_output_tokens"`
+	TotalCostUSD       float64   `json:"total_cost_usd"`
+	RateLimitRequests  int       `json:"ratelimit_requests"`
+	RateLimitRemaining int       `json:"ratelimit_remaining"`
 	RateLimitReset     time.Time `json:"ratelimit_reset"`
 }
 
@@ -74,7 +74,7 @@ type Provider struct {
 	localFast         closableProvider
 	localBalanced     closableProvider
 	remoteFree        closableProvider // Groq Llama-3.3-70B free tier (14,400 req/day, zero cost)
-	remoteCheapLong   closableProvider // Qwen3-32B paid cheap
+	remoteCheapLong   closableProvider // DeepSeek V3.1 paid cheap
 	remoteCheapVision closableProvider
 	remotePremium     closableProvider // MiniMax M2.7 paid premium
 	miniMaxDirect     closableProvider
@@ -121,8 +121,8 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 	}
 
 	if cfg.OpenRouterAPIKey != "" {
-		// Tier 1 — Qwen3-32B paid cheap ($0.08/$0.24 per 1M, thinking disabled)
-		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelQwen3, llm.OpenAICompatibleRequestOptions{
+		// Tier 1 — DeepSeek V3.1 paid cheap remote fallback
+		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelDeepSeekV31, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
 			ExtraFields: map[string]any{"include_reasoning": false},
@@ -163,13 +163,13 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		miniMaxDirect:     miniMaxDirect,
 		judge:             judge,
 		budgets: map[string]laneBudget{
-			"local":             {Soft: 1000000, Hard: 1000000},
-			"remote_free":       {Soft: 10000, Hard: 14000}, // Groq free tier ~14,400 req/day
-			"remote_cheap":      {Soft: 400, Hard: 800, CostHardUSD: 0.50},
-			"remote_vision":     {Soft: 120, Hard: 240, CostHardUSD: 0.25},
-			"remote_premium":    {Soft: 80, Hard: 160, CostHardUSD: 2.00},
-			"audio":             {Soft: 800, Hard: 1200},
-			"research":          {Soft: 40, Hard: 80},
+			"local":          {Soft: 1000000, Hard: 1000000},
+			"remote_free":    {Soft: 10000, Hard: 14000}, // Groq free tier ~14,400 req/day
+			"remote_cheap":   {Soft: 400, Hard: 800, CostHardUSD: 0.50},
+			"remote_vision":  {Soft: 120, Hard: 240, CostHardUSD: 0.25},
+			"remote_premium": {Soft: 80, Hard: 160, CostHardUSD: 2.00},
+			"audio":          {Soft: 800, Hard: 1200},
+			"research":       {Soft: 40, Hard: 80},
 		},
 		states: make(map[string]*routeState),
 		degraded: DegradedState{
@@ -283,7 +283,7 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 		RequiresVision:  hasVisionParts(history),
 		// Add other flags if needed
 	}
-	
+
 	if opts.LocalOnly {
 		req.LocalOnly = true
 	}
@@ -531,7 +531,7 @@ func (p *Provider) providerFor(lane string) agent.LLMProvider {
 
 func hasVisionParts(history []agent.Message) bool {
 	for _, m := range history {
-		// This depends on how agent.Message is structured. 
+		// This depends on how agent.Message is structured.
 		// Assuming for now it's simple string content check or metadata.
 		// If agent.Message has a structured content type, check it here.
 		if strings.Contains(m.Content, "[image]") || strings.Contains(m.Content, "base64,") {
@@ -602,7 +602,7 @@ func responseSatisfies(decision DryRunDecision, resp *agent.ModelResponse) bool 
 	if len(resp.ToolCalls) > 0 {
 		return true
 	}
-	
+
 	content := strings.TrimSpace(resp.Content)
 	reasoning := strings.TrimSpace(resp.ReasoningContent)
 
@@ -612,12 +612,12 @@ func responseSatisfies(decision DryRunDecision, resp *agent.ModelResponse) bool 
 	}
 
 	// Se o modo é 'minimize', exigimos conteúdo textual final (Content).
-	// No entanto, se o modelo for local (Gemma 3), aceitamos o ReasoningContent 
+	// No entanto, se o modelo for local (Gemma 3), aceitamos o ReasoningContent
 	// como resposta se ele não estiver vazio (às vezes o provider falha em separar).
 	if decision.Guards.ReasoningMode == "minimize" && decision.UseRemote {
 		return false
 	}
-	
+
 	// Permitimos que a resposta contenha apenas raciocínio se o modelo for local
 	// ou se o modo não for estrito.
 	return reasoning != ""
@@ -632,7 +632,7 @@ func stripThoughtTags(s string) string {
 		}
 		end := strings.Index(s, "</thought>")
 		if end == -1 {
-			// If tag is not closed, strip until the end of string? 
+			// If tag is not closed, strip until the end of string?
 			// Or just the tag itself. Let's strip the tag and keep the rest.
 			return strings.Replace(s, "<thought>", "", 1)
 		}
@@ -696,7 +696,7 @@ func (p *Provider) markFailure(budgetLane, providerKey, reason string) {
 
 func (p *Provider) recordTokens(budgetLane, providerKey, model string, inputTokens, outputTokens int, metadata map[string]string) {
 	cost := CalculateCostUSD(model, inputTokens, outputTokens)
-	
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	state := p.ensureStateLocked(providerKey)
@@ -908,7 +908,7 @@ func historyWindowFor(c RouteCandidate) int {
 	if c.BudgetLane == "remote_premium" {
 		return 20 // premium: larger window for complex multi-turn tasks
 	}
-	return 12 // remote cheap (Qwen3): 6 exchanges — enough for most tasks
+	return 12 // remote cheap: 6 exchanges — enough for most tasks
 }
 
 // trimHistory returns the last maxTurns messages, always preserving the last user message.

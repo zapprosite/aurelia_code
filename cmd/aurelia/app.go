@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -277,6 +276,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	if a.primaryBot == nil {
 		return fmt.Errorf("no telegram bot configured (set telegram_bot_token or bots in config)")
 	}
+	notificationBot := selectNotificationBot(a.cfg, a.pool, a.primaryBot, logger)
 
 	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
 		a.primaryBot.SetHealthReporter(gw)
@@ -293,7 +293,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	}
 	a.primaryBot.SetInputGuard(telegram.NewInputGuard(ollamaURL))
 
-	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, a.primaryBot, a.taskStore); err != nil {
+	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, notificationBot, a.taskStore); err != nil {
 		return fmt.Errorf("register spawn agent tool: %w", err)
 	}
 
@@ -306,7 +306,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	}
 	agent.SyncBotsToSquad(botEntries)
 
-	cronScheduler, cronCtx, cronCancel, err := buildCronScheduler(a.cronStore, loop, canonicalService, a.primaryBot)
+	cronScheduler, cronCtx, cronCancel, err := buildCronScheduler(a.cronStore, loop, canonicalService, notificationBot)
 	if err != nil {
 		return fmt.Errorf("initialize cron scheduler: %w", err)
 	}
@@ -317,6 +317,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	seedSystemCrons(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
 	seedRepoGuardianCron(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
 	seedControleDBCron(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
+	reconcileSystemCronCadence(context.Background(), a.cronStore, a.cfg)
 
 	// S-22: Squad Live Load — updates agent metrics every 10s
 	agent.StartLiveLoad(a.cronScheduler, ollamaURL, a.cfg.OpenRouterAPIKey)
@@ -406,6 +407,22 @@ func (a *app) initVoice(logger *slog.Logger) error {
 	}
 
 	return nil
+}
+
+func selectNotificationBot(cfg *config.AppConfig, pool *telegram.BotPool, primary *telegram.BotController, logger *slog.Logger) *telegram.BotController {
+	if primary == nil || cfg == nil || pool == nil {
+		return primary
+	}
+	botID := strings.TrimSpace(cfg.TelegramNotificationBotID)
+	if botID == "" {
+		return primary
+	}
+	if bc := pool.Get(botID); bc != nil {
+		logger.Info("using dedicated notification bot", slog.String("bot_id", botID))
+		return bc
+	}
+	logger.Warn("configured notification bot not found; falling back to primary", slog.String("bot_id", botID))
+	return primary
 }
 
 func (a *app) initServers(logger *slog.Logger) {
@@ -637,10 +654,10 @@ func firstNonEmpty(values ...string) string {
 
 func (a *app) effectiveBotLLM(botCfg config.BotConfig, appCfg *config.AppConfig) (string, string) {
 	if strings.TrimSpace(botCfg.LLMProvider) != "" || strings.TrimSpace(botCfg.LLMModel) != "" {
-		return firstNonEmpty(botCfg.LLMProvider, appCfg.LLMProvider), firstNonEmpty(botCfg.LLMModel, appCfg.LLMModel)
+		return telegram.EffectiveBotLLM(botCfg, appCfg.LLMProvider, appCfg.LLMModel)
 	}
 	snapshot := buildLLMRuntimeSnapshot(a, time.Now().UTC())
-	return snapshot.EffectiveProvider, snapshot.EffectiveModel
+	return telegram.EffectiveBotLLM(botCfg, snapshot.EffectiveProvider, snapshot.EffectiveModel)
 }
 
 func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (closableLLMProvider, error) {
@@ -723,43 +740,13 @@ func (a *app) start() {
 	qdrantAPIKey := a.cfg.QdrantAPIKey
 	dashboard.RegisterRoute("/api/brain/search", buildBrainSearchHandler(qdrantURL, qdrantCollection, qdrantAPIKey, a.cfg.OllamaURL, a.cfg.QdrantEmbeddingModel))
 	dashboard.RegisterRoute("/api/brain/recent", buildBrainRecentHandler(qdrantURL, qdrantCollection, qdrantAPIKey))
-
-	// Proxy VRV homelab dashboard (/api/vrv/ → http://localhost:3333/)
+	dashboard.RegisterRoute("/api/homelab", buildHomelabSnapshotHandler())
+	dashboard.RegisterRoute("/api/homelab/status", buildHomelabSnapshotHandler())
+	dashboard.RegisterRoute("/api/vrv", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/?tab=homelab", http.StatusTemporaryRedirect)
+	}))
 	dashboard.RegisterRoute("/api/vrv/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		subPath := strings.TrimPrefix(r.URL.Path, "/api/vrv")
-		if subPath == "" || subPath == "/" {
-			subPath = "/"
-		}
-		targetURL := "http://localhost:3333" + subPath
-		if r.URL.RawQuery != "" {
-			targetURL += "?" + r.URL.RawQuery
-		}
-		resp, err := http.Get(targetURL) //nolint:noctx
-		if err != nil {
-			http.Error(w, "VRV backend unreachable: "+err.Error(), http.StatusBadGateway)
-			return
-		}
-		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			http.Error(w, "VRV read error: "+err.Error(), http.StatusBadGateway)
-			return
-		}
-		ct := resp.Header.Get("Content-Type")
-		if strings.Contains(ct, "text/html") {
-			body = bytes.ReplaceAll(body, []byte(`href="/`), []byte(`href="/api/vrv/`))
-			body = bytes.ReplaceAll(body, []byte(`src="/`), []byte(`src="/api/vrv/`))
-		}
-		for k, vs := range resp.Header {
-			if k == "Content-Encoding" || k == "Content-Length" || k == "Transfer-Encoding" {
-				continue
-			}
-			for _, v := range vs {
-				w.Header().Add(k, v)
-			}
-		}
-		w.WriteHeader(resp.StatusCode)
-		_, _ = w.Write(body)
+		http.Redirect(w, r, "/?tab=homelab", http.StatusTemporaryRedirect)
 	}))
 
 	// S-32: REST API for multi-bot management
@@ -850,6 +837,9 @@ func buildCronScheduler(
 		chat := &telebot.Chat{ID: job.TargetChatID}
 		if execErr != nil {
 			return telegram.SendText(bot.GetBot(), chat, "Falha na rotina agendada:\n"+execErr.Error())
+		}
+		if strings.TrimSpace(output) == "" && len(parts) == 0 {
+			return nil
 		}
 		if len(parts) > 0 {
 			return telegram.SendMediaParts(bot.GetBot(), chat, parts)

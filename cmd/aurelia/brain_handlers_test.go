@@ -37,7 +37,7 @@ func TestBuildBrainSearchHandlerUsesSemanticSearch(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/brain/search?q=contrato", nil)
 	rec := httptest.NewRecorder()
 
-	buildBrainSearchHandler(server.URL, "conversation_memory", "", server.URL, "bge-m3").ServeHTTP(rec, req)
+	buildBrainSearchHandler(server.URL, "conversation_memory", "", server.URL, "nomic-embed-text").ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", rec.Code)
@@ -98,7 +98,7 @@ func TestBuildBrainSearchHandlerFallsBackLexicallyWithExplicitDegradation(t *tes
 	req := httptest.NewRequest(http.MethodGet, "/api/brain/search?q=caixa", nil)
 	rec := httptest.NewRecorder()
 
-	buildBrainSearchHandler(server.URL, "conversation_memory", "", server.URL, "bge-m3").ServeHTTP(rec, req)
+	buildBrainSearchHandler(server.URL, "conversation_memory", "", server.URL, "nomic-embed-text").ServeHTTP(rec, req)
 
 	if got := rec.Header().Get("X-Aurelia-Brain-Mode"); got != "lexical-fallback" {
 		t.Fatalf("expected lexical-fallback mode, got %q", got)

@@ -82,10 +82,10 @@ func TestListOllamaModels(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
 			"data": [
-				{"id":"bge-m3:latest"},
+				{"id":"nomic-embed-text:latest"},
 				{"id":"Gemma33.5:9b"},
-				{"id":"Gemma33.5:27b-q4_K_M"},
-				{"id":"gemma3:27b-it-q4_K_M"}
+				{"id":"gemma3:12b"},
+				{"id":"llama3.2:3b"}
 			]
 		}`))
 	}))
@@ -102,11 +102,11 @@ func TestListOllamaModels(t *testing.T) {
 	if !containsModelID(got, "Gemma33.5:9b") {
 		t.Fatalf("models missing Gemma33.5:9b: %v", got)
 	}
-	if !containsModelID(got, "Gemma33.5:27b-q4_K_M") {
-		t.Fatalf("models missing Gemma33.5:27b-q4_K_M: %v", got)
+	if !containsModelID(got, "gemma3:12b") {
+		t.Fatalf("models missing gemma3:12b: %v", got)
 	}
-	if !containsModelID(got, "gemma3:27b-it-q4_K_M") {
-		t.Fatalf("models missing gemma3:27b-it-q4_K_M: %v", got)
+	if !containsModelID(got, "llama3.2:3b") {
+		t.Fatalf("models missing llama3.2:3b: %v", got)
 	}
 }
 
@@ -130,4 +130,3 @@ func containsModelID(items []string, want string) bool {
 	}
 	return false
 }
-

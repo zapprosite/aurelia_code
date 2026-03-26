@@ -17,7 +17,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const defaultSystemPrompt = "Você é Aurélia, uma assistente virtual de inteligência artificial de alto nível. Sua comunicação deve ser profissional, prestativa, objetiva e estruturada. Utilize formatação Markdown (negritos, listas e tabelas) para garantir clareza máxima. Ao analisar códigos ou realizar tarefas técnicas, priorize a precisão e sempre valide suas ações com 'run_command' antes de confirmar a conclusão."
+const defaultSystemPrompt = "Voce e Aurelia_Code, a camada soberana de comando do ecossistema multi-bot do Will. Sua comunicacao deve ser tecnica, objetiva, estruturada e entregue em Markdown limpo. Ao analisar codigo ou tarefas operacionais, priorize precisao, impacto sistemico e validacao com 'run_command' antes de confirmar conclusoes."
 
 type inputSession struct {
 	senderID  string
@@ -116,11 +116,11 @@ func newInputSession(c telebot.Context, text string) inputSession {
 
 func newInputSessionWithContext(ctx context.Context, senderUserID int64, text string) inputSession {
 	senderID := fmt.Sprintf("%d", senderUserID)
-	convID := senderID
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	ctx = agent.WithRunContext(agent.WithTeamContext(ctx, convID, senderID), uuid.NewString())
+	convID := scopedConversationID(ctx, senderID)
+	ctx = agent.WithRunContext(agent.WithTeamContext(ctx, senderID, senderID), uuid.NewString())
 	return inputSession{
 		senderID: senderID,
 		convID:   convID,
@@ -131,6 +131,21 @@ func newInputSessionWithContext(ctx context.Context, senderUserID int64, text st
 			Content: text,
 		},
 	}
+}
+
+func scopedConversationID(ctx context.Context, senderID string) string {
+	if ctx == nil {
+		return senderID
+	}
+	botID, ok := agent.BotContextFromContext(ctx)
+	if !ok {
+		return senderID
+	}
+	botID = strings.TrimSpace(botID)
+	if botID == "" {
+		return senderID
+	}
+	return senderID + ":" + botID
 }
 
 func (bc *BotController) newInputSession(c telebot.Context, text string) inputSession {
@@ -150,6 +165,21 @@ func (bc *BotController) bindBotContext(ctx context.Context) context.Context {
 		botID = "aurelia"
 	}
 	return agent.WithBotContext(ctx, botID)
+}
+
+func (bc *BotController) scopedConversationID(senderUserID int64) string {
+	return scopedConversationID(bc.bindBotContext(context.Background()), fmt.Sprintf("%d", senderUserID))
+}
+
+func (bc *BotController) identityPromptLine() string {
+	identity := strings.TrimSpace(bc.botName)
+	if identity == "" {
+		identity = strings.TrimSpace(bc.botID)
+	}
+	if identity == "" {
+		return ""
+	}
+	return "Identidade operacional deste canal: " + identity + ". Se perguntarem qual bot recebeu ou enviou a mensagem, responda usando exatamente esse nome e nunca o nome de outro bot."
 }
 
 type botChatSender struct {
@@ -362,6 +392,7 @@ const voiceSystemPromptSuffix = "\n\nATENÇÃO — MODO VOZ: Esta mensagem chego
 func (bc *BotController) resolveExecutionPrompt(session inputSession) (string, []string) {
 	var prompt string
 	var tools []string
+	profile := governanceProfileForBot(bc.botID)
 
 	// S-32: Use persona template system prompt when bot has a personaID configured.
 	// This ensures ac-vendas, organizadora-obras, agenda-pessoal etc. respond as their
@@ -369,17 +400,15 @@ func (bc *BotController) resolveExecutionPrompt(session inputSession) (string, [
 	if bc.personaID != "" {
 		if tmpl := persona.FindTemplate(bc.personaID); tmpl != nil && tmpl.SystemPrompt != "" {
 			prompt = tmpl.SystemPrompt
-			tools = defaultConversationTools
-			if session.voiceMode {
-				prompt += voiceSystemPromptSuffix
-			}
+			tools = profile.allowedTools(defaultConversationTools)
+			prompt = bc.applyExecutionContracts(prompt, profile, session.voiceMode)
 			return prompt, tools
 		}
 	}
 
 	if bc.canonical == nil {
 		prompt = defaultSystemPrompt
-		tools = defaultConversationTools
+		tools = profile.allowedTools(defaultConversationTools)
 	} else {
 		var err error
 		prompt, tools, err = bc.canonical.BuildPromptForQuery(session.ctx, session.senderID, session.convID, session.text)
@@ -388,16 +417,30 @@ func (bc *BotController) resolveExecutionPrompt(session inputSession) (string, [
 			prompt = defaultSystemPrompt
 			tools = defaultConversationTools
 		}
-		// Persona doesn't specify tools → use default core set to avoid 77-tool token bloat.
-		if len(tools) == 0 {
-			tools = defaultConversationTools
-		}
+		tools = profile.allowedTools(tools)
 	}
 
-	if session.voiceMode {
-		prompt += voiceSystemPromptSuffix
-	}
+	prompt = bc.applyExecutionContracts(prompt, profile, session.voiceMode)
 	return prompt, tools
+}
+
+func (bc *BotController) applyExecutionContracts(prompt string, profile botGovernanceProfile, voiceMode bool) string {
+	parts := make([]string, 0, 4)
+	if trimmed := strings.TrimSpace(prompt); trimmed != "" {
+		parts = append(parts, trimmed)
+	}
+	if identity := bc.identityPromptLine(); identity != "" {
+		parts = append(parts, identity)
+	}
+	if contract := strings.TrimSpace(profile.promptContract(bc.botName)); contract != "" {
+		parts = append(parts, contract)
+	}
+	if voiceMode {
+		parts = append(parts, voiceSystemPromptSuffix)
+	} else {
+		parts = append(parts, markdown2026Contract)
+	}
+	return strings.Join(parts, "\n\n")
 }
 
 func (bc *BotController) executeConversation(c telebot.Context, session inputSession, activeSkill *skill.Skill, history []agent.Message, systemPrompt string, allowedTools []string) (string, error) {

@@ -65,7 +65,7 @@
 
 **URL:** `http://localhost:6333`
 **API Key:** em `~/.aurelia/config/secrets.env` → `QDRANT_API_KEY`
-**Modelo de embedding:** `bge-m3` (1024 dimensões, Cosine similarity)
+**Modelo de embedding:** `nomic-embed-text` via Ollama local
 
 ### Collections — Catálogo Oficial
 

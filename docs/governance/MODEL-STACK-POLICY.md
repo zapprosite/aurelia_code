@@ -20,13 +20,12 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 | Tier | Modelo | Provedor | Uso |
 |------|--------|----------|-----|
 | **Tier 0 — Local** | `gemma3:12b` | Ollama (RTX 4090) | Fallback universal, custo zero |
-| **Tier 0 — Local Lab** | `gemma3:27b-it-q4_K_M` | Ollama | Raciocínio profundo, uso manual |
 | **Tier 1 — Cheap Remote** | `deepseek/deepseek-chat-v3.1` | OpenRouter | Curation, structured output, routing |
 | **Tier 2 — Premium Remote** | `minimax/minimax-m2.7` | MiniMax direct | coding_main, critical, execução principal |
 | **Tier 2 — Long Context** | `moonshotai/kimi-k2.5` | OpenRouter | Contexto longo, multimodal |
-| **Embedding** | `bge-m3` | Ollama | Qdrant, sempre local, multilingual |
+| **Embedding** | `nomic-embed-text` | Ollama (RTX 4090) | Qdrant, sempre local |
 | **STT** | `whisper-large-v3-turbo` | Groq | Transcrição rápida PT-BR |
-| **TTS** | Kokoro / voice-proxy | Local CPU | Voz oficial Aurélia, sem custo |
+| **TTS** | `kokoro` | Local CPU | Voz oficial Aurélia, sem XTTS nem proxy |
 
 **Fonte de verdade do roteamento:** `internal/gateway/policy.go`
 
@@ -36,9 +35,13 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 
 | Modelo | Removido em | Substituto no Runtime |
 |--------|------------|----------------------|
+| `gemma3:27b-it-q4_K_M` | 2026-03-26 | `gemma3:12b` |
+| `bge-m3` | 2026-03-26 | `nomic-embed-text` |
 | `qwen3.5:9b` | 2026-03-24 | `gemma3:12b` |
 | `qwen3.5:4b` | 2026-03-24 | `gemma3:12b` |
-| `qwen/qwen3.5-*` | 2026-03-24 | `deepseek/deepseek-chat-v3.1` |
+| `qwen/qwen3*` | 2026-03-26 | `deepseek/deepseek-chat-v3.1` |
+| `voice-proxy` | 2026-03-26 | `kokoro` em `127.0.0.1:8012` |
+| `xtts` / `openedai-speech` | 2026-03-26 | `kokoro` em CPU |
 | `google/gemini-2.5-flash` | 2026-03-25 | `deepseek/deepseek-chat-v3.1` (Tier 1) |
 | `google/gemini-2.5-pro` | 2026-03-25 | `minimax/minimax-m2.7` (Tier 2) |
 | Codex CLI auth | 2026-02 | OpenCode (orquestrador externo) |
@@ -51,7 +54,7 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 internal/gateway/cost.go           ← modelCosts map (tiers 0–4)
 internal/config/config.go          ← AppConfig.LLMModel default
 cmd/aurelia/onboard.go             ← onboarding default model
-scripts/update-ollama.sh           ← MAIN_MODEL / LIGHT_MODEL
+scripts/update-ollama.sh           ← MAIN_MODEL / EMBED_MODEL
 .opencode/agents/aurelia.md        ← Stack documentado para OpenCode
 .agents/skills/homelab-control/SKILL.md  ← Modelos pinados
 .agents/rules/13-model-stack-policy.md   ← Esta policy em form de rule
@@ -74,7 +77,7 @@ scripts/update-ollama.sh           ← MAIN_MODEL / LIGHT_MODEL
 Se um agente reintroduzir modelo proibido ou confundir orquestrador com motor interno:
 ```bash
 # Detectar modelos legados no runtime
-grep -r "qwen3\.5\|gemini-2\.5\|gemini-flash\|gemini-pro\|google/gemini" internal/ cmd/ scripts/
+grep -r "qwen3\.5\|qwen/qwen3\|bge-m3\|gemma3:27b\|gemini-2\.5\|gemini-flash\|gemini-pro\|google/gemini" internal/ cmd/ scripts/
 # Detectar orquestradores no runtime (não deveriam estar aqui)
 grep -r "anthropic/claude\|opencode\|antigravity" internal/gateway/ internal/config/
 ```

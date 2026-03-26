@@ -26,9 +26,9 @@ func TestEmbedText_RealOllama(t *testing.T) {
 	ollamaURL := ollamaURLForTest(t)
 	client := NewSemanticHTTPClient(30 * time.Second)
 
-	vec, err := EmbedText(context.Background(), client, ollamaURL, "bge-m3", "aurelia homelab test")
+	vec, err := EmbedText(context.Background(), client, ollamaURL, "nomic-embed-text", "aurelia homelab test")
 	if err != nil {
-		t.Fatalf("EmbedText() error = %v (is Ollama running at %s with bge-m3?)", err, ollamaURL)
+		t.Fatalf("EmbedText() error = %v (is Ollama running at %s with nomic-embed-text?)", err, ollamaURL)
 	}
 	if len(vec) < 512 {
 		t.Fatalf("expected vector dim >= 512, got %d", len(vec))
@@ -44,15 +44,15 @@ func TestEmbedText_CosineSimilarity_SimilarTexts(t *testing.T) {
 	client := NewSemanticHTTPClient(30 * time.Second)
 	ctx := context.Background()
 
-	v1, err := EmbedText(ctx, client, ollamaURL, "bge-m3", "fluxo de caixa da empresa")
+	v1, err := EmbedText(ctx, client, ollamaURL, "nomic-embed-text", "fluxo de caixa da empresa")
 	if err != nil {
 		t.Fatalf("EmbedText(v1) error = %v", err)
 	}
-	v2, err := EmbedText(ctx, client, ollamaURL, "bge-m3", "caixa financeiro do negócio")
+	v2, err := EmbedText(ctx, client, ollamaURL, "nomic-embed-text", "caixa financeiro do negócio")
 	if err != nil {
 		t.Fatalf("EmbedText(v2) error = %v", err)
 	}
-	vDiff, err := EmbedText(ctx, client, ollamaURL, "bge-m3", "receita de bolo de chocolate")
+	vDiff, err := EmbedText(ctx, client, ollamaURL, "nomic-embed-text", "receita de bolo de chocolate")
 	if err != nil {
 		t.Fatalf("EmbedText(vDiff) error = %v", err)
 	}

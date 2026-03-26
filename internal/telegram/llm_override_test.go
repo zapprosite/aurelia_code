@@ -7,7 +7,7 @@ import (
 )
 
 func TestBuildBotOverrideProvider_NoneConfigured(t *testing.T) {
-	provider, effectiveProvider, effectiveModel, err := buildBotOverrideProvider(&config.AppConfig{}, config.BotConfig{ID: "controle-db"})
+	provider, effectiveProvider, effectiveModel, err := buildBotOverrideProvider(&config.AppConfig{}, config.BotConfig{ID: "aurelia"})
 	if err != nil {
 		t.Fatalf("buildBotOverrideProvider() error = %v", err)
 	}
@@ -16,13 +16,13 @@ func TestBuildBotOverrideProvider_NoneConfigured(t *testing.T) {
 	}
 }
 
-func TestBuildBotOverrideProvider_OpenRouter(t *testing.T) {
+func TestBuildBotOverrideProvider_ControleDBPinnedToMiniMaxM27(t *testing.T) {
 	provider, effectiveProvider, effectiveModel, err := buildBotOverrideProvider(&config.AppConfig{
 		OpenRouterAPIKey: "test-key",
 	}, config.BotConfig{
 		ID:          "controle-db",
-		LLMProvider: "openrouter",
-		LLMModel:    "minimax/minimax-m2.7",
+		LLMProvider: "groq",
+		LLMModel:    "llama-3.3-70b-versatile",
 	})
 	if err != nil {
 		t.Fatalf("buildBotOverrideProvider() error = %v", err)

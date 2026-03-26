@@ -1,14 +1,14 @@
 package telegram
 
 import (
+	"context"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/kocar/aurelia/internal/agent"
 	"gopkg.in/telebot.v3"
 )
-
-
 
 func TestIsSupportedImageDocument(t *testing.T) {
 	t.Parallel()
@@ -97,7 +97,6 @@ func TestInputSessionPersistedContent_MultipleImages(t *testing.T) {
 		},
 	}
 
-
 	if got := session.persistedContent(); got != "Compare estas referencias.\n[2 imagem(ns) enviada(s)]" {
 		t.Fatalf("unexpected persisted content %q", got)
 	}
@@ -133,7 +132,6 @@ func TestStoreAndLoadRecentMedia(t *testing.T) {
 			},
 		},
 	}
-
 
 	bc.storeRecentMedia(session)
 
@@ -185,7 +183,49 @@ func TestAttachRecentMediaIfRelevant(t *testing.T) {
 	}
 }
 
+func TestNewInputSessionWithContext_ScopesConversationByBot(t *testing.T) {
+	t.Parallel()
 
+	ctx := agent.WithBotContext(context.Background(), "homelab-logs")
+	session := newInputSessionWithContext(ctx, 42, "teste")
+
+	if session.convID != "42:homelab-logs" {
+		t.Fatalf("expected bot-scoped conversation id, got %q", session.convID)
+	}
+
+	teamKey, userID, ok := agent.TeamContextFromContext(session.ctx)
+	if !ok {
+		t.Fatal("expected team context to be preserved")
+	}
+	if teamKey != "42" || userID != "42" {
+		t.Fatalf("unexpected team context teamKey=%q userID=%q", teamKey, userID)
+	}
+}
+
+func TestResolveExecutionPrompt_IncludesOperationalIdentity(t *testing.T) {
+	t.Parallel()
+
+	bc := &BotController{
+		botID:     "homelab-logs",
+		botName:   "HOMELAB_LOGS",
+		personaID: "homelab-ops",
+	}
+
+	prompt, tools := bc.resolveExecutionPrompt(inputSession{})
+	if !strings.Contains(prompt, "HOMELAB_LOGS") {
+		t.Fatalf("expected prompt to include bot identity, got %q", prompt)
+	}
+	if !strings.Contains(prompt, "subordinado a Aurelia_Code") {
+		t.Fatalf("expected governance contract in prompt, got %q", prompt)
+	}
+	for _, forbidden := range []string{"create_schedule", "cpf_cnpj"} {
+		for _, tool := range tools {
+			if tool == forbidden {
+				t.Fatalf("unexpected tool %q in homelab profile", tool)
+			}
+		}
+	}
+}
 
 type fakeTelebotContext struct {
 	telebot.Context

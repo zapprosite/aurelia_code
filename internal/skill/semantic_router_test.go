@@ -30,7 +30,7 @@ func TestSemanticRouter_SyncSkills_WritesCanonicalPayload(t *testing.T) {
 	}))
 	defer server.Close()
 
-	router := NewSemanticRouter(server.URL, "secret", "test_skills", "bge-m3", server.URL)
+	router := NewSemanticRouter(server.URL, "secret", "test_skills", "nomic-embed-text", server.URL)
 	router.embedURL = server.URL + "/api/embed"
 
 	err := router.SyncSkills(context.Background(), map[string]Skill{

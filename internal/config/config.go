@@ -21,9 +21,9 @@ const (
 	defaultGroqSTTBaseURL   = "https://api.groq.com/openai/v1"
 	defaultGroqSTTModel     = "whisper-large-v3-turbo"
 	defaultTTSProvider      = "openai_compatible"
-	defaultLocalTTSBaseURL  = "http://127.0.0.1:8012" // Kokoro TTS (CPU, < 1.5GB VRAM)
+	defaultLocalTTSBaseURL  = "http://127.0.0.1:8012" // Kokoro TTS runtime
 	defaultLocalTTSModel    = "kokoro"
-	defaultLocalTTSVoice    = "pt-br" // Kokoro 2026 feminine PT-BR voice (premium)
+	defaultLocalTTSVoice    = "pt-br" // Legacy app alias mapped internally to a feminine PT Kokoro voice
 	defaultTTSLanguage      = "pt"
 	defaultLocalTTSFormat   = "opus"
 
@@ -40,7 +40,7 @@ const (
 	defaultGroqSoftCapDaily     = 800
 	defaultGroqHardCapDaily     = 1200
 	defaultQdrantCollection     = "conversation_memory"
-	defaultQdrantEmbeddingModel = "bge-m3"
+	defaultQdrantEmbeddingModel = "nomic-embed-text"
 	defaultDashboardPort        = 3334
 	defaultHealthPort           = 8484
 )
@@ -60,25 +60,26 @@ type BotConfig struct {
 
 // AppConfig holds all runtime configuration needed for the application.
 type AppConfig struct {
-	Bots               []BotConfig
-	LLMProvider        string
-	LLMModel           string
-	STTProvider        string
-	STTBaseURL         string
-	STTModel           string
-	STTLanguage        string
-	TTSProvider        string
-	TTSBaseURL         string
-	TTSModel           string
-	TTSVoice           string
-	TTSLanguage        string
-	TTSFormat          string
-	TTSSpeed           float64
-	PremiumTTSProvider string
-	PremiumTTSBaseURL  string
-	PremiumTTSModel    string
-	PremiumTTSVoice    string
-	TelegramBotToken   string
+	Bots                      []BotConfig
+	LLMProvider               string
+	LLMModel                  string
+	STTProvider               string
+	STTBaseURL                string
+	STTModel                  string
+	STTLanguage               string
+	TTSProvider               string
+	TTSBaseURL                string
+	TTSModel                  string
+	TTSVoice                  string
+	TTSLanguage               string
+	TTSFormat                 string
+	TTSSpeed                  float64
+	PremiumTTSProvider        string
+	PremiumTTSBaseURL         string
+	PremiumTTSModel           string
+	PremiumTTSVoice           string
+	TelegramBotToken          string
+	TelegramNotificationBotID string
 
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
@@ -126,24 +127,25 @@ type AppConfig struct {
 type fileConfig struct {
 	Bots []BotConfig `json:"bots,omitempty"`
 
-	LLMProvider        string  `json:"llm_provider"`
-	LLMModel           string  `json:"llm_model"`
-	STTProvider        string  `json:"stt_provider"`
-	STTBaseURL         string  `json:"stt_base_url"`
-	STTModel           string  `json:"stt_model"`
-	STTLanguage        string  `json:"stt_language"`
-	TTSProvider        string  `json:"tts_provider"`
-	TTSBaseURL         string  `json:"tts_base_url"`
-	TTSModel           string  `json:"tts_model"`
-	TTSVoice           string  `json:"tts_voice"`
-	TTSLanguage        string  `json:"tts_language"`
-	TTSFormat          string  `json:"tts_format"`
-	TTSSpeed           float64 `json:"tts_speed"`
-	PremiumTTSProvider string  `json:"premium_tts_provider"`
-	PremiumTTSBaseURL  string  `json:"premium_tts_base_url"`
-	PremiumTTSModel    string  `json:"premium_tts_model"`
-	PremiumTTSVoice    string  `json:"premium_tts_voice"`
-	TelegramBotToken   string  `json:"telegram_bot_token"`
+	LLMProvider               string  `json:"llm_provider"`
+	LLMModel                  string  `json:"llm_model"`
+	STTProvider               string  `json:"stt_provider"`
+	STTBaseURL                string  `json:"stt_base_url"`
+	STTModel                  string  `json:"stt_model"`
+	STTLanguage               string  `json:"stt_language"`
+	TTSProvider               string  `json:"tts_provider"`
+	TTSBaseURL                string  `json:"tts_base_url"`
+	TTSModel                  string  `json:"tts_model"`
+	TTSVoice                  string  `json:"tts_voice"`
+	TTSLanguage               string  `json:"tts_language"`
+	TTSFormat                 string  `json:"tts_format"`
+	TTSSpeed                  float64 `json:"tts_speed"`
+	PremiumTTSProvider        string  `json:"premium_tts_provider"`
+	PremiumTTSBaseURL         string  `json:"premium_tts_base_url"`
+	PremiumTTSModel           string  `json:"premium_tts_model"`
+	PremiumTTSVoice           string  `json:"premium_tts_voice"`
+	TelegramBotToken          string  `json:"telegram_bot_token"`
+	TelegramNotificationBotID string  `json:"telegram_notification_bot_id"`
 
 	TelegramAllowedUserIDs   []int64 `json:"telegram_allowed_user_ids"`
 	AnthropicAPIKey          string  `json:"anthropic_api_key"`
@@ -190,22 +192,23 @@ type fileConfig struct {
 
 // EditableConfig represents the user-editable portion of the runtime config.
 type EditableConfig struct {
-	LLMProvider        string
-	LLMModel           string
-	STTProvider        string
-	STTLanguage        string
-	TTSProvider        string
-	TTSBaseURL         string
-	TTSModel           string
-	TTSVoice           string
-	TTSLanguage        string
-	TTSFormat          string
-	TTSSpeed           float64
-	PremiumTTSProvider string
-	PremiumTTSBaseURL  string
-	PremiumTTSModel    string
-	PremiumTTSVoice    string
-	TelegramBotToken   string
+	LLMProvider               string
+	LLMModel                  string
+	STTProvider               string
+	STTLanguage               string
+	TTSProvider               string
+	TTSBaseURL                string
+	TTSModel                  string
+	TTSVoice                  string
+	TTSLanguage               string
+	TTSFormat                 string
+	TTSSpeed                  float64
+	PremiumTTSProvider        string
+	PremiumTTSBaseURL         string
+	PremiumTTSModel           string
+	PremiumTTSVoice           string
+	TelegramBotToken          string
+	TelegramNotificationBotID string
 
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
@@ -317,9 +320,9 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		STTModel:               defaultGroqSTTModel,
 		STTLanguage:            defaultSTTLanguage,
 		TTSProvider:            defaultTTSProvider,
-		TTSBaseURL:             defaultLocalTTSBaseURL, // Kokoro (CPU, < 1.5GB VRAM)
+		TTSBaseURL:             defaultLocalTTSBaseURL, // Kokoro on CPU
 		TTSModel:               defaultLocalTTSModel,   // kokoro
-		TTSVoice:               defaultLocalTTSVoice,   // pt-br (feminine)
+		TTSVoice:               defaultLocalTTSVoice,   // pt-br alias
 		TTSLanguage:            defaultTTSLanguage,     // pt
 		TTSFormat:              defaultLocalTTSFormat,  // opus
 		TTSSpeed:               defaultTTSSpeed,
@@ -394,22 +397,23 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		return nil, err
 	}
 	return &EditableConfig{
-		LLMProvider:        cfg.LLMProvider,
-		LLMModel:           cfg.LLMModel,
-		STTProvider:        cfg.STTProvider,
-		STTLanguage:        cfg.STTLanguage,
-		TTSProvider:        cfg.TTSProvider,
-		TTSBaseURL:         cfg.TTSBaseURL,
-		TTSModel:           cfg.TTSModel,
-		TTSVoice:           cfg.TTSVoice,
-		TTSLanguage:        cfg.TTSLanguage,
-		TTSFormat:          cfg.TTSFormat,
-		TTSSpeed:           cfg.TTSSpeed,
-		PremiumTTSProvider: cfg.PremiumTTSProvider,
-		PremiumTTSBaseURL:  cfg.PremiumTTSBaseURL,
-		PremiumTTSModel:    cfg.PremiumTTSModel,
-		PremiumTTSVoice:    cfg.PremiumTTSVoice,
-		TelegramBotToken:   cfg.TelegramBotToken,
+		LLMProvider:               cfg.LLMProvider,
+		LLMModel:                  cfg.LLMModel,
+		STTProvider:               cfg.STTProvider,
+		STTLanguage:               cfg.STTLanguage,
+		TTSProvider:               cfg.TTSProvider,
+		TTSBaseURL:                cfg.TTSBaseURL,
+		TTSModel:                  cfg.TTSModel,
+		TTSVoice:                  cfg.TTSVoice,
+		TTSLanguage:               cfg.TTSLanguage,
+		TTSFormat:                 cfg.TTSFormat,
+		TTSSpeed:                  cfg.TTSSpeed,
+		PremiumTTSProvider:        cfg.PremiumTTSProvider,
+		PremiumTTSBaseURL:         cfg.PremiumTTSBaseURL,
+		PremiumTTSModel:           cfg.PremiumTTSModel,
+		PremiumTTSVoice:           cfg.PremiumTTSVoice,
+		TelegramBotToken:          cfg.TelegramBotToken,
+		TelegramNotificationBotID: cfg.TelegramNotificationBotID,
 
 		TelegramAllowedUserIDs:   append([]int64(nil), cfg.TelegramAllowedUserIDs...),
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
@@ -650,35 +654,36 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 	if len(bots) == 0 && cfg.TelegramBotToken != "" {
 		bots = []BotConfig{{
 			ID:             "aurelia",
-			Name:           "Aurélia",
+			Name:           "Aurelia_Code",
 			Token:          cfg.TelegramBotToken,
 			AllowedUserIDs: append([]int64(nil), cfg.TelegramAllowedUserIDs...),
-			PersonaID:      "aurelia-leader",
-			FocusArea:      "COO, orquestra time, monitora saúde",
+			PersonaID:      "aurelia-sovereign",
+			FocusArea:      "Comando soberano do ecossistema, orquestra time e arbitra prioridades",
 			Enabled:        true,
 		}}
 	}
 
 	return &AppConfig{
-		Bots:               bots,
-		LLMProvider:        cfg.LLMProvider,
-		LLMModel:           cfg.LLMModel,
-		STTProvider:        cfg.STTProvider,
-		STTBaseURL:         cfg.STTBaseURL,
-		STTModel:           cfg.STTModel,
-		STTLanguage:        cfg.STTLanguage,
-		TTSProvider:        cfg.TTSProvider,
-		TTSBaseURL:         cfg.TTSBaseURL,
-		TTSModel:           cfg.TTSModel,
-		TTSVoice:           cfg.TTSVoice,
-		TTSLanguage:        cfg.TTSLanguage,
-		TTSFormat:          cfg.TTSFormat,
-		TTSSpeed:           cfg.TTSSpeed,
-		PremiumTTSProvider: cfg.PremiumTTSProvider,
-		PremiumTTSBaseURL:  cfg.PremiumTTSBaseURL,
-		PremiumTTSModel:    cfg.PremiumTTSModel,
-		PremiumTTSVoice:    cfg.PremiumTTSVoice,
-		TelegramBotToken:   cfg.TelegramBotToken,
+		Bots:                      bots,
+		LLMProvider:               cfg.LLMProvider,
+		LLMModel:                  cfg.LLMModel,
+		STTProvider:               cfg.STTProvider,
+		STTBaseURL:                cfg.STTBaseURL,
+		STTModel:                  cfg.STTModel,
+		STTLanguage:               cfg.STTLanguage,
+		TTSProvider:               cfg.TTSProvider,
+		TTSBaseURL:                cfg.TTSBaseURL,
+		TTSModel:                  cfg.TTSModel,
+		TTSVoice:                  cfg.TTSVoice,
+		TTSLanguage:               cfg.TTSLanguage,
+		TTSFormat:                 cfg.TTSFormat,
+		TTSSpeed:                  cfg.TTSSpeed,
+		PremiumTTSProvider:        cfg.PremiumTTSProvider,
+		PremiumTTSBaseURL:         cfg.PremiumTTSBaseURL,
+		PremiumTTSModel:           cfg.PremiumTTSModel,
+		PremiumTTSVoice:           cfg.PremiumTTSVoice,
+		TelegramBotToken:          cfg.TelegramBotToken,
+		TelegramNotificationBotID: cfg.TelegramNotificationBotID,
 
 		TelegramAllowedUserIDs:   cfg.TelegramAllowedUserIDs,
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
@@ -726,6 +731,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 
 func sameFileConfig(a, b fileConfig) bool {
 	if a.TelegramBotToken != b.TelegramBotToken ||
+		a.TelegramNotificationBotID != b.TelegramNotificationBotID ||
 		a.LLMProvider != b.LLMProvider ||
 		a.LLMModel != b.LLMModel ||
 		a.STTProvider != b.STTProvider ||
@@ -789,17 +795,17 @@ func sameFileConfig(a, b fileConfig) bool {
 }
 
 func defaultTTSBaseURLForProvider(provider string) string {
-	// TTS uses Kokoro (CPU-based, < 1.5GB VRAM)
+	// TTS uses Kokoro on CPU.
 	return defaultLocalTTSBaseURL
 }
 
 func defaultTTSModelForProvider(provider string) string {
-	// Kokoro TTS 2026 model
+	// Kokoro is the only local TTS runtime.
 	return defaultLocalTTSModel
 }
 
 func defaultTTSVoiceForProvider(provider string) string {
-	// Kokoro pt-br feminine voice (premium)
+	// Keep the legacy PT-BR alias at app level; the TTS layer resolves it.
 	return defaultLocalTTSVoice
 }
 
@@ -809,22 +815,22 @@ func defaultTTSFormatForProvider(provider string) string {
 }
 
 func usesLegacyTTSDefaults(provider, baseURL, model, format string) bool {
-	// All TTS providers now use local voice-proxy, no legacy cloud providers
+	// All TTS providers now use local Kokoro, no legacy cloud providers.
 	return false
 }
 
 func usesLegacyTTSModel(provider, model string) bool {
-	// All TTS providers now use local voice-proxy, no legacy cloud models
+	// All TTS providers now use local Kokoro, no legacy cloud models.
 	return false
 }
 
 func usesLegacyTTSVoice(provider, voice string) bool {
-	// All TTS providers now use local voice-proxy with Aurelia.wav (PT-BR), no legacy cloud voices
+	// All TTS providers now use local Kokoro, no legacy cloud voices.
 	return false
 }
 
 func usesLegacyTTSFormat(provider, format string) bool {
-	// All TTS providers now use local voice-proxy with opus format, no legacy cloud formats
+	// All TTS providers now use local Kokoro with opus format.
 	return false
 }
 

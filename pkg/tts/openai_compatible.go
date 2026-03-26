@@ -14,6 +14,7 @@ import (
 type Synthesizer interface {
 	Synthesize(ctx context.Context, text string) (Audio, error)
 	IsAvailable() bool
+	MaxChars() int
 }
 
 type Audio struct {
@@ -44,7 +45,7 @@ func NewOpenAICompatibleSynthesizer(baseURL, model, voice, language, format stri
 	return &OpenAICompatibleSynthesizer{
 		baseURL:  strings.TrimRight(strings.TrimSpace(baseURL), "/"),
 		model:    strings.TrimSpace(model),
-		voice:    strings.TrimSpace(voice),
+		voice:    normalizeVoiceAlias(model, voice),
 		language: strings.TrimSpace(language),
 		format:   strings.TrimSpace(format),
 		speed:    speed,
@@ -54,10 +55,40 @@ func NewOpenAICompatibleSynthesizer(baseURL, model, voice, language, format stri
 	}
 }
 
+func normalizeVoiceAlias(model, voice string) string {
+	normalizedVoice := strings.TrimSpace(voice)
+	if normalizedVoice == "" {
+		return ""
+	}
+
+	switch strings.ToLower(normalizedVoice) {
+	case "pt-br", "pt_br", "ptbr":
+		// Preserve the historic app-level alias while translating it to a real
+		// Kokoro feminine PT voice that the current image exposes.
+		switch strings.ToLower(strings.TrimSpace(model)) {
+		case "kokoro", "tts-1", "tts-1-hd":
+			return "pf_dora"
+		}
+	}
+
+	return normalizedVoice
+}
+
 func (s *OpenAICompatibleSynthesizer) IsAvailable() bool {
 	return s != nil && s.baseURL != "" && s.model != "" && s.voice != ""
 }
 
+func (s *OpenAICompatibleSynthesizer) MaxChars() int {
+	if s == nil {
+		return 3000
+	}
+	// Kokoro (GPU) handles long text with internal chunking.
+	if strings.Contains(strings.ToLower(s.model), "kokoro") {
+		return 50000
+	}
+	// Default safety limit for external APIs (OpenAI standard)
+	return 3000
+}
 
 func (s *OpenAICompatibleSynthesizer) Synthesize(ctx context.Context, text string) (Audio, error) {
 	if !s.IsAvailable() {

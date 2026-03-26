@@ -35,7 +35,7 @@ func TestFullStack_EmbedQdrantDashboard(t *testing.T) {
 
 	// 1. Embed via Ollama
 	embedBody, _ := json.Marshal(map[string]any{
-		"model": "bge-m3",
+		"model": "nomic-embed-text",
 		"input": "aurelia fullstack integration test",
 	})
 	embedReq, _ := http.NewRequestWithContext(ctx, http.MethodPost, ollamaURL+"/api/embed", bytes.NewReader(embedBody))
@@ -43,7 +43,7 @@ func TestFullStack_EmbedQdrantDashboard(t *testing.T) {
 
 	embedResp, err := httpClient.Do(embedReq)
 	if err != nil {
-		t.Fatalf("Ollama embed: %v (OLLAMA_URL=%s, bge-m3 instalado?)", err, ollamaURL)
+		t.Fatalf("Ollama embed: %v (OLLAMA_URL=%s, nomic-embed-text instalado?)", err, ollamaURL)
 	}
 	defer embedResp.Body.Close()
 	if embedResp.StatusCode >= 300 {

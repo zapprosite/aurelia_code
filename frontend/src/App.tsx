@@ -10,11 +10,12 @@ import { PlanViewer, type ActionPlan } from "./components/dashboard/PlanViewer";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Card, CardHeader, CardTitle } from "./components/ui/Card";
 import { Badge } from "./components/ui/Badge";
-import { Layout, Server } from "lucide-react";
+import { Layout } from "lucide-react";
 import { BrainSearch } from "./components/dashboard/BrainSearch";
 import { BotsTab } from "./components/dashboard/BotsTab";
 import { useSystemMetrics } from "./hooks/useSystemMetrics";
 import { type SquadAgent } from "./components/dashboard/SquadGrid";
+import { HomelabTab } from "./components/dashboard/HomelabTab";
 
 // Initial Feed Placeholder
 const INITIAL_FEED: FeedItemProps[] = [
@@ -29,39 +30,25 @@ const INITIAL_FEED: FeedItemProps[] = [
   }
 ];
 
-// S-28: VRV Homelab tab with manual refresh button
-function HomelabTab() {
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2 text-white/40">
-        <Server className="w-4 h-4" />
-        <span className="text-xs font-mono uppercase tracking-widest">VRV — Homelab Monitor</span>
-        <button
-          onClick={() => {
-            if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
-          }}
-          className="ml-auto font-mono text-[11px] px-2 py-0.5 rounded border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-colors"
-          title="Atualizar painel VRV"
-        >
-          [↺ atualizar]
-        </button>
-      </div>
-      <div className="rounded-xl overflow-hidden border border-white/10" style={{ height: "75vh" }}>
-        <iframe
-          ref={iframeRef}
-          src="/api/vrv/"
-          className="w-full h-full"
-          style={{ border: "none", background: "#0a0a0a" }}
-          title="VRV Homelab Dashboard"
-        />
-      </div>
-    </div>
-  );
+function getInitialTab(): TabId {
+  if (typeof window === "undefined") {
+    return "timeline";
+  }
+  const tab = new URLSearchParams(window.location.search).get("tab");
+  switch (tab) {
+    case "bots":
+    case "squad":
+    case "brain":
+    case "roadmap":
+    case "homelab":
+      return tab;
+    default:
+      return "timeline";
+  }
 }
 
 function App() {
-  const [activeTab, setActiveTab] = React.useState<TabId>("timeline");
+  const [activeTab, setActiveTab] = React.useState<TabId>(() => getInitialTab());
   const [feed, setFeed] = React.useState<FeedItemProps[]>(INITIAL_FEED);
   const [plans, setPlans] = React.useState<ActionPlan[]>([]);
   const [squadAgents, setSquadAgents] = React.useState<SquadAgent[]>([]);
@@ -143,7 +130,7 @@ function App() {
       case "squad":    return "Squad View — Agent Status";
       case "brain":    return "The Brain — Semantic Context";
       case "roadmap":  return "Master Plan — Feature Roadmap";
-      case "homelab":  return "Homelab — VRV Dashboard";
+      case "homelab":  return "Homelab — Centro Operacional";
       default: return "Dashboard";
     }
   };
