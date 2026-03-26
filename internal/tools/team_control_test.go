@@ -87,7 +87,7 @@ func TestTeamStatusTool_Execute_RendersSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(got, "status=paused") || !strings.Contains(got, "pendentes=2") {
+	if !strings.Contains(got, "status=paused") || !strings.Contains(got, "pendentes=2") || !strings.Contains(got, "coordenacao=delegation + handoff + assist") {
 		t.Fatalf("unexpected status output: %q", got)
 	}
 }

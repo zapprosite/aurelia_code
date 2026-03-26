@@ -10,18 +10,18 @@ import (
 
 // SquadAgent define a identidade fixa e o status de um membro do Squad Oficial.
 type SquadAgent struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Role      string `json:"role"`
-	Status    string `json:"status"` // "online", "offline", "busy"
-	Load      int    `json:"load"`   // 0-100% de carga
-	Color     string `json:"color"`  // Classe CSS de cor sugerida
-	IconName  string `json:"icon"`   // Nome do ícone Lucide
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Role     string `json:"role"`
+	Status   string `json:"status"` // "online", "offline", "busy"
+	Load     int    `json:"load"`   // 0-100% de carga
+	Color    string `json:"color"`  // Classe CSS de cor sugerida
+	IconName string `json:"icon"`   // Nome do ícone Lucide
 }
 
 var (
 	squadMu sync.RWMutex
-	
+
 	// fixedSquad mantém a lista oficial em memória do backend Go,
 	// em vez de injetar estático via hardcode no frontend.
 	fixedSquad = []SquadAgent{
@@ -238,6 +238,8 @@ func botPersonaIcon(personaID string) (icon, color string) {
 		return "ClipboardCheck", "text-yellow-400"
 	case "life-organizer":
 		return "Calendar", "text-green-400"
+	case "data-governance":
+		return "Database", "text-cyan-400"
 	default:
 		return "Bot", "text-white/60"
 	}

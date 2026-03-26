@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/observability"
 )
 
@@ -76,14 +77,16 @@ func (r *SemanticRouter) SyncSkills(ctx context.Context, skills map[string]Skill
 		// Generate consistent UUID from skill name
 		id := uuid.NewMD5(uuid.NameSpaceURL, []byte("skill:"+name)).String()
 
+		payload := buildSkillIndexPayload(name, skill)
+		if err := memory.ValidateSkillIndexPayload(payload); err != nil {
+			logger.Warn("skill payload rejected by contract", "skill", name, "err", err)
+			continue
+		}
+
 		points = append(points, map[string]any{
-			"id":     id,
-			"vector": vector,
-			"payload": map[string]any{
-				"name":        name,
-				"description": skill.Metadata.Description,
-				"synced_at":   time.Now().UTC().Format(time.RFC3339),
-			},
+			"id":      id,
+			"vector":  vector,
+			"payload": payload,
 		})
 	}
 
@@ -117,6 +120,24 @@ func (r *SemanticRouter) SyncSkills(ctx context.Context, skills map[string]Skill
 
 	logger.Info("semantic skill router synced", "count", len(points))
 	return nil
+}
+
+func buildSkillIndexPayload(name string, skill Skill) map[string]any {
+	now := time.Now().UTC()
+	return map[string]any{
+		"app_id":        "aurelia",
+		"repo_id":       "aurelia",
+		"environment":   "local",
+		"text":          fmt.Sprintf("%s: %s", name, skill.Metadata.Description),
+		"name":          name,
+		"description":   skill.Metadata.Description,
+		"source_system": "skills",
+		"source_id":     "skill:" + name,
+		"domain":        "skills",
+		"ts":            now.Unix(),
+		"version":       1,
+		"synced_at":     now.Format(time.RFC3339),
+	}
 }
 
 // Search returns top K skill names for a query

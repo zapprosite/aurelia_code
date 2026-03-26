@@ -1,0 +1,39 @@
+{
+  "files": [
+    {
+      "name": "runtime.sqlite",
+      "role": "runtime operational state",
+      "allowed_contents": [
+        "cron",
+        "session",
+        "mailbox light",
+        "worker state",
+        "mirrors transit"
+      ]
+    },
+    {
+      "name": "teams.sqlite",
+      "role": "team orchestration state",
+      "allowed_contents": [
+        "tasks",
+        "dependencies",
+        "team runs",
+        "leases"
+      ]
+    },
+    {
+      "name": "cache.sqlite",
+      "role": "discardable cache",
+      "allowed_contents": [
+        "temporary cache",
+        "materialized views",
+        "replay short-term"
+      ]
+    }
+  ],
+  "forbidden_uses": [
+    "business source of truth",
+    "semantic source of truth",
+    "long term canonical memory"
+  ]
+}

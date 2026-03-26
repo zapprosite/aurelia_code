@@ -48,6 +48,8 @@ A Aurelia deve transicionar do estado de assistente para um sistema de engenhari
 | **S-27** | Telegram /status | Comando `/status` retornando squad, crons pendentes e uptime no chat. | 📅 Aprovado | MÉDIA |
 | **S-28** | VRV Auto-Refresh | Botão de refresh manual para o iframe VRV no dashboard (substituir meta-refresh). | 📅 Aprovado | BAIXA |
 | **S-29** | Tavily Web Search | Substituição do DuckDuckGo pela API Tavily no daemon e Claude Code. | ✅ Concluído (ADR) | ALTA |
+| **S-30** | Bibliotheca v2 | Infra unificada Bash (Memory/Notes/Comms/Skills) + Governança Regra 15. | ✅ Concluído (ADR) | ESTRATÉGICA |
+| **S-31** | Git Cleanup | Omissão de 2.4GB de skills externas e padronização do .gitignore. | ✅ Concluído (ADR) | MÉDIA |
 
 ## 3. Detalhamento dos Próximos Passos (Curto Prazo)
 

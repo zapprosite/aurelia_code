@@ -1,8 +1,14 @@
 # Data Governance — Aurélia Homelab
 
 > Autoridade: Will (Principal Engineer)
-> Última revisão: 2026-03-24
-> Escopo: Qdrant, SQLite, Supabase, multi-bot (S-32)
+> Última revisão: 2026-03-25
+> Escopo: Qdrant, SQLite, Supabase, Obsidian CLI, multi-bot (S-32)
+
+> Contratos superiores:
+> `docs/governance/DATA_STACK_STANDARD.md`
+> `docs/governance/SCHEMA_REGISTRY.md`
+> `docs/governance/OBSIDIAN_VAULT_STANDARD.md`
+> `.agent/rules/14-data-stack-governance.md`
 
 ---
 
@@ -28,7 +34,13 @@
 > **SQLite** para estado de runtime e memória curta.
 > **Qdrant** para busca semântica e contexto histórico.
 > **Supabase** para dados estruturados do negócio (obras, leads, agenda).
+> **Obsidian CLI** para camada editorial e reconciliação controlada com auditoria.
 > Nunca misture responsabilidades entre as três camadas.
+
+### Guardião operacional
+> O bot `controle-db` é o guardião oficial da higiene e governança da camada de dados.
+> Ele inventaria, classifica, propõe e executa limpezas seguras de artefatos de teste em Qdrant, Supabase, Obsidian CLI e SQLite.
+> Nada é apagado sem evidência, e nada canônico é tratado como teste por conveniência.
 
 ---
 
@@ -130,7 +142,7 @@ Pontos sem `bot_id` são considerados **legado** e serão limpos pelo Sentinel (
 conversation_memory: bot_id, persona_id, chat_id, domain  (keyword)
 aurelia_skills:      skill_id, category                    (keyword)
 knowledge_hvac:      category                              (keyword)
-knowledge_personal:  category                              (keyword)
+knowledge_personal:  type                                  (keyword)
 ```
 
 ---
@@ -206,10 +218,17 @@ created_at  timestamptz default now()
 | `hvac-sales` | grupo Comercial | `conversation_memory` (filtro `bot_id=hvac-sales`) + `knowledge_hvac` | `public.leads` |
 | `project-manager` | grupo Obras | `conversation_memory` (filtro `bot_id=project-manager`) + `knowledge_hvac` | `public.obras` |
 | `life-organizer` | chat pessoal / grupo família | `conversation_memory` (filtro `bot_id=life-organizer`) + `knowledge_personal` | `personal.agenda` |
+| `controle-db` | chat de governança de dados | leitura transversal para auditoria controlada | `system.*` e metadados de governança |
 
 ### Regra de escrita no Qdrant
 Todo insert em `conversation_memory` DEVE incluir `bot_id` no payload.
 O `ContextAssembler` filtra por `bot_id` automaticamente (a implementar em S-35).
+
+### Regra de limpeza e governança
+- Artefatos com nome `test`, `tmp`, `debug`, `sandbox`, `demo` ou equivalente devem ser inventariados pelo `controle-db`.
+- Toda limpeza relevante exige: evidência, classificação, backup ou justificativa de dispensar backup, execução e relatório.
+- `controle-db` pode operar transversalmente nas camadas de dados, mas não redefine o que é canônico por conta própria.
+- Se houver conflito entre documentação e runtime, `controle-db` deve reportar drift antes de apagar qualquer coisa.
 
 ---
 
