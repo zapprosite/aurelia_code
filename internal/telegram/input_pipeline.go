@@ -28,9 +28,8 @@ type inputSession struct {
 	voiceMode bool // true when input came from a voice/audio message
 }
 
-
 func (bc *BotController) processInput(c telebot.Context, text string, requiresAudio bool) error {
-	session := newInputSession(c, text)
+	session := bc.newInputSession(c, text)
 	return bc.processInputSession(c, session, requiresAudio)
 }
 
@@ -134,6 +133,25 @@ func newInputSessionWithContext(ctx context.Context, senderUserID int64, text st
 	}
 }
 
+func (bc *BotController) newInputSession(c telebot.Context, text string) inputSession {
+	return newInputSessionWithContext(bc.bindBotContext(context.Background()), c.Sender().ID, text)
+}
+
+func (bc *BotController) newInputSessionWithContext(ctx context.Context, senderUserID int64, text string) inputSession {
+	return newInputSessionWithContext(bc.bindBotContext(ctx), senderUserID, text)
+}
+
+func (bc *BotController) bindBotContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	botID := strings.TrimSpace(bc.botID)
+	if botID == "" {
+		botID = "aurelia"
+	}
+	return agent.WithBotContext(ctx, botID)
+}
+
 type botChatSender struct {
 	bot  *telebot.Bot
 	chat *telebot.Chat
@@ -148,13 +166,12 @@ func (s *botChatSender) Chat() *telebot.Chat {
 	return s.chat
 }
 
-
 func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatID int64, text string, requiresAudio bool) error {
 	if bc == nil || bc.bot == nil {
 		return fmt.Errorf("telegram bot controller is not available")
 	}
 	chat := &telebot.Chat{ID: chatID}
-	session := newInputSessionWithContext(ctx, userID, text)
+	session := bc.newInputSessionWithContext(ctx, userID, text)
 	text = strings.ReplaceAll(text, "\x00", "")
 	session.text = text
 	session.voiceMode = requiresAudio
@@ -289,7 +306,7 @@ func (bc *BotController) prepareExecution(session inputSession) (*skill.Skill, [
 	}
 
 	activeSkill := resolveActiveSkill(skills, targetSkill)
- 
+
 	// Se houver partes multimodais (imagens), removemos a última versão textual
 	// salvada no banco e injetamos a versão completa no histórico para o LLM.
 	if len(session.message.Parts) > 0 {

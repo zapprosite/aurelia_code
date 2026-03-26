@@ -76,3 +76,12 @@ Este documento é a fonte única de verdade sobre todas as decisões arquitetura
     - Remoção de logs de stress-test e binários órfãos na raiz.
     - Unificação de diretórios de skills: `.claude` agora é espelho de `.agents`.
     - Limpeza de 47MB de recursos Docker órfãos.
+
+## 📚 Unificação Sovereign-Bibliotheca v2 (25 de Março de 2026)
+- **Motivo**: Fragmentação de ferramentas entre Go/Node/Bash e alto volume de artefatos externos degradando performance.
+- **Ações**:
+    - Criação da `homelab-bibliotheca/lib/` (Bash Unified Layer).
+    - Implementação de módulos agnósticos de Memória, Notas, Comms e Skills.
+    - Cleanup massivo do Git: **2.4GB** de competências externas removidos do rastreamento (.gitignore industrial).
+    - Instituição da **Regra de Governança 15** para manutenção da ordem técnica.
+    - Sincronização e regeneração do `codebase-map.json` via ai-context.

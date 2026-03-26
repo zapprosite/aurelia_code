@@ -61,6 +61,27 @@ func TestBuildLLMProvider_Ollama(t *testing.T) {
 	}
 }
 
+func TestBuildLLMProvider_OllamaIgnoresOpenRouterKey(t *testing.T) {
+	cfg := &config.AppConfig{
+		LLMProvider:      "ollama",
+		LLMModel:         "gemma3:12b",
+		OpenRouterAPIKey: "secret",
+	}
+
+	provider, err := buildLLMProvider(cfg, nil)
+	if err != nil {
+		t.Fatalf("buildLLMProvider() error = %v", err)
+	}
+	defer provider.Close()
+
+	if _, ok := provider.(*gateway.Provider); ok {
+		t.Fatalf("provider type = %T, expected direct ollama provider without gateway", provider)
+	}
+	if _, ok := provider.(*llm.OpenAICompatibleProvider); !ok {
+		t.Fatalf("provider type = %T, want *llm.OpenAICompatibleProvider", provider)
+	}
+}
+
 func TestBuildLLMProvider_OpenRouter(t *testing.T) {
 	cfg := &config.AppConfig{
 		LLMProvider:      "openrouter",

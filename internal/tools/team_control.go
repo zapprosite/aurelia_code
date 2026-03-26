@@ -140,8 +140,9 @@ func (t *TeamStatusTool) Execute(ctx context.Context, args map[string]interface{
 		return "", err
 	}
 	return fmt.Sprintf(
-		"Equipe atual: status=%s | pendentes=%d | rodando=%d | bloqueadas=%d | concluidas=%d | falhas=%d | canceladas=%d | total=%d",
+		"Equipe atual: status=%s | coordenacao=%s | pendentes=%d | rodando=%d | bloqueadas=%d | concluidas=%d | falhas=%d | canceladas=%d | total=%d",
 		snapshot.TeamStatus,
+		agent.CoordinationLabel(snapshot.CoordinationModes),
 		snapshot.Pending,
 		snapshot.Running,
 		snapshot.Blocked,
@@ -163,9 +164,9 @@ func NewCreateSquadTool(spawner TeamSpawner) *CreateSquadTool {
 func (t *CreateSquadTool) Definition() agent.Tool {
 	return agent.Tool{
 		Name:        "create_squad",
-		Description: "Cria um squad de agentes especialistas para uma missao complexa. O bot master coordenara o time.",
+		Description: "Cria um time de especialistas para uma missao complexa. Mantem o nome legado create_squad por compatibilidade.",
 		JSONSchema: objectSchema(map[string]any{
-			"mission":     stringProperty("Descricao da missao global do squad."),
+			"mission":     stringProperty("Descricao da missao global do time."),
 			"composition": stringProperty("Descricao dos papéis necessários (ex: 'um pesquisador e um coder')."),
 		}, "mission"),
 	}
@@ -179,7 +180,7 @@ func (t *CreateSquadTool) Execute(ctx context.Context, args map[string]interface
 	if !ok {
 		return "", fmt.Errorf("contexto de chat nao encontrado para criar squad")
 	}
-	return fmt.Sprintf("Squad pronto para a missao: %s (Key: %s). Agora use 'spawn_agent' para adicionar os especialistas especificos.", mission, teamKey), nil
+	return fmt.Sprintf("Time pronto para a missao: %s (Key: %s). Agora use 'spawn_agent' para adicionar os especialistas especificos.", mission, teamKey), nil
 }
 
 type GetDashboardStatusTool struct{}

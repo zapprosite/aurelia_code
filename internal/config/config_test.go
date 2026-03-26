@@ -65,6 +65,17 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 	}
 
 	input := fileConfig{
+		Bots: []BotConfig{{
+			ID:             "controle-db",
+			Name:           "CONTROLE DB",
+			Token:          "telegram-token-2",
+			AllowedUserIDs: []int64{7},
+			PersonaID:      "data-governance",
+			FocusArea:      "Governanca de dados",
+			LLMProvider:    "openrouter",
+			LLMModel:       "minimax/minimax-m2.7",
+			Enabled:        true,
+		}},
 		LLMProvider:            "ollama",
 		LLMModel:               "gemma3:12b",
 		STTProvider:            "groq",
@@ -104,6 +115,12 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 
 	if cfg.TelegramBotToken != input.TelegramBotToken {
 		t.Fatalf("TelegramBotToken = %q, want %q", cfg.TelegramBotToken, input.TelegramBotToken)
+	}
+	if len(cfg.Bots) != 1 {
+		t.Fatalf("Bots len = %d, want 1", len(cfg.Bots))
+	}
+	if cfg.Bots[0].ID != "controle-db" || cfg.Bots[0].LLMProvider != "openrouter" || cfg.Bots[0].LLMModel != "minimax/minimax-m2.7" {
+		t.Fatalf("unexpected bot config loaded: %+v", cfg.Bots[0])
 	}
 	if cfg.LLMProvider != input.LLMProvider {
 		t.Fatalf("LLMProvider = %q, want %q", cfg.LLMProvider, input.LLMProvider)
@@ -202,6 +219,57 @@ func TestLoad_NormalizesMissingFieldsWithDefaults(t *testing.T) {
 	}
 	if cfg.MCPConfigPath != filepath.Join(tmpDir, "config", "mcp_servers.json") {
 		t.Fatalf("MCPConfigPath = %q, want instance default", cfg.MCPConfigPath)
+	}
+}
+
+func TestLoad_NormalizesLegacyVoiceCaptureCommandToRepoScript(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("AURELIA_HOME", tmpDir)
+
+	repoRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(repoRoot, "scripts"), 0o755); err != nil {
+		t.Fatalf("MkdirAll() unexpected error: %v", err)
+	}
+	localScript := filepath.Join(repoRoot, "scripts", "voice-capture-openwakeword.sh")
+	if err := os.WriteFile(localScript, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatalf("WriteFile() unexpected error: %v", err)
+	}
+
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd() unexpected error: %v", err)
+	}
+	defer func() { _ = os.Chdir(oldWD) }()
+	if err := os.Chdir(repoRoot); err != nil {
+		t.Fatalf("Chdir() unexpected error: %v", err)
+	}
+
+	r, err := runtime.New()
+	if err != nil {
+		t.Fatalf("runtime.New() unexpected error: %v", err)
+	}
+
+	input := fileConfig{
+		VoiceCaptureEnabled: true,
+		VoiceCaptureCommand: "/home/will/aurelia-24x7/scripts/voice-capture-openwakeword.sh --output-dir /tmp/out",
+	}
+	if err := os.MkdirAll(filepath.Dir(r.AppConfig()), 0o700); err != nil {
+		t.Fatalf("MkdirAll() unexpected error: %v", err)
+	}
+	data, err := json.Marshal(input)
+	if err != nil {
+		t.Fatalf("Marshal() unexpected error: %v", err)
+	}
+	if err := os.WriteFile(r.AppConfig(), data, 0o600); err != nil {
+		t.Fatalf("WriteFile() unexpected error: %v", err)
+	}
+
+	cfg, err := Load(r)
+	if err != nil {
+		t.Fatalf("Load() unexpected error: %v", err)
+	}
+	if got := cfg.VoiceCaptureCommand; got != localScript+" --output-dir /tmp/out" {
+		t.Fatalf("VoiceCaptureCommand = %q", got)
 	}
 }
 

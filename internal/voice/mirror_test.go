@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestQdrantMirror_MirrorTranscriptEmbedsAndUpserts(t *testing.T) {
@@ -103,6 +104,69 @@ func TestQdrantMirror_UpsertShapeContainsVector(t *testing.T) {
 	}
 	if !strings.Contains(pointsBody, "\"vector\":[0.1,0.2]") {
 		t.Fatalf("points body = %s", pointsBody)
+	}
+}
+
+func TestBuildVoiceSemanticPayload_AddsCanonicalFieldsAndKeepsLegacyFields(t *testing.T) {
+	t.Parallel()
+
+	event := TranscriptEvent{
+		JobID:       "job-42",
+		UserID:      11,
+		ChatID:      22,
+		Source:      "groq-whisper",
+		Transcript:  "ligar o modo sentinela",
+		Accepted:    true,
+		RequiresTTS: true,
+		CreatedAt:   time.Date(2026, 3, 25, 21, 15, 30, 0, time.UTC),
+	}
+
+	payload := buildVoiceSemanticPayload(event)
+
+	if payload["text"] != event.Transcript {
+		t.Fatalf("expected text=%q, got %#v", event.Transcript, payload["text"])
+	}
+	if payload["canonical_bot_id"] != defaultCanonicalBotID {
+		t.Fatalf("expected canonical_bot_id=%q, got %#v", defaultCanonicalBotID, payload["canonical_bot_id"])
+	}
+	if payload["source_system"] != defaultVoiceSourceSystem {
+		t.Fatalf("expected source_system=%q, got %#v", defaultVoiceSourceSystem, payload["source_system"])
+	}
+	if payload["domain"] != defaultVoiceDomain {
+		t.Fatalf("expected domain=%q, got %#v", defaultVoiceDomain, payload["domain"])
+	}
+	if payload["version"] != defaultPayloadVersion {
+		t.Fatalf("expected version=%d, got %#v", defaultPayloadVersion, payload["version"])
+	}
+	if payload["source_id"] != "voice:job-42" {
+		t.Fatalf("expected source_id=%q, got %#v", "voice:job-42", payload["source_id"])
+	}
+	if payload["ts"] != event.CreatedAt.Unix() {
+		t.Fatalf("expected ts=%d, got %#v", event.CreatedAt.Unix(), payload["ts"])
+	}
+
+	if payload["transcript"] != event.Transcript {
+		t.Fatalf("expected transcript legacy field to remain, got %#v", payload["transcript"])
+	}
+	if payload["source"] != event.Source {
+		t.Fatalf("expected source legacy field to remain, got %#v", payload["source"])
+	}
+	if payload["created_at"] != event.CreatedAt.Format(time.RFC3339Nano) {
+		t.Fatalf("expected created_at legacy field to remain, got %#v", payload["created_at"])
+	}
+}
+
+func TestBuildVoiceSemanticPayload_FallsBackToTimestampSourceID(t *testing.T) {
+	t.Parallel()
+
+	createdAt := time.Date(2026, 3, 25, 22, 0, 0, 0, time.UTC)
+	payload := buildVoiceSemanticPayload(TranscriptEvent{
+		Transcript: "modo sentinela",
+		CreatedAt:  createdAt,
+	})
+
+	if payload["source_id"] != "voice:ts:1774476000" {
+		t.Fatalf("unexpected fallback source_id: %#v", payload["source_id"])
 	}
 }
 

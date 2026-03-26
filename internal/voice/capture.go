@@ -105,6 +105,25 @@ func (s *CommandCaptureSource) IsAvailable() bool {
 	return s != nil && strings.TrimSpace(s.command) != ""
 }
 
+func MissingCommandPath(command string) string {
+	fields := strings.Fields(strings.TrimSpace(command))
+	if len(fields) == 0 {
+		return ""
+	}
+
+	head := fields[0]
+	if head == "" {
+		return ""
+	}
+	if !strings.Contains(head, "/") && !strings.HasPrefix(head, ".") {
+		return ""
+	}
+	if _, err := os.Stat(head); err != nil {
+		return head
+	}
+	return ""
+}
+
 type CaptureConfig struct {
 	PollInterval         time.Duration
 	HeartbeatPath        string

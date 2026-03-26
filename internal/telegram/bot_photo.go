@@ -220,7 +220,7 @@ func (bc *BotController) attachRecentMediaIfRelevant(c telebot.Context, text str
 // Helpers missing from previous listing but required
 func (bc *BotController) processInputWithParts(c telebot.Context, parts []agent.ContentPart) error {
 	// Re-wrap input session for multimodal
-	session := newInputSession(c, "")
+	session := bc.newInputSession(c, "")
 	session.message.Parts = parts
 	session.text = session.persistedContent()
 

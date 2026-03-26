@@ -282,3 +282,49 @@ func TestScheduler_RunDueJobs_PropagatesStoreError(t *testing.T) {
 		t.Fatalf("expected store error %v, got %v", expectedErr, err)
 	}
 }
+func TestScheduler_RunDueJobs_HandlesInvalidCronExpression(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 3, 12, 10, 0, 0, 0, time.UTC)
+
+	store := &fakeCronStore{
+		jobs: map[string]CronJob{},
+		dueJobs: []CronJob{
+			{
+				ID:           "job-invalid",
+				OwnerUserID:  "user-1",
+				TargetChatID: 100,
+				ScheduleType: "cron",
+				CronExpr:     "- - - - *", // A expressão problemática
+				Prompt:       "invalid",
+				Active:       true,
+			},
+			{
+				ID:           "job-valid",
+				OwnerUserID:  "user-1",
+				TargetChatID: 100,
+				ScheduleType: "cron",
+				CronExpr:     "*/5 * * * *",
+				Prompt:       "valid",
+				Active:       true,
+			},
+		},
+	}
+	runtime := &fakeCronRuntime{
+		results: map[string]string{"job-valid": "ok"},
+	}
+
+	scheduler, err := NewScheduler(store, runtime, staticClock{now: now}, SchedulerConfig{PollInterval: time.Minute})
+	if err != nil {
+		t.Fatalf("NewScheduler() error = %v", err)
+	}
+
+	processed, err := scheduler.RunDueJobs(context.Background())
+	if err != nil {
+		t.Fatalf("RunDueJobs() should not fail on invalid cron, but got %v", err)
+	}
+	// O job-invalid deve falhar internamente e o job-valid deve ser processado
+	if processed != 1 {
+		t.Fatalf("expected 1 processed job (valid one), got %d", processed)
+	}
+}

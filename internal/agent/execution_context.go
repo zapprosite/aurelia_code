@@ -5,15 +5,16 @@ import "context"
 type executionContextKey string
 
 const (
-	teamKeyContextKey  executionContextKey = "team_key"
-	userKeyContextKey  executionContextKey = "user_key"
-	teamIDContextKey   executionContextKey = "team_id"
-	taskIDContextKey   executionContextKey = "task_id"
-	runIDContextKey    executionContextKey = "run_id"
-	agentKeyContextKey executionContextKey = "agent_name"
-	workdirContextKey  executionContextKey = "workdir"
-	runOptionsContextKey  executionContextKey = "run_options"
-	prevPhaseContextKey   executionContextKey = "prev_phase"
+	teamKeyContextKey    executionContextKey = "team_key"
+	userKeyContextKey    executionContextKey = "user_key"
+	teamIDContextKey     executionContextKey = "team_id"
+	taskIDContextKey     executionContextKey = "task_id"
+	runIDContextKey      executionContextKey = "run_id"
+	agentKeyContextKey   executionContextKey = "agent_name"
+	botKeyContextKey     executionContextKey = "bot_id"
+	workdirContextKey    executionContextKey = "workdir"
+	runOptionsContextKey executionContextKey = "run_options"
+	prevPhaseContextKey  executionContextKey = "prev_phase"
 )
 
 const (
@@ -74,6 +75,10 @@ func WithAgentContext(ctx context.Context, agentName string) context.Context {
 	return context.WithValue(ctx, agentKeyContextKey, agentName)
 }
 
+func WithBotContext(ctx context.Context, botID string) context.Context {
+	return context.WithValue(ctx, botKeyContextKey, botID)
+}
+
 func WithWorkdirContext(ctx context.Context, workdir string) context.Context {
 	return context.WithValue(ctx, workdirContextKey, workdir)
 }
@@ -89,6 +94,19 @@ func AgentContextFromContext(ctx context.Context) (agentName string, ok bool) {
 	}
 
 	return agentName, true
+}
+
+func BotContextFromContext(ctx context.Context) (botID string, ok bool) {
+	if ctx == nil {
+		return "", false
+	}
+
+	botID, ok = ctx.Value(botKeyContextKey).(string)
+	if !ok || botID == "" {
+		return "", false
+	}
+
+	return botID, true
 }
 
 func RunContextFromContext(ctx context.Context) (runID string, ok bool) {

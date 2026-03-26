@@ -6,14 +6,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/kocar/aurelia/internal/memory"
 )
 
 const (
 	defaultQdrantMirrorCollection = "conversation_memory"
 	defaultQdrantMirrorEmbedding  = "bge-m3"
+	defaultCanonicalBotID         = "aurelia_code"
+	defaultVoiceDomain            = "system"
+	defaultVoiceSourceSystem      = "voice"
+	defaultPayloadVersion         = 1
 )
 
 type MultiMirror struct {
@@ -89,19 +96,20 @@ func (m *QdrantMirror) MirrorTranscript(ctx context.Context, event TranscriptEve
 		return m.ensureErr
 	}
 
+	payload := buildVoiceSemanticPayload(event)
+	if err := memory.ValidateCanonicalMemoryPayload(payload); err != nil {
+		return fmt.Errorf("voice semantic payload rejected: %w", err)
+	}
+	pointID := strings.TrimSpace(event.JobID)
+	if pointID == "" {
+		pointID = buildVoiceSourceID(event, payload["ts"].(int64))
+	}
+
 	body, err := json.Marshal(map[string]any{
 		"points": []map[string]any{{
-			"id":     event.JobID,
-			"vector": vector,
-			"payload": map[string]any{
-				"user_id":      event.UserID,
-				"chat_id":      event.ChatID,
-				"source":       event.Source,
-				"transcript":   event.Transcript,
-				"accepted":     event.Accepted,
-				"requires_tts": event.RequiresTTS,
-				"created_at":   event.CreatedAt.Format(time.RFC3339Nano),
-			},
+			"id":      pointID,
+			"vector":  vector,
+			"payload": payload,
 		}},
 	})
 	if err != nil {
@@ -124,6 +132,46 @@ func (m *QdrantMirror) MirrorTranscript(ctx context.Context, event TranscriptEve
 		return fmt.Errorf("qdrant mirror returned %s", resp.Status)
 	}
 	return nil
+}
+
+func buildVoiceSemanticPayload(event TranscriptEvent) map[string]any {
+	createdAt := event.CreatedAt.UTC()
+	if createdAt.IsZero() {
+		createdAt = time.Now().UTC()
+	}
+	ts := createdAt.Unix()
+
+	payload := map[string]any{
+		// Canonical payload fields for Qdrant/schema alignment.
+		"app_id":           "aurelia",
+		"repo_id":          "aurelia",
+		"environment":      "local",
+		"text":             event.Transcript,
+		"canonical_bot_id": defaultCanonicalBotID,
+		"source_system":    defaultVoiceSourceSystem,
+		"source_id":        buildVoiceSourceID(event, ts),
+		"domain":           defaultVoiceDomain,
+		"ts":               ts,
+		"version":          defaultPayloadVersion,
+
+		// Legacy/backward-compatible fields.
+		"user_id":      event.UserID,
+		"chat_id":      event.ChatID,
+		"source":       event.Source,
+		"transcript":   event.Transcript,
+		"accepted":     event.Accepted,
+		"requires_tts": event.RequiresTTS,
+		"created_at":   createdAt.Format(time.RFC3339Nano),
+	}
+	return payload
+}
+
+func buildVoiceSourceID(event TranscriptEvent, ts int64) string {
+	jobID := strings.TrimSpace(event.JobID)
+	if jobID != "" {
+		return "voice:" + jobID
+	}
+	return "voice:ts:" + strconv.FormatInt(ts, 10)
 }
 
 func (m *QdrantMirror) embed(ctx context.Context, text string) ([]float32, error) {

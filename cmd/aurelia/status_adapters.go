@@ -10,7 +10,7 @@ import (
 	"github.com/kocar/aurelia/internal/telegram"
 )
 
-// squadStatusAdapter implements telegram.SquadStatusReporter using agent.GetFixedSquad().
+// squadStatusAdapter implements telegram.SquadStatusReporter using the legacy in-memory team roster.
 type squadStatusAdapter struct{}
 
 func (squadStatusAdapter) GetSquadStatus() []telegram.AgentStatus {

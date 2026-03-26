@@ -1,12 +1,15 @@
 package main
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/kocar/aurelia/internal/memory"
 )
 
 type brainPoint struct {
@@ -15,160 +18,139 @@ type brainPoint struct {
 	Payload map[string]interface{} `json:"payload,omitempty"`
 }
 
-func qdrantRequest(method, reqURL, apiKey string, body []byte) (*http.Response, error) {
-	var bodyReader io.Reader
-	if body != nil {
-		bodyReader = bytes.NewReader(body)
+func buildBrainSearchHandler(qdrantURL, collection, apiKey, ollamaURL, embeddingModel string) http.HandlerFunc {
+	client := memory.NewSemanticHTTPClient(10 * time.Second)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		query := strings.TrimSpace(r.URL.Query().Get("q"))
+		if query == "" {
+			points, err := memory.ScrollPoints(r.Context(), client, qdrantURL, collection, apiKey, 20)
+			if err != nil {
+				writeBrainHeaders(w, "recent", "degraded", err)
+				_ = json.NewEncoder(w).Encode([]brainPoint{})
+				return
+			}
+			sortSemanticPoints(points)
+			writeBrainHeaders(w, "recent", "ok", nil)
+			_ = json.NewEncoder(w).Encode(toBrainPoints(points))
+			return
+		}
+
+		vector, err := memory.EmbedText(r.Context(), client, ollamaURL, embeddingModel, query)
+		if err == nil {
+			points, searchErr := memory.SearchSemantic(r.Context(), client, qdrantURL, collection, apiKey, vector, 20)
+			if searchErr == nil {
+				writeBrainHeaders(w, "semantic", "ok", nil)
+				_ = json.NewEncoder(w).Encode(toBrainPoints(points))
+				return
+			}
+			err = searchErr
+		}
+
+		points, fallbackErr := lexicalBrainFallback(r.Context(), client, qdrantURL, collection, apiKey, query)
+		if fallbackErr != nil {
+			writeBrainHeaders(w, "degraded", "degraded", joinErrors(err, fallbackErr))
+			_ = json.NewEncoder(w).Encode([]brainPoint{})
+			return
+		}
+
+		writeBrainHeaders(w, "lexical-fallback", "degraded", err)
+		_ = json.NewEncoder(w).Encode(toBrainPoints(points))
 	}
-	req, err := http.NewRequest(method, reqURL, bodyReader)
+}
+
+func buildBrainRecentHandler(qdrantURL, collection, apiKey string) http.HandlerFunc {
+	client := memory.NewSemanticHTTPClient(10 * time.Second)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		points, err := memory.ScrollPoints(r.Context(), client, qdrantURL, collection, apiKey, 20)
+		if err != nil {
+			writeBrainHeaders(w, "recent", "degraded", err)
+			_ = json.NewEncoder(w).Encode([]brainPoint{})
+			return
+		}
+		sortSemanticPoints(points)
+		writeBrainHeaders(w, "recent", "ok", nil)
+		_ = json.NewEncoder(w).Encode(toBrainPoints(points[:min(len(points), 10)]))
+	}
+}
+
+func lexicalBrainFallback(ctx context.Context, client *http.Client, qdrantURL, collection, apiKey, query string) ([]memory.SemanticPoint, error) {
+	points, err := memory.ScrollPoints(ctx, client, qdrantURL, collection, apiKey, 100)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	if apiKey != "" {
-		req.Header.Set("api-key", apiKey)
-	}
-	return http.DefaultClient.Do(req)
+	filtered := memory.FilterPointsLexical(points, query)
+	sortSemanticPoints(filtered)
+	return filtered, nil
 }
 
-// buildBrainSearchHandler returns a handler for /api/brain/search?q=<query>
-// S-26: For now, performs a scroll (list) filtered by text if q is provided,
-// since embedding is not available without Ollama integration here.
-func buildBrainSearchHandler(qdrantURL, collection, apiKey string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+func toBrainPoints(points []memory.SemanticPoint) []brainPoint {
+	results := make([]brainPoint, 0, len(points))
+	for _, point := range points {
+		payload := memory.NormalizeSemanticPayload(point.Payload)
+		results = append(results, brainPoint{
+			ID:      point.ID,
+			Score:   point.Score,
+			Payload: toStringMap(payload),
+		})
+	}
+	return results
+}
 
-		q := r.URL.Query().Get("q")
+func toStringMap(payload map[string]any) map[string]interface{} {
+	out := make(map[string]interface{}, len(payload))
+	for key, value := range payload {
+		out[key] = value
+	}
+	return out
+}
 
-		// Use scroll API to fetch points, then filter by payload text match
-		scrollURL := fmt.Sprintf("%s/collections/%s/points/scroll", qdrantURL, url.PathEscape(collection))
-		scrollBody := map[string]interface{}{
-			"limit":        20,
-			"with_payload": true,
-			"with_vector":  false,
+func sortSemanticPoints(points []memory.SemanticPoint) {
+	sort.SliceStable(points, func(i, j int) bool {
+		left := memory.ExtractPayloadTimestamp(points[i].Payload)
+		right := memory.ExtractPayloadTimestamp(points[j].Payload)
+		if left.Equal(right) {
+			return points[i].Score > points[j].Score
 		}
-		bodyBytes, _ := json.Marshal(scrollBody)
-		resp, err := qdrantRequest(http.MethodPost, scrollURL, apiKey, bodyBytes)
-		if err != nil {
-			// Graceful fallback: return empty
-			_ = json.NewEncoder(w).Encode([]brainPoint{})
-			return
-		}
-		defer resp.Body.Close()
+		return left.After(right)
+	})
+}
 
-		var scrollResp struct {
-			Result struct {
-				Points []struct {
-					ID      interface{}            `json:"id"`
-					Payload map[string]interface{} `json:"payload"`
-				} `json:"points"`
-			} `json:"result"`
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&scrollResp); err != nil {
-			_ = json.NewEncoder(w).Encode([]brainPoint{})
-			return
-		}
-
-		results := make([]brainPoint, 0, len(scrollResp.Result.Points))
-		for _, p := range scrollResp.Result.Points {
-			if q != "" {
-				// Simple text match in payload values
-				match := false
-				for _, v := range p.Payload {
-					if s, ok := v.(string); ok {
-						if containsCI(s, q) {
-							match = true
-							break
-						}
-					}
-				}
-				if !match {
-					continue
-				}
-			}
-			results = append(results, brainPoint{
-				ID:      p.ID,
-				Payload: p.Payload,
-			})
-		}
-		_ = json.NewEncoder(w).Encode(results)
+func writeBrainHeaders(w http.ResponseWriter, mode, status string, err error) {
+	if mode == "" {
+		mode = "unknown"
+	}
+	if status == "" {
+		status = "unknown"
+	}
+	w.Header().Set("X-Aurelia-Brain-Mode", mode)
+	w.Header().Set("X-Aurelia-Brain-Status", status)
+	if err != nil {
+		w.Header().Set("X-Aurelia-Brain-Error", err.Error())
 	}
 }
 
-// buildBrainRecentHandler returns a handler for /api/brain/recent
-// Returns the latest 10 points from Qdrant.
-func buildBrainRecentHandler(qdrantURL, collection, apiKey string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-
-		scrollURL := fmt.Sprintf("%s/collections/%s/points/scroll", qdrantURL, url.PathEscape(collection))
-		scrollBody := map[string]interface{}{
-			"limit":        10,
-			"with_payload": true,
-			"with_vector":  false,
-		}
-		bodyBytes, _ := json.Marshal(scrollBody)
-		resp, err := qdrantRequest(http.MethodPost, scrollURL, apiKey, bodyBytes)
-		if err != nil {
-			_ = json.NewEncoder(w).Encode([]brainPoint{})
-			return
-		}
-		defer resp.Body.Close()
-
-		var scrollResp struct {
-			Result struct {
-				Points []struct {
-					ID      interface{}            `json:"id"`
-					Payload map[string]interface{} `json:"payload"`
-				} `json:"points"`
-			} `json:"result"`
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&scrollResp); err != nil {
-			_ = json.NewEncoder(w).Encode([]brainPoint{})
-			return
-		}
-
-		results := make([]brainPoint, 0, len(scrollResp.Result.Points))
-		for _, p := range scrollResp.Result.Points {
-			results = append(results, brainPoint{
-				ID:      p.ID,
-				Payload: p.Payload,
-			})
-		}
-		_ = json.NewEncoder(w).Encode(results)
+func joinErrors(primary, secondary error) error {
+	switch {
+	case primary == nil:
+		return secondary
+	case secondary == nil:
+		return primary
+	default:
+		return fmt.Errorf("%v; fallback lexical failed: %w", primary, secondary)
 	}
 }
 
-func containsCI(s, substr string) bool {
-	if len(substr) == 0 {
-		return true
+func min(a, b int) int {
+	if a < b {
+		return a
 	}
-	sl := len(s)
-	subl := len(substr)
-	if subl > sl {
-		return false
-	}
-	for i := 0; i <= sl-subl; i++ {
-		match := true
-		for j := 0; j < subl; j++ {
-			cs := s[i+j]
-			cq := substr[j]
-			if cs >= 'A' && cs <= 'Z' {
-				cs += 32
-			}
-			if cq >= 'A' && cq <= 'Z' {
-				cq += 32
-			}
-			if cs != cq {
-				match = false
-				break
-			}
-		}
-		if match {
-			return true
-		}
-	}
-	return false
+	return b
 }

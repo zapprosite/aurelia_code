@@ -39,25 +39,25 @@ import (
 
 // app is the central application container, managing lifecycle and dependencies.
 type app struct {
-	cfg            *config.AppConfig
-	resolver       *runtime.PathResolver
-	instanceLock   *runtime.InstanceLock
+	cfg          *config.AppConfig
+	resolver     *runtime.PathResolver
+	instanceLock *runtime.InstanceLock
 
 	// Core Infrastructure
-	mem            *memory.MemoryManager
-	cronStore      *cron.SQLiteCronStore
-	mcpManager     *mcp.Manager
-	taskStore      *agent.SQLiteTaskStore
-	llmProvider    closableLLMProvider
+	mem         *memory.MemoryManager
+	cronStore   *cron.SQLiteCronStore
+	mcpManager  *mcp.Manager
+	taskStore   *agent.SQLiteTaskStore
+	llmProvider closableLLMProvider
 
 	// Features
-	pool           *telegram.BotPool          // S-32: multi-bot pool
-	primaryBot     *telegram.BotController    // S-32: primary bot reference (aurelia)
-	cronScheduler  *cron.Scheduler
-	cronCtx        context.Context
-	cronCancel     context.CancelFunc
-	heartbeat      *heartbeat.HeartbeatService
-	healthServer   *health.Server
+	pool          *telegram.BotPool       // S-32: multi-bot pool
+	primaryBot    *telegram.BotController // S-32: primary bot reference (aurelia)
+	cronScheduler *cron.Scheduler
+	cronCtx       context.Context
+	cronCancel    context.CancelFunc
+	heartbeat     *heartbeat.HeartbeatService
+	healthServer  *health.Server
 
 	// Voice Stack
 	voiceProcessor *voice.Processor
@@ -214,7 +214,6 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 		a.cfg.QdrantURL, a.cfg.QdrantAPIKey, "aurelia_skills",
 		a.cfg.QdrantEmbeddingModel, a.cfg.OllamaURL,
 	)
-	loop.WithSemanticRouter(semanticRouter)
 
 	skillLoader := skill.NewLoader(a.resolver.Skills(), projectSkillsDir)
 	if loadedSkills, err := skillLoader.LoadAll(); err == nil {
@@ -378,7 +377,12 @@ func (a *app) initVoice(logger *slog.Logger) error {
 
 	if a.cfg.VoiceCaptureEnabled {
 		if a.cfg.VoiceCaptureCommand == "" {
-			return fmt.Errorf("voice capture is enabled but voice_capture_command is missing")
+			logger.Warn("voice capture enabled but command is missing; leaving capture runtime disabled")
+			return nil
+		}
+		if missing := voice.MissingCommandPath(a.cfg.VoiceCaptureCommand); missing != "" {
+			logger.Warn("voice capture command path is unavailable; leaving capture runtime disabled", slog.String("path", missing))
+			return nil
 		}
 		a.voiceCapture = voice.NewCaptureWorker(
 			voiceSpool,
@@ -490,14 +494,40 @@ func (a *app) registerBotAPIRoutes(resolver *runtime.PathResolver, appCfg *confi
 		}
 		corsJSON(w)
 		type botStatus struct {
-			config.BotConfig
-			Running bool `json:"running"`
+			ID                string  `json:"id"`
+			Name              string  `json:"name"`
+			AllowedUserIDs    []int64 `json:"allowed_user_ids"`
+			PersonaID         string  `json:"persona_id"`
+			FocusArea         string  `json:"focus_area"`
+			LLMProvider       string  `json:"llm_provider,omitempty"`
+			LLMModel          string  `json:"llm_model,omitempty"`
+			EffectiveProvider string  `json:"effective_provider,omitempty"`
+			EffectiveModel    string  `json:"effective_model,omitempty"`
+			Enabled           bool    `json:"enabled"`
+			Running           bool    `json:"running"`
+			TokenPresent      bool    `json:"token_present"`
+			TokenPreview      string  `json:"token_preview,omitempty"`
 		}
 		cfgs := a.pool.Configs()
 		out := make([]botStatus, 0, len(cfgs))
 		for _, bc := range cfgs {
 			running := a.pool.Get(bc.ID) != nil
-			out = append(out, botStatus{BotConfig: bc, Running: running})
+			effectiveProvider, effectiveModel := a.effectiveBotLLM(bc, appCfg)
+			out = append(out, botStatus{
+				ID:                bc.ID,
+				Name:              bc.Name,
+				AllowedUserIDs:    bc.AllowedUserIDs,
+				PersonaID:         bc.PersonaID,
+				FocusArea:         bc.FocusArea,
+				LLMProvider:       bc.LLMProvider,
+				LLMModel:          bc.LLMModel,
+				EffectiveProvider: effectiveProvider,
+				EffectiveModel:    effectiveModel,
+				Enabled:           bc.Enabled,
+				Running:           running,
+				TokenPresent:      strings.TrimSpace(bc.Token) != "",
+				TokenPreview:      maskTokenPreview(bc.Token),
+			})
 		}
 		_ = json.NewEncoder(w).Encode(out)
 	}))
@@ -531,7 +561,21 @@ func (a *app) registerBotAPIRoutes(resolver *runtime.PathResolver, appCfg *confi
 		all := a.pool.Configs()
 		_ = config.SaveBots(resolver, all)
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(req)
+		effectiveProvider, effectiveModel := a.effectiveBotLLM(req, appCfg)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"id":                 req.ID,
+			"name":               req.Name,
+			"allowed_user_ids":   req.AllowedUserIDs,
+			"persona_id":         req.PersonaID,
+			"focus_area":         req.FocusArea,
+			"llm_provider":       req.LLMProvider,
+			"llm_model":          req.LLMModel,
+			"effective_provider": effectiveProvider,
+			"effective_model":    effectiveModel,
+			"enabled":            req.Enabled,
+			"token_present":      strings.TrimSpace(req.Token) != "",
+			"token_preview":      maskTokenPreview(req.Token),
+		})
 	}))
 
 	// DELETE /api/bots/remove?id=xxx
@@ -568,8 +612,37 @@ func (a *app) registerBotAPIRoutes(resolver *runtime.PathResolver, appCfg *confi
 	}))
 }
 
+func maskTokenPreview(token string) string {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return ""
+	}
+	if len(token) <= 10 {
+		return "***"
+	}
+	return token[:6] + "..." + token[len(token)-4:]
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func (a *app) effectiveBotLLM(botCfg config.BotConfig, appCfg *config.AppConfig) (string, string) {
+	if strings.TrimSpace(botCfg.LLMProvider) != "" || strings.TrimSpace(botCfg.LLMModel) != "" {
+		return firstNonEmpty(botCfg.LLMProvider, appCfg.LLMProvider), firstNonEmpty(botCfg.LLMModel, appCfg.LLMModel)
+	}
+	snapshot := buildLLMRuntimeSnapshot(a, time.Now().UTC())
+	return snapshot.EffectiveProvider, snapshot.EffectiveModel
+}
+
 func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (closableLLMProvider, error) {
-	if (cfg.LLMProvider == "openrouter" || cfg.LLMProvider == "ollama") && cfg.OpenRouterAPIKey != "" {
+	if cfg.LLMProvider == "openrouter" && cfg.OpenRouterAPIKey != "" {
 		return gateway.NewProvider(cfg)
 	}
 	switch cfg.LLMProvider {
@@ -589,7 +662,6 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 		return nil, fmt.Errorf("unsupported llm provider %q", cfg.LLMProvider)
 	}
 }
-
 
 func (a *app) start() {
 	logger := observability.Logger("cmd.app")
@@ -611,11 +683,13 @@ func (a *app) start() {
 		_ = a.voiceCapture.Start()
 	}
 
-	dashboard.RegisterRoute("/api/squad", func(w http.ResponseWriter, r *http.Request) {
+	teamRosterHandler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		_ = json.NewEncoder(w).Encode(agent.GetFixedSquad())
-	})
+	}
+	dashboard.RegisterRoute("/api/team", teamRosterHandler)
+	dashboard.RegisterRoute("/api/squad", teamRosterHandler) // legacy alias
 	// Expor gateway status ao dashboard
 	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
 		dashboard.RegisterRoute("/api/router/status", func(w http.ResponseWriter, r *http.Request) {
@@ -626,6 +700,14 @@ func (a *app) start() {
 	}
 	dashboard.RegisterRoute("/api/commands", dashboard.HandleCommands)
 	dashboard.RegisterRoute("/api/metrics", metrics.Handler())
+	dashboard.RegisterRoute("/api/status", dashboard.NewStatusHandler(func(r *http.Request) dashboard.StatusSnapshot {
+		return buildDashboardStatusSnapshot(a)
+	}))
+	dashboard.RegisterRoute("/api/runtime/llm", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		_ = json.NewEncoder(w).Encode(buildLLMRuntimeSnapshot(a, time.Now().UTC()))
+	}))
 
 	// S-26: The Brain — Qdrant semantic search endpoints
 	qdrantURL := a.cfg.QdrantURL
@@ -637,7 +719,7 @@ func (a *app) start() {
 		qdrantCollection = "conversation_memory"
 	}
 	qdrantAPIKey := a.cfg.QdrantAPIKey
-	dashboard.RegisterRoute("/api/brain/search", buildBrainSearchHandler(qdrantURL, qdrantCollection, qdrantAPIKey))
+	dashboard.RegisterRoute("/api/brain/search", buildBrainSearchHandler(qdrantURL, qdrantCollection, qdrantAPIKey, a.cfg.OllamaURL, a.cfg.QdrantEmbeddingModel))
 	dashboard.RegisterRoute("/api/brain/recent", buildBrainRecentHandler(qdrantURL, qdrantCollection, qdrantAPIKey))
 
 	// Proxy VRV homelab dashboard (/api/vrv/ → http://localhost:3333/)
@@ -817,7 +899,7 @@ func performOllamaWarmup(cfg *config.AppConfig) {
 		"stream": false,
 	}
 	body, _ := json.Marshal(payload)
-	
+
 	logger.Info("warming up local model", "model", cfg.LLMModel)
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	resp, err := http.DefaultClient.Do(req)

@@ -3,13 +3,17 @@ package cron
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/kocar/aurelia/internal/dashboard"
+	"github.com/kocar/aurelia/internal/observability"
 )
+
+var logger = observability.Logger("cron.scheduler")
 
 type Scheduler struct {
 	store   Store
@@ -67,7 +71,9 @@ func (s *Scheduler) RunDueJobs(ctx context.Context) (int, error) {
 	processed := 0
 	for _, job := range jobs {
 		if err := s.runSingleJob(ctx, now, job); err != nil {
-			return processed, err
+			logger.Error("cron run failed", slog.String("job_id", job.ID), slog.String("expr", job.CronExpr), slog.Any("err", err))
+			// S-2026: Continua operando mesmo que um job esteja zumbi ou malformado
+			continue
 		}
 		processed++
 	}
@@ -80,7 +86,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 	for {
 		if _, err := s.RunDueJobs(ctx); err != nil {
-			return err
+			logger.Error("scheduler loop error (critical store failure)", slog.Any("err", err))
 		}
 
 		select {
