@@ -82,8 +82,9 @@ func (s *OpenAICompatibleSynthesizer) MaxChars() int {
 	if s == nil {
 		return 3000
 	}
-	// Kokoro (GPU) handles long text with internal chunking.
-	if strings.Contains(strings.ToLower(s.model), "kokoro") {
+	// Kokoro/Kodoro (GPU) handles long text with internal chunking.
+	m := strings.ToLower(s.model)
+	if strings.Contains(m, "kokoro") || strings.Contains(m, "kodoro") {
 		return 50000
 	}
 	// Default safety limit for external APIs (OpenAI standard)
