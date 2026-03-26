@@ -30,9 +30,7 @@ Este é o índice central de governança para humanos e agentes.
 
 ## Fontes permanentes de governança
 
-- [DATA_GOVERNANCE.md](./DATA_GOVERNANCE.md)
-- [DATA_STACK_STANDARD.md](./DATA_STACK_STANDARD.md)
-- [SCHEMA_REGISTRY.md](./SCHEMA_REGISTRY.md)
+- [DATA_POLICY.md](./DATA_POLICY.md)
 - [OBSIDIAN_VAULT_STANDARD.md](./OBSIDIAN_VAULT_STANDARD.md)
 - [MODEL-STACK-POLICY.md](./MODEL-STACK-POLICY.md)
 - [SECRETS.md](./SECRETS.md)
