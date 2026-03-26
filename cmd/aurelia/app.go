@@ -226,6 +226,9 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 }
 
 func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
+	logger.Info("Aurelia Daemon starting", 
+		slog.String("mode", string(a.cfg.AureliaMode)),
+		slog.String("version", "starlight-2026"))
 	cwd, _ := os.Getwd()
 	projectPlaybookPath := filepath.Join(cwd, "docs", "PROJECT_PLAYBOOK.md")
 	projectSkillsDir := runtime.ProjectSkills(cwd)
@@ -418,7 +421,6 @@ func selectNotificationBot(cfg *config.AppConfig, pool *telegram.BotPool, primar
 		return primary
 	}
 	if bc := pool.Get(botID); bc != nil {
-		logger.Info("using dedicated notification bot", slog.String("bot_id", botID))
 		return bc
 	}
 	logger.Warn("configured notification bot not found; falling back to primary", slog.String("bot_id", botID))
