@@ -351,7 +351,7 @@ func resolveActiveSkill(skills map[string]skill.Skill, targetSkill string) *skil
 var defaultConversationTools = []string{
 	"read_file", "write_file", "list_dir", "run_command",
 	"web_search", "docker_control", "system_monitor", "service_control",
-	"create_schedule", "list_schedules",
+	"create_schedule", "list_schedules", "cpf_cnpj",
 }
 
 // voiceSystemPromptSuffix is appended to the system prompt when the user
