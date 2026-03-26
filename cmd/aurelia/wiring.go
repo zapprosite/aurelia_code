@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"os"
@@ -24,6 +25,33 @@ func buildToolRegistry() *agent.ToolRegistry {
 	registry.RegisterMemoryTools()
 	registry.RegisterVerifierTools() // Nova ferramenta de verificação
 	return registry
+}
+
+// registerHomelabTool registers the homelab_status tool.
+func registerHomelabTool(cfg *config.AppConfig, registry *agent.ToolRegistry) {
+	tools.RegisterHomelabTool(registry, cfg.OllamaURL, cfg.QdrantURL)
+}
+
+// maybeRegisterObsidianTool registers the obsidian_sync tool if ObsidianSyncEnabled.
+func maybeRegisterObsidianTool(cfg *config.AppConfig, registry *agent.ToolRegistry, db *sql.DB) {
+	if !cfg.ObsidianSyncEnabled || cfg.ObsidianVaultPath == "" {
+		return
+	}
+	tool := tools.NewObsidianSyncTool(
+		cfg.ObsidianVaultPath,
+		cfg.OllamaURL,
+		cfg.QdrantEmbeddingModel,
+		cfg.QdrantURL,
+		cfg.QdrantAPIKey,
+		cfg.QdrantCollection,
+		db,
+		observability.Logger("obsidian"),
+	)
+	if tool == nil {
+		return
+	}
+	registry.Register(tool.Definition(), tool.Execute)
+	observability.Logger("cmd.wiring").Info("obsidian_sync tool registered", slog.String("vault", cfg.ObsidianVaultPath))
 }
 
 func registerScheduleTools(registry *agent.ToolRegistry, cronStore *cron.SQLiteCronStore) *cron.Service {

@@ -4,11 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 )
+
+// ErrOllamaUnavailable is returned when the Ollama service cannot be reached.
+// Callers should fall back to lexical search (FilterPointsLexical) when they see this error.
+var ErrOllamaUnavailable = errors.New("ollama unavailable")
 
 type SemanticPoint struct {
 	ID      any
@@ -21,6 +26,30 @@ func NewSemanticHTTPClient(timeout time.Duration) *http.Client {
 		timeout = 10 * time.Second
 	}
 	return &http.Client{Timeout: timeout}
+}
+
+// CheckOllamaHealth returns nil if Ollama is reachable, ErrOllamaUnavailable otherwise.
+func CheckOllamaHealth(ctx context.Context, client *http.Client, ollamaURL string) error {
+	ollamaURL = strings.TrimRight(strings.TrimSpace(ollamaURL), "/")
+	if ollamaURL == "" {
+		return ErrOllamaUnavailable
+	}
+	if client == nil {
+		client = NewSemanticHTTPClient(3 * time.Second)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ollamaURL+"/api/tags", nil)
+	if err != nil {
+		return ErrOllamaUnavailable
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrOllamaUnavailable, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: HTTP %s", ErrOllamaUnavailable, resp.Status)
+	}
+	return nil
 }
 
 func EmbedText(ctx context.Context, client *http.Client, ollamaURL, model, text string) ([]float32, error) {
@@ -55,7 +84,7 @@ func EmbedText(ctx context.Context, client *http.Client, ollamaURL, model, text 
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", ErrOllamaUnavailable, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {

@@ -1,6 +1,6 @@
 # ADR 20260325: Basico Bem Feito para Swarm, Memoria Infinita e Dashboard Operacional
 
-**Status:** Proposto
+**Status:** Substituída por `20260325-basico-bem-feito-v2-implementation.md`
 **Data:** 2026-03-25
 **Autoridade:** Will (Principal Engineer) + Aurelia (Arquiteta Principal)
 **Escopo:** runtime multi-bot, swarm/team, memoria, dashboard e contratos de verdade
