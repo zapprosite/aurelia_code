@@ -23,6 +23,16 @@ var homelabMonitorCron = cron.CronJob{
 		" Se todos estiverem saudáveis, NÃO envie mensagem (STAY SILENT).",
 }
 
+var repoGuardianCron = cron.CronJob{
+	ScheduleType: "cron",
+	CronExpr:     "0 */6 * * *",
+	Prompt: "[sys:repo-guardian] Você é o guardião do repositório Aurelia." +
+		" Execute a skill repo-guardian: audite todos os arquivos .md, verifique links quebrados, ADRs órfãs e arquivos fora do lugar." +
+		" Use mcp__ai-context__explore para descoberta semântica e mcp__ai-context__sync para regenerar o codebase-map." +
+		" Reporte: contagem de .md, problemas encontrados, ações tomadas." +
+		" Se tudo estiver em ordem, responda: '✓ Repositório organizado (sem anomalias detectadas)'.",
+}
+
 var systemCronDefs = []cron.CronJob{
 	{
 		ScheduleType: "cron",
@@ -122,6 +132,32 @@ func seedObsidianCron(ctx context.Context, store *cron.SQLiteCronStore, cfg *con
 		return
 	}
 	logger.Info("seed_obsidian: cron criado", slog.String("vault", cfg.ObsidianVaultPath))
+}
+
+// seedRepoGuardianCron registra o cron de governança do repositório (idempotente).
+func seedRepoGuardianCron(ctx context.Context, store *cron.SQLiteCronStore, adminChatID int64) {
+	logger := observability.Logger("cmd.seed_crons")
+	svc := cron.NewService(store, nil)
+
+	existing, err := store.ListJobsByChat(ctx, adminChatID)
+	if err != nil {
+		logger.Warn("seed_repo_guardian: failed to list jobs", slog.Any("err", err))
+		return
+	}
+	for _, j := range existing {
+		if extractSysMarker(j.Prompt) == "[sys:repo-guardian]" {
+			return
+		}
+	}
+
+	def := repoGuardianCron
+	def.OwnerUserID = "system"
+	def.TargetChatID = adminChatID
+	if _, err := svc.CreateJob(ctx, def); err != nil {
+		logger.Warn("seed_repo_guardian: failed to create cron", slog.Any("err", err))
+		return
+	}
+	logger.Info("seed_repo_guardian: cron criado", slog.String("expr", def.CronExpr))
 }
 
 // seedSystemCrons cria os cron jobs sistêmicos caso ainda não existam.

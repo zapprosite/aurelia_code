@@ -315,6 +315,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	a.cronCancel = cronCancel
 
 	seedSystemCrons(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
+	seedRepoGuardianCron(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
 
 	// S-22: Squad Live Load — updates agent metrics every 10s
 	agent.StartLiveLoad(a.cronScheduler, ollamaURL, a.cfg.OpenRouterAPIKey)
