@@ -122,6 +122,7 @@ type AppConfig struct {
 	SupabaseEnabled          bool
 	ObsidianVaultPath        string
 	ObsidianSyncEnabled      bool
+	AureliaMode              string // "sovereign" or "lite"
 }
 
 type fileConfig struct {
@@ -188,6 +189,7 @@ type fileConfig struct {
 	SupabaseEnabled          bool    `json:"supabase_enabled"`
 	ObsidianVaultPath        string  `json:"obsidian_vault_path"`
 	ObsidianSyncEnabled      bool    `json:"obsidian_sync_enabled"`
+	AureliaMode              string  `json:"aurelia_mode"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
@@ -309,6 +311,9 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("OBSIDIAN_VAULT_PATH"); env != "" {
 		cfg.ObsidianVaultPath = env
 	}
+	if env := os.Getenv("AURELIA_MODE"); env != "" {
+		cfg.AureliaMode = strings.ToLower(env)
+	}
 }
 
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {
@@ -355,6 +360,7 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		OllamaURL:                "http://127.0.0.1:11434",
 		DashboardPort:            defaultDashboardPort,
 		HealthPort:               defaultHealthPort,
+		AureliaMode:              "sovereign",
 	}
 }
 
@@ -592,6 +598,27 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.HealthPort <= 0 {
 		cfg.HealthPort = defaults.HealthPort
 	}
+	if cfg.AureliaMode == "" {
+		cfg.AureliaMode = "sovereign"
+	}
+
+	// Apply Lite Mode overrides if enabled
+	if cfg.AureliaMode == "lite" {
+		if cfg.LLMProvider == "ollama" {
+			// If no keys for cloud, we keep ollama but maybe a smaller model
+			// But usually lite means preference for Cloud to save local resources
+			if cfg.OpenRouterAPIKey != "" {
+				cfg.LLMProvider = "openrouter"
+				cfg.LLMModel = "anthropic/claude-3-haiku"
+			} else if cfg.GoogleAPIKey != "" {
+				cfg.LLMProvider = "google"
+				cfg.LLMModel = "gemini-2.0-flash"
+			}
+		}
+		// In lite mode, we might want to disable local voice capture if not configured
+		cfg.VoiceEnabled = cfg.TelegramBotToken != "" && cfg.VoiceEnabled
+	}
+
 	return cfg
 }
 
@@ -726,6 +753,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		SupabaseEnabled:          cfg.SupabaseEnabled,
 		ObsidianVaultPath:        cfg.ObsidianVaultPath,
 		ObsidianSyncEnabled:      cfg.ObsidianSyncEnabled,
+		AureliaMode:              cfg.AureliaMode,
 	}
 }
 
