@@ -1,11 +1,14 @@
 package persona
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/kocar/aurelia/internal/memory"
+	"gopkg.in/yaml.v3"
 )
 
 // Config holds the persona frontmatter configuration.
@@ -156,4 +159,66 @@ func buildLongTermMemoryBlock(facts []memory.Fact, notes []memory.Note) string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+// ── File helpers ──────────────────────────────────────────────────────────────
+
+func readOptionalFile(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return string(content), nil
+}
+
+func readPersonaFile(path, kind string) ([]byte, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s file: %w", kind, err)
+	}
+	return content, nil
+}
+
+func parseIdentityFrontmatter(identityBytes []byte) (Config, string, error) {
+	var config Config
+	parts := bytes.SplitN(identityBytes, []byte("---"), 3)
+	if len(parts) != 3 {
+		return config, string(bytes.TrimSpace(identityBytes)), nil
+	}
+	if err := yaml.Unmarshal(parts[1], &config); err != nil {
+		return Config{}, "", fmt.Errorf("failed to parse yaml frontmatter: %w", err)
+	}
+	return config, string(bytes.TrimSpace(parts[2])), nil
+}
+
+func buildPromptBody(identityBody string, soulBytes, userBytes []byte) string {
+	return fmt.Sprintf("%s\n\n%s\n\n%s",
+		identityBody,
+		string(bytesTrimSpace(soulBytes)),
+		string(bytesTrimSpace(userBytes)),
+	)
+}
+
+func buildSystemPrompt(identity CanonicalIdentity, promptBody string) string {
+	return fmt.Sprintf("%s\n\n%s", buildCanonicalIdentityBlock(identity), promptBody)
+}
+
+func bytesTrimSpace(content []byte) []byte {
+	return []byte(strings.TrimSpace(string(content)))
+}
+
+// RenderSystemPrompt assembles the final prompt with canonical identity and long-term memory.
+func (p *Persona) RenderSystemPrompt(identity CanonicalIdentity, facts []memory.Fact, notes []memory.Note) string {
+	if p == nil {
+		return ""
+	}
+	sections := []string{buildCanonicalIdentityBlock(identity)}
+	if memoryBlock := buildLongTermMemoryBlock(facts, notes); memoryBlock != "" {
+		sections = append(sections, memoryBlock)
+	}
+	sections = append(sections, strings.TrimSpace(p.PromptBody))
+	return strings.Join(sections, "\n\n")
 }
