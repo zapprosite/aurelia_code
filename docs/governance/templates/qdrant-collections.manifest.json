@@ -1,0 +1,78 @@
+{
+  "collections": [
+    {
+      "name": "memory_items",
+      "vector_size": 1024,
+      "distance": "Cosine",
+      "required_payload_fields": [
+        "app_id",
+        "repo_id",
+        "environment",
+        "canonical_bot_id",
+        "domain",
+        "source_system",
+        "source_id",
+        "text",
+        "ts",
+        "version"
+      ],
+      "payload_indexes": [
+        "app_id",
+        "repo_id",
+        "environment",
+        "canonical_bot_id",
+        "domain",
+        "source_system"
+      ]
+    },
+    {
+      "name": "knowledge_items",
+      "vector_size": 1024,
+      "distance": "Cosine",
+      "required_payload_fields": [
+        "app_id",
+        "repo_id",
+        "environment",
+        "canonical_bot_id",
+        "category",
+        "source_system",
+        "source_id",
+        "text",
+        "ts",
+        "version"
+      ],
+      "payload_indexes": [
+        "app_id",
+        "repo_id",
+        "environment",
+        "canonical_bot_id",
+        "category",
+        "source_system"
+      ]
+    },
+    {
+      "name": "skills_index",
+      "vector_size": 1024,
+      "distance": "Cosine",
+      "required_payload_fields": [
+        "app_id",
+        "repo_id",
+        "environment",
+        "skill_id",
+        "category",
+        "source_system",
+        "source_id",
+        "text",
+        "ts",
+        "version"
+      ],
+      "payload_indexes": [
+        "app_id",
+        "repo_id",
+        "environment",
+        "skill_id",
+        "category"
+      ]
+    }
+  ]
+}

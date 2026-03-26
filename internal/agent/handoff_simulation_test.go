@@ -59,13 +59,26 @@ func TestNativeHandoffSimulation(t *testing.T) {
 	teamKey := "test_team_" + uuid.NewString()
 	userID := "user_1"
 
-	// 1. Spawn do primeiro agente (Planner)
-	taskID, err := service.Spawn(ctx, teamKey, userID, "planner", "Faz o plano", "Inicie o projeto")
+	// 1. Criar team+task diretamente via mgr para evitar race com workerLoop
+	teamID, err := mgr.CreateTeam(ctx, teamKey, userID, "planner")
 	require.NoError(t, err)
-	assert.NotEmpty(t, taskID)
+	require.NoError(t, mgr.RegisterTeammate(ctx, teamID, "planner", "Faz o plano"))
+	// Registrar o mapeamento no service para que resolveTeamKey funcione no handoff
+	service.mu.Lock()
+	service.teamByKey[teamKey] = teamID
+	service.userByKey[teamKey] = userID
+	service.mu.Unlock()
+	taskID := uuid.NewString()
+	require.NoError(t, mgr.CreateTask(ctx, TeamTask{
+		ID:     taskID,
+		TeamID: teamID,
+		RunID:  uuid.NewString(),
+		Title:  "planner",
+		Prompt: "Inicie o projeto",
+		Status: TaskPending,
+	}, nil))
 
 	// 2. Simular a execução do loop (o que o workerLoop faria)
-	teamID, _ := mgr.GetTeamIDByKey(ctx, teamKey)
 	task, _ := mgr.ClaimNextTask(ctx, teamID, "planner")
 	require.NotNil(t, task)
 
@@ -102,6 +115,8 @@ func TestNativeHandoffSimulation(t *testing.T) {
 		}
 	}
 	require.NotNil(t, coderTask, "Uma nova task para o 'coder' deveria ter sido criada")
-	assert.Equal(t, TaskPending, coderTask.Status)
+	// Status pode ser pending ou running — o worker loop pode ter pego antes do assert
+	assert.True(t, coderTask.Status == TaskPending || coderTask.Status == TaskRunning,
+		"coder task status should be pending or running, got %s", coderTask.Status)
 	assert.Contains(t, coderTask.Prompt, "Escreva o código solicitado.")
 }

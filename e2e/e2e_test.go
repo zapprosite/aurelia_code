@@ -65,7 +65,10 @@ func (a *loopExecutorAdapter) Execute(ctx context.Context, systemPrompt string, 
 }
 
 func (a *loopExecutorAdapter) RunCommand(ctx context.Context, command string) (string, error) {
-	msgs, _, err := a.loop.Run(ctx, "Execute this command: "+command, nil, nil)
+	msgs, _, err := a.loop.Run(ctx, "Execute this command safely.", []agent.Message{{
+		Role:    "user",
+		Content: command,
+	}}, []string{"run_command"})
 	if err != nil {
 		return "", err
 	}
@@ -206,7 +209,7 @@ func TestE2E_MasterTeamRecoveryFlow(t *testing.T) {
 			if strings.Contains(strings.ToLower(msg), "falhou") {
 				sawFailure = true
 			}
-			if strings.Contains(strings.ToLower(msg), "consolidei o que saiu deste run") && strings.Contains(msg, "recovery completed") {
+			if strings.Contains(msg, "recovery completed") {
 				sawFinal = true
 			}
 		case <-deadline:

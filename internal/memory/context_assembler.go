@@ -1,9 +1,7 @@
 package memory
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -11,13 +9,14 @@ import (
 )
 
 type ContextAssembler struct {
-	qdrantURL      string
-	qdrantAPIKey   string
+	qdrantURL        string
+	qdrantAPIKey     string
 	qdrantCollection string
-	embedURL       string
-	embeddingModel string
-	mem            *MemoryManager
-	client         *http.Client
+	ollamaURL        string
+	embedURL         string
+	embeddingModel   string
+	mem              *MemoryManager
+	client           *http.Client
 }
 
 func NewContextAssembler(qdrantURL, apiKey, collection, embeddingModel, ollamaURL string, mem *MemoryManager) *ContextAssembler {
@@ -25,22 +24,37 @@ func NewContextAssembler(qdrantURL, apiKey, collection, embeddingModel, ollamaUR
 		qdrantURL:        strings.TrimRight(strings.TrimSpace(qdrantURL), "/"),
 		qdrantAPIKey:     strings.TrimSpace(apiKey),
 		qdrantCollection: strings.TrimSpace(collection),
+		ollamaURL:        strings.TrimRight(strings.TrimSpace(ollamaURL), "/"),
 		embedURL:         strings.TrimRight(strings.TrimSpace(ollamaURL), "/") + "/api/embed",
 		embeddingModel:   strings.TrimSpace(embeddingModel),
 		mem:              mem,
-		client:           &http.Client{Timeout: 10 * time.Second},
+		client:           NewSemanticHTTPClient(10 * time.Second),
 	}
 }
 
 // AssembleContext returns a formatted markdown string joining semantic matches and recent facts/notes.
 func (a *ContextAssembler) AssembleContext(ctx context.Context, query string) string {
+	return a.AssembleContextForBot(ctx, "", query)
+}
+
+// AssembleContextForBot scopes semantic results to a specific bot when provided.
+func (a *ContextAssembler) AssembleContextForBot(ctx context.Context, botID, query string) string {
 	var sb strings.Builder
 
 	// 1. Fetch from Qdrant
-	if qdrantRes, err := a.searchQdrant(ctx, query); err == nil && qdrantRes != "" {
-		sb.WriteString("Arquivos Históricos (Qdrant Semantic Search):\n")
+	if qdrantRes, mode, err := a.searchQdrant(ctx, botID, query); qdrantRes != "" {
+		title := "Arquivos Históricos (Qdrant Semantic Search):\n"
+		if mode == "lexical-fallback" {
+			title = "Arquivos Históricos (Qdrant Fallback Lexical):\n"
+		}
+		sb.WriteString(title)
 		sb.WriteString(qdrantRes)
 		sb.WriteString("\n\n")
+		if err != nil && mode == "lexical-fallback" {
+			sb.WriteString("[memory/degraded] Busca semântica indisponível; usando fallback lexical.\n\n")
+		}
+	} else if err != nil {
+		sb.WriteString(fmt.Sprintf("[memory/degraded] Busca semântica indisponível: %v\n\n", err))
 	}
 
 	// 2. Fetch from SQLite Notes
@@ -56,105 +70,75 @@ func (a *ContextAssembler) AssembleContext(ctx context.Context, query string) st
 	return strings.TrimSpace(sb.String())
 }
 
-func (a *ContextAssembler) searchQdrant(ctx context.Context, text string) (string, error) {
+func (a *ContextAssembler) searchQdrant(ctx context.Context, botID, text string) (string, string, error) {
 	if a.qdrantURL == "" || text == "" {
-		return "", nil
+		return "", "", nil
 	}
 
-	// 1. Embed Query
-	vector, err := a.embed(ctx, text)
-	if err != nil {
-		return "", err
+	vector, semanticErr := EmbedText(ctx, a.client, a.ollamaURL, a.embeddingModel, text)
+	if semanticErr == nil {
+		points, err := SearchSemantic(ctx, a.client, a.qdrantURL, a.qdrantCollection, a.qdrantAPIKey, vector, 5)
+		if err == nil {
+			points = FilterPointsByCanonicalBotID(points, botID)
+			if rendered := formatSemanticPoints(points, 0.40); rendered != "" {
+				return rendered, "semantic", nil
+			}
+		} else {
+			semanticErr = err
+		}
 	}
 
-	// 2. Search Qdrant
-	body, err := json.Marshal(map[string]any{
-		"vector":       vector,
-		"limit":        3,
-		"with_payload": true,
-	})
-	if err != nil {
-		return "", err
+	points, scrollErr := ScrollPoints(ctx, a.client, a.qdrantURL, a.qdrantCollection, a.qdrantAPIKey, 50)
+	if scrollErr != nil {
+		if semanticErr != nil {
+			return "", "degraded", fmt.Errorf("%v; fallback lexical failed: %w", semanticErr, scrollErr)
+		}
+		return "", "degraded", scrollErr
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.qdrantURL+"/collections/"+a.qdrantCollection+"/points/search", bytes.NewReader(body))
-	if err != nil {
-		return "", err
+	points = FilterPointsByCanonicalBotID(points, botID)
+	filtered := FilterPointsLexical(points, text)
+	if len(filtered) == 0 {
+		return "", "degraded", semanticErr
 	}
-	req.Header.Set("Content-Type", "application/json")
-	if a.qdrantAPIKey != "" {
-		req.Header.Set("api-key", a.qdrantAPIKey)
-	}
+	return formatSemanticPoints(filtered, 0), "lexical-fallback", semanticErr
+}
 
-	resp, err := a.client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return "", fmt.Errorf("qdrant search returned %s", resp.Status)
-	}
-
-	var searchRes struct {
-		Result []struct {
-			Score   float64        `json:"score"`
-			Payload map[string]any `json:"payload"`
-		} `json:"result"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&searchRes); err != nil {
-		return "", err
-	}
-
+func formatSemanticPoints(points []SemanticPoint, minScore float64) string {
 	var out strings.Builder
-	for _, hit := range searchRes.Result {
-		// Minimum certainty threshold
-		if hit.Score < 0.4 {
+	for _, hit := range points {
+		if hit.Score > 0 && hit.Score < minScore {
 			continue
 		}
-		
-		transcript, _ := hit.Payload["transcript"].(string)
-		if transcript != "" {
-			out.WriteString(fmt.Sprintf("> (Score: %.2f) %s\n", hit.Score, transcript))
+
+		payload := NormalizeSemanticPayload(hit.Payload)
+		text := ExtractSearchableText(payload)
+		if text == "" {
+			continue
 		}
+
+		var labels []string
+		if botID := firstString(payload, "canonical_bot_id"); botID != "" {
+			labels = append(labels, botID)
+		}
+		if domain := firstString(payload, "domain"); domain != "" {
+			labels = append(labels, domain)
+		}
+		prefix := ""
+		if len(labels) > 0 {
+			prefix = "[" + strings.Join(labels, "/") + "] "
+		}
+
+		if hit.Score > 0 {
+			out.WriteString(fmt.Sprintf("> (Score: %.2f) %s%s\n", hit.Score, prefix, text))
+			continue
+		}
+		out.WriteString(fmt.Sprintf("> %s%s\n", prefix, text))
 	}
 
-	return out.String(), nil
+	return out.String()
 }
 
 func (a *ContextAssembler) embed(ctx context.Context, text string) ([]float32, error) {
-	body, err := json.Marshal(map[string]any{
-		"model": a.embeddingModel,
-		"input": text,
-	})
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.embedURL, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := a.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("ollama embed returned %s", resp.Status)
-	}
-
-	var payload struct {
-		Embeddings [][]float32 `json:"embeddings"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return nil, err
-	}
-	if len(payload.Embeddings) == 0 || len(payload.Embeddings[0]) == 0 {
-		return nil, fmt.Errorf("ollama embed returned no vectors")
-	}
-	return payload.Embeddings[0], nil
+	return EmbedText(ctx, a.client, a.ollamaURL, a.embeddingModel, text)
 }

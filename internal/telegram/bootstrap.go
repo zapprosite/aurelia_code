@@ -21,7 +21,7 @@ func (bc *BotController) handleStatus(c telebot.Context) error {
 	}
 
 	// Persistir o comando do usuário para manter contexto (ex: "Resolva !")
-	session := newInputSession(c, c.Text())
+	session := bc.newInputSession(c, c.Text())
 	_ = bc.persistIncomingContext(session, c.Sender().ID)
 
 	data, err := bc.healthReporter.GatewayStatusJSON()

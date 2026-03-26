@@ -57,16 +57,18 @@ type TaskEvent struct {
 }
 
 type TeamStatusSnapshot struct {
-	TeamKey    string
-	TeamID     string
-	TeamStatus string
-	Pending    int
-	Running    int
-	Blocked    int
-	Completed  int
-	Failed     int
-	Cancelled  int
-	TotalTasks int
+	TeamKey           string
+	TeamID            string
+	TeamStatus        string
+	CoordinationModes []string
+	CoordinationLabel string
+	Pending           int
+	Running           int
+	Blocked           int
+	Completed         int
+	Failed            int
+	Cancelled         int
+	TotalTasks        int
 }
 
 type TeamManager interface {

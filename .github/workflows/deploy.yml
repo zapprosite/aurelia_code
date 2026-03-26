@@ -1,0 +1,131 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:   # permite disparar manualmente pela UI do GitHub
+
+jobs:
+  deploy:
+    name: Build & Deploy to Homelab
+    runs-on: ubuntu-latest
+    # Só roda em push para main (não em PRs)
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.8'
+          cache: true
+
+      - name: Test (gate — deploy não roda se testes quebrarem)
+        run: go test ./... -count=1
+
+      - name: Build binary (linux/amd64, CGO_ENABLED=0)
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags="-s -w" \
+            -o ./build/aurelia ./cmd/aurelia
+          ls -lah ./build/aurelia
+
+      - name: Deploy to homelab via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOMELAB_HOST }}
+          username: ${{ secrets.HOMELAB_USER }}
+          key: ${{ secrets.HOMELAB_SSH_KEY }}
+          port: ${{ secrets.HOMELAB_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            echo "=== Aurélia deploy $(date) ==="
+
+            # Recebe o binário via SCP (próximo step)
+            # Aqui só prepara o ambiente
+            mkdir -p /tmp/aurelia-deploy
+
+      - name: Upload binary via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOMELAB_HOST }}
+          username: ${{ secrets.HOMELAB_USER }}
+          key: ${{ secrets.HOMELAB_SSH_KEY }}
+          port: ${{ secrets.HOMELAB_SSH_PORT || 22 }}
+          source: "./build/aurelia"
+          target: "/tmp/aurelia-deploy/"
+          strip_components: 2
+
+      - name: Atomic swap & restart
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOMELAB_HOST }}
+          username: ${{ secrets.HOMELAB_USER }}
+          key: ${{ secrets.HOMELAB_SSH_KEY }}
+          port: ${{ secrets.HOMELAB_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            NEW=/tmp/aurelia-deploy/aurelia
+            INSTALLED=/usr/local/bin/aurelia
+            BACKUP=/usr/local/bin/aurelia.bak
+
+            echo "Binary novo: $(ls -lah $NEW)"
+
+            # Backup do binário atual
+            sudo cp $INSTALLED $BACKUP
+
+            # Stop → swap → start (downtime < 3s)
+            sudo systemctl stop aurelia
+            sudo cp $NEW $INSTALLED
+            sudo chmod +x $INSTALLED
+            sudo systemctl start aurelia
+
+            # Aguarda health check
+            sleep 5
+            STATUS=$(curl -s http://127.0.0.1:8484/health | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])" 2>/dev/null || echo "unreachable")
+            echo "Health check: $STATUS"
+
+            if [ "$STATUS" != "ok" ]; then
+              echo "ROLLBACK: health check falhou, restaurando backup"
+              sudo systemctl stop aurelia
+              sudo cp $BACKUP $INSTALLED
+              sudo systemctl start aurelia
+              exit 1
+            fi
+
+            # Limpa temporários
+            rm -f $NEW $BACKUP
+            echo "Deploy concluído: $(date)"
+
+      - name: Notify via Aurelia (impersonate)
+        if: success()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOMELAB_HOST }}
+          username: ${{ secrets.HOMELAB_USER }}
+          key: ${{ secrets.HOMELAB_SSH_KEY }}
+          port: ${{ secrets.HOMELAB_SSH_PORT || 22 }}
+          script: |
+            COMMIT="${{ github.sha }}"
+            MSG="Deploy realizado: commit ${COMMIT:0:7} em $(date '+%d/%m %H:%M'). Health: ok."
+            curl -s -X POST http://127.0.0.1:8484/v1/telegram/impersonate \
+              -H "Content-Type: application/json" \
+              -d "{\"text\": \"$MSG\", \"bot_id\": \"aurelia\"}" || true
+
+      - name: Notify on failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOMELAB_HOST }}
+          username: ${{ secrets.HOMELAB_USER }}
+          key: ${{ secrets.HOMELAB_SSH_KEY }}
+          port: ${{ secrets.HOMELAB_SSH_PORT || 22 }}
+          script: |
+            curl -s -X POST http://127.0.0.1:8484/v1/telegram/impersonate \
+              -H "Content-Type: application/json" \
+              -d '{"text": "DEPLOY FALHOU — rollback aplicado. Verifique GitHub Actions.", "bot_id": "aurelia"}' || true

@@ -9,12 +9,12 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-// SquadStatusReporter provides squad agent status for the /status command.
+// SquadStatusReporter provides team agent status for the /status command.
 type SquadStatusReporter interface {
 	GetSquadStatus() []AgentStatus
 }
 
-// AgentStatus is a snapshot of one squad member's status.
+// AgentStatus is a snapshot of one team member's status.
 type AgentStatus struct {
 	Name   string
 	Icon   string
@@ -30,14 +30,14 @@ type CronNextJobReporter interface {
 
 // NextJob represents an upcoming scheduled job.
 type NextJob struct {
-	Name    string
-	NextIn  string
+	Name   string
+	NextIn string
 }
 
 // startedAt is the process start time, used for uptime calculation.
 var startedAt = time.Now()
 
-// SetSquadReporter wires the squad reporter.
+// SetSquadReporter wires the team reporter.
 func (bc *BotController) SetSquadReporter(r SquadStatusReporter) {
 	bc.squadReporter = r
 }
@@ -47,11 +47,11 @@ func (bc *BotController) SetCronJobReporter(r CronNextJobReporter) {
 	bc.cronJobReporter = r
 }
 
-// handleSquadStatus builds and sends a formatted squad + cron status message.
+// handleSquadStatus builds and sends a formatted team + cron status message.
 func (bc *BotController) handleSquadStatus(c telebot.Context) error {
 	var sb strings.Builder
 
-	// Squad
+	// Team
 	if bc.squadReporter != nil {
 		agents := bc.squadReporter.GetSquadStatus()
 		online := 0
@@ -60,7 +60,7 @@ func (bc *BotController) handleSquadStatus(c telebot.Context) error {
 				online++
 			}
 		}
-		sb.WriteString(fmt.Sprintf("🟢 Squad Online (%d/%d)\n", online, len(agents)))
+		sb.WriteString(fmt.Sprintf("🟢 Team Online (%d/%d)\n", online, len(agents)))
 		for i, a := range agents {
 			prefix := "├─"
 			if i == len(agents)-1 {
@@ -75,7 +75,7 @@ func (bc *BotController) handleSquadStatus(c telebot.Context) error {
 			sb.WriteString(fmt.Sprintf("%s %s %s — %s %d%%\n", prefix, statusIcon, a.Name, a.Status, a.Load))
 		}
 	} else {
-		sb.WriteString("Squad: indisponível\n")
+		sb.WriteString("Team: indisponível\n")
 	}
 
 	// Crons
