@@ -23,6 +23,19 @@ var homelabMonitorCron = cron.CronJob{
 		" Se todos estiverem saudáveis, NÃO envie mensagem (STAY SILENT).",
 }
 
+var controleDBCron = cron.CronJob{
+	ScheduleType: "cron",
+	CronExpr:     "0 9 * * 1", // toda segunda-feira às 09:00
+	Prompt: "[sys:controle-db-audit] Você é o CONTROLE DB. Execute a auditoria semanal da camada de dados:" +
+		" 1) Liste todas as collections do Qdrant (curl http://127.0.0.1:6333/collections) e compare com a lista canônica (aurelia_skills, conversation_memory)." +
+		" 2) Verifique tamanho do SQLite e integridade (PRAGMA integrity_check)." +
+		" 3) Confirme que db_audit_log existe — se não existir, crie." +
+		" 4) Detecte tabelas fora do schema canônico." +
+		" 5) Cheque WAL size." +
+		" 6) Grave o relatório em db_audit_log com action=INVENTORY." +
+		" Se tudo estiver OK responda: '✓ Auditoria DB semanal concluída — sem anomalias'. Se houver problema, detalhe com risco e ação sugerida.",
+}
+
 var repoGuardianCron = cron.CronJob{
 	ScheduleType: "cron",
 	CronExpr:     "0 */6 * * *",
@@ -132,6 +145,32 @@ func seedObsidianCron(ctx context.Context, store *cron.SQLiteCronStore, cfg *con
 		return
 	}
 	logger.Info("seed_obsidian: cron criado", slog.String("vault", cfg.ObsidianVaultPath))
+}
+
+// seedControleDBCron registra a auditoria semanal de dados (idempotente).
+func seedControleDBCron(ctx context.Context, store *cron.SQLiteCronStore, adminChatID int64) {
+	logger := observability.Logger("cmd.seed_crons")
+	svc := cron.NewService(store, nil)
+
+	existing, err := store.ListJobsByChat(ctx, adminChatID)
+	if err != nil {
+		logger.Warn("seed_controle_db: failed to list jobs", slog.Any("err", err))
+		return
+	}
+	for _, j := range existing {
+		if extractSysMarker(j.Prompt) == "[sys:controle-db-audit]" {
+			return
+		}
+	}
+
+	def := controleDBCron
+	def.OwnerUserID = "system"
+	def.TargetChatID = adminChatID
+	if _, err := svc.CreateJob(ctx, def); err != nil {
+		logger.Warn("seed_controle_db: failed to create cron", slog.Any("err", err))
+		return
+	}
+	logger.Info("seed_controle_db: cron criado", slog.String("expr", def.CronExpr))
 }
 
 // seedRepoGuardianCron registra o cron de governança do repositório (idempotente).
