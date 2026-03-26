@@ -44,6 +44,9 @@ Este é o índice central de governança para humanos e agentes.
 - regras executáveis em `.agent/rules/`
 - `sync-ai-context` obrigatório em slice não trivial, handoff e merge
 - `sync-ai-context` dispensável em microedições sem drift semântico
+- **Paridade .env**: .env e .env.example devem ser espelhos estruturais (Zero Drift)
+- **Zero Hardcode**: placeholders {chave-para-env} obrigatórios para segredos no código
+- **Persistência**: Proibida a deleção do arquivo .env por agentes (Permissão Humana Exclusiva)
 
 Comando canônico:
 
@@ -78,6 +81,17 @@ Destino correto:
 - deploy e rollout
 - segurança e governança
 
+### 1.4 Persistent Configuration Deletion
+```bash
+# FORBIDDEN: Delete the environment configuration (ONLY HUMAN CAN DELETE)
+rm .env
+rm -f .env
+rm /home/will/aurelia/.env
+```
+
+**Why:** Deleting the `.env` file wipes out the identity and infrastructure secrets of the Sovereign system.
+
+### 1.5 Docker Catastrophe
 ## Modo Nonstop por Slice
 
 Quando a slice precisa continuar entre sessões ou agentes, o padrão oficial é:

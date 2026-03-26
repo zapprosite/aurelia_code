@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PLACEHOLDER="{chave-secrets}"
+PLACEHOLDER="{chave-para-env}"
 
 echo "🛰️ Iniciando Enterprise Scrubbing..."
 
@@ -55,7 +55,7 @@ for pattern in "${PATTERNS[@]}"; do
     # Nota: para padrões complexos com captura, simplificamos para manter a chave do campo.
     if [[ "$pattern" == *[:=]* ]]; then
         # Se contiver := ou =, tentamos preservar o prefixo
-        # Ex: api_key: "REAL_KEY" -> api_key: "{chave-secrets}"
+        # Ex: api_key: "REAL_KEY" -> api_key: "{chave-para-env}"
         find "$REPO_ROOT" -type f $FIND_EXCLUDES -exec sed -i -E "s/($pattern)/\2: \"$PLACEHOLDER\"/g" {} + 2>/dev/null || true
         # Fallback simples se a captura falhar
         find "$REPO_ROOT" -type f $FIND_EXCLUDES -exec sed -i -E "s/$pattern/secret: \"$PLACEHOLDER\"/g" {} + 2>/dev/null || true
@@ -68,6 +68,6 @@ done
 echo "✅ Scrubbing concluído. Varrendo códigos de retorno..."
 
 # Garantir que nenhum .env inesperado foi deixado
-find "$REPO_ROOT" -name ".env" ! -name ".env.example" -type f -delete 2>/dev/null || true
+# find "$REPO_ROOT" -name ".env" ! -name ".env.example" -type f -delete 2>/dev/null || true
 
 echo "Done."
