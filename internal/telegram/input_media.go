@@ -47,7 +47,7 @@ func (bc *BotController) handleTranscreverCommand(c telebot.Context) error {
 	if len(args) > 0 {
 		// handle as URL
 		url := args[0]
-		session := newInputSession(c, url)
+		session := bc.newInputSession(c, url)
 		return bc.handleMediaURL(c, session)
 	}
 
@@ -87,7 +87,7 @@ func (bc *BotController) processMediaFile(c telebot.Context, file *telebot.File,
 		return SendContextText(c, "❌ Falha na transcrição: "+err.Error())
 	}
 
-	session := newInputSession(c, "[Processamento Manual]")
+	session := bc.newInputSession(c, "[Processamento Manual]")
 	summary, err := bc.mediaProcessor.Summarize(session.ctx, transcript)
 	if err != nil {
 		summary = "[Falha ao gerar resumo]"

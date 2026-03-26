@@ -6,27 +6,28 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/kocar/aurelia/internal/runtime"
 )
 
 const (
-	defaultMaxIterations        = 500
-	defaultMemoryWindowSize     = 20
-	defaultLLMProvider          = "ollama"
-	defaultLLMModel             = "gemma3:12b"
-	defaultSTTProvider          = "groq"
-	defaultSTTLanguage          = "pt"
-	defaultGroqSTTBaseURL       = "https://api.groq.com/openai/v1"
-	defaultGroqSTTModel         = "whisper-large-v3-turbo"
-	defaultTTSProvider          = "openai_compatible"
-	defaultLocalTTSBaseURL = "http://127.0.0.1:8012" // Kokoro TTS (CPU, < 1.5GB VRAM)
-	defaultLocalTTSModel   = "kokoro"
-	defaultLocalTTSVoice   = "pt-br" // Kokoro 2026 feminine PT-BR voice (premium)
+	defaultMaxIterations    = 500
+	defaultMemoryWindowSize = 20
+	defaultLLMProvider      = "ollama"
+	defaultLLMModel         = "gemma3:12b"
+	defaultSTTProvider      = "groq"
+	defaultSTTLanguage      = "pt"
+	defaultGroqSTTBaseURL   = "https://api.groq.com/openai/v1"
+	defaultGroqSTTModel     = "whisper-large-v3-turbo"
+	defaultTTSProvider      = "openai_compatible"
+	defaultLocalTTSBaseURL  = "http://127.0.0.1:8012" // Kokoro TTS (CPU, < 1.5GB VRAM)
+	defaultLocalTTSModel    = "kokoro"
+	defaultLocalTTSVoice    = "pt-br" // Kokoro 2026 feminine PT-BR voice (premium)
 	defaultTTSLanguage      = "pt"
-	defaultLocalTTSFormat  = "opus"
+	defaultLocalTTSFormat   = "opus"
 
-	defaultTTSSpeed        = 1.0
+	defaultTTSSpeed = 1.0
 
 	defaultHeartbeatEnabled     = true
 	defaultHeartbeatIntervalMin = 30
@@ -52,30 +53,32 @@ type BotConfig struct {
 	AllowedUserIDs []int64 `json:"allowed_user_ids"`
 	PersonaID      string  `json:"persona_id"`
 	FocusArea      string  `json:"focus_area"`
+	LLMProvider    string  `json:"llm_provider,omitempty"`
+	LLMModel       string  `json:"llm_model,omitempty"`
 	Enabled        bool    `json:"enabled"`
 }
 
 // AppConfig holds all runtime configuration needed for the application.
 type AppConfig struct {
-	Bots []BotConfig
-	LLMProvider              string
-	LLMModel                 string
-	STTProvider              string
-	STTBaseURL               string
-	STTModel                 string
-	STTLanguage              string
-	TTSProvider              string
-	TTSBaseURL               string
-	TTSModel                 string
-	TTSVoice                 string
-	TTSLanguage              string
-	TTSFormat                string
-	TTSSpeed                 float64
-	PremiumTTSProvider       string
-	PremiumTTSBaseURL        string
-	PremiumTTSModel          string
-	PremiumTTSVoice          string
-	TelegramBotToken         string
+	Bots               []BotConfig
+	LLMProvider        string
+	LLMModel           string
+	STTProvider        string
+	STTBaseURL         string
+	STTModel           string
+	STTLanguage        string
+	TTSProvider        string
+	TTSBaseURL         string
+	TTSModel           string
+	TTSVoice           string
+	TTSLanguage        string
+	TTSFormat          string
+	TTSSpeed           float64
+	PremiumTTSProvider string
+	PremiumTTSBaseURL  string
+	PremiumTTSModel    string
+	PremiumTTSVoice    string
+	TelegramBotToken   string
 
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
@@ -114,29 +117,33 @@ type AppConfig struct {
 	OllamaURL                string
 	DashboardPort            int
 	HealthPort               int
+	SupabaseURL              string
+	SupabaseEnabled          bool
+	ObsidianVaultPath        string
+	ObsidianSyncEnabled      bool
 }
 
 type fileConfig struct {
 	Bots []BotConfig `json:"bots,omitempty"`
 
-	LLMProvider              string  `json:"llm_provider"`
-	LLMModel                 string  `json:"llm_model"`
-	STTProvider              string  `json:"stt_provider"`
-	STTBaseURL               string  `json:"stt_base_url"`
-	STTModel                 string  `json:"stt_model"`
-	STTLanguage              string  `json:"stt_language"`
-	TTSProvider              string  `json:"tts_provider"`
-	TTSBaseURL               string  `json:"tts_base_url"`
-	TTSModel                 string  `json:"tts_model"`
-	TTSVoice                 string  `json:"tts_voice"`
-	TTSLanguage              string  `json:"tts_language"`
-	TTSFormat                string  `json:"tts_format"`
-	TTSSpeed                 float64 `json:"tts_speed"`
-	PremiumTTSProvider       string  `json:"premium_tts_provider"`
-	PremiumTTSBaseURL        string  `json:"premium_tts_base_url"`
-	PremiumTTSModel          string  `json:"premium_tts_model"`
-	PremiumTTSVoice          string  `json:"premium_tts_voice"`
-	TelegramBotToken         string  `json:"telegram_bot_token"`
+	LLMProvider        string  `json:"llm_provider"`
+	LLMModel           string  `json:"llm_model"`
+	STTProvider        string  `json:"stt_provider"`
+	STTBaseURL         string  `json:"stt_base_url"`
+	STTModel           string  `json:"stt_model"`
+	STTLanguage        string  `json:"stt_language"`
+	TTSProvider        string  `json:"tts_provider"`
+	TTSBaseURL         string  `json:"tts_base_url"`
+	TTSModel           string  `json:"tts_model"`
+	TTSVoice           string  `json:"tts_voice"`
+	TTSLanguage        string  `json:"tts_language"`
+	TTSFormat          string  `json:"tts_format"`
+	TTSSpeed           float64 `json:"tts_speed"`
+	PremiumTTSProvider string  `json:"premium_tts_provider"`
+	PremiumTTSBaseURL  string  `json:"premium_tts_base_url"`
+	PremiumTTSModel    string  `json:"premium_tts_model"`
+	PremiumTTSVoice    string  `json:"premium_tts_voice"`
+	TelegramBotToken   string  `json:"telegram_bot_token"`
 
 	TelegramAllowedUserIDs   []int64 `json:"telegram_allowed_user_ids"`
 	AnthropicAPIKey          string  `json:"anthropic_api_key"`
@@ -175,26 +182,30 @@ type fileConfig struct {
 	OllamaURL                string  `json:"ollama_url"`
 	DashboardPort            int     `json:"dashboard_port"`
 	HealthPort               int     `json:"health_port"`
+	SupabaseURL              string  `json:"supabase_url"`
+	SupabaseEnabled          bool    `json:"supabase_enabled"`
+	ObsidianVaultPath        string  `json:"obsidian_vault_path"`
+	ObsidianSyncEnabled      bool    `json:"obsidian_sync_enabled"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
 type EditableConfig struct {
-	LLMProvider              string
-	LLMModel                 string
-	STTProvider              string
-	STTLanguage              string
-	TTSProvider              string
-	TTSBaseURL               string
-	TTSModel                 string
-	TTSVoice                 string
-	TTSLanguage              string
-	TTSFormat                string
-	TTSSpeed                 float64
-	PremiumTTSProvider       string
-	PremiumTTSBaseURL        string
-	PremiumTTSModel          string
-	PremiumTTSVoice          string
-	TelegramBotToken         string
+	LLMProvider        string
+	LLMModel           string
+	STTProvider        string
+	STTLanguage        string
+	TTSProvider        string
+	TTSBaseURL         string
+	TTSModel           string
+	TTSVoice           string
+	TTSLanguage        string
+	TTSFormat          string
+	TTSSpeed           float64
+	PremiumTTSProvider string
+	PremiumTTSBaseURL  string
+	PremiumTTSModel    string
+	PremiumTTSVoice    string
+	TelegramBotToken   string
 
 	TelegramAllowedUserIDs   []int64
 	AnthropicAPIKey          string
@@ -238,7 +249,7 @@ func Load(r *runtime.PathResolver) (*AppConfig, error) {
 	}
 
 	normalized := normalizeFileConfig(cfg, r)
-	
+
 	// Apply environment variable overrides for secrets
 	applyEnvOverrides(&normalized)
 
@@ -289,28 +300,34 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("MINIMAX_API_KEY"); env != "" {
 		cfg.MiniMaxAPIKey = env
 	}
+	if env := os.Getenv("SUPABASE_URL"); env != "" {
+		cfg.SupabaseURL = env
+	}
+	if env := os.Getenv("OBSIDIAN_VAULT_PATH"); env != "" {
+		cfg.ObsidianVaultPath = env
+	}
 }
 
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 	return fileConfig{
-		LLMProvider:              defaultLLMProvider,
-		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
-		STTProvider:              defaultSTTProvider,
-		STTBaseURL:               defaultGroqSTTBaseURL,
-		STTModel:                 defaultGroqSTTModel,
-		STTLanguage:              defaultSTTLanguage,
-		TTSProvider:              defaultTTSProvider,
-		TTSBaseURL:               defaultLocalTTSBaseURL,        // Kokoro (CPU, < 1.5GB VRAM)
-		TTSModel:                 defaultLocalTTSModel,           // kokoro
-		TTSVoice:                 defaultLocalTTSVoice,           // pt-br (feminine)
-		TTSLanguage:              defaultTTSLanguage,             // pt
-		TTSFormat:                defaultLocalTTSFormat,          // opus
-		TTSSpeed:                 defaultTTSSpeed,
-		PremiumTTSProvider:       "disabled",                     // Kokoro is now default, no premium needed
-		PremiumTTSBaseURL:        "http://127.0.0.1:8012",
-		PremiumTTSModel:          "kokoro",
-		PremiumTTSVoice:          "pt-br",
-		TelegramAllowedUserIDs:   []int64{},
+		LLMProvider:            defaultLLMProvider,
+		LLMModel:               defaultLLMModelForProvider(defaultLLMProvider),
+		STTProvider:            defaultSTTProvider,
+		STTBaseURL:             defaultGroqSTTBaseURL,
+		STTModel:               defaultGroqSTTModel,
+		STTLanguage:            defaultSTTLanguage,
+		TTSProvider:            defaultTTSProvider,
+		TTSBaseURL:             defaultLocalTTSBaseURL, // Kokoro (CPU, < 1.5GB VRAM)
+		TTSModel:               defaultLocalTTSModel,   // kokoro
+		TTSVoice:               defaultLocalTTSVoice,   // pt-br (feminine)
+		TTSLanguage:            defaultTTSLanguage,     // pt
+		TTSFormat:              defaultLocalTTSFormat,  // opus
+		TTSSpeed:               defaultTTSSpeed,
+		PremiumTTSProvider:     "disabled", // Kokoro is now default, no premium needed
+		PremiumTTSBaseURL:      "http://127.0.0.1:8012",
+		PremiumTTSModel:        "kokoro",
+		PremiumTTSVoice:        "pt-br",
+		TelegramAllowedUserIDs: []int64{},
 
 		MaxIterations:            defaultMaxIterations,
 		DBPath:                   filepath.Join(r.Data(), "aurelia.db"),
@@ -341,22 +358,22 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 // DefaultEditableConfig returns the default user-editable configuration values.
 func DefaultEditableConfig() EditableConfig {
 	return EditableConfig{
-		LLMProvider:              defaultLLMProvider,
-		LLMModel:                 defaultLLMModelForProvider(defaultLLMProvider),
-		STTProvider:              defaultSTTProvider,
-		STTLanguage:              defaultSTTLanguage,
-		TTSProvider:              defaultTTSProvider,
-		TTSBaseURL:               defaultTTSBaseURLForProvider(defaultTTSProvider),
-		TTSModel:                 defaultTTSModelForProvider(defaultTTSProvider),
-		TTSVoice:                 defaultTTSVoiceForProvider(defaultTTSProvider),
-		TTSLanguage:              defaultTTSLanguage,
-		TTSFormat:                defaultTTSFormatForProvider(defaultTTSProvider),
-		TTSSpeed:                 defaultTTSSpeed,
-		PremiumTTSProvider:       "openai_compatible",
-		PremiumTTSBaseURL:        "http://127.0.0.1:8012",
-		PremiumTTSModel:          "kokoro",
-		PremiumTTSVoice:          "pt-br",
-		TelegramAllowedUserIDs:   []int64{},
+		LLMProvider:            defaultLLMProvider,
+		LLMModel:               defaultLLMModelForProvider(defaultLLMProvider),
+		STTProvider:            defaultSTTProvider,
+		STTLanguage:            defaultSTTLanguage,
+		TTSProvider:            defaultTTSProvider,
+		TTSBaseURL:             defaultTTSBaseURLForProvider(defaultTTSProvider),
+		TTSModel:               defaultTTSModelForProvider(defaultTTSProvider),
+		TTSVoice:               defaultTTSVoiceForProvider(defaultTTSProvider),
+		TTSLanguage:            defaultTTSLanguage,
+		TTSFormat:              defaultTTSFormatForProvider(defaultTTSProvider),
+		TTSSpeed:               defaultTTSSpeed,
+		PremiumTTSProvider:     "openai_compatible",
+		PremiumTTSBaseURL:      "http://127.0.0.1:8012",
+		PremiumTTSModel:        "kokoro",
+		PremiumTTSVoice:        "pt-br",
+		TelegramAllowedUserIDs: []int64{},
 
 		MaxIterations:            defaultMaxIterations,
 		MemoryWindowSize:         defaultMemoryWindowSize,
@@ -377,22 +394,22 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		return nil, err
 	}
 	return &EditableConfig{
-		LLMProvider:              cfg.LLMProvider,
-		LLMModel:                 cfg.LLMModel,
-		STTProvider:              cfg.STTProvider,
-		STTLanguage:              cfg.STTLanguage,
-		TTSProvider:              cfg.TTSProvider,
-		TTSBaseURL:               cfg.TTSBaseURL,
-		TTSModel:                 cfg.TTSModel,
-		TTSVoice:                 cfg.TTSVoice,
-		TTSLanguage:              cfg.TTSLanguage,
-		TTSFormat:                cfg.TTSFormat,
-		TTSSpeed:                 cfg.TTSSpeed,
-		PremiumTTSProvider:       cfg.PremiumTTSProvider,
-		PremiumTTSBaseURL:        cfg.PremiumTTSBaseURL,
-		PremiumTTSModel:          cfg.PremiumTTSModel,
-		PremiumTTSVoice:          cfg.PremiumTTSVoice,
-		TelegramBotToken:         cfg.TelegramBotToken,
+		LLMProvider:        cfg.LLMProvider,
+		LLMModel:           cfg.LLMModel,
+		STTProvider:        cfg.STTProvider,
+		STTLanguage:        cfg.STTLanguage,
+		TTSProvider:        cfg.TTSProvider,
+		TTSBaseURL:         cfg.TTSBaseURL,
+		TTSModel:           cfg.TTSModel,
+		TTSVoice:           cfg.TTSVoice,
+		TTSLanguage:        cfg.TTSLanguage,
+		TTSFormat:          cfg.TTSFormat,
+		TTSSpeed:           cfg.TTSSpeed,
+		PremiumTTSProvider: cfg.PremiumTTSProvider,
+		PremiumTTSBaseURL:  cfg.PremiumTTSBaseURL,
+		PremiumTTSModel:    cfg.PremiumTTSModel,
+		PremiumTTSVoice:    cfg.PremiumTTSVoice,
+		TelegramBotToken:   cfg.TelegramBotToken,
 
 		TelegramAllowedUserIDs:   append([]int64(nil), cfg.TelegramAllowedUserIDs...),
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
@@ -549,6 +566,7 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.VoiceCapturePollMS <= 0 {
 		cfg.VoiceCapturePollMS = defaults.VoiceCapturePollMS
 	}
+	cfg.VoiceCaptureCommand = normalizeVoiceCaptureCommand(cfg.VoiceCaptureCommand)
 	if cfg.GroqSoftCapDaily <= 0 {
 		cfg.GroqSoftCapDaily = defaults.GroqSoftCapDaily
 	}
@@ -571,6 +589,38 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 		cfg.HealthPort = defaults.HealthPort
 	}
 	return cfg
+}
+
+func normalizeVoiceCaptureCommand(command string) string {
+	command = strings.TrimSpace(command)
+	if command == "" {
+		return ""
+	}
+
+	fields := strings.Fields(command)
+	if len(fields) == 0 {
+		return command
+	}
+
+	legacyPath := fields[0]
+	if _, err := os.Stat(legacyPath); err == nil {
+		return command
+	}
+	if !strings.Contains(legacyPath, "voice-capture-openwakeword.sh") {
+		return command
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil || strings.TrimSpace(cwd) == "" {
+		return command
+	}
+	localScript := filepath.Join(cwd, "scripts", "voice-capture-openwakeword.sh")
+	if _, err := os.Stat(localScript); err != nil {
+		return command
+	}
+
+	fields[0] = localScript
+	return strings.Join(fields, " ")
 }
 
 func writeConfigFile(path string, cfg fileConfig) error {
@@ -610,25 +660,25 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 	}
 
 	return &AppConfig{
-		Bots:                     bots,
-		LLMProvider:              cfg.LLMProvider,
-		LLMModel:                 cfg.LLMModel,
-		STTProvider:              cfg.STTProvider,
-		STTBaseURL:               cfg.STTBaseURL,
-		STTModel:                 cfg.STTModel,
-		STTLanguage:              cfg.STTLanguage,
-		TTSProvider:              cfg.TTSProvider,
-		TTSBaseURL:               cfg.TTSBaseURL,
-		TTSModel:                 cfg.TTSModel,
-		TTSVoice:                 cfg.TTSVoice,
-		TTSLanguage:              cfg.TTSLanguage,
-		TTSFormat:                cfg.TTSFormat,
-		TTSSpeed:                 cfg.TTSSpeed,
-		PremiumTTSProvider:       cfg.PremiumTTSProvider,
-		PremiumTTSBaseURL:        cfg.PremiumTTSBaseURL,
-		PremiumTTSModel:          cfg.PremiumTTSModel,
-		PremiumTTSVoice:          cfg.PremiumTTSVoice,
-		TelegramBotToken:         cfg.TelegramBotToken,
+		Bots:               bots,
+		LLMProvider:        cfg.LLMProvider,
+		LLMModel:           cfg.LLMModel,
+		STTProvider:        cfg.STTProvider,
+		STTBaseURL:         cfg.STTBaseURL,
+		STTModel:           cfg.STTModel,
+		STTLanguage:        cfg.STTLanguage,
+		TTSProvider:        cfg.TTSProvider,
+		TTSBaseURL:         cfg.TTSBaseURL,
+		TTSModel:           cfg.TTSModel,
+		TTSVoice:           cfg.TTSVoice,
+		TTSLanguage:        cfg.TTSLanguage,
+		TTSFormat:          cfg.TTSFormat,
+		TTSSpeed:           cfg.TTSSpeed,
+		PremiumTTSProvider: cfg.PremiumTTSProvider,
+		PremiumTTSBaseURL:  cfg.PremiumTTSBaseURL,
+		PremiumTTSModel:    cfg.PremiumTTSModel,
+		PremiumTTSVoice:    cfg.PremiumTTSVoice,
+		TelegramBotToken:   cfg.TelegramBotToken,
 
 		TelegramAllowedUserIDs:   cfg.TelegramAllowedUserIDs,
 		AnthropicAPIKey:          cfg.AnthropicAPIKey,
@@ -667,6 +717,10 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		OllamaURL:                cfg.OllamaURL,
 		DashboardPort:            cfg.DashboardPort,
 		HealthPort:               cfg.HealthPort,
+		SupabaseURL:              cfg.SupabaseURL,
+		SupabaseEnabled:          cfg.SupabaseEnabled,
+		ObsidianVaultPath:        cfg.ObsidianVaultPath,
+		ObsidianSyncEnabled:      cfg.ObsidianSyncEnabled,
 	}
 }
 

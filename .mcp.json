@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:${SUPABASE_POSTGRES_PASSWORD}@localhost:5435/postgres"
+      ],
+      "env": {}
+    },
+    "qdrant": {
+      "type": "stdio",
+      "command": "/home/will/.local/venv-qdrant-mcp/bin/mcp-server-qdrant",
+      "args": [],
+      "env": {
+        "QDRANT_URL": "http://localhost:6333",
+        "QDRANT_API_KEY": "${QDRANT_API_KEY}",
+        "COLLECTION_NAME": "aurelia_skills",
+        "QDRANT_SEARCH_LIMIT": "10"
+      }
+    }
+  }
+}

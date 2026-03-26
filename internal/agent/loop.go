@@ -15,9 +15,20 @@ import (
 )
 
 type Loop struct {
-	llm           LLMProvider
-	registry      *ToolRegistry
-	maxIterations int
+	llm             LLMProvider
+	registry        *ToolRegistry
+	maxIterations   int
+	memoryAssembler MemoryAssembler
+	toolCatalog     *ToolCatalog
+	toolCatalogTopK int
+}
+
+type MemoryAssembler interface {
+	AssembleContext(ctx context.Context, query string) string
+}
+
+type BotScopedMemoryAssembler interface {
+	AssembleContextForBot(ctx context.Context, botID, query string) string
 }
 
 func NewLoop(llm LLMProvider, registry *ToolRegistry, maxIterations int) *Loop {
@@ -42,47 +53,23 @@ func (l *Loop) GetLLMProvider() LLMProvider {
 
 // Run é a interface clássica do loop, mantida para compatibilidade
 func (l *Loop) Run(ctx context.Context, systemPrompt string, history []Message, allowedTools []string) ([]Message, string, error) {
-	// Filtrar definições de tools baseado em allowedTools
-	var filteredTools []Tool
-	if len(allowedTools) > 0 {
-		allTools := l.registry.GetDefinitions()
-		allowedSet := make(map[string]bool)
-		for _, t := range allowedTools {
-			allowedSet[t] = true
-		}
-		for _, tool := range allTools {
-			if allowedSet[tool.Name] {
-				filteredTools = append(filteredTools, tool)
-			}
-		}
-	} else {
-		filteredTools = l.registry.GetDefinitions()
-	}
-
-	// Aumentar o system prompt com orientações de runtime capabilities
-	augmentedPrompt := augmentSystemPromptWithRuntimeCapabilities(systemPrompt, filteredTools)
-
 	opts := LoopOptions{
-		SystemPrompt:     augmentedPrompt,
-		InitialHistory:   history,
-		MaxIterations:    l.maxIterations,
-		ToolDefinitions:  filteredTools,
+		SystemPrompt:    systemPrompt,
+		InitialHistory:  history,
+		MaxIterations:   l.maxIterations,
+		ToolDefinitions: l.resolveToolDefinitions(history, allowedTools),
 	}
 	return l.RunWithOptions(ctx, opts)
 }
 
-// WithMemoryAssembler wrapper para compatibilidade com app.go
-func (l *Loop) WithMemoryAssembler(any) *Loop {
+func (l *Loop) WithMemoryAssembler(assembler MemoryAssembler) *Loop {
+	l.memoryAssembler = assembler
 	return l
 }
 
-// WithToolCatalog wrapper para compatibilidade com app.go
-func (l *Loop) WithToolCatalog(any, int) *Loop {
-	return l
-}
-
-// WithSemanticRouter wrapper para compatibilidade com app.go
-func (l *Loop) WithSemanticRouter(any) *Loop {
+func (l *Loop) WithToolCatalog(catalog *ToolCatalog, topK int) *Loop {
+	l.toolCatalog = catalog
+	l.toolCatalogTopK = topK
 	return l
 }
 
@@ -109,6 +96,11 @@ func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message,
 	if opts.MaxIterations <= 0 {
 		opts.MaxIterations = l.maxIterations
 	}
+	if len(opts.ToolDefinitions) == 0 {
+		opts.ToolDefinitions = l.resolveToolDefinitions(opts.InitialHistory, nil)
+	}
+	opts.SystemPrompt = augmentSystemPromptWithRuntimeCapabilities(opts.SystemPrompt, opts.ToolDefinitions)
+	opts.SystemPrompt = l.augmentSystemPromptWithMemory(ctx, opts.SystemPrompt, opts.Task, opts.InitialHistory)
 
 	for i := 0; i < opts.MaxIterations; i++ {
 		// Stop if context cancelled
@@ -126,11 +118,7 @@ func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message,
 		currentPhase, _ := PrevPhaseFromContext(ctx)
 		dynamicSystemPrompt := augmentSystemPromptWithPhase(opts.SystemPrompt, currentPhase)
 		// O provedor de LLM PRECISA das ferramentas registradas (usar filtradas se disponíveis)
-		toolDefs := opts.ToolDefinitions
-		if len(toolDefs) == 0 {
-			toolDefs = l.registry.GetDefinitions()
-		}
-		resp, err := l.llm.GenerateContent(ctx, dynamicSystemPrompt, currentHistory, toolDefs)
+		resp, err := l.llm.GenerateContent(ctx, dynamicSystemPrompt, currentHistory, opts.ToolDefinitions)
 		if err != nil {
 			return currentHistory, "", fmt.Errorf("generate content error: %w", err)
 		}
@@ -157,7 +145,7 @@ func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message,
 
 		for _, call := range resp.ToolCalls {
 			logger.Info("executing tool", slog.String("tool_name", call.Name), slog.Any("arg_keys", observability.MapKeys(call.Arguments)))
-			
+
 			dashboard.Publish(dashboard.Event{
 				Type:      "agent_tool",
 				Agent:     "Aurelia",
@@ -181,13 +169,13 @@ func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message,
 						if plan.GlobalPlanStore.HasPending() {
 							resultStr = "BLOQUEIO DE SEGURANÇA: Existem planos propostos aguardando aprovação humana no Cockpit. Você NÃO pode iniciar a execução sem o OK do usuário."
 							dashboard.Publish(dashboard.Event{
-								Type: "security_alert",
-								Agent: "Aurelia",
-								Action: "Tentativa de Execução Bloqueada",
-								Payload: "Aguardando aprovação de plano pendente.",
+								Type:      "security_alert",
+								Agent:     "Aurelia",
+								Action:    "Tentativa de Execução Bloqueada",
+								Payload:   "Aguardando aprovação de plano pendente.",
 								Timestamp: time.Now().Format("15:04:05"),
 							})
-							
+
 							currentHistory = append(currentHistory, Message{
 								Role:    "tool",
 								Content: resultStr,
@@ -219,12 +207,77 @@ func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message,
 	return currentHistory, "Max iterations reached", fmt.Errorf("max iterations reached")
 }
 
+func (l *Loop) resolveToolDefinitions(history []Message, allowedTools []string) []Tool {
+	if l == nil || l.registry == nil {
+		return nil
+	}
+	if len(allowedTools) > 0 {
+		return l.registry.FilterDefinitions(allowedTools)
+	}
+	if l.toolCatalog != nil {
+		if query := latestQueryableMessage(history); query != "" {
+			if tools := l.toolCatalog.MatchForTask(query, l.toolCatalogTopK); len(tools) > 0 {
+				return tools
+			}
+		}
+	}
+	return l.registry.GetDefinitions()
+}
+
+func (l *Loop) augmentSystemPromptWithMemory(ctx context.Context, basePrompt, task string, history []Message) string {
+	if l == nil || l.memoryAssembler == nil {
+		return basePrompt
+	}
+
+	query := strings.TrimSpace(task)
+	if query == "" {
+		query = latestQueryableMessage(history)
+	}
+	if query == "" {
+		return basePrompt
+	}
+
+	var memoryContext string
+	if scoped, ok := l.memoryAssembler.(BotScopedMemoryAssembler); ok {
+		botID, _ := BotContextFromContext(ctx)
+		memoryContext = scoped.AssembleContextForBot(ctx, botID, query)
+	} else {
+		memoryContext = l.memoryAssembler.AssembleContext(ctx, query)
+	}
+	memoryContext = strings.TrimSpace(memoryContext)
+	if memoryContext == "" {
+		return basePrompt
+	}
+
+	return strings.TrimSpace(basePrompt) + "\n\n---\n# MEMORY CONTEXT\nUse este contexto recuperado apenas quando ele for relevante e consistente com a solicitacao atual.\n\n" + memoryContext
+}
+
+func latestQueryableMessage(history []Message) string {
+	for i := len(history) - 1; i >= 0; i-- {
+		if history[i].Role != "user" {
+			continue
+		}
+		if text := strings.TrimSpace(history[i].Content); text != "" {
+			return text
+		}
+		for _, part := range history[i].Parts {
+			if part.Type != ContentPartText {
+				continue
+			}
+			if text := strings.TrimSpace(part.Text); text != "" {
+				return text
+			}
+		}
+	}
+	return ""
+}
+
 func augmentSystemPromptWithPhase(basePrompt, phase string) string {
 	var lines []string
 	lines = append(lines, basePrompt)
 	lines = append(lines, "\n---")
 	lines = append(lines, fmt.Sprintf("FASE ATUAL DO WORKFLOW: %s", phase))
-	
+
 	switch phase {
 	case "PLANNING":
 		lines = append(lines, "DIRETRIZ: Você está na fase de desenho técnico. Antes de qualquer mudança, use a tool `propose_plan`.")
@@ -235,7 +288,7 @@ func augmentSystemPromptWithPhase(basePrompt, phase string) string {
 	case "VERIFICATION":
 		lines = append(lines, "DIRETRIZ: Valide as mudanças com testes ou leitura de logs. Use `log_verification` para concluir.")
 	}
-	
+
 	return strings.Join(lines, "\n")
 }
 

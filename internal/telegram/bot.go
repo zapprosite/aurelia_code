@@ -28,9 +28,9 @@ type HealthReporter interface {
 // BotController wires Telegram I/O to the application services.
 type BotController struct {
 	bot              *telebot.Bot
-	botID            string   // S-32: per-bot identity for multi-bot pool
-	personaID        string   // S-32: persona template ID (e.g. "hvac-sales", "project-manager")
-	allowedUserIDs   []int64  // S-32: per-bot override; if nil, uses config.TelegramAllowedUserIDs
+	botID            string  // S-32: per-bot identity for multi-bot pool
+	personaID        string  // S-32: persona template ID (e.g. "hvac-sales", "project-manager")
+	allowedUserIDs   []int64 // S-32: per-bot override; if nil, uses config.TelegramAllowedUserIDs
 	config           *config.AppConfig
 	memory           *memory.MemoryManager
 	router           *skill.Router
@@ -53,6 +53,7 @@ type BotController struct {
 	squadReporter   SquadStatusReporter
 	cronJobReporter CronNextJobReporter
 	mediaProcessor  *media.Processor
+	llmOverride     ownedLLMProvider
 }
 
 // BotID returns the identifier of this bot instance.
@@ -169,6 +170,18 @@ func NewBotControllerForBot(
 		allowedIDs = appCfg.TelegramAllowedUserIDs
 	}
 
+	router := r
+	executor := e
+	var llmOverride ownedLLMProvider
+	if provider, _, _, err := buildBotOverrideProvider(appCfg, botCfg); err != nil {
+		return nil, fmt.Errorf("initialize llm override for bot %q: %w", botCfg.ID, err)
+	} else if provider != nil {
+		llmOverride = provider
+		overrideLoop := agent.NewLoop(provider, e.GetLoop().Registry(), appCfg.MaxIterations)
+		router = skill.NewRouter(provider)
+		executor = skill.NewExecutor(overrideLoop)
+	}
+
 	bc := &BotController{
 		bot:              b,
 		botID:            botCfg.ID,
@@ -176,8 +189,8 @@ func NewBotControllerForBot(
 		allowedUserIDs:   allowedIDs,
 		config:           appCfg,
 		memory:           mem,
-		router:           r,
-		executor:         e,
+		router:           router,
+		executor:         executor,
 		loader:           l,
 		stt:              s,
 		tts:              tts.NewDefaultSynthesizer(appCfg),
@@ -187,7 +200,8 @@ func NewBotControllerForBot(
 		pendingAlbums:    make(map[string]*pendingAlbum),
 		recentMedia:      make(map[string]recentMedia),
 		personasDir:      personasDir,
-		mediaProcessor:   media.NewProcessor(s, e.GetLoop().GetLLMProvider(), ""),
+		mediaProcessor:   media.NewProcessor(s, executor.GetLoop().GetLLMProvider(), ""),
+		llmOverride:      llmOverride,
 	}
 
 	bc.setupRoutes()
@@ -208,6 +222,9 @@ func (bc *BotController) Start() {
 // Stop ends Telegram polling.
 func (bc *BotController) Stop() {
 	bc.bot.Stop()
+	if bc.llmOverride != nil {
+		bc.llmOverride.Close()
+	}
 }
 
 func (bc *BotController) isAllowedUser(userID int64) bool {

@@ -33,7 +33,13 @@ func (s *MasterTeamService) buildSnapshot(ctx context.Context, teamKey, runID st
 	if err != nil {
 		return TeamStatusSnapshot{}, err
 	}
-	snapshot := TeamStatusSnapshot{TeamKey: teamKey, TeamID: teamID, TeamStatus: teamStatus}
+	snapshot := TeamStatusSnapshot{
+		TeamKey:           teamKey,
+		TeamID:            teamID,
+		TeamStatus:        teamStatus,
+		CoordinationModes: DefaultCoordinationModes(),
+	}
+	snapshot.CoordinationLabel = CoordinationLabel(snapshot.CoordinationModes)
 	if len(filtered) == 0 {
 		return snapshot, nil
 	}
@@ -186,7 +192,15 @@ func (s *MasterTeamService) formatHumanStatus(snapshot TeamStatusSnapshot) strin
 		parts = append(parts, fmt.Sprintf("🧱 %d bloqueios", snapshot.Blocked))
 	}
 
-	return fmt.Sprintf("Estado: **%s**\n%s", strings.ToUpper(statusStr), strings.Join(parts, "  ·  "))
+	if len(parts) == 0 {
+		parts = append(parts, "sem tasks ativas")
+	}
+	return fmt.Sprintf(
+		"Estado: **%s**\nCoordenação: `%s`\n%s",
+		strings.ToUpper(statusStr),
+		CoordinationLabel(snapshot.CoordinationModes),
+		strings.Join(parts, "  ·  "),
+	)
 }
 
 func formatBodyLines(lines []string) string {

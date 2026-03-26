@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/health"
 	"github.com/kocar/aurelia/internal/runtime"
+	"github.com/kocar/aurelia/internal/store"
 )
 
 const geminiSmokeFreshness = 24 * time.Hour
@@ -44,6 +46,26 @@ func registerAuxiliaryHealthChecks(healthSrv *health.Server, cfg *config.AppConf
 	}
 
 	healthSrv.RegisterCheck("gemini_api", buildGeminiHealthCheck(cfg, geminiSmokeStatusPath(resolver)))
+
+	if cfg.SupabaseEnabled && cfg.SupabaseURL != "" {
+		healthSrv.RegisterCheck("supabase_db", buildSupabaseHealthCheck(cfg.SupabaseURL))
+	}
+}
+
+// buildSupabaseHealthCheck returns a health check function that pings Supabase.
+// The store is created on demand to avoid holding a pool just for the health check;
+// the real pool is managed by the app startup.
+func buildSupabaseHealthCheck(dsn string) func() health.CheckResult {
+	return func() health.CheckResult {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		s, err := store.Connect(ctx, dsn, nil)
+		if err != nil {
+			return health.CheckResult{Status: "error", Message: "supabase unreachable: " + err.Error()}
+		}
+		defer s.Close()
+		return health.CheckResult{Status: "ok", Message: "supabase connected"}
+	}
 }
 
 func buildPrimaryLLMHealthCheck(cfg *config.AppConfig, provider any) func() health.CheckResult {
@@ -218,4 +240,41 @@ func readGeminiSmokeStatus(path string) (geminiSmokeStatus, error) {
 		return status, fmt.Errorf("missing checked_at")
 	}
 	return status, nil
+}
+
+// ── Instance guard ────────────────────────────────────────────────────────────
+
+// shouldSuppressDuplicateLaunch returns true when a duplicate-launch error
+// was caused by an orphan process (PID 1 = systemd adopted it) rather than
+// a legitimate service conflict.
+func shouldSuppressDuplicateLaunch(parentPID int, err error) bool {
+	if err == nil {
+		return false
+	}
+	if !strings.Contains(err.Error(), "another Aurelia instance is already running") {
+		return false
+	}
+	return parentPID == 1
+}
+
+func recordDuplicateLaunch(args []string, err error) {
+	home := os.Getenv("AURELIA_HOME")
+	if home == "" {
+		home = filepath.Join(os.Getenv("HOME"), ".aurelia")
+	}
+	logDir := filepath.Join(home, "logs")
+	_ = os.MkdirAll(logDir, 0o755)
+	logPath := filepath.Join(logDir, "duplicate-launch.log")
+	entry := fmt.Sprintf("[%s] args=%v error=%v\n", time.Now().Format(time.RFC3339), args, err)
+	_ = os.WriteFile(logPath, []byte(entry), 0o644)
+}
+
+func exitCodeForBootstrapError(logger *slog.Logger, args []string, err error) int {
+	if shouldSuppressDuplicateLaunch(os.Getppid(), err) {
+		recordDuplicateLaunch(args, err)
+		logger.Warn("suppressed orphan duplicate launch", slog.Any("err", err))
+		return 0
+	}
+	logger.Error("bootstrap failed", slog.Any("err", err))
+	return 1
 }
