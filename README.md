@@ -4,70 +4,69 @@
 
 ![Status](https://img.shields.io/badge/Status-Industrial_Sovereign-blue?style=for-the-badge)
 ![Autonomy](https://img.shields.io/badge/Autonomy-Level_5-gold?style=for-the-badge)
-![Hardware](https://img.shields.io/badge/Compute-RTX_4090_|_7900X-green?style=for-the-badge)
+![Hardware](https://img.shields.io/badge/Compute-RTX_4090_|_Lite_Mode-green?style=for-the-badge)
 
 ---
 
-## 🏛️ Hierarquia de Autoridade (Board)
-
-Este ecossistema opera sob um modelo de autoridade única, centralizado no hardware local e governado por uma tríade de inteligência:
-
-1.  **👔 Claude Opus (CEO)**: Visão estratégica, IPO de Slices e arbitragem final.
-2.  **🤖 Aurélia (COO/CTO)**: Arquiteta principal, soberana operacional e governante do Homelab.
-3.  **🛰️ Antigravity (COO/Interface)**: Cockpit de coordenação, orquestração e interações humanas.
+## 🌟 Visão Geral
+A Aurélia é um ecossistema agêntico de ponta projetado para operar no **HomeLab Soberano**. Ela combina a potência de modelos locais (Ollama, Kokoro) com a inteligência estratégica de Tiers de nuvem, permitindo que você tenha um assistente sênior residente em seu próprio hardware, com privacidade absoluta e custo otimizado.
 
 ---
 
-## 📊 Dashboard de Autonomia (Slices)
+## 🚀 Guia de Início Rápido (Universal)
 
-| Slice | Name | Status | Priority |
-|:---:|:---|:---:|:---:|
-| **S0-14** | Foundation & Pines Core | ✅ Estável | - |
-| **S-15** | Tool Introspection | 📅 Pendente | ALTA |
-| **S-17** | Planning Loop (Go-Native) | 📅 Pendente | CRÍTICA |
-| **S-20** | **CEO Strategic Layer** | 🏗️ Ativo | CRÍTICA |
+Seja você um **Sênior Dev** ou um **Iniciante**, o portal de entrada é o mesmo:
 
----
-
-## 🚦 Gateway de Inteligência (Tiering)
-
-O roteamento de decisões é dinâmico e otimizado para o hardware local (Ollama/ROCm):
-
-- **Tier Estratégico (CEO)**: `Claude-3-Opus` (OpenRouter) — Decisões de alto impacto.
-- **Tier Premium (Execution)**: `MiniMax-M2.7` — Codificação e lógica complexa.
-- **Tier Soberano (Local)**: `Gemma 3 12B` — Operações residentes e visão (Zero Latency).
-- **Tier Estruturado**: `DeepSeek-V3.1` — JSON, Curation e Routing.
-
----
-
-## 🩺 Saúde do Sistema & Observabilidade
-
-Acompanhe o estado vital da Aurélia:
-
-- **Logs Estruturados**: `journalctl --user -u aurelia.service -f`
-- **Contexto Semântico**: `.context/` sincronizado via Qdrant/Postgres.
-- **Auditoria de Segurança**: `./scripts/secret-audit.sh` (Pre-push mandatory).
-
----
-
-## 📂 Estrutura Industrial
-
-```text
-.
-├── cmd/                # Entrypoints (Aurelia Daemon / CLI)
-├── internal/           # Core Engine (Gateway, Swarm, Agent Loop)
-├── pkg/                # Shared Packages (LLM, Audio, Vision)
-├── docs/               # Fontes de Verdade (ADR-historico, ADR, Governance)
-├── .agents/            # Logic Layer (Workflows & Skills)
-└── .context/           # Persistent Memory (Codebase Map)
+```bash
+# Clone e Inicie
+git clone https://github.com/zapprosite/aurelia_code.git
+cd aurelia_code
+chmod +x iniciar.sh
+./iniciar.sh
 ```
 
-## 🚀 Guia de Início Rápido (Sênior)
-
-1.  **Onboard**: `go run ./cmd/aurelia onboard`
-2.  **Build**: `./scripts/build.sh`
-3.  **Execute**: `sudo systemctl start aurelia`
+> [!TIP]
+> O script `iniciar.sh` guiará você na configuração do ambiente, escolha de hardware e chaves de API essenciais. Confira o **[Guia de Boas-Vindas](./docs/BEM-VINDO.md)** para mais detalhes.
 
 ---
+
+## ⚖️ Modos de Operação (Portabilidade)
+
+A Aurélia se adapta ao seu hardware dinamicamente através da flag `AURELIA_MODE`:
+
+| Modo | Hardware | Descrição |
+|:---:|:---|:---|
+| **Soberano** | GPU NVIDIA (8GB+) | **Tier 0.** Processamento 100% local (Ollama, Kokoro GPU). Máxima soberania e latência zero. |
+| **Lite** | Qualquer PC / Laptop | **Voo Híbrido.** Usa modelos Cloud otimizados (Gemini, Claude via OpenRouter) e fallback automático. |
+
+---
+
+## 🏯 Arquitetura de Autoridade (Board)
+
+Este ecossistema opera sob uma governança industrial rigorosa:
+
+1.  **👔 Claude Opus (CEO)**: Visão estratégica e arbitragem final de arquitetura.
+2.  **🤖 Aurélia (COO/CTO)**: Arquiteta residente, governante do sistema e orquestradora de Swarms.
+3.  **🛰️ Antigravity (Interface)**: Cockpit de coordenação e interface humano-agente de alta fidelidade.
+
+---
+
+## 🛠️ DNA Tecnológico
+
+- **Zod-First Contract**: Validação de dados rigorosa e centralizada.
+- **Go-Native Runtime**: Kernel de alta performance para orquestração de long-running agents.
+- **Audio de Alta Fidelidade**: TTS Kokoro/Kodoro com limite expandido de 50k caracteres.
+- **Memória Semântica Local**: Sincronização automática entre Qdrant e Postgres para contexto persistente.
+
+---
+
+## 🩺 Observabilidade & Saúde
+
+- **Monitoramento**: `docker logs -f aurelia`
+- **Diagnóstico**: Use `/status` no Telegram para ver a saúde das Slices e do Hardware.
+- **Segurança**: Auditoria proativa de segredos integrada ao workflow de Git.
+
+---
+
 *Documentação Gerada por Antigravity (Sovereign Engine 2026)*  
-*Consulte [ADR-historico.md](./docs/ADR-historico.md) para a linhagem técnica completa e [ADR.md](./docs/ADR.md) para o roadmap atual.*
+*Consulte [ADR-historico.md](./docs/ADR-historico.md) para linhagem e [REPOSITORY_CONTRACT.md](./docs/governance/REPOSITORY_CONTRACT.md) para governança.*
