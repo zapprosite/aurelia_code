@@ -24,7 +24,11 @@ func qdrantURLForTest(t *testing.T) string {
 
 func qdrantAPIKeyForTest(t *testing.T) string {
 	t.Helper()
-	return os.Getenv("QDRANT_API_KEY")
+	k := os.Getenv("QDRANT_API_KEY")
+	if k == "" {
+		t.Skip("QDRANT_API_KEY not set — skipping live Qdrant test")
+	}
+	return k
 }
 
 // qdrantDo executes a raw HTTP request to Qdrant and returns the status code.
