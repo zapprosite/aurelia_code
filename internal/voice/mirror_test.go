@@ -30,7 +30,7 @@ func TestQdrantMirror_MirrorTranscriptEmbedsAndUpserts(t *testing.T) {
 	}))
 	defer server.Close()
 
-	mirror := NewQdrantMirror(server.URL, "secret", "test_collection", "bge-m3", server.URL)
+	mirror := NewQdrantMirror(server.URL, "secret", "test_collection", "nomic-embed-text", server.URL)
 	mirror.embedURL = server.URL + "/embed"
 	if err := mirror.MirrorTranscript(context.Background(), TranscriptEvent{
 		JobID:      "job-1",
@@ -67,7 +67,7 @@ func TestMultiMirror_StopsOnFirstError(t *testing.T) {
 func TestQdrantMirror_SkipsEmptyTranscript(t *testing.T) {
 	t.Parallel()
 
-	mirror := NewQdrantMirror("http://example.test", "secret", "collection", "bge-m3", "http://example.test")
+	mirror := NewQdrantMirror("http://example.test", "secret", "collection", "nomic-embed-text", "http://example.test")
 	if err := mirror.MirrorTranscript(context.Background(), TranscriptEvent{}); err != nil {
 		t.Fatalf("MirrorTranscript() error = %v", err)
 	}
@@ -97,7 +97,7 @@ func TestQdrantMirror_UpsertShapeContainsVector(t *testing.T) {
 	}))
 	defer server.Close()
 
-	mirror := NewQdrantMirror(server.URL, "secret", "test_collection", "bge-m3", server.URL)
+	mirror := NewQdrantMirror(server.URL, "secret", "test_collection", "nomic-embed-text", server.URL)
 	mirror.embedURL = server.URL + "/embed"
 	if err := mirror.MirrorTranscript(context.Background(), TranscriptEvent{JobID: "job-1", Transcript: "ola"}); err != nil {
 		t.Fatalf("MirrorTranscript() error = %v", err)

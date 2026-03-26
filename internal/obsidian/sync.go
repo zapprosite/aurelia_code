@@ -31,7 +31,7 @@ type Syncer struct {
 // NewSyncer creates an Obsidian syncer. db must have obsidian_sync_state table (see InitSchema).
 func NewSyncer(vaultPath, ollamaURL, embedModel, qdrantURL, qdrantAPIKey, collection string, db *sql.DB, logger *slog.Logger) *Syncer {
 	if embedModel == "" {
-		embedModel = "bge-m3"
+		embedModel = "nomic-embed-text"
 	}
 	if logger == nil {
 		logger = slog.Default()

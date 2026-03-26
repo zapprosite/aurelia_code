@@ -198,15 +198,14 @@ func TestOnboardingUI_ModelSelectionPersistsChoice(t *testing.T) {
 	ui.step = stepLLMModel
 	ui.modelOptions = []llm.ModelOption{
 		{ID: "gemma3:12b", Name: "Gemma3 12B"},
-		{ID: "gemma3:27b-it-q4_K_M", Name: "Gemma3 27B Q4_K_M"},
 	}
-	ui.menuIndex = 1
+	ui.menuIndex = 0
 
 	_, _, err := ui.HandleKey(keyEvent{code: keyEnter})
 	if err != nil {
 		t.Fatalf("HandleKey() error = %v", err)
 	}
-	if ui.cfg.LLMModel != "gemma3:27b-it-q4_K_M" {
+	if ui.cfg.LLMModel != "gemma3:12b" {
 		t.Fatalf("LLMModel = %q", ui.cfg.LLMModel)
 	}
 	if ui.step != stepSTTProvider {
@@ -306,12 +305,12 @@ func TestOnboardingUI_OpenRouterModelSearchFiltersResults(t *testing.T) {
 
 func TestFilterModelOptions_VisionOnly(t *testing.T) {
 	options := []llm.ModelOption{
-		{ID: "gemma3:12b", Name: "Gemma3 12B"},
-		{ID: "gemma3:27b-it-q4_K_M", Name: "Gemma 3 27B", SupportsImageInput: true},
+		{ID: "gemma3:12b", Name: "Gemma3 12B", SupportsImageInput: true},
+		{ID: "mistral:7b", Name: "Mistral 7B"},
 	}
 
 	filtered := filterModelOptions(config.EditableConfig{LLMProvider: "ollama"}, options, "", modelCapabilityVision)
-	if len(filtered) != 1 || filtered[0].ID != "gemma3:27b-it-q4_K_M" {
+	if len(filtered) != 1 || filtered[0].ID != "gemma3:12b" {
 		t.Fatalf("filtered = %+v", filtered)
 	}
 }

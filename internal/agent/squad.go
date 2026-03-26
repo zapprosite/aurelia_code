@@ -27,8 +27,8 @@ var (
 	fixedSquad = []SquadAgent{
 		{
 			ID:       "aurelia",
-			Name:     "Aurélia",
-			Role:     "Líder · Arquiteta · Homelab",
+			Name:     "Aurelia_Code",
+			Role:     "Soberana · Comando · Orquestracao",
 			Status:   "online",
 			Load:     12,
 			Color:    "text-purple-400",
@@ -230,6 +230,8 @@ func SyncBotsToSquad(bots []BotConfigEntry) {
 
 func botPersonaIcon(personaID string) (icon, color string) {
 	switch personaID {
+	case "aurelia-sovereign":
+		return "Crown", "text-purple-400"
 	case "aurelia-leader":
 		return "Crown", "text-purple-400"
 	case "hvac-sales":
@@ -238,8 +240,12 @@ func botPersonaIcon(personaID string) (icon, color string) {
 		return "ClipboardCheck", "text-yellow-400"
 	case "life-organizer":
 		return "Calendar", "text-green-400"
+	case "secretaria-caixa":
+		return "Briefcase", "text-blue-500"
 	case "data-governance":
 		return "Database", "text-cyan-400"
+	case "homelab-ops":
+		return "Server", "text-orange-400"
 	default:
 		return "Bot", "text-white/60"
 	}

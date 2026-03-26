@@ -42,6 +42,10 @@ func (s stubSynthesizer) IsAvailable() bool {
 	return s.err == nil || len(s.audio.Data) > 0
 }
 
+func (s stubSynthesizer) MaxChars() int {
+	return 3000
+}
+
 func TestSendText_SendsTelegramHTML(t *testing.T) {
 	sender := &stubSender{}
 	chat := &telebot.Chat{ID: 123}
@@ -216,7 +220,7 @@ func TestSendAudio_NoFallbackWhenTTSFails(t *testing.T) {
 }
 
 func TestSanitizeTextForSpeech_StripsMarkdown(t *testing.T) {
-	got := sanitizeTextForSpeech("## Titulo\n\n- **item** com [link](https://example.com)\n\n`codigo`")
+	got := sanitizeTextForSpeech("## Titulo\n\n- **item** com [link](https://example.com)\n\n`codigo`", 3000)
 	if containsSubstring(got, "#") || containsSubstring(got, "**") || containsSubstring(got, "`") {
 		t.Fatalf("unexpected markdown in sanitized text: %q", got)
 	}
@@ -248,7 +252,7 @@ func TestSanitizeTextForSpeech_LongTextCutsAtSentence(t *testing.T) {
 	}
 	long := sb.String()
 
-	got := sanitizeTextForSpeech(long)
+	got := sanitizeTextForSpeech(long, 3000)
 	runes := []rune(got)
 
 	if len(runes) > 3000 {
@@ -257,6 +261,27 @@ func TestSanitizeTextForSpeech_LongTextCutsAtSentence(t *testing.T) {
 	// Must end at a sentence boundary (period), not mid-word
 	if !strings.HasSuffix(strings.TrimSpace(got), ".") {
 		t.Fatalf("expected text to end with '.', got: %q", got[max(0, len(got)-30):])
+	}
+}
+
+func TestSanitizeTextForSpeech_HighLimit(t *testing.T) {
+	// Build a text of 5000 chars.
+	sentence := "Este é um texto longo que não deve ser cortado. "
+	var sb strings.Builder
+	for sb.Len() < 5000 {
+		sb.WriteString(sentence)
+	}
+	long := sb.String()
+
+	limit := 10000
+	got := sanitizeTextForSpeech(long, limit)
+	runes := []rune(got)
+
+	if len(runes) <= 3000 {
+		t.Fatalf("expected more than 3000 runes (previous limit), got %d", len(runes))
+	}
+	if len(runes) > limit {
+		t.Fatalf("exceeded limit: got %d", len(runes))
 	}
 }
 

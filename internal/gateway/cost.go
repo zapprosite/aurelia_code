@@ -10,12 +10,9 @@ type ModelCost struct {
 // Prices sourced from OpenRouter/provider pricing pages.
 var modelCosts = map[string]ModelCost{
 	// Tier 0 — Local (free)
-	"gemma3:12b":          {InputPerMToken: 0, OutputPerMToken: 0},
-	"gemma3:27b-it-q4_K_M": {InputPerMToken: 0, OutputPerMToken: 0},
+	"gemma3:12b": {InputPerMToken: 0, OutputPerMToken: 0},
 
 	// Tier 1 — Remote Cheap (OpenRouter)
-	"qwen/qwen3-32b":              {InputPerMToken: 0.08, OutputPerMToken: 0.24},
-	"qwen/qwen3.5-flash-02-23":    {InputPerMToken: 0.065, OutputPerMToken: 0.26},
 	"mistralai/devstral-2512":     {InputPerMToken: 0.05, OutputPerMToken: 0.22},  // cheapest paid Tier1
 	"deepseek/deepseek-v3.2":      {InputPerMToken: 0.28, OutputPerMToken: 0.42},
 	"deepseek/deepseek-chat-v3.1": {InputPerMToken: 0.15, OutputPerMToken: 0.75},

@@ -10,18 +10,17 @@ const (
 	modelMiniMaxM25Free = "minimax/minimax-m2.5:free"
 
 	// Tier 1 — remote cheap (paid)
-	modelQwen3       = "qwen/qwen3-32b"               // $0.08/$0.24 per 1M, PT-BR quality
-	modelDevstral2   = "mistralai/devstral-2512"       // $0.05/$0.22, 256K ctx, coding+PT-BR
-	modelQwen35Flash = "qwen/qwen3.5-flash-02-23"      // $0.065/$0.26, 1M ctx, ultra-fast
+	modelDeepSeekV31 = "deepseek/deepseek-chat-v3.1" // Tier 1 cheap remote standard
+	modelDevstral2   = "mistralai/devstral-2512"     // optional cheap coding fallback
 
 	// Tier 2 — remote premium (paid)
 	modelMiniMaxM27    = "minimax/minimax-m2.7"
-	modelMiniMaxM25    = "minimax/minimax-m2.5"        // slightly cheaper than M2.7
+	modelMiniMaxM25    = "minimax/minimax-m2.5" // slightly cheaper than M2.7
 	modelMiniMaxDirect = "MiniMax-M2"
 
 	// Long context — Llama 4 Scout: 10M ctx at $0.08/$0.30 (-85% vs Kimi)
 	modelLlama4Scout = "meta-llama/llama-4-scout"
-	modelKimiK25     = "moonshotai/kimi-k2.5"          // kept as vision fallback
+	modelKimiK25     = "moonshotai/kimi-k2.5" // kept as vision fallback
 
 	// Free reasoning (rate-limited: 1000 req/day with $10+ credit)
 	modelDeepSeekR1Free = "deepseek/deepseek-r1-0528:free"
@@ -44,7 +43,7 @@ type DryRunRequest struct {
 	CostSensitive   bool   `json:"cost_sensitive,omitempty"`
 	PremiumRequired bool   `json:"premium_required,omitempty"`
 	LatencyBudgetMS int    `json:"latency_budget_ms,omitempty"`
-	
+
 	// New fields for the Judge
 	JudgeClass      string  `json:"judge_class,omitempty"`
 	JudgeConfidence float64 `json:"judge_confidence,omitempty"`
@@ -151,9 +150,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      modelQwen3,
+				Model:      modelDeepSeekV31,
 				UseRemote:  true,
-				Reason:     fmt.Sprintf("%s: qwen3-32b remote fallback.", taskClass),
+				Reason:     fmt.Sprintf("%s: deepseek-chat-v3.1 remote fallback.", taskClass),
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -166,8 +165,8 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 		// and go directly to Groq (free, 0.8s) for accuracy. Soft queries still probe locally.
 		//
 		// Cascade:
-		//   hard  → Groq (free, 0.8s) → Qwen3 ($0.08/$0.24) → M2.7 ($0.30/$1.20)
-		//   soft  → gemma3 probe (free, 2s) → Groq (free) → Qwen3 → M2.7
+		//   hard  → Groq (free, 0.8s) → DeepSeek V3.1 → M2.7 ($0.30/$1.20)
+		//   soft  → gemma3 probe (free, 2s) → Groq (free) → DeepSeek V3.1 → M2.7
 		if isHardProfessional(req.Task) {
 			candidates = []RouteCandidate{
 				{
@@ -184,9 +183,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				{
 					Lane:       "remote-cheap",
 					Provider:   "openrouter",
-					Model:      modelQwen3,
+					Model:      modelDeepSeekV31,
 					UseRemote:  true,
-					Reason:     "professional[hard]: qwen3-32b paid fallback ($0.08/$0.24/1M).",
+					Reason:     "professional[hard]: deepseek-chat-v3.1 paid fallback.",
 					Guards:     guardsForProfessional(req.OutputMode, true),
 					BudgetLane: "remote_cheap",
 					Class:      taskClass,
@@ -232,9 +231,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				{
 					Lane:       "remote-cheap",
 					Provider:   "openrouter",
-					Model:      modelQwen3,
+					Model:      modelDeepSeekV31,
 					UseRemote:  true,
-					Reason:     "professional[soft]: qwen3-32b paid fallback ($0.08/$0.24/1M).",
+					Reason:     "professional[soft]: deepseek-chat-v3.1 paid fallback.",
 					Guards:     guardsForProfessional(req.OutputMode, true),
 					BudgetLane: "remote_cheap",
 					Class:      taskClass,
@@ -286,9 +285,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			candidates = append(candidates, RouteCandidate{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      modelQwen3,
+				Model:      modelDeepSeekV31,
 				UseRemote:  true,
-				Reason:     fmt.Sprintf("%s: qwen3-32b preferred for structured output.", taskClass),
+				Reason:     fmt.Sprintf("%s: deepseek-chat-v3.1 preferred for structured output.", taskClass),
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -312,9 +311,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			candidates = append(candidates, RouteCandidate{
 				Lane:       "remote-cheap",
 				Provider:   "openrouter",
-				Model:      modelQwen3,
+				Model:      modelDeepSeekV31,
 				UseRemote:  true,
-				Reason:     fmt.Sprintf("%s: qwen3-32b fallback.", taskClass),
+				Reason:     fmt.Sprintf("%s: deepseek-chat-v3.1 fallback.", taskClass),
 				Guards:     guardsFor(req.OutputMode, true),
 				BudgetLane: "remote_cheap",
 				Class:      taskClass,
@@ -558,7 +557,7 @@ func guardsFor(outputMode string, remote bool) ResponseGuards {
 				SoftTimeoutMS:   30000,
 			}
 		}
-		// Para modelos locais (predominantemente gemma3:12b), 
+		// Para modelos locais (predominantemente gemma3:12b),
 		// permitimos o raciocínio por padrão para evitar respostas vazias.
 		// S-30: Polish Premium — expandindo buffers para formatação industrial.
 		return ResponseGuards{

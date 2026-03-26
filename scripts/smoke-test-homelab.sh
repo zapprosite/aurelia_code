@@ -88,9 +88,8 @@ echo "3️⃣  ARCHITECTURE DECISIONS"
 echo "   Testando: recomendações de arquitetura"
 echo ""
 
-# Voice Stack VRAM Budget
-VOICE_CONTAINERS=("speaches" "chatterbox" "voice-proxy")
-VOICE_VRAM=0
+# Voice Stack
+VOICE_CONTAINERS=("kokoro")
 for container in "${VOICE_CONTAINERS[@]}"; do
   if docker ps --format "{{.Names}}" | grep -q "$container"; then
     echo "   🎵 Voice component: $container ✅"
@@ -158,25 +157,11 @@ echo ""
 # 5. MULTI-STEP ORCHESTRATION
 # ============================================================================
 echo "5️⃣  MULTI-STEP ORCHESTRATION (DRY RUN)"
-echo "   Testando: orquestração voice stack deploy"
+echo "   Testando: orquestração kokoro deploy"
 echo ""
 
-echo "   Step 1: VRAM Pre-check"
-if command -v nvidia-smi &> /dev/null; then
-  FREE=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1)
-  VRAM_GB=$((FREE / 1024))
-  if [ "$VRAM_GB" -ge 8 ]; then
-    echo "      ✅ VRAM OK: ${VRAM_GB}GB (precisa 8GB)"
-  else
-    echo "      ⚠️  VRAM baixa: ${VRAM_GB}GB (precisa 8GB)"
-  fi
-else
-  echo "      ⚠️  nvidia-smi não disponível"
-fi
-
-echo ""
-echo "   Step 2: Check backends"
-for backend in speaches chatterbox-tts voice-proxy; do
+echo "   Step 1: Check backends"
+for backend in kokoro; do
   if docker ps --format "{{.Names}}" | grep -q "$backend"; then
     echo "      ✅ $backend rodando"
   else
@@ -185,12 +170,9 @@ for backend in speaches chatterbox-tts voice-proxy; do
 done
 
 echo ""
-echo "   Step 3: Health verification"
-if curl -s http://localhost:8010/health > /dev/null 2>&1; then
-  echo "      ✅ STT (Whisper) respondendo"
-fi
-if curl -s http://localhost:8011/health > /dev/null 2>&1; then
-  echo "      ✅ TTS (Chatterbox) respondendo"
+echo "   Step 2: Health verification"
+if curl -s http://localhost:8012/v1/models > /dev/null 2>&1; then
+  echo "      ✅ TTS (Kokoro) respondendo"
 fi
 
 echo ""

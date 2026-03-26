@@ -20,24 +20,24 @@ func buildBotOverrideProvider(appCfg *config.AppConfig, botCfg config.BotConfig)
 		return nil, "", "", fmt.Errorf("app config is required")
 	}
 
-	provider := strings.ToLower(strings.TrimSpace(botCfg.LLMProvider))
-	model := strings.TrimSpace(botCfg.LLMModel)
-	if provider == "" && model == "" {
+	if !botHasPinnedLLM(botCfg.ID) && strings.TrimSpace(botCfg.LLMProvider) == "" && strings.TrimSpace(botCfg.LLMModel) == "" {
 		return nil, "", "", nil
 	}
 
-	if provider == "" {
-		provider = strings.ToLower(strings.TrimSpace(appCfg.LLMProvider))
-	}
+	provider, model := EffectiveBotLLM(botCfg, appCfg.LLMProvider, appCfg.LLMModel)
+	provider = strings.ToLower(strings.TrimSpace(provider))
+	model = strings.TrimSpace(model)
+
 	if provider == "" {
 		return nil, "", "", fmt.Errorf("bot %q has llm override without provider", botCfg.ID)
 	}
 	if model == "" {
-		if strings.EqualFold(provider, strings.TrimSpace(appCfg.LLMProvider)) && strings.TrimSpace(appCfg.LLMModel) != "" {
-			model = strings.TrimSpace(appCfg.LLMModel)
-		} else {
-			return nil, "", "", fmt.Errorf("bot %q requires llm_model for provider %q", botCfg.ID, provider)
-		}
+		return nil, "", "", fmt.Errorf("bot %q requires llm_model for provider %q", botCfg.ID, provider)
+	}
+	if !botHasPinnedLLM(botCfg.ID) &&
+		strings.EqualFold(provider, strings.TrimSpace(appCfg.LLMProvider)) &&
+		strings.EqualFold(model, strings.TrimSpace(appCfg.LLMModel)) {
+		return nil, "", "", nil
 	}
 
 	switch provider {

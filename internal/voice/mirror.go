@@ -16,7 +16,7 @@ import (
 
 const (
 	defaultQdrantMirrorCollection = "conversation_memory"
-	defaultQdrantMirrorEmbedding  = "bge-m3"
+	defaultQdrantMirrorEmbedding  = "nomic-embed-text"
 	defaultCanonicalBotID         = "aurelia_code"
 	defaultVoiceDomain            = "system"
 	defaultVoiceSourceSystem      = "voice"

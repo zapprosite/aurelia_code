@@ -139,7 +139,7 @@ func (bc *BotController) persistAudioTranscriptForSender(senderID int64, filePat
 		return
 	}
 
-	conversationID := fmt.Sprintf("%d", senderID)
+	conversationID := bc.scopedConversationID(senderID)
 	ctx := context.Background()
 
 	if err := bc.memory.EnsureConversation(ctx, conversationID, senderID, "groq"); err != nil {

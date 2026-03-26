@@ -70,3 +70,25 @@ func TestOpenAICompatibleSynthesizer_SynthesizeAPIError(t *testing.T) {
 		t.Fatal("expected api error")
 	}
 }
+
+func TestOpenAICompatibleSynthesizer_NormalizesLegacyPTBRAlias(t *testing.T) {
+	t.Parallel()
+
+	synth := NewOpenAICompatibleSynthesizer("http://127.0.0.1:8012", "kokoro", "pt-br", "pt", "opus", 1)
+	if synth.voice != "pf_dora" {
+		t.Fatalf("voice = %q, want pf_dora", synth.voice)
+	}
+}
+func TestOpenAICompatibleSynthesizer_MaxChars(t *testing.T) {
+	t.Parallel()
+
+	kokoro := NewOpenAICompatibleSynthesizer("http://local", "kokoro", "pt-br", "pt", "opus", 1)
+	if kokoro.MaxChars() != 50000 {
+		t.Fatalf("kokoro max chars = %d, want 50000", kokoro.MaxChars())
+	}
+
+	generic := NewOpenAICompatibleSynthesizer("http://remote", "tts-1", "alloy", "en", "mp3", 1)
+	if generic.MaxChars() != 3000 {
+		t.Fatalf("generic max chars = %d, want 3000", generic.MaxChars())
+	}
+}

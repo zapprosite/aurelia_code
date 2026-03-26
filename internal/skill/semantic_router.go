@@ -16,7 +16,7 @@ import (
 )
 
 const defaultSemanticSkillsCollection = "aurelia_skills"
-const defaultSemanticSkillsEmbedding = "bge-m3"
+const defaultSemanticSkillsEmbedding = "nomic-embed-text"
 
 // SemanticRouter uses local embeddings (e.g. Ollama) and Qdrant to route skills based on vector similarity.
 type SemanticRouter struct {

@@ -99,8 +99,6 @@ func fallbackModels(provider string) []ModelOption {
 	case "ollama":
 		return []ModelOption{
 			{ID: "gemma3:12b", Name: "Gemma 3 12B", SupportsTools: true},
-			{ID: "gemma3:4b", Name: "Gemma 3 4B"},
-			{ID: "gemma3:27b-it-q4_K_M", Name: "Gemma 3 27B IT Q4_K_M", SupportsTools: true},
 		}
 	case "openrouter":
 		return []ModelOption{

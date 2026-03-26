@@ -43,9 +43,9 @@ func TestCalculateCostUSD_UnknownModelFree(t *testing.T) {
 
 func TestLookupCost_KnownModel(t *testing.T) {
 	t.Parallel()
-	// Tier 1 — Qwen3-32B (replaced DeepSeek as primary cheap model)
-	cost := LookupCost("qwen/qwen3-32b")
-	if cost.InputPerMToken != 0.08 || cost.OutputPerMToken != 0.24 {
+	// Tier 1 — DeepSeek V3.1 cheap remote fallback
+	cost := LookupCost("deepseek/deepseek-chat-v3.1")
+	if cost.InputPerMToken != 0.15 || cost.OutputPerMToken != 0.75 {
 		t.Fatalf("cost = %+v", cost)
 	}
 }

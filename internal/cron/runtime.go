@@ -44,7 +44,7 @@ func (r *AgentCronRuntime) ExecuteJob(ctx context.Context, job CronJob) (string,
 	metrics, _ := r.extractGPUMetrics(ctx)
 
 	// Se for o watchdog de 5 min, só reportamos se houver anomalia (Temp > 75 ou Container Down)
-	if job.ID == "sentinel-watchdog" {
+	if cronMarker(job.Prompt) == "[sys:sentinel-watchdog]" {
 		return r.handleSentinelWatchdog(ctx, job, metrics)
 	}
 
@@ -61,7 +61,7 @@ func (r *AgentCronRuntime) ExecuteJob(ctx context.Context, job CronJob) (string,
 	}
 
 	analysisPrompt := fmt.Sprintf(
-		"%s\n\n[SISTEMA: MÉTRICAS REAIS DETECTADAS]\n%s\n\nPor favor, escreva um resumo premium estilo Aurélia Soberana 2026. Use ícones sênior (🌡️, 🔥, ⚡, 💎). Fale sobre a saúde do sistema e possíveis gargalos. Seja técnico e direto (Dev-to-Dev). Se houver anomalia, destaque. USE APENAS MARKDOWN, NADA DE JSON.",
+		"%s\n\n[SISTEMA: MÉTRICAS REAIS DETECTADAS]\n%s\n\nEscreva um resumo operacional curto, técnico e direto. Não se apresente como Aurélia nem como outro bot; aja apenas como um monitor automático do homelab. Se não houver anomalia relevante, prefira silêncio quando o prompt permitir. USE APENAS MARKDOWN, NADA DE JSON.",
 		job.Prompt, metrics,
 	)
 
@@ -134,6 +134,17 @@ func (r *AgentCronRuntime) handleSentinelWatchdog(ctx context.Context, job CronJ
 	}
 
 	return "", nil, nil
+}
+
+func cronMarker(prompt string) string {
+	if !strings.HasPrefix(prompt, "[sys:") {
+		return ""
+	}
+	end := strings.Index(prompt, "]")
+	if end < 0 {
+		return ""
+	}
+	return prompt[:end+1]
 }
 
 func formatChatTeamKey(chatID int64) string {

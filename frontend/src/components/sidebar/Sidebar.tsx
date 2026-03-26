@@ -20,7 +20,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: "squad",    label: "Squad (Agentes)",   icon: Users },
     { id: "brain",    label: "The Brain (.context)", icon: Brain },
     { id: "roadmap",  label: "Roadmap Slices",    icon: Map },
-    { id: "homelab",  label: "Homelab (VRV)",     icon: Server },
+    { id: "homelab",  label: "Homelab",           icon: Server },
   ];
 
   return (

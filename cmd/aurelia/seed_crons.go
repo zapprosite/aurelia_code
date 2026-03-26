@@ -4,11 +4,14 @@ import (
 	"context"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/cron"
 	"github.com/kocar/aurelia/internal/observability"
 )
+
+const systemMonitorCronExpr = "*/180 * * * *"
 
 // systemCronDefs define os cron jobs sistêmicos gerenciados pela Aurélia.
 // Cada job é identificado por um marcador [sys:nome] no início do prompt.
@@ -17,7 +20,7 @@ import (
 // Registered separately from systemCronDefs to control the marker.
 var homelabMonitorCron = cron.CronJob{
 	ScheduleType: "cron",
-	CronExpr:     "*/15 * * * *",
+	CronExpr:     systemMonitorCronExpr,
 	Prompt: "[sys:homelab-monitor] Use a ferramenta homelab_status para verificar o estado do homelab." +
 		" Reporte apenas se houver componente degradado ou offline." +
 		" Se todos estiverem saudáveis, NÃO envie mensagem (STAY SILENT).",
@@ -33,7 +36,7 @@ var controleDBCron = cron.CronJob{
 		" 4) Detecte tabelas fora do schema canônico." +
 		" 5) Cheque WAL size." +
 		" 6) Grave o relatório em db_audit_log com action=INVENTORY." +
-		" Se tudo estiver OK responda: '✓ Auditoria DB semanal concluída — sem anomalias'. Se houver problema, detalhe com risco e ação sugerida.",
+		" Se tudo estiver OK, NÃO envie mensagem (STAY SILENT). Se houver problema, detalhe risco e ação sugerida.",
 }
 
 var repoGuardianCron = cron.CronJob{
@@ -42,14 +45,14 @@ var repoGuardianCron = cron.CronJob{
 	Prompt: "[sys:repo-guardian] Você é o guardião do repositório Aurelia." +
 		" Execute a skill repo-guardian: audite todos os arquivos .md, verifique links quebrados, ADRs órfãs e arquivos fora do lugar." +
 		" Use mcp__ai-context__explore para descoberta semântica e mcp__ai-context__sync para regenerar o codebase-map." +
-		" Reporte: contagem de .md, problemas encontrados, ações tomadas." +
-		" Se tudo estiver em ordem, responda: '✓ Repositório organizado (sem anomalias detectadas)'.",
+		" Reporte apenas se houver problemas encontrados ou ações corretivas tomadas." +
+		" Se tudo estiver em ordem, NÃO envie mensagem (STAY SILENT).",
 }
 
 var systemCronDefs = []cron.CronJob{
 	{
 		ScheduleType: "cron",
-		CronExpr:     "*/5 * * * *",
+		CronExpr:     systemMonitorCronExpr,
 		Prompt: "[sys:sentinel-watchdog] Você é o Sentinel. Monitore a saúde crítica." +
 			" **Ações**: 1. Execute 'nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader'. 2. Verifique 'docker ps'." +
 			" **Análise**: Use o motor local gemma3:12b. Se temp > 75°C, execute 'docker stop $(docker ps --format \"{{.ID}}\")' e ALERTE IMEDIATAMENTE." +
@@ -60,26 +63,29 @@ var systemCronDefs = []cron.CronJob{
 		CronExpr:     "0 7 * * *",
 		Prompt: "[sys:sentinel-smoke] Você é o Sentinel, monitor do homelab." +
 			" Smoke test diário completo: bash /home/will/aurelia/scripts/smoke-test-homelab.sh" +
-			" Gere relatório executivo com status de containers, VRAM livre, ZFS e tunnel Cloudflared.",
+			" Gere relatório executivo apenas se houver falha, degradação ou drift operacional." +
+			" Se tudo estiver saudável, NÃO envie mensagem (STAY SILENT).",
 	},
 	{
 		ScheduleType: "cron",
-		CronExpr:     "*/30 * * * *",
+		CronExpr:     systemMonitorCronExpr,
 		Prompt: "[sys:memory-sync] Você é o Sentinel, monitor de memória vetorial." +
 			" Verifique Qdrant: curl -s http://localhost:6333/collections/conversation_memory" +
-			" Reporte status e contagem de vetores. Alerte se offline ou count=0.",
+			" Alerte apenas se estiver offline, count=0 ou houver drift relevante." +
+			" Se tudo estiver saudável, NÃO envie mensagem (STAY SILENT).",
 	},
 	{
 		ScheduleType: "cron",
-		CronExpr:     "0 */5 * * *",
+		CronExpr:     systemMonitorCronExpr,
 		Prompt: "[sys:gpu-report] Você é o Sentinel, monitor industrial de GPU." +
 			" **Ação**: Execute 'node scripts/grafana-capture.mjs'." +
 			" **Análise**: Use o motor local gemma3:12b para analisar o dashboard de métricas." +
-			" Envie o resumo executivo de 5 horas. Se tudo estiver estável, apenas confirme: '✓ Homelab Industrial Estável'.",
+			" Envie resumo executivo somente se detectar instabilidade, saturação, erro ou tendência anômala." +
+			" Se tudo estiver estável, NÃO envie mensagem (STAY SILENT).",
 	},
 	{
 		ScheduleType: "cron",
-		CronExpr:     "*/15 * * * *",
+		CronExpr:     systemMonitorCronExpr,
 		Prompt: "[sys:aurelia-ping] Você é o Sentinel." +
 			" Health check do daemon Aurelia: curl -s http://localhost:8484/health" +
 			" Responda em 1 linha com: status, LLM provider ativo e voz habilitada." +
@@ -134,7 +140,7 @@ func seedObsidianCron(ctx context.Context, store *cron.SQLiteCronStore, cfg *con
 
 	job := cron.CronJob{
 		ScheduleType: "cron",
-		CronExpr:     "*/30 * * * *",
+		CronExpr:     systemMonitorCronExpr,
 		OwnerUserID:  "system",
 		TargetChatID: adminChatID,
 		Prompt: "[sys:obsidian-sync] Use a ferramenta obsidian_sync para sincronizar o vault do Obsidian com o Qdrant." +
@@ -236,6 +242,58 @@ func seedSystemCrons(ctx context.Context, store *cron.SQLiteCronStore, adminChat
 
 	if created > 0 {
 		logger.Info("seed_crons: done", slog.Int("created", created))
+	}
+}
+
+func reconcileSystemCronCadence(ctx context.Context, store *cron.SQLiteCronStore, cfg *config.AppConfig) {
+	if store == nil || cfg == nil || cfg.VoiceReplyChatID == 0 {
+		return
+	}
+
+	logger := observability.Logger("cmd.seed_crons")
+	jobs, err := store.ListJobsByChat(ctx, cfg.VoiceReplyChatID)
+	if err != nil {
+		logger.Warn("reconcile_system_crons: failed to list jobs", slog.Any("err", err))
+		return
+	}
+
+	desired := map[string]string{
+		"[sys:homelab-monitor]":   systemMonitorCronExpr,
+		"[sys:sentinel-watchdog]": systemMonitorCronExpr,
+		"[sys:memory-sync]":       systemMonitorCronExpr,
+		"[sys:gpu-report]":        systemMonitorCronExpr,
+		"[sys:aurelia-ping]":      systemMonitorCronExpr,
+	}
+	if cfg.ObsidianSyncEnabled && cfg.ObsidianVaultPath != "" {
+		desired["[sys:obsidian-sync]"] = systemMonitorCronExpr
+	}
+
+	now := time.Now().UTC()
+	nextRun := now.Truncate(time.Minute).Add(3 * time.Hour)
+	updated := 0
+
+	for _, job := range jobs {
+		marker := extractSysMarker(job.Prompt)
+		wantExpr, ok := desired[marker]
+		if !ok || !strings.EqualFold(job.ScheduleType, "cron") {
+			continue
+		}
+		needsUpdate := job.CronExpr != wantExpr || job.NextRunAt == nil || !job.NextRunAt.After(now)
+		if !needsUpdate {
+			continue
+		}
+		job.CronExpr = wantExpr
+		job.NextRunAt = &nextRun
+		if err := store.UpdateJob(ctx, job); err != nil {
+			logger.Warn("reconcile_system_crons: failed to update job", slog.String("job_id", job.ID), slog.String("marker", marker), slog.Any("err", err))
+			continue
+		}
+		updated++
+		logger.Info("reconcile_system_crons: updated cadence", slog.String("job_id", job.ID), slog.String("marker", marker), slog.String("expr", wantExpr))
+	}
+
+	if updated > 0 {
+		logger.Info("reconcile_system_crons: done", slog.Int("updated", updated))
 	}
 }
 
