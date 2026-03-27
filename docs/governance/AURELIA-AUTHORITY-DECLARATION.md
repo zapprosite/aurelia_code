@@ -36,7 +36,7 @@ A Aurélia está evoluindo de bot Telegram para sistema **JARVIS local-first**, 
 - **Controle total** do Home Lab via comandos naturais
 - **Autonomia 24x7** sem dependência de cloud
 
-**Roadmap completo:** [`docs/adr/ADR-20260320-roadmap-mestre-slices.md`](../adr/ADR-20260320-roadmap-mestre-slices.md)
+**Roadmap / ADRs ativos:** [`docs/adr/README.md`](../adr/README.md)
 
 ---
 

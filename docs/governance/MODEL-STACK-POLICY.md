@@ -3,7 +3,7 @@
 **Status:** ✅ Vigente
 **Criado:** 2026-03-24
 **Autoridade:** Aurélia (Arquiteta Principal) + Will (Principal Engineer)
-**Rule associada:** [`.agents/rules/13-model-stack-policy.md`](../../.agents/rules/13-model-stack-policy.md)
+**Referência operacional associada:** [`.agent/rules/README.md`](../../.agent/rules/README.md)
 
 ---
 
@@ -56,8 +56,8 @@ internal/config/config.go          ← AppConfig.LLMModel default
 cmd/aurelia/onboard.go             ← onboarding default model
 scripts/update-ollama.sh           ← MAIN_MODEL / EMBED_MODEL
 .opencode/agents/aurelia.md        ← Stack documentado para OpenCode
-.agents/skills/homelab-control/SKILL.md  ← Modelos pinados
-.agents/rules/13-model-stack-policy.md   ← Esta policy em form de rule
+.agent/skills/homelab-control/SKILL.md   ← contexto operacional do homelab
+.agent/rules/README.md                   ← índice vigente de regras e guias
 ```
 
 ---
@@ -66,7 +66,7 @@ scripts/update-ollama.sh           ← MAIN_MODEL / EMBED_MODEL
 
 1. Abrir issue ou slice com benchmark comparativo
 2. Criar ADR: `docs/ADR.md` → nova entrada com justificativa
-3. Atualizar este documento + rule 13
+3. Atualizar este documento + referência operacional consolidada em `.agent/rules/README.md`
 4. Atualizar todos os arquivos protegidos listados acima
 5. Rodar `go test ./...` para validar testes com novo modelo default
 
