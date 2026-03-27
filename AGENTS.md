@@ -69,6 +69,12 @@ Todos devem delegar para `AGENTS.md` e para o catálogo em `docs/governance/SKIL
 - Skill `/add-subdomain`: [`.agent/skills/add-subdomain/SKILL.md`](.agent/skills/add-subdomain/SKILL.md)
 - Workflow nonstop: [`.agent/workflows/adr-semparar.md`](.agent/workflows/adr-semparar.md)
 - Voz local: [`docs/jarvis_local_voice_blueprint_20260319.md`](docs/jarvis_local_voice_blueprint_20260319.md)
+
+## Serviços de Sistema (SOTA 2026)
+- **Aurelia System API**: Gateway de governança em Go na porta `8080`. Gerencia paridade de `.env` e saúde do cluster.
+- **Smart Router**: Roteamento inteligente na porta `4000` (LiteLLM).
+- **QvC Monitor**: Auditoria horária de Qualidade vs Custo (Cron).
+
 ## AI Context References
 - Documentation index: `.context/docs/README.md`
 - Agent playbooks: `.context/agents/README.md`

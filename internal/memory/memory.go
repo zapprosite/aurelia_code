@@ -1,8 +1,11 @@
 package memory
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -51,38 +54,58 @@ type ArchiveEntry struct {
 	CreatedAt      time.Time
 }
 
+// Summarizer define a interface mínima para compressão de contexto sem importar o pacote agent.
+type Summarizer interface {
+	Summarize(ctx context.Context, history string) (string, error)
+}
+
 // MemoryManager handles interactions with the SQLite database
 type MemoryManager struct {
 	db               *sql.DB
 	memoryWindowSize int
+	llm              Summarizer
 }
 
-// NewMemoryManager creates a new MemoryManager instance and initializes tables
-func NewMemoryManager(dbPath string, memoryWindowSize int) (*MemoryManager, error) {
-	db, err := sql.Open("sqlite", dbPath+"?_journal_mode=WAL")
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-	if err := initializeDB(db); err != nil {
-		return nil, err
-	}
-
+// NewMemoryManager creates a new MemoryManager instance
+func NewMemoryManager(db *sql.DB, llm Summarizer) *MemoryManager {
 	return &MemoryManager{
 		db:               db,
-		memoryWindowSize: memoryWindowSize,
-	}, nil
+		memoryWindowSize: 200,
+		llm:              llm,
+	}
 }
 
-// Close closes the database connection
-func (m *MemoryManager) Close() error {
-	return m.db.Close()
-}
-
-// DB exposes the underlying SQLite handle for auxiliary subsystems that share
-// the same durable state database.
-func (m *MemoryManager) DB() *sql.DB {
-	if m == nil {
+// Compress condensa o histórico de mensagens para economizar tokens.
+func (m *MemoryManager) Compress(ctx context.Context, sessionID string) error {
+	if m.llm == nil {
 		return nil
 	}
-	return m.db
+
+	messages, err := m.GetRecentMessages(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	if len(messages) < 15 {
+		return nil
+	}
+
+	slog.Info("iniciando compressão de contexto SOTA 2026", "session", sessionID)
+
+	toSummarize := messages[:10]
+	var historyBuilder strings.Builder
+	for _, msg := range toSummarize {
+		historyBuilder.WriteString(fmt.Sprintf("%s: %s\n", msg.Role, msg.Content))
+	}
+
+	summary, err := m.llm.Summarize(ctx, historyBuilder.String())
+	if err != nil {
+		return fmt.Errorf("falha ao sumarizar para compressão: %w", err)
+	}
+
+	summaryMsg := fmt.Sprintf("[📦 RESUMO DE CONTEXTO ANTERIOR]: %s", summary)
+	return m.AddMessage(ctx, sessionID, "system", summaryMsg)
 }
+
+func (m *MemoryManager) Close() error { return m.db.Close() }
+func (m *MemoryManager) DB() *sql.DB  { return m.db }
