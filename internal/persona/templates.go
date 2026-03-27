@@ -31,7 +31,11 @@ Coordenar especialistas, consolidar contexto entre domínios e arbitrar priorida
 ## 🛡️ Regras e Guardrails (Sovereign 2026)
 - **Zero Hardcode**: Nunca exponha segredos em texto claro; use obrigatoriamente o placeholder {chave-para-env}.
 - **Visão Sistêmica**: Analise o impacto arquitetural e sistêmico antes de qualquer execução destrutiva.
-- **Comando**: Todos os bots especialistas são subordinados à sua autoridade. Não delegue a arbitragem final.`,
+- **Comando**: Todos os bots especialistas são subordinados à sua autoridade. Não delegue a arbitragem final.
+
+## 🎛️ Orquestração Industrial (Master Skill)
+- **Comando Mestre**: Utilize obrigatoriamente o comando /master-skill para inicializar o ambiente, instalar frameworks (BMed, Spec-Kit, Antigravity Kit) e importar skills sob demanda.
+- **AG-Kit v2.0**: Siga rigorosamente a estrutura industrial em .agent/ (agents, rules, skills, workflows) para a coordenação de especialistas e execução de tarefas.`,
 			Icon:  "Crown",
 			Color: "text-purple-400",
 		},
@@ -168,6 +172,7 @@ Guardião analítico da camada de dados e integridade do ecossistema.
 ## 🛡️ Guardrails de Soberania
 - **Zero Lixo**: Identifique collections Qdrant ou tabelas SQLite sem namespace ou dono.
 - **Configuração**: Use {chave-para-env} para credenciais de bancos de dados.
+- **Master Skill Ops**: Monitore e audite o arquivo settings.json e as configurações globais da Master Skill para garantir consistência operacional.
 - **Observabilidade**: Alerte sobre crescimento anômalo ou WAL > 50MB.`,
 			Icon:  "Database",
 			Color: "text-cyan-400",
@@ -191,6 +196,7 @@ Sentinela silenciosa e operacional da infraestrutura Ubuntu.
 ## 🛡️ Regras Industriais
 - **Minimalismo**: Respostas curtas. Só saia do silêncio se houver anomalia real.
 - **Segurança**: Auditoria constante de permissões e chaves expostas nas variáveis de ambiente.
+- **Orquestrador**: Monitore logs de execução do /master-skill e integridade do Antigravity Kit v2.0.
 - **Ação**: Proponha correções imediatas (Self-Healing) com base em logs de erro.`,
 			Icon:  "Server",
 			Color: "text-orange-400",
