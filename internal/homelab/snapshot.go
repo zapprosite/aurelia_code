@@ -22,10 +22,21 @@ const (
 	maxSnapshots        = 15
 	maxChangeLogLines   = 20
 	maxZpoolStatusLines = 10
+
+	homelabServiceSupabase = "supabase"
+	homelabServiceQdrant   = "qdrant"
+	homelabServiceCaprover = "caprover"
+
+	homelabStatusHealthy  = "healthy"
+	homelabStatusDegraded = "degraded"
+	homelabStatusOffline  = "offline"
 )
 
 type Snapshot struct {
 	Containers  []ContainerStatus `json:"containers"`
+	Services    []HomelabService  `json:"services"`
+	Summary     HomelabSummary    `json:"summary"`
+	Counts      HomelabCounts     `json:"counts"`
 	Health      []HealthEndpoint  `json:"health"`
 	Snapshots   []ZFSSnapshot     `json:"snapshots"`
 	Changelog   string            `json:"changelog"`
@@ -40,6 +51,43 @@ type ContainerStatus struct {
 	Status string `json:"status"`
 	Ports  string `json:"ports"`
 	Up     bool   `json:"up"`
+}
+
+type HomelabService struct {
+	ID         string            `json:"id"`
+	Name       string            `json:"name"`
+	Label      string            `json:"label"`
+	Status     string            `json:"status"`
+	Summary    string            `json:"summary"`
+	Detail     string            `json:"detail"`
+	Counts     ServiceCounts     `json:"counts"`
+	Containers []ContainerStatus `json:"containers"`
+}
+
+type HomelabSummary struct {
+	Status   string `json:"status"`
+	Healthy  int    `json:"healthy"`
+	Degraded int    `json:"degraded"`
+	Offline  int    `json:"offline"`
+}
+
+type ServiceCounts struct {
+	Total      int `json:"total"`
+	Up         int `json:"up"`
+	Restarting int `json:"restarting"`
+	Exited     int `json:"exited"`
+	Dead       int `json:"dead"`
+	Other      int `json:"other"`
+}
+
+type HomelabCounts struct {
+	Services             int `json:"services"`
+	Containers           int `json:"containers"`
+	UpContainers         int `json:"up_containers"`
+	RestartingContainers int `json:"restarting_containers"`
+	ExitedContainers     int `json:"exited_containers"`
+	DeadContainers       int `json:"dead_containers"`
+	OtherContainers      int `json:"other_containers"`
 }
 
 type HealthEndpoint struct {
@@ -114,8 +162,13 @@ func NewCollector() *Collector {
 }
 
 func (c *Collector) Collect(ctx context.Context) Snapshot {
+	containers := c.collectContainers(ctx)
+	services, summary, counts := buildHomelabServices(containers)
 	return Snapshot{
-		Containers:  c.collectContainers(ctx),
+		Containers:  containers,
+		Services:    services,
+		Summary:     summary,
+		Counts:      counts,
 		Health:      c.collectHealth(ctx),
 		Snapshots:   c.collectSnapshots(ctx),
 		Changelog:   c.collectChangelog(),
@@ -132,6 +185,179 @@ func (c *Collector) collectContainers(ctx context.Context) []ContainerStatus {
 		return nil
 	}
 	return parseContainerStatuses(raw)
+}
+
+func buildHomelabServices(containers []ContainerStatus) ([]HomelabService, HomelabSummary, HomelabCounts) {
+	specs := []struct {
+		name  string
+		label string
+		match func(ContainerStatus) bool
+	}{
+		{
+			name:  homelabServiceSupabase,
+			label: "Supabase",
+			match: func(container ContainerStatus) bool {
+				return strings.HasPrefix(container.Name, "supabase-") || container.Name == "realtime-dev.supabase-realtime"
+			},
+		},
+		{
+			name:  homelabServiceQdrant,
+			label: "Qdrant",
+			match: func(container ContainerStatus) bool {
+				return container.Name == "qdrant"
+			},
+		},
+		{
+			name:  homelabServiceCaprover,
+			label: "CapRover",
+			match: func(container ContainerStatus) bool {
+				return strings.HasPrefix(container.Name, "captain-")
+			},
+		},
+	}
+
+	services := make([]HomelabService, 0, len(specs))
+	serviceSummary := HomelabSummary{}
+	containerCounts := HomelabCounts{
+		Services: len(specs),
+	}
+
+	for _, container := range containers {
+		containerCounts.Containers++
+		switch classifyContainerState(container.Status) {
+		case homelabStatusHealthy:
+			containerCounts.UpContainers++
+		case "restarting":
+			containerCounts.RestartingContainers++
+		case "exited":
+			containerCounts.ExitedContainers++
+		case "dead":
+			containerCounts.DeadContainers++
+		default:
+			containerCounts.OtherContainers++
+		}
+	}
+
+	for _, spec := range specs {
+		group := make([]ContainerStatus, 0)
+		for _, container := range containers {
+			if spec.match(container) {
+				group = append(group, container)
+			}
+		}
+
+		serviceCounts := ServiceCounts{
+			Total: len(group),
+		}
+		healthy := 0
+		for _, container := range group {
+			switch classifyContainerState(container.Status) {
+			case homelabStatusHealthy:
+				healthy++
+				serviceCounts.Up++
+			case "restarting":
+				serviceCounts.Restarting++
+			case "exited":
+				serviceCounts.Exited++
+			case "dead":
+				serviceCounts.Dead++
+			default:
+				serviceCounts.Other++
+			}
+		}
+
+		status := homelabStatusOffline
+		switch {
+		case len(group) == 0 || healthy == 0:
+			status = homelabStatusOffline
+		case healthy == len(group):
+			status = homelabStatusHealthy
+		default:
+			status = homelabStatusDegraded
+		}
+		if status == homelabStatusHealthy {
+			serviceSummary.Healthy++
+		} else if status == homelabStatusDegraded {
+			serviceSummary.Degraded++
+		} else {
+			serviceSummary.Offline++
+		}
+
+		services = append(services, HomelabService{
+			ID:         spec.name,
+			Name:       spec.name,
+			Label:      spec.label,
+			Status:     status,
+			Summary:    serviceSummaryText(spec.label, status),
+			Detail:     serviceDetailText(serviceCounts),
+			Counts:     serviceCounts,
+			Containers: group,
+		})
+	}
+
+	serviceSummary.Status = deriveHomelabStatus(serviceSummary.Healthy, serviceSummary.Degraded, serviceSummary.Offline)
+	return services, serviceSummary, containerCounts
+}
+
+func serviceSummaryText(label string, status string) string {
+	switch status {
+	case homelabStatusHealthy:
+		return label + " operacional."
+	case homelabStatusDegraded:
+		return label + " parcialmente operacional; requer atenção."
+	default:
+		return label + " offline ou sem containers saudáveis."
+	}
+}
+
+func serviceDetailText(counts ServiceCounts) string {
+	parts := make([]string, 0, 4)
+	if counts.Total > 0 {
+		parts = append(parts, strconv.Itoa(counts.Up)+"/"+strconv.Itoa(counts.Total)+" up")
+	}
+	if counts.Restarting > 0 {
+		parts = append(parts, strconv.Itoa(counts.Restarting)+" restarting")
+	}
+	if counts.Exited > 0 {
+		parts = append(parts, strconv.Itoa(counts.Exited)+" exited")
+	}
+	if counts.Dead > 0 {
+		parts = append(parts, strconv.Itoa(counts.Dead)+" dead")
+	}
+	if counts.Other > 0 {
+		parts = append(parts, strconv.Itoa(counts.Other)+" other")
+	}
+	if len(parts) == 0 {
+		return "nenhum container encontrado"
+	}
+	return strings.Join(parts, " · ")
+}
+
+func deriveHomelabStatus(healthy, degraded, offline int) string {
+	switch {
+	case healthy > 0 && degraded == 0 && offline == 0:
+		return homelabStatusHealthy
+	case healthy == 0 && degraded == 0 && offline > 0:
+		return homelabStatusOffline
+	default:
+		return homelabStatusDegraded
+	}
+}
+
+func classifyContainerState(status string) string {
+	normalized := strings.ToLower(strings.TrimSpace(status))
+	switch {
+	case strings.HasPrefix(normalized, "up"):
+		return homelabStatusHealthy
+	case strings.HasPrefix(normalized, "restarting"):
+		return "restarting"
+	case strings.HasPrefix(normalized, "exited"):
+		return "exited"
+	case strings.HasPrefix(normalized, "dead"):
+		return "dead"
+	default:
+		return "other"
+	}
 }
 
 func (c *Collector) collectHealth(ctx context.Context) []HealthEndpoint {

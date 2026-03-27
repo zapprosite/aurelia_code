@@ -1,41 +1,82 @@
 # Project Rules and Guidelines
 
-> Entry point de documentação e governança do repositório.
+> Auto-generated from .context/docs on 2026-03-24T15:38:26.407Z
 
-## Leitura obrigatória
+## README
 
-1. [README.md](./README.md)
-2. [docs/governance/REPOSITORY_CONTRACT.md](./docs/governance/REPOSITORY_CONTRACT.md)
-3. [CLAUDE.md](./CLAUDE.md)
-4. [GEMINI.md](./GEMINI.md)
-5. [.agent/rules/README.md](./.agent/rules/README.md)
-6. [docs/adr/README.md](./docs/adr/README.md)
-7. [.context/docs/README.md](./.context/docs/README.md)
+# Documentation Index
+
+Este diretório é a memória técnica curta do repositório. Use-o como ponto de entrada para entender a forma atual do código, o fluxo de desenvolvimento e as decisões operacionais que aparecem em `AGENTS.md`, `.agents/rules/` e nos artefatos de workflow em `.context/workflow/`.
 
 ## Core Guides
 
-- [Project Overview](./.context/docs/project-overview.md)
-- [Architecture Notes](./.context/docs/architecture.md)
-- [Development Workflow](./.context/docs/development-workflow.md)
-- [Testing Strategy](./.context/docs/testing-strategy.md)
-- [Glossary & Domain Concepts](./.context/docs/glossary.md)
-- [Data Flow & Integrations](./.context/docs/data-flow.md)
-- [Security & Compliance Notes](./.context/docs/security.md)
-- [Tooling & Productivity Guide](./.context/docs/tooling.md)
+- [Project Overview](./project-overview.md)
+- [Architecture Notes](./architecture.md)
+- [Development Workflow](./development-workflow.md)
+- [Testing Strategy](./testing-strategy.md)
+- [Glossary & Domain Concepts](./glossary.md)
+- [Data Flow & Integrations](./data-flow.md)
+- [Security & Compliance Notes](./security.md)
+- [Tooling & Productivity Guide](./tooling.md)
+
+## Current Repository Snapshot
+
+- Root: `/home/will/aurelia`
+- Module: `github.com/kocar/aurelia`
+- Primary languages: Go (`198` files), Shell (`13` files), Markdown (`38` files), JSON (`2` files)
+- Main runtime entrypoint: [`cmd/aurelia/main.go`](../../cmd/aurelia/main.go)
+- Composition root: [`cmd/aurelia/app.go`](../../cmd/aurelia/app.go)
+- Main architectural source: [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)
+- Governance source: [`AGENTS.md`](../../AGENTS.md)
+- Governance contract: [`docs/REPOSITORY_CONTRACT.md`](../../docs/REPOSITORY_CONTRACT.md)
+
+## Repository Map
+
+- `.agents/` — autoridade operacional local, regras, workflows e skills do workspace
+- `.agents/skills/aurelia-media-voice/` — transcript de mídia e governança da voz oficial da Aurelia
+- `.context/` — memória operacional, docs sintéticos e estado de workflow
+- `.context/plans/` — implementation plans e task boards por slice, fora da raiz
+- `cmd/` — entrypoints do binário e onboarding
+- `internal/` — domínio principal, runtime, gateway, voz, ferramentas, Telegram, MCP, cron e memória
+- `pkg/` — provedores LLM, STT e TTS reutilizáveis
+- `scripts/` — build, instalação do daemon, health-check e smoke scripts
+- `docs/` — documentação arquitetural e ADRs do produto
+- `e2e/` — testes end-to-end e smoke integration
+- `.github/workflows/` — CI, lint, gitleaks e govulncheck
+
+## Document Map
+
+| Guide | Focus | Key Inputs |
+| --- | --- | --- |
+| `project-overview.md` | posicionamento do projeto, entrypoints e stack | `README.md`, `go.mod`, `cmd/aurelia/*` |
+| `architecture.md` | shape do sistema e limites entre módulos | `docs/ARCHITECTURE.md`, `cmd/aurelia/app.go`, `internal/*` |
+| `development-workflow.md` | ciclo de trabalho, branching e revisão | `AGENTS.md`, `.agents/rules/`, scripts, CI |
+| `testing-strategy.md` | estratégia de testes e gates | `*_test.go`, `e2e/`, `.github/workflows/` |
+| `glossary.md` | termos, tipos e conceitos recorrentes | `internal/agent`, `internal/persona`, `internal/runtime` |
+| `data-flow.md` | entrada, raciocínio, ferramentas e persistência | `internal/telegram`, `internal/agent`, `internal/memory`, `internal/health` |
+| `security.md` | auth, segredos e guardrails | `internal/config`, `internal/tools`, `AGENTS.md`, CI |
+| `tooling.md` | CLIs, scripts e automação diária | `scripts/`, Go toolchain, systemd, npm/npx MCP |
 
 ## Governance Highlights
 
-- contrato central: [docs/governance/REPOSITORY_CONTRACT.md](./docs/governance/REPOSITORY_CONTRACT.md)
-- stack de modelos: [docs/governance/MODEL-STACK-POLICY.md](./docs/governance/MODEL-STACK-POLICY.md) e [.agent/rules/13-model-stack-policy.md](./.agent/rules/13-model-stack-policy.md)
-- stack de dados: [docs/governance/DATA_POLICY.md](./docs/governance/DATA_POLICY.md), [docs/governance/OBSIDIAN_VAULT_STANDARD.md](./docs/governance/OBSIDIAN_VAULT_STANDARD.md)
-- rede e subdomínios: [docs/governance/S-23-cloudflare-access.md](./docs/governance/S-23-cloudflare-access.md) e [.agent/rules/12-network-governance.md](./.agent/rules/12-network-governance.md)
-- ADR por slice estrutural: [docs/adr/README.md](./docs/adr/README.md)
-- continuidade de slice: [.agent/workflows/adr-semparar.md](./.agent/workflows/adr-semparar.md) e [scripts/adr-slice-init.sh](./scripts/adr-slice-init.sh)
-- bibliotheca e integração Go/Node/Bash: [.agent/rules/15-sovereign-bibliotheca.md](./.agent/rules/15-sovereign-bibliotheca.md)
-- voz e mídia: [docs/jarvis_local_voice_blueprint_20260319.md](./docs/jarvis_local_voice_blueprint_20260319.md) e [.agent/skills/aurelia-media-voice/SKILL.md](./.agent/skills/aurelia-media-voice/SKILL.md)
+- adapters finos por motor: [`CLAUDE.md`](../../CLAUDE.md), [`GEMINI.md`](../../GEMINI.md), [`MODEL.md`](../../MODEL.md)
+- ADR obrigatória por slice estrutural: [`docs/adr/README.md`](../../docs/adr/README.md)
+- modo nonstop para slices longas: [`/adr-semparar`](../../.agents/workflows/adr-semparar.md)
+- comando canônico de continuidade: [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh)
+- higiene da raiz: contratos e docs de entrada ficam na raiz; blueprints/ADRs/planos de slice não
+- política da voz oficial: [`docs/aurelia_voice_profile_20260319.md`](../../docs/aurelia_voice_profile_20260319.md)
+- **motor de inferência da Aurélia** (IMUTÁVEL): [`docs/governance/MODEL-STACK-POLICY.md`](../../docs/governance/MODEL-STACK-POLICY.md) — `gemma3:12b` (local Tier 0) + `deepseek/deepseek-chat-v3.1` (Tier 1) + `minimax/minimax-m2.7` (Tier 2) + `moonshotai/kimi-k2.5` (long context); Claude/Antigravity/OpenCode são orquestradores externos controlados por Will; mudança só via ADR; rule: [`.agents/rules/13-model-stack-policy.md`](../../.agents/rules/13-model-stack-policy.md)
+- **governança de rede/portas/subdomínios**: ler [`/srv/ops/ai-governance/NETWORK_MAP.md`](/srv/ops/ai-governance/NETWORK_MAP.md) antes de qualquer mudança; adicionar subdomínio via skill [`/add-subdomain`](../../.agents/skills/add-subdomain/SKILL.md); Cloudflare Access gerenciado por Terraform em [`/srv/ops/terraform/cloudflare/access.tf`](/srv/ops/terraform/cloudflare/access.tf) — ver [`docs/governance/S-23-cloudflare-access.md`](../../docs/governance/S-23-cloudflare-access.md); regra completa: [`.agents/rules/12-network-governance.md`](../../.agents/rules/12-network-governance.md)
+
+## 🛡️ Proteção Industrial & Hard-Lock (Antigravity)
+
+- **Imutabilidade de Rules**: Proibida a alteração de `.agent/rules/` por agentes sem ordem direta de Will.
+- **Paridade .env**: O arquivo `.env` deve ser mantido como espelho 1:1 do `.env.example`. Falhar se `scripts/env-parity-check.sh` não retornar 0.
+- **Autoridade Final**: Apenas Will pode aprovar mudanças estruturais de infraestrutura.
 
 ## Related Resources
 
-- [Agent Handbook](./.context/agents/README.md)
-- [Workflow changelog](./.context/workflow/docs/changelog-post-reboot-validation-2026-03-19.md)
-- [Codebase map](./.context/docs/codebase-map.json)
+- [Agent Handbook](../agents/README.md)
+- [Workflow changelogs](../workflow/docs/changelog-post-reboot-validation-2026-03-19.md)
+- [Codebase map](./codebase-map.json)
+

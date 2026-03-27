@@ -32,6 +32,7 @@
 
 ## Proposta / Plano Ativo
 
+- [20260326-implementacao-master-skill-global.md](20260326-implementacao-master-skill-global.md) — implementação do Orquestrador Global Master Skill (Sovereign 2026)
 - [20260325-basico-bem-feito-v2-implementation.md](20260325-basico-bem-feito-v2-implementation.md) — **plano de implementação concreto**, 4 fases, critérios binários de aceite — **leitura obrigatória**
 - [20260324-rich-media-expansion.md](20260324-rich-media-expansion.md) — expansão de mídias ricas
 

@@ -82,13 +82,21 @@ func TestOpenAICompatibleSynthesizer_NormalizesLegacyPTBRAlias(t *testing.T) {
 func TestOpenAICompatibleSynthesizer_MaxChars(t *testing.T) {
 	t.Parallel()
 
-	kokoro := NewOpenAICompatibleSynthesizer("http://local", "kokoro", "pt-br", "pt", "opus", 1)
-	if kokoro.MaxChars() != 50000 {
-		t.Fatalf("kokoro max chars = %d, want 50000", kokoro.MaxChars())
+	tests := []struct {
+		model    string
+		expected int
+	}{
+		{"kokoro", 50000},
+		{"kodoro", 50000},
+		{"KOKORO-v1", 50000},
+		{"tts-1", 3000},
+		{"", 3000},
 	}
 
-	generic := NewOpenAICompatibleSynthesizer("http://remote", "tts-1", "alloy", "en", "mp3", 1)
-	if generic.MaxChars() != 3000 {
-		t.Fatalf("generic max chars = %d, want 3000", generic.MaxChars())
+	for _, tc := range tests {
+		s := NewOpenAICompatibleSynthesizer("http://local", tc.model, "pf_dora", "pt", "opus", 1.0)
+		if got := s.MaxChars(); got != tc.expected {
+			t.Errorf("MaxChars(%q) = %d, want %d", tc.model, got, tc.expected)
+		}
 	}
 }

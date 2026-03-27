@@ -432,15 +432,23 @@ func sanitizeTextForSpeech(text string, limit int) string {
 	runes := []rune(sanitized)
 	if len(runes) > limit {
 		window := string(runes[:limit])
-		// Find last sentence end within window
+		// Optimization: only search for sentence ends in the last 1000 characters 
+		// of the window to avoid discarding huge chunks of text.
+		searchStart := 0
+		if limit > 1000 {
+			searchStart = limit - 1000
+		}
+		
+		found := false
 		for _, sep := range []string{". ", "! ", "? ", ".\n", "!\n", "?\n"} {
-			if idx := strings.LastIndex(window, sep); idx > 500 {
+			if idx := strings.LastIndex(window, sep); idx >= searchStart {
 				sanitized = strings.TrimSpace(window[:idx+1])
+				found = true
 				break
 			}
 		}
-		if len([]rune(sanitized)) > limit {
-			// fallback: hard cut
+		if !found {
+			// fallback: hard cut at limit
 			sanitized = strings.TrimSpace(string(runes[:limit])) + "."
 		}
 	}
