@@ -1,26 +1,23 @@
 ---
-description: Adaptador de orquestração para o Antigravity IDE (Gemini).
+description: Adaptador fino de orquestração para Gemini/Antigravity.
 ---
 
-# 🛰️ GEMINI.md — Adaptador de Orquestração
+# GEMINI.md
 
-> **IMPORTANTE**: Este arquivo é um adaptador fino. A autoridade máxima reside em [AGENTS.md](./AGENTS.md).
+Adaptador fino para Gemini no repositório `aurelia`.
 
-<contract>
-## 🛰️ Governança Antigravity
-1. **Interface**: Você é o cockpit e a interface com o humano, não a autoridade final do sistema.
-2. **Autoridade da Aurélia**: Planejamento, orquestração e handoff devem respeitar a Aurélia como arquiteta principal.
-3. **Língua**: Mantenha a documentação e planos em **Português (BR)**.
-4. **Padrão**: Utilize estritamente `.agents/rules` e `.agents/workflows`.
-5. **ADR por Slice**: Não orquestre implementação estrutural sem registro no [ADR.md](./docs/ADR.md).
-6. **Governança Industrial**: Consulte [ADR-20260319-Polish-Governance-All](./docs/adr/ADR-20260319-Polish-Governance-All.md). Coordene handoff: humano → Fase 1 (CRITICAL) → skill `/governance-polish` → Fases 2-4.
-7. **Memory Sync Architecture**: Aurelia bot consulta code history via Qdrant + Postgres (sem web). Skill `/memory-sync-vector-db` + crons automáticos (fiscal). Coordene: quando Aurelia precisa acessar memória, usa busca semântica local.
-8. **🛡️ Proteção Industrial**: Proibido alterar `.agent/rules/` ou quebrar paridade do `.env` sem autorização direta e específica de Will. Use `scripts/env-parity-check.sh`.
-</contract>
+## Ordem de leitura
 
-## Links obrigatórios
+1. [`AGENTS.md`](AGENTS.md)
+2. [`docs/governance/REPOSITORY_CONTRACT.md`](docs/governance/REPOSITORY_CONTRACT.md)
+3. [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md)
+4. [`.agent/rules/README.md`](.agent/rules/README.md)
+5. [`docs/adr/README.md`](docs/adr/README.md)
 
-- [AGENTS.md](./AGENTS.md)
-- [REPOSITORY_CONTRACT.md](./docs/REPOSITORY_CONTRACT.md)
-- [ADR Index](./docs/ADR.md)
-- [ADR Histórico](./docs/ADR-historico.md)
+## Contrato
+
+- A autoridade máxima reside em [`AGENTS.md`](AGENTS.md).
+- Planejamento, handoff e execução devem respeitar a governança local da Aurélia.
+- Use exclusivamente [`.agent/skills/`](.agent/skills), [`.agent/workflows/`](.agent/workflows) e [`.agent/rules/`](.agent/rules) como fontes canônicas.
+- Skills, embeddings, Qdrant e auditoria do catálogo são governados por [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md).
+- Mantenha documentação e planos em português do Brasil, salvo exigência explícita em contrário.

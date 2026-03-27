@@ -11,15 +11,19 @@ import (
 
 // Metadata represents the YAML frontmatter of a SKILL.md
 type Metadata struct {
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
+	Name        string   `yaml:"name"`
+	Description string   `yaml:"description"`
+	Tags        []string `yaml:"tags,omitempty"`
+	Engines     []string `yaml:"engines,omitempty"`
+	Owner       string   `yaml:"owner,omitempty"`
 }
 
 // Skill represents a loaded plugin/skill
 type Skill struct {
-	Metadata Metadata
-	Content  string // The full markdown content including or excluding frontmatter
-	DirPath  string // The folder path where it resides
+	Metadata   Metadata
+	Content    string // The full markdown content including or excluding frontmatter
+	DirPath    string // The folder path where it resides
+	SourcePath string // Full path to SKILL.md
 }
 
 // Loader is responsible for loading skills from the filesystem
@@ -85,9 +89,10 @@ func (l *Loader) loadFrom(baseDir string, skills map[string]Skill) error {
 
 		// Use the yaml defined "name" as key; duplicate names: last dir wins
 		skills[metadata.Name] = Skill{
-			Metadata: metadata,
-			Content:  contentStr,
-			DirPath:  skillDir,
+			Metadata:   metadata,
+			Content:    contentStr,
+			DirPath:    skillDir,
+			SourcePath: skillFile,
 		}
 	}
 

@@ -39,6 +39,6 @@ Esta skill governa a evolução da infraestrutura e segurança da Aurélia, gara
 - Antes de grandes atualizações de sistema operacional ou drivers.
 
 ## 🛡️ Referências Obrigatórias
-- [AGENTS.md](../../AGENTS.md)
-- [AURELIA-AUTHORITY-DECLARATION.md](../../docs/governance/AURELIA-AUTHORITY-DECLARATION.md)
-- [ADR-20260320-plano-mestre-jarvis-local-first.md](../../docs/adr/ADR-20260320-plano-mestre-jarvis-local-first.md)
+- [AGENTS.md](../../../AGENTS.md)
+- [AURELIA-AUTHORITY-DECLARATION.md](../../../docs/governance/AURELIA-AUTHORITY-DECLARATION.md)
+- [ADR Index](../../../docs/adr/README.md)

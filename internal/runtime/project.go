@@ -12,8 +12,13 @@ func ProjectRoot(cwd string) string {
 	return filepath.Join(cwd, defaultDir)
 }
 
-// ProjectSkills returns the per-project skills directory under the target project.
+// ProjectSkills returns the canonical project skill catalog tracked in the repository.
 func ProjectSkills(cwd string) string {
+	return filepath.Join(cwd, ".agent", "skills")
+}
+
+// ProjectSkillOverlay returns the optional local overlay for project-specific skill installs.
+func ProjectSkillOverlay(cwd string) string {
 	return filepath.Join(ProjectRoot(cwd), "skills")
 }
 
@@ -25,6 +30,8 @@ func BootstrapProject(cwd string) error {
 
 	dirs := []string{
 		ProjectRoot(cwd),
+		ProjectSkillOverlay(cwd),
+		filepath.Join(cwd, ".agent"),
 		ProjectSkills(cwd),
 	}
 	for _, dir := range dirs {

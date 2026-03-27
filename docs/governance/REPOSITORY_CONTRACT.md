@@ -22,17 +22,20 @@ Este é o índice central de governança para humanos e agentes.
 
 1. [AGENTS.md](../../AGENTS.md)
 2. [README.md](../../README.md)
-3. [CLAUDE.md](../../CLAUDE.md)
-4. [GEMINI.md](../../GEMINI.md)
-5. [.agent/rules/README.md](../../.agent/rules/README.md)
-6. [ADR Index](../adr/README.md)
-7. [.context/docs/README.md](../../.context/docs/README.md)
+3. [Skill Catalog](./SKILL-CATALOG.md)
+4. [CLAUDE.md](../../CLAUDE.md)
+5. [GEMINI.md](../../GEMINI.md)
+6. [MODEL.md](../../MODEL.md)
+7. [.agent/rules/README.md](../../.agent/rules/README.md)
+8. [ADR Index](../adr/README.md)
+9. [.context/docs/README.md](../../.context/docs/README.md)
 
 ## Fontes permanentes de governança
 
 - [DATA_POLICY.md](./DATA_POLICY.md)
 - [OBSIDIAN_VAULT_STANDARD.md](./OBSIDIAN_VAULT_STANDARD.md)
 - [MODEL-STACK-POLICY.md](./MODEL-STACK-POLICY.md)
+- [SKILL-CATALOG.md](./SKILL-CATALOG.md)
 - [SECRETS.md](./SECRETS.md)
 - [S-23-cloudflare-access.md](./S-23-cloudflare-access.md)
 
@@ -46,6 +49,7 @@ Este é o índice central de governança para humanos e agentes.
 - `sync-ai-context` dispensável em microedições sem drift semântico
 - **Paridade .env**: .env e .env.example devem ser espelhos estruturais (Zero Drift)
 - **Zero Hardcode**: placeholders {chave-para-env} obrigatórios para segredos no código
+- **Segredos operacionais locais**: `app.json` pode persistir segredos da instância; mascaramento é obrigatório em UI, logs, docs e exemplos
 - **Persistência**: Proibida a deleção do arquivo .env por agentes (Permissão Humana Exclusiva)
 
 Comando canônico:
@@ -56,7 +60,7 @@ Comando canônico:
 
 Devem ficar na raiz:
 
-- contratos e adaptadores vigentes (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`)
+- contratos e adaptadores vigentes (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `MODEL.md`)
 - docs de entrada (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`)
 
 Não devem ficar na raiz:
