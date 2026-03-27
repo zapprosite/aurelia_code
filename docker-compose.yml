@@ -19,6 +19,25 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    networks:
+      - aurelia-net
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: aurelia-smart-router
+    ports:
+      - "4000:4000"
+    volumes:
+      - /srv/apps/litellm/config.yaml:/app/config.yaml
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+    command: [ "--config", "/app/config.yaml", "--port", "4000" ]
+    depends_on:
+      - ollama
+    networks:
+      - aurelia-net
   redis:
     image: redis/redis-stack:latest
     ports:
@@ -26,6 +45,10 @@ services:
       - "8001:8001"
     volumes:
       - ./data/redis:/data
+
+networks:
+  aurelia-net:
+    driver: bridge
 
 volumes:
   redis_data:

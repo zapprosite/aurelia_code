@@ -1,0 +1,15 @@
+[Unit]
+Description=Aurelia Elite Daemon
+After=network.target
+
+[Service]
+Type=simple
+Environment=AURELIA_HOME=%h/.aurelia
+WorkingDirectory=__AURELIA_ROOT__
+ExecStartPre=/bin/sh -c 'mkdir -p %h/.aurelia/logs && chmod 0755 %h/.aurelia/logs'
+ExecStart=__AURELIA_ROOT__/aurelia-elite
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

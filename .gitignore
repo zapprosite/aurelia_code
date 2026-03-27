@@ -97,8 +97,33 @@ bot_test.log
 
 # External Skills (Managed via Bibliotheca scripts)
 homelab-bibliotheca/skills/open-claw/skills/
-homelab-bibliotheca/skills/open-claw/repo/
-homelab-bibliotheca/skills/open-claw/temp/
-!homelab-bibliotheca/skills/open-claw/skills-registry.json
+# Infrastructure Data (Sovereign 2026)
+data/
+ollama_data/
+qdrant_data/
+redis_data/
+
+# Python Environments
+.venv/
+__pycache__/
+build/
+
+# Logs and Temp
+logs/
+*.log
+kimi_debug.txt
+*_debug.txt
+
+# Secrets
 .env
-.env
+.env.*
+!.env.example
+secrets.env
+
+# Workspace and Tooling
+go.work
+.claude/
+.planning/
+.playwright-mcp/
+node_modules/
+package-lock.json
