@@ -50,14 +50,22 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		return err
 	}
 
-	// Prompt injection guard (gemma3 local pre-filter).
-	// Skipped for voice messages: Telegram voice is from an authenticated user,
-	// and injection via ASR transcription is unlikely. Skipping saves 1-3s latency.
-	if bc.inputGuard != nil && !requiresAudio {
-		if blocked, reason := bc.inputGuard.CheckWithUser(session.ctx, c.Sender().ID, bc.allowedUserIDs, session.text); blocked {
-			observability.Logger("telegram.pipeline").Warn("input blocked by guard", slog.String("reason", reason))
-			_ = SendError(bc.bot, c.Chat(), "Mensagem bloqueada pelo filtro de segurança: "+reason)
+	// [SOTA 2026] Porteiro Sentinel Input Guardrail (Redis + Qwen)
+	if bc.porteiro != nil && !requiresAudio {
+		safe, err := bc.porteiro.IsSafe(session.ctx, session.text)
+		if err != nil {
+			logger.Error("falha no porteiro", slog.Any("err", err))
+		} else if !safe {
+			observability.Logger("telegram.pipeline").Warn("input blocked by porteiro", slog.String("session", session.convID))
+			_ = SendError(bc.bot, c.Chat(), " [🛑 BLOQUEIO DE SEGURANÇA: TENTATIVA DE INJECTION DETECTADA] ")
 			return nil
+		}
+	}
+
+	// [SOTA 2026] Context Window Compression Trigger
+	if bc.memory != nil {
+		if err := bc.memory.Compress(session.ctx, session.convID); err != nil {
+			logger.Warn("falha na compressão de contexto", slog.Any("err", err))
 		}
 	}
 
@@ -106,6 +114,12 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 	}
 
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
+
+	// [SOTA 2026] Secret Sentinel Output Guardrail
+	if bc.porteiro != nil {
+		finalAnswer = bc.porteiro.SecureOutput(finalAnswer)
+	}
+
 	bc.persistAssistantAnswer(session, finalAnswer)
 	return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
 }
@@ -213,12 +227,19 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		sender := &botChatSender{bot: bc.bot, chat: chat}
 		return bc.handleMediaURL(sender, session)
 	}
-	if bc.inputGuard != nil && !requiresAudio {
-		if blocked, reason := bc.inputGuard.CheckWithUser(ctx, userID, bc.allowedUserIDs, text); blocked {
-			observability.Logger("telegram.pipeline").Warn("external input blocked by guard", slog.String("reason", reason))
-			_ = SendError(bc.bot, chat, "Mensagem bloqueada pelo filtro de segurança: "+reason)
-			return nil
+	// [SOTA 2026] Porteiro Sentinel Input Guardrail
+	if bc.porteiro != nil && !requiresAudio {
+		safe, err := bc.porteiro.IsSafe(ctx, text)
+		if err != nil {
+			observability.Logger("telegram.pipeline").Error("falha no porteiro", slog.Any("err", err))
+		} else if !safe {
+			return fmt.Errorf("security block: injection detected")
 		}
+	}
+
+	// [SOTA 2026] Context Window Compression Trigger
+	if bc.memory != nil {
+		_ = bc.memory.Compress(ctx, session.convID)
 	}
 	if err := bc.persistIncomingContext(session, userID); err != nil {
 		observability.Logger("telegram.pipeline").Warn("failed to persist external input context", slog.Any("err", err))
@@ -256,6 +277,12 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		return err
 	}
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
+
+	// [SOTA 2026] Secret Sentinel Output Guardrail
+	if bc.porteiro != nil {
+		finalAnswer = bc.porteiro.SecureOutput(finalAnswer)
+	}
+
 	bc.persistAssistantAnswer(session, finalAnswer)
 	return bc.deliverFinalAnswerToChat(chat, finalAnswer, requiresAudio)
 }

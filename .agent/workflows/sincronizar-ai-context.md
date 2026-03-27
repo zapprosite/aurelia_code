@@ -27,6 +27,11 @@ Chamar o MCP ai-context tool:
 context({ action: "check", repoPath: "/home/will/aurelia" })
 ```
 
+### 1.1 Verificar paridade .env (Audit)
+```bash
+/home/will/aurelia/scripts/audit-env-parity.sh
+```
+
 ### 2. Detectar drift (ver quais arquivos precisam atualização)
 ```
 context({ action: "listToFill", target: "docs" })
