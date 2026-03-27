@@ -1,6 +1,6 @@
-// Package obsidian provides read-only sync from an Obsidian vault to Qdrant.
-// Phase 1: read .md files, extract frontmatter + content, return VaultNotes.
-// Bidirectional sync is out of scope until a conflict-resolution strategy is defined.
+// Package obsidian provides read-only access to an Obsidian vault.
+// The canonical indexing pipeline lives in internal/markdownbrain; this package
+// only parses vault markdown into stable note structs.
 package obsidian
 
 import (
@@ -15,12 +15,12 @@ import (
 // VaultNote represents a single Obsidian markdown file.
 type VaultNote struct {
 	// RelPath is the path relative to vault root, e.g. "projects/aurelia.md"
-	RelPath    string
-	Title      string
-	Content    string            // body text after frontmatter
-	Tags       []string
+	RelPath     string
+	Title       string
+	Content     string // body text after frontmatter
+	Tags        []string
 	Frontmatter map[string]string // raw key=value pairs from YAML front matter
-	ModifiedAt time.Time
+	ModifiedAt  time.Time
 }
 
 // ReadVault walks vaultPath and returns all .md files as VaultNotes.

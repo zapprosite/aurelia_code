@@ -380,6 +380,7 @@ func resolveActiveSkill(skills map[string]skill.Skill, targetSkill string) *skil
 // MCP tools (github, playwright, filesystem, etc.) are still available via skills.
 var defaultConversationTools = []string{
 	"read_file", "write_file", "list_dir", "run_command",
+	"markdown_brain_sync",
 	"web_search", "docker_control", "system_monitor", "service_control",
 	"create_schedule", "list_schedules", "cpf_cnpj",
 }

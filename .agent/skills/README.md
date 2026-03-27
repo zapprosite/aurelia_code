@@ -1,80 +1,38 @@
 # Skills
 
-On-demand expertise for AI agents. Skills are task-specific procedures that get activated when relevant.
+Catálogo canônico de skills versionadas do repositório `aurelia`.
 
-> Project: aurelia
+## Fonte de verdade
 
-## How Skills Work
+- Skills oficiais moram em subdiretórios de [`.agent/skills/`](.).
+- Cada skill deve ter `SKILL.md` com frontmatter válido.
+- O nome no frontmatter é a identidade lógica da skill.
+- O diretório do repo vence overlays locais em caso de colisão de nome.
 
-1. **Discovery**: AI agents discover available skills
-2. **Matching**: When a task matches a skill's description, it's activated
-3. **Execution**: The skill's instructions guide the AI's behavior
+## Overlays aceitos
 
-## Available Skills
+- Global opcional: `~/.aurelia/skills`
+- Project overlay opcional: `<repo>/.aurelia/skills`
 
-### Built-in Skills
+Esses overlays existem para extensões locais e instalações temporárias. Eles não substituem o catálogo canônico do repo.
 
-| Skill | Description | Phases |
-|-------|-------------|--------|
-| [Commit Message](./commit-message/SKILL.md) | Generate commit messages following conventional commits with scope detection | E, C |
-| [Pr Review](./pr-review/SKILL.md) | Review pull requests against team standards and best practices | R, V |
-| [Code Review](./code-review/SKILL.md) | Review code quality, patterns, and best practices | R, V |
-| [Test Generation](./test-generation/SKILL.md) | Generate comprehensive test cases for code | E, V |
-| [Documentation](./documentation/SKILL.md) | Generate and update technical documentation | P, C |
-| [Refactoring](./refactoring/SKILL.md) | Safe code refactoring with step-by-step approach | E |
-| [Bug Investigation](./bug-investigation/SKILL.md) | Systematic bug investigation and root cause analysis | E, V |
-| [Feature Breakdown](./feature-breakdown/SKILL.md) | Break down features into implementable tasks | P |
-| [Api Design](./api-design/SKILL.md) | Design RESTful APIs following best practices | P, R |
-| [Security Audit](./security-audit/SKILL.md) | Security review checklist for code and infrastructure | R, V |
+## Indexação semântica
 
-### Project-Specific Skills
+- A collection canônica de skills no Qdrant é `aurelia_skills`.
+- O sync usa embeddings locais e chunking por seções do `SKILL.md`.
+- O payload indexado deve preservar `name`, `description`, `section`, `path`, `chunk_id` e `checksum`.
 
-| Skill | Description | Phases |
-|-------|-------------|--------|
-| [Governance Polish](./governance-polish/SKILL.md) | ADR-20260319: Execute 4 phases (CRITICAL → HIGH → MEDIUM → LOW) for industrial homelab governance | P, E, V, C |
-| [Memory Sync Vector DB](./memory-sync-vector-db/SKILL.md) | Sync memory (markdown) → Qdrant (embeddings) + Postgres (metadata) for Aurelia bot offline access | E, V |
+## Auditoria
 
-## Creating Custom Skills
+O catálogo deve permanecer limpo:
 
-Create a new skill by adding a directory with a `SKILL.md` file:
+- sem links quebrados
+- sem frontmatter inválido
+- sem drift `.agents/` nos entrypoints de governança
+- sem duplicação silenciosa de nomes entre fonte canônica e overlays
 
-```
-.context/skills/
-└── my-skill/
-    ├── SKILL.md          # Required: skill definition
-    └── templates/        # Optional: helper resources
-        └── checklist.md
-```
+## Referências
 
-### SKILL.md Format
-
-```yaml
----
-name: my-skill
-description: When to use this skill
-phases: [P, E, V]  # Optional: PREVC phases
-mode: false        # Optional: mode command?
----
-
-# My Skill
-
-## When to Use
-[Description of when this skill applies]
-
-## Instructions
-1. Step one
-2. Step two
-
-## Examples
-[Usage examples]
-```
-
-## PREVC Phase Mapping
-
-| Phase | Name | Skills |
-|-------|------|--------|
-| P | Planning | feature-breakdown, documentation, api-design |
-| R | Review | pr-review, code-review, api-design, security-audit |
-| E | Execution | commit-message, test-generation, refactoring, bug-investigation |
-| V | Validation | pr-review, code-review, test-generation, security-audit |
-| C | Confirmation | commit-message, documentation |
+- Contrato do catálogo: [`../../docs/governance/SKILL-CATALOG.md`](../../docs/governance/SKILL-CATALOG.md)
+- Contrato do repositório: [`../../docs/governance/REPOSITORY_CONTRACT.md`](../../docs/governance/REPOSITORY_CONTRACT.md)
+- Governança principal: [`../../AGENTS.md`](../../AGENTS.md)

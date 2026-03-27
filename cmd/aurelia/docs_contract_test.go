@@ -17,8 +17,14 @@ func TestGovernanceEntrypointLinksResolve(t *testing.T) {
 	repoRoot := repoRootFromCaller(t)
 	files := []string{
 		filepath.Join(repoRoot, "AGENTS.md"),
+		filepath.Join(repoRoot, "CLAUDE.md"),
+		filepath.Join(repoRoot, "GEMINI.md"),
+		filepath.Join(repoRoot, "MODEL.md"),
+		filepath.Join(repoRoot, ".github", "copilot-instructions.md"),
 		filepath.Join(repoRoot, ".agent", "rules", "README.md"),
+		filepath.Join(repoRoot, ".agent", "skills", "README.md"),
 		filepath.Join(repoRoot, "docs", "governance", "REPOSITORY_CONTRACT.md"),
+		filepath.Join(repoRoot, "docs", "governance", "SKILL-CATALOG.md"),
 		filepath.Join(repoRoot, "docs", "adr", "README.md"),
 	}
 
@@ -41,6 +47,63 @@ func TestGovernanceEntrypointLinksResolve(t *testing.T) {
 
 			if _, err := os.Stat(resolved); err != nil {
 				t.Fatalf("broken markdown link in %s -> %s (%v)", file, match[1], err)
+			}
+		}
+	}
+}
+
+func TestGovernanceEntrypointsAvoidLegacyDotAgentsPath(t *testing.T) {
+	t.Parallel()
+
+	repoRoot := repoRootFromCaller(t)
+	files := []string{
+		filepath.Join(repoRoot, "AGENTS.md"),
+		filepath.Join(repoRoot, "CLAUDE.md"),
+		filepath.Join(repoRoot, "GEMINI.md"),
+		filepath.Join(repoRoot, "MODEL.md"),
+		filepath.Join(repoRoot, ".github", "copilot-instructions.md"),
+		filepath.Join(repoRoot, "docs", "governance", "REPOSITORY_CONTRACT.md"),
+		filepath.Join(repoRoot, "docs", "governance", "SKILL-CATALOG.md"),
+	}
+
+	for _, file := range files {
+		content, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		if strings.Contains(string(content), ".agents/") {
+			t.Fatalf("legacy .agents drift found in %s", file)
+		}
+	}
+}
+
+func TestGovernanceDocsAvoidRetiredObsidianSyncPipeline(t *testing.T) {
+	t.Parallel()
+
+	repoRoot := repoRootFromCaller(t)
+	files := []string{
+		filepath.Join(repoRoot, "docs", "adr", "20260325-basico-bem-feito-v2-implementation.md"),
+		filepath.Join(repoRoot, "docs", "adr", "20260326-zero-hardcode-policy.md"),
+		filepath.Join(repoRoot, "docs", "adr", "20260327-markdown-brain-aurelia-code.md"),
+		filepath.Join(repoRoot, "docs", "governance", "REPOSITORY_CONTRACT.md"),
+	}
+
+	disallowed := []string{
+		"obsidian_sync",
+		"internal/obsidian/sync.go",
+		"obsidian_sync_state",
+		"antes de qualquer persistência em disco",
+	}
+
+	for _, file := range files {
+		content, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		text := string(content)
+		for _, needle := range disallowed {
+			if strings.Contains(text, needle) {
+				t.Fatalf("retired governance drift %q found in %s", needle, file)
 			}
 		}
 	}

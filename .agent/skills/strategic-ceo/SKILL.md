@@ -1,4 +1,5 @@
 ---
+name: strategic-ceo
 description: Especialista em Decisões Estratégicas e Governança Global (CEO Role).
 ---
 

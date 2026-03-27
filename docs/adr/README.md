@@ -10,6 +10,7 @@
 
 ## Implementada (código existe e foi validado)
 
+- [20260327-markdown-brain-aurelia-code.md](20260327-markdown-brain-aurelia-code.md) — cérebro Markdown canônico para o `aurelia_code`
 - [20260326-homelab-dashboard-native.md](20260326-homelab-dashboard-native.md) — absorção nativa do monitor do homelab no dashboard da Aurelia
 - [20260325-slice-voice-capture-readiness.md](20260325-slice-voice-capture-readiness.md) — voice capture pipeline e config normalizado
 - [20260325-slice-runtime-governance-enforcement.md](20260325-slice-runtime-governance-enforcement.md) — enforcement de payload canônico no Qdrant

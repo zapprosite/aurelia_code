@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -59,35 +60,36 @@ func (r *SemanticRouter) SyncSkills(ctx context.Context, skills map[string]Skill
 
 	points := make([]map[string]any, 0, len(skills))
 	for name, skill := range skills {
-		text := fmt.Sprintf("%s: %s", name, skill.Metadata.Description)
-		vector, err := r.embed(ctx, text)
-		if err != nil {
-			logger.Warn("failed to embed skill for sync", "skill", name, "err", err)
-			continue
+		chunks := ChunkSkill(name, skill)
+		for _, chunk := range chunks {
+			vector, err := r.embed(ctx, chunk.Text)
+			if err != nil {
+				logger.Warn("failed to embed skill chunk for sync", "skill", name, "section", chunk.Section, "err", err)
+				continue
+			}
+
+			// Ensure collection on first successful vector (implies dimension size)
+			r.ensureOnce.Do(func() {
+				r.ensureErr = r.ensureCollection(ctx, len(vector))
+			})
+			if r.ensureErr != nil {
+				return fmt.Errorf("ensure collection failed: %w", r.ensureErr)
+			}
+
+			id := uuid.NewMD5(uuid.NameSpaceURL, []byte("skill:"+name+":"+chunk.ID)).String()
+
+			payload := buildSkillIndexPayload(name, skill, chunk)
+			if err := memory.ValidateSkillIndexPayload(payload); err != nil {
+				logger.Warn("skill payload rejected by contract", "skill", name, "section", chunk.Section, "err", err)
+				continue
+			}
+
+			points = append(points, map[string]any{
+				"id":      id,
+				"vector":  vector,
+				"payload": payload,
+			})
 		}
-
-		// Ensure collection on first successful vector (implies dimension size)
-		r.ensureOnce.Do(func() {
-			r.ensureErr = r.ensureCollection(ctx, len(vector))
-		})
-		if r.ensureErr != nil {
-			return fmt.Errorf("ensure collection failed: %w", r.ensureErr)
-		}
-
-		// Generate consistent UUID from skill name
-		id := uuid.NewMD5(uuid.NameSpaceURL, []byte("skill:"+name)).String()
-
-		payload := buildSkillIndexPayload(name, skill)
-		if err := memory.ValidateSkillIndexPayload(payload); err != nil {
-			logger.Warn("skill payload rejected by contract", "skill", name, "err", err)
-			continue
-		}
-
-		points = append(points, map[string]any{
-			"id":      id,
-			"vector":  vector,
-			"payload": payload,
-		})
 	}
 
 	if len(points) == 0 {
@@ -118,19 +120,32 @@ func (r *SemanticRouter) SyncSkills(ctx context.Context, skills map[string]Skill
 		return fmt.Errorf("qdrant upsert returned %s", resp.Status)
 	}
 
-	logger.Info("semantic skill router synced", "count", len(points))
+	logger.Info("semantic skill router synced", "skills", len(skills), "chunks", len(points))
 	return nil
 }
 
-func buildSkillIndexPayload(name string, skill Skill) map[string]any {
+func buildSkillIndexPayload(name string, skill Skill, chunk SkillChunk) map[string]any {
 	now := time.Now().UTC()
+	sourcePath := strings.TrimSpace(skill.SourcePath)
+	if sourcePath == "" && skill.DirPath != "" {
+		sourcePath = filepath.Join(skill.DirPath, "SKILL.md")
+	}
 	return map[string]any{
 		"app_id":        "aurelia",
 		"repo_id":       "aurelia",
 		"environment":   "local",
-		"text":          fmt.Sprintf("%s: %s", name, skill.Metadata.Description),
+		"text":          chunk.Text,
 		"name":          name,
 		"description":   skill.Metadata.Description,
+		"section":       chunk.Section,
+		"path":          sourcePath,
+		"chunk_id":      chunk.ID,
+		"chunk_index":   chunk.Index,
+		"chunk_count":   chunk.Count,
+		"checksum":      chunk.Checksum,
+		"owner":         skill.Metadata.Owner,
+		"tags":          skill.Metadata.Tags,
+		"engines":       skill.Metadata.Engines,
 		"source_system": "skills",
 		"source_id":     "skill:" + name,
 		"domain":        "skills",
@@ -195,12 +210,17 @@ func (r *SemanticRouter) Search(ctx context.Context, query string, limit int) ([
 	}
 
 	var matchedNames []string
+	seen := make(map[string]struct{})
 	for _, hit := range searchRes.Result {
 		// Allow slightly lower threshold for skill routing compared to strict memory
 		if hit.Score < 0.3 {
 			continue
 		}
 		if name, ok := hit.Payload["name"].(string); ok && name != "" {
+			if _, exists := seen[name]; exists {
+				continue
+			}
+			seen[name] = struct{}{}
 			matchedNames = append(matchedNames, name)
 		}
 	}
