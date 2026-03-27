@@ -122,6 +122,7 @@ type AppConfig struct {
 	SupabaseEnabled          bool
 	ObsidianVaultPath        string
 	ObsidianSyncEnabled      bool
+	AureliaMode              string // "sovereign" or "lite"
 }
 
 type fileConfig struct {
@@ -188,6 +189,7 @@ type fileConfig struct {
 	SupabaseEnabled          bool    `json:"supabase_enabled"`
 	ObsidianVaultPath        string  `json:"obsidian_vault_path"`
 	ObsidianSyncEnabled      bool    `json:"obsidian_sync_enabled"`
+	AureliaMode              string  `json:"aurelia_mode"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
@@ -256,8 +258,14 @@ func Load(r *runtime.PathResolver) (*AppConfig, error) {
 	// Apply environment variable overrides for secrets
 	applyEnvOverrides(&normalized)
 
+	// Before checking if we should write back, we compare against a version 
+	// that doesn't include secrets if they are just placeholders.
+	// However, the most robust way is to always mask secrets before writing.
+	
 	if !sameFileConfig(normalized, cfg) {
-		if err := writeConfigFile(path, normalized); err != nil {
+		masked := normalized
+		maskSecrets(&masked)
+		if err := writeConfigFile(path, masked); err != nil {
 			return nil, err
 		}
 	}
@@ -309,6 +317,45 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("OBSIDIAN_VAULT_PATH"); env != "" {
 		cfg.ObsidianVaultPath = env
 	}
+	if env := os.Getenv("AURELIA_MODE"); env != "" {
+		cfg.AureliaMode = strings.ToLower(env)
+	}
+}
+
+func maskSecrets(cfg *fileConfig) {
+	placeholder := "{chave-para-env}"
+	if cfg.TelegramBotToken != "" {
+		cfg.TelegramBotToken = placeholder
+	}
+	if cfg.TelegramNotificationBotID != "" {
+		cfg.TelegramNotificationBotID = placeholder
+	}
+	if cfg.AnthropicAPIKey != "" {
+		cfg.AnthropicAPIKey = placeholder
+	}
+	if cfg.GoogleAPIKey != "" {
+		cfg.GoogleAPIKey = placeholder
+	}
+	if cfg.OpenRouterAPIKey != "" {
+		cfg.OpenRouterAPIKey = placeholder
+	}
+	if cfg.OpenAIAPIKey != "" {
+		cfg.OpenAIAPIKey = placeholder
+	}
+	if cfg.GroqAPIKey != "" {
+		cfg.GroqAPIKey = placeholder
+	}
+	if cfg.MiniMaxAPIKey != "" {
+		cfg.MiniMaxAPIKey = placeholder
+	}
+	if cfg.QdrantAPIKey != "" {
+		cfg.QdrantAPIKey = placeholder
+	}
+	for i := range cfg.Bots {
+		if cfg.Bots[i].Token != "" {
+			cfg.Bots[i].Token = placeholder
+		}
+	}
 }
 
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {
@@ -355,6 +402,7 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		OllamaURL:                "http://127.0.0.1:11434",
 		DashboardPort:            defaultDashboardPort,
 		HealthPort:               defaultHealthPort,
+		AureliaMode:              "sovereign",
 	}
 }
 
@@ -464,6 +512,8 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.HeartbeatEnabled = editable.HeartbeatEnabled
 	cfg.HeartbeatIntervalMinutes = editable.HeartbeatIntervalMinutes
 	cfg = normalizeFileConfig(cfg, r)
+	
+	maskSecrets(&cfg)
 	return writeConfigFile(r.AppConfig(), cfg)
 }
 
@@ -592,6 +642,27 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	if cfg.HealthPort <= 0 {
 		cfg.HealthPort = defaults.HealthPort
 	}
+	if cfg.AureliaMode == "" {
+		cfg.AureliaMode = "sovereign"
+	}
+
+	// Apply Lite Mode overrides if enabled
+	if cfg.AureliaMode == "lite" {
+		if cfg.LLMProvider == "ollama" {
+			// If no keys for cloud, we keep ollama but maybe a smaller model
+			// But usually lite means preference for Cloud to save local resources
+			if cfg.OpenRouterAPIKey != "" {
+				cfg.LLMProvider = "openrouter"
+				cfg.LLMModel = "anthropic/claude-3-haiku"
+			} else if cfg.GoogleAPIKey != "" {
+				cfg.LLMProvider = "google"
+				cfg.LLMModel = "gemini-2.0-flash"
+			}
+		}
+		// In lite mode, we might want to disable local voice capture if not configured
+		cfg.VoiceEnabled = cfg.TelegramBotToken != "" && cfg.VoiceEnabled
+	}
+
 	return cfg
 }
 
@@ -726,6 +797,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		SupabaseEnabled:          cfg.SupabaseEnabled,
 		ObsidianVaultPath:        cfg.ObsidianVaultPath,
 		ObsidianSyncEnabled:      cfg.ObsidianSyncEnabled,
+		AureliaMode:              cfg.AureliaMode,
 	}
 }
 

@@ -147,7 +147,7 @@ knowledge_personal:  type                                  (keyword)
 ## 4. Supabase Local
 
 **Status:** Instalado. 13 containers (Kong, PostgREST, Auth, Storage, Realtime, Studio).
-**Studio:** `http://localhost:3000` (porta padrão Supabase local)
+**Studio:** `http://localhost:54323` (porta exposta neste homelab)
 **PostgREST:** usado pelos bots via HTTP para CRUD sem SQL direto.
 
 ### Schemas — Separação por Domínio

@@ -3,7 +3,49 @@ import { Activity, Bot, Boxes, HardDrive, RefreshCcw, Server, ShieldCheck, Termi
 import { Badge } from "../ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/Card";
 
+type HomelabServiceStatus = "healthy" | "degraded" | "offline";
+
+type HomelabServiceContainer = {
+  name?: string;
+  status?: string;
+  ports?: string;
+  up?: boolean;
+};
+
+type HomelabService = {
+  id?: string;
+  key?: string;
+  label?: string;
+  name?: string;
+  slug?: string;
+  service?: string;
+  status?: string;
+  state?: string;
+  health?: string;
+  summary?: string;
+  detail?: string;
+  description?: string;
+  message?: string;
+  reason?: string;
+  counts?: {
+    total?: number;
+    up?: number;
+    restarting?: number;
+    exited?: number;
+    dead?: number;
+    other?: number;
+  };
+  url?: string;
+  endpoint?: string;
+  container?: string;
+  containers?: Array<string | HomelabServiceContainer> | string;
+  ok?: boolean;
+  up?: boolean;
+  degraded?: boolean;
+};
+
 type HomelabSnapshot = {
+  services?: HomelabService[] | Record<string, HomelabService>;
   containers: Array<{ name: string; status: string; ports: string; up: boolean }>;
   health: Array<{ name: string; url: string; ok: boolean; code: number }>;
   snapshots: Array<{ name: string; creation: string }>;
@@ -22,6 +64,45 @@ type HomelabSnapshot = {
   timestamp: string;
 };
 
+type ServiceDefinition = {
+  key: "supabase" | "qdrant" | "caprover";
+  label: string;
+  icon: React.ReactNode;
+  fallbackSummary: string;
+  fallbackDetails: string;
+};
+
+type ServiceView = ServiceDefinition & {
+  status: HomelabServiceStatus;
+  summary: string;
+  detail: string;
+  source: string;
+};
+
+const CANONICAL_SERVICES: ServiceDefinition[] = [
+  {
+    key: "supabase",
+    label: "Supabase",
+    icon: <ShieldCheck className="h-4 w-4" />,
+    fallbackSummary: "registro canônico e camada de dados local.",
+    fallbackDetails: "infra de dados e auth do stack."
+  },
+  {
+    key: "qdrant",
+    label: "Qdrant",
+    icon: <Activity className="h-4 w-4" />,
+    fallbackSummary: "índice vetorial e busca semântica.",
+    fallbackDetails: "vetores e recuperação semântica."
+  },
+  {
+    key: "caprover",
+    label: "CapRover",
+    icon: <Server className="h-4 w-4" />,
+    fallbackSummary: "plataforma de deploy e exposição dos apps.",
+    fallbackDetails: "orquestração e publicação de serviços."
+  }
+];
+
 function formatTimestamp(value?: string) {
   if (!value) return "agora";
   const date = new Date(value);
@@ -32,50 +113,218 @@ function formatTimestamp(value?: string) {
   }).format(date);
 }
 
-function StatusDot({ ok }: { ok: boolean }) {
-  return (
-    <span
-      className={[
-        "inline-flex h-2.5 w-2.5 rounded-full",
-        ok ? "bg-emerald-400 shadow-[0_0_12px_rgba(74,222,128,0.65)]" : "bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.55)]"
-      ].join(" ")}
-    />
-  );
+function toList<T>(value: T[] | Record<string, T> | undefined): T[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : Object.values(value);
 }
 
-function SummaryCard({
-  icon,
-  label,
-  value,
-  detail,
-  tone = "neutral"
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  detail: string;
-  tone?: "neutral" | "good" | "warn";
-}) {
-  const toneClass =
-    tone === "good"
-      ? "border-emerald-500/20 bg-emerald-500/8"
-      : tone === "warn"
-        ? "border-amber-500/20 bg-amber-500/8"
-        : "border-white/10 bg-white/5";
+function statusLabel(status: HomelabServiceStatus) {
+  switch (status) {
+    case "healthy":
+      return "healthy";
+    case "degraded":
+      return "degraded";
+    case "offline":
+    default:
+      return "offline";
+  }
+}
 
+function statusStyles(status: HomelabServiceStatus) {
+  switch (status) {
+    case "healthy":
+      return {
+        card: "border-emerald-500/20 bg-emerald-500/8",
+        dot: "bg-emerald-400 shadow-[0_0_12px_rgba(74,222,128,0.65)]",
+        badge: "border-emerald-500/20 bg-emerald-500/12 text-emerald-200",
+        text: "text-emerald-300/90"
+      };
+    case "degraded":
+      return {
+        card: "border-amber-500/20 bg-amber-500/8",
+        dot: "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.55)]",
+        badge: "border-amber-500/20 bg-amber-500/12 text-amber-100",
+        text: "text-amber-300/90"
+      };
+    case "offline":
+    default:
+      return {
+        card: "border-rose-500/20 bg-rose-500/8",
+        dot: "bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.55)]",
+        badge: "border-rose-500/20 bg-rose-500/12 text-rose-100",
+        text: "text-rose-300/90"
+      };
+  }
+}
+
+function normalizeStatus(raw: unknown, fallbackUp?: boolean): HomelabServiceStatus {
+  if (typeof raw === "boolean") {
+    return raw ? "healthy" : "offline";
+  }
+
+  if (typeof raw === "string") {
+    const value = raw.trim().toLowerCase();
+    if (!value) {
+      return fallbackUp === undefined ? "offline" : fallbackUp ? "healthy" : "offline";
+    }
+    if (["healthy", "ok", "up", "online", "ready", "pass", "passed"].includes(value) || value.startsWith("up") || value.includes("healthy") || value.includes("ready")) {
+      return "healthy";
+    }
+    if (["degraded", "warning", "warn", "partial"].includes(value) || value.includes("degrad") || value.includes("warn") || value.includes("partial")) {
+      return "degraded";
+    }
+    if (["offline", "down", "error", "fail", "failed", "unavailable", "missing", "stopped"].includes(value) || value.includes("offline") || value.includes("down") || value.includes("error") || value.includes("fail")) {
+      return "offline";
+    }
+  }
+
+  if (fallbackUp !== undefined) {
+    return fallbackUp ? "healthy" : "offline";
+  }
+
+  return "offline";
+}
+
+function findText(...values: Array<unknown>) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function normalizeContainers(value: HomelabService["containers"]) {
+  if (!value) return [] as string[];
+  if (typeof value === "string") {
+    return value
+      .split(/[;,]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return value
+    .map((item) => {
+      if (typeof item === "string") return item.trim();
+      return item.name?.trim() ?? "";
+    })
+    .filter(Boolean);
+}
+
+function isSupabaseLike(value: string) {
+  const normalized = value.toLowerCase();
+  return normalized.includes("supabase") || normalized.includes("postgres");
+}
+
+function isQdrantLike(value: string) {
+  const normalized = value.toLowerCase();
+  return normalized.includes("qdrant");
+}
+
+function isCaproverLike(value: string) {
+  const normalized = value.toLowerCase();
+  return normalized.includes("caprover") || normalized.includes("captain");
+}
+
+function matchesService(service: HomelabService, key: ServiceDefinition["key"]) {
+  const haystack = [service.id, service.key, service.label, service.name, service.slug, service.service, service.container, service.url, service.endpoint]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  switch (key) {
+    case "supabase":
+      return isSupabaseLike(haystack);
+    case "qdrant":
+      return isQdrantLike(haystack);
+    case "caprover":
+      return isCaproverLike(haystack);
+  }
+}
+
+function serviceFallback(status: HomelabServiceStatus, label: string, fallbackSummary: string) {
+  if (status === "healthy") return fallbackSummary;
+  if (status === "degraded") return `${label} está vivo, mas pede atenção.`;
+  return `${label} está offline ou sem resposta do snapshot.`;
+}
+
+function buildServiceView(
+  definition: ServiceDefinition,
+  services: HomelabService[],
+  health: Array<{ name: string; url: string; ok: boolean; code: number }>,
+  containers: Array<{ name: string; status: string; ports: string; up: boolean }>
+): ServiceView {
+  const rawService = services.find((service) => matchesService(service, definition.key));
+  const healthMatch = health.find((item) => {
+    const name = item.name.toLowerCase();
+    switch (definition.key) {
+      case "supabase":
+        return name.includes("supabase");
+      case "qdrant":
+        return name.includes("qdrant");
+      case "caprover":
+        return name.includes("caprover") || name.includes("captain");
+    }
+  });
+
+  const rawContainerNames = normalizeContainers(rawService?.containers);
+  const fallbackContainer =
+    rawService?.container
+    ?? rawContainerNames[0]
+    ?? containers.find((item) => matchesService({ name: item.name, container: item.name, status: item.status }, definition.key))?.name
+    ?? "";
+  const explicitStatus = rawService?.degraded ? "degraded" : (rawService?.status ?? rawService?.state ?? rawService?.health ?? rawService?.ok ?? rawService?.up);
+  const status = normalizeStatus(explicitStatus, rawContainerNames.length > 0 ? rawContainerNames.some((name) => containers.some((container) => container.name === name && container.up)) : undefined);
+  const source = findText(rawService?.url, rawService?.endpoint, healthMatch?.url, fallbackContainer);
+  const summary = findText(rawService?.summary, rawService?.message, rawService?.detail, rawService?.description, rawService?.reason)
+    || serviceFallback(status, definition.label, definition.fallbackSummary);
+  const detail = findText(rawService?.detail, rawService?.description, rawService?.reason)
+    || (rawService?.counts?.total ? `${rawService.counts.up ?? 0}/${rawService.counts.total} up${rawService.counts.restarting ? ` · ${rawService.counts.restarting} restarting` : ""}${rawService.counts.exited ? ` · ${rawService.counts.exited} exited` : ""}${rawService.counts.dead ? ` · ${rawService.counts.dead} dead` : ""}` : "")
+    || (rawContainerNames.length > 0 ? `containers: ${rawContainerNames.slice(0, 2).join(", ")}${rawContainerNames.length > 2 ? ` +${rawContainerNames.length - 2}` : ""}` : "")
+    || (source ? `fonte: ${source}` : definition.fallbackDetails);
+
+  return {
+    ...definition,
+    status,
+    summary,
+    detail,
+    source: source || definition.fallbackDetails
+  };
+}
+
+function ServiceStatusDot({ status }: { status: HomelabServiceStatus }) {
+  return <span className={["inline-flex h-2.5 w-2.5 rounded-full", statusStyles(status).dot].join(" ")} />;
+}
+
+function ServiceCard({ service }: { service: ServiceView }) {
+  const styles = statusStyles(service.status);
   return (
-    <Card className={toneClass}>
+    <Card className={["overflow-hidden border-l-2", styles.card].join(" ")}>
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2 text-white/45">
-          {icon}
-          <CardDescription className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/45">
-            {label}
-          </CardDescription>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2 text-white/45">
+            {service.icon}
+            <CardTitle className="text-base text-white/88">{service.label}</CardTitle>
+          </div>
+          <Badge variant="outline" className={["flex items-center gap-2 text-[10px] uppercase tracking-[0.2em]", styles.badge].join(" ")}>
+            <ServiceStatusDot status={service.status} />
+            <span>{statusLabel(service.status)}</span>
+          </Badge>
         </div>
+        <CardDescription className="mt-2 text-[11px] font-mono uppercase tracking-[0.2em] text-white/35">
+          fonte principal: services
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-1">
-        <div className="text-3xl font-semibold tracking-tight text-white/92">{value}</div>
-        <p className="text-sm text-white/45">{detail}</p>
+      <CardContent className="space-y-3">
+        <p className="text-sm leading-6 text-white/80">{service.summary}</p>
+        <div className="space-y-2 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-3 text-xs text-white/50">
+          <div className="font-medium text-white/72">{service.detail}</div>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">
+              {service.source}
+            </span>
+            <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">
+              {statusLabel(service.status)}
+            </span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -137,14 +386,19 @@ export function HomelabTab() {
     return () => window.clearInterval(timer);
   }, []);
 
+  const services = toList(snapshot?.services);
   const containers = snapshot?.containers ?? [];
   const health = snapshot?.health ?? [];
   const snapshots = snapshot?.snapshots ?? [];
-  const containersUp = containers.filter((item) => item.up).length;
-  const containersDown = containers.length - containersUp;
-  const healthUp = health.filter((item) => item.ok).length;
-  const healthDown = health.length - healthUp;
   const diskPercent = snapshot?.disk_usage.used_percent ?? 0;
+  const canonicalServices = CANONICAL_SERVICES.map((definition) =>
+    buildServiceView(definition, services, health, containers)
+  );
+  const serviceStatuses = canonicalServices.reduce<Record<HomelabServiceStatus, number>>((acc, service) => {
+    acc[service.status] += 1;
+    return acc;
+  }, { healthy: 0, degraded: 0, offline: 0 });
+  const hasDegradation = serviceStatuses.degraded > 0 || serviceStatuses.offline > 0;
 
   return (
     <div className="space-y-6">
@@ -175,34 +429,10 @@ export function HomelabTab() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard
-          icon={<Boxes className="h-4 w-4" />}
-          label="Containers"
-          value={`${containersUp}/${containers.length || 0}`}
-          detail={containersDown > 0 ? `${containersDown} com falha ou desligados` : "todos operacionais"}
-          tone={containersDown > 0 ? "warn" : "good"}
-        />
-        <SummaryCard
-          icon={<ShieldCheck className="h-4 w-4" />}
-          label="Endpoints"
-          value={`${healthUp}/${health.length || 0}`}
-          detail={healthDown > 0 ? `${healthDown} indisponível` : "health checks OK"}
-          tone={healthDown > 0 ? "warn" : "good"}
-        />
-        <SummaryCard
-          icon={<Activity className="h-4 w-4" />}
-          label="Snapshots ZFS"
-          value={`${snapshots.length}`}
-          detail="cauda mais recente do histórico"
-        />
-        <SummaryCard
-          icon={<HardDrive className="h-4 w-4" />}
-          label="Disco /srv"
-          value={snapshot?.disk_usage.used || "N/A"}
-          detail={snapshot?.disk_usage.raw || "sem leitura"}
-          tone={diskPercent >= 85 ? "warn" : "neutral"}
-        />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {canonicalServices.map((service) => (
+          <ServiceCard key={service.key} service={service} />
+        ))}
       </div>
 
       {loading && !snapshot && (
@@ -227,9 +457,9 @@ export function HomelabTab() {
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Boxes className="h-4 w-4 text-primary" />
-                Containers
+                Containers brutos
               </CardTitle>
-              <CardDescription>estado bruto do Docker local, sem proxy externo</CardDescription>
+              <CardDescription>detalhe auxiliar do Docker local; a leitura principal vem de `services`</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <DataTable
@@ -239,7 +469,7 @@ export function HomelabTab() {
                     <td className="px-4 py-3 font-medium text-white/88">{item.name}</td>
                     <td className="px-4 py-3">
                       <div className="inline-flex items-center gap-2">
-                        <StatusDot ok={item.up} />
+                        <ServiceStatusDot status={item.up ? "healthy" : "offline"} />
                         <span className={item.up ? "text-emerald-300/90" : "text-rose-300/90"}>
                           {item.up ? "up" : "off"}
                         </span>
@@ -257,17 +487,32 @@ export function HomelabTab() {
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-base">
                 <ShieldCheck className="h-4 w-4 text-primary" />
-                Health + Agente
+                Checks auxiliares + Agente
               </CardTitle>
-              <CardDescription>probes locais e estado do agente que abastecia o VRV</CardDescription>
+              <CardDescription>probes locais e estado do agente; suporte, não fonte principal</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-0">
+              <div className="space-y-2 rounded-xl border border-white/8 bg-white/[0.03] p-3">
+                <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-white/35">
+                  <span>serviços canônicos</span>
+                  <span>{serviceStatuses.healthy}/3 healthy</span>
+                </div>
+                <div className="flex h-2 overflow-hidden rounded-full bg-white/8">
+                  <div className="bg-emerald-400" style={{ width: `${(serviceStatuses.healthy / 3) * 100}%` }} />
+                  <div className="bg-amber-400" style={{ width: `${(serviceStatuses.degraded / 3) * 100}%` }} />
+                  <div className="bg-rose-400" style={{ width: `${(serviceStatuses.offline / 3) * 100}%` }} />
+                </div>
+                <div className="text-xs text-white/45">
+                  {hasDegradation ? `${serviceStatuses.degraded} degraded / ${serviceStatuses.offline} offline` : "todos os serviços canônicos estão healthy"}
+                </div>
+              </div>
+
               <div className="space-y-3">
                 {health.map((item) => (
                   <div key={item.name} className="flex items-start justify-between gap-3 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-3">
                     <div>
                       <div className="flex items-center gap-2 text-sm font-medium text-white/85">
-                        <StatusDot ok={item.ok} />
+                        <ServiceStatusDot status={item.ok ? "healthy" : "offline"} />
                         {item.name}
                       </div>
                       <div className="mt-1 text-xs text-white/35">{item.url}</div>
