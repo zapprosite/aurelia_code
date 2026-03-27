@@ -165,12 +165,6 @@ func (a *app) initCore(logger *slog.Logger) error {
 	}
 	a.taskStore = taskStore
 
-	llmProvider, err := buildLLMProvider(a.cfg, a.resolver)
-	if err != nil {
-		return fmt.Errorf("initialize llm provider: %w", err)
-	}
-	a.llmProvider = llmProvider
-
 	redis, err := infra.NewRedisProvider(a.cfg)
 	if err != nil {
 		logger.Warn("falha ao inicializar o Redis (Porteiro operará sem cache)", slog.Any("err", err))
@@ -747,7 +741,7 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 	case "google":
 		return llm.NewGeminiProvider(context.Background(), cfg.GoogleAPIKey, cfg.LLMModel)
 	case "ollama":
-		return llm.NewOllamaProvider(cfg.OllamaURL, cfg.LLMModel), nil
+		return llm.NewOllamaProvider(cfg.OllamaEndpoint, cfg.OllamaModel), nil
 	case "openrouter":
 		return llm.NewOpenRouterProvider(cfg.OpenRouterAPIKey, cfg.LLMModel), nil
 	case "openai":
@@ -991,4 +985,19 @@ func performOllamaWarmup(cfg *config.AppConfig) {
 		resp2.Body.Close()
 		logger.Info("embedding model warmed up successfully", "model", cfg.QdrantEmbeddingModel)
 	}
+}
+
+// memoryWrapper satisfaz a interface memory.Summarizer usando um agent.LLMProvider.
+type memoryWrapper struct {
+llm agent.LLMProvider
+}
+
+func (w *memoryWrapper) Summarize(ctx context.Context, history string) (string, error) {
+prompt := "Sintetize os pontos principais da conversa de forma extremamente concisa. Responda apenas o resumo Markdown."
+msgs := []agent.Message{{Role: "user", Content: history}}
+resp, err := w.llm.GenerateContent(ctx, prompt, msgs, nil)
+if err != nil {
+ "", err
+}
+return resp.Content, nil
 }
