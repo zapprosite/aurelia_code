@@ -1,0 +1,16 @@
+[Unit]
+Description=Aurelia System API (Sentinel)
+After=network.target
+
+[Service]
+Type=simple
+User=will
+WorkingDirectory=/home/will/aurelia/services/aurelia-api
+ExecStart=/home/will/aurelia/bin/aurelia-api
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/will/aurelia/logs/aurelia-api.log
+StandardError=append:/home/will/aurelia/logs/aurelia-api.log
+
+[Install]
+WantedBy=multi-user.target

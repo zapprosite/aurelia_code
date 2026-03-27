@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -14,6 +15,9 @@ import (
 func main() {
 	// Carrega env principal
 	_ = godotenv.Load("/home/will/aurelia/.env")
+
+	// Inicia Sentinela de Saúde (Background)
+	go startSentinel()
 
 	r := gin.Default()
 
@@ -111,4 +115,26 @@ func getKeys(path string) (map[string]bool, error) {
 		}
 	}
 	return keys, scanner.Err()
+}
+
+func startSentinel() {
+	client := http.Client{Timeout: 5 * time.Second}
+	ticker := time.NewTicker(30 * time.Second)
+	
+	fmt.Println("🛡️ SENTINELA: Monitoramento de saúde iniciado (Check: localhost:9090)")
+	
+	for range ticker.C {
+		resp, err := client.Get("http://localhost:9090/health")
+		if err != nil {
+			fmt.Printf("⚠️ SENTINELA: Falha ao contatar Aurelia Daemon: %v\n", err)
+			continue
+		}
+		resp.Body.Close()
+		
+		if resp.StatusCode == http.StatusOK {
+			// fmt.Println("✅ SENTINELA: Aurelia Daemon SAUDÁVEL")
+		} else {
+			fmt.Printf("❌ SENTINELA: Aurelia Daemon retornou erro: %d\n", resp.StatusCode)
+		}
+	}
 }
