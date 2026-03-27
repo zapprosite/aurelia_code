@@ -17,6 +17,7 @@ import (
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/skill"
+	"github.com/kocar/aurelia/internal/store"
 	"github.com/kocar/aurelia/pkg/stt"
 	"github.com/kocar/aurelia/pkg/tts"
 )
@@ -57,6 +58,8 @@ type BotController struct {
 	cronJobReporter CronNextJobReporter
 	mediaProcessor  *media.Processor
 	llmOverride     ownedLLMProvider
+	slashRouter     *SlashCommandHandler
+	supabaseStore   *store.SupabaseStore
 }
 
 func (c *BotController) SetPorteiro(p *middleware.PorteiroMiddleware) {
@@ -136,7 +139,9 @@ func NewBotController(
 		recentMedia:      make(map[string]recentMedia),
 		personasDir:      personasDir,
 		mediaProcessor:   media.NewProcessor(s, e.GetLoop().GetLLMProvider(), ""),
+		supabaseStore:    store.NewSupabaseStore(cfg),
 	}
+	bc.slashRouter = NewSlashCommandHandler(bc)
 
 	bc.setupRoutes()
 	return bc, nil
@@ -211,7 +216,9 @@ func NewBotControllerForBot(
 		personasDir:      personasDir,
 		mediaProcessor:   media.NewProcessor(s, executor.GetLoop().GetLLMProvider(), ""),
 		llmOverride:      llmOverride,
+		supabaseStore:    store.NewSupabaseStore(appCfg),
 	}
+	bc.slashRouter = NewSlashCommandHandler(bc)
 
 	bc.setupRoutes()
 	return bc, nil

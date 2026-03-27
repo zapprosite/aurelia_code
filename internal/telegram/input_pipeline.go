@@ -46,8 +46,13 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		return bc.handleMediaURL(c, session)
 	}
 
-	if handled, err := bc.handleMemoryCommand(c, session); handled {
-		return err
+	if handled, reply, err := bc.slashRouter.Handle(session.ctx, session); handled {
+		if err != nil {
+			_ = SendError(bc.bot, c.Chat(), err.Error())
+		} else if reply != "" {
+			_ = SendContextText(c, reply)
+		}
+		return nil
 	}
 
 	// [SOTA 2026] Porteiro Sentinel Input Guardrail (Redis + Qwen)
@@ -406,8 +411,8 @@ func resolveActiveSkill(skills map[string]skill.Skill, targetSkill string) *skil
 // Limits Groq token usage by excluding the 77 MCP schemas sent by default.
 // MCP tools (github, playwright, filesystem, etc.) are still available via skills.
 var defaultConversationTools = []string{
-	"read_file", "write_file", "list_dir", "run_command",
-	"markdown_brain_sync",
+	"read_file", "write_file", "list_dir", "run_command", "grep_search", "find_files",
+	"markdown_brain_sync", "create_adr",
 	"web_search", "docker_control", "system_monitor", "service_control",
 	"create_schedule", "list_schedules", "cpf_cnpj",
 }

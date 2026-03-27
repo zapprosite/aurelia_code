@@ -147,6 +147,50 @@ func CPFCNPJDefinition() agent.Tool {
 	}
 }
 
+func GrepSearchDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "grep_search",
+		Description: "Busca padrões de texto recursivamente em arquivos do sistema. Usa 'rg' (ripgrep) se disponível ou 'grep'. Retorna linha e coluna.",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"query": stringProperty("Regex ou texto simples"),
+				"path":  stringProperty("Caminho base (padrao '.')"),
+			},
+			"query",
+		),
+	}
+}
+
+func FindFilesDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "find_files",
+		Description: "Busca arquivos por nome ou padrão glob recursivamente.",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"pattern": stringProperty("Padrão glob (ex: *.go)"),
+				"path":    stringProperty("Caminho base (padrao '.')"),
+			},
+			"pattern",
+		),
+	}
+}
+
+func CreateADRDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "create_adr",
+		Description: "Cria um novo Architectural Decision Record (ADR) no diretório docs/adr/ seguindo o padrão soberano.",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"title":   stringProperty("Titulo da decisao"),
+				"status":  stringProperty("Status (PROPOSED, ACCEPTED, SUPERSEDED, etc - padrao PROPOSED)"),
+				"context": stringProperty("Contexto e problema a resolver"),
+				"decision": stringProperty("A decisao tomada"),
+			},
+			"title",
+		),
+	}
+}
+
 func RegisterCoreTools(registry *agent.ToolRegistry) {
 	if registry == nil {
 		return
@@ -162,6 +206,9 @@ func RegisterCoreTools(registry *agent.ToolRegistry) {
 	registry.Register(ServiceControlDefinition(), ServiceControlHandler)
 	registry.Register(OllamaControlDefinition(), OllamaControlHandler)
 	registry.Register(CPFCNPJDefinition(), CPFCNPJHandler)
+	registry.Register(GrepSearchDefinition(), GrepSearchHandler)
+	registry.Register(FindFilesDefinition(), FindFilesHandler)
+	registry.Register(CreateADRDefinition(), CreateADRHandler)
 
 	setPhase := NewSetPhaseTool()
 	registry.Register(setPhase.Definition(), setPhase.Execute)
