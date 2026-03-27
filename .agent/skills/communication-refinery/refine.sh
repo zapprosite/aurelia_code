@@ -28,13 +28,13 @@ fi
 
 # 1. Mapeamento de Token do Bot (conforme .env)
 case $BOT in
-    vendas) TOKEN_VAR="TELEGRAM_TOKEN_VENDAS" ;;
-    agenda) TOKEN_VAR="TELEGRAM_TOKEN_AGENDA" ;;
-    infra)  TOKEN_VAR="TELEGRAM_TOKEN_INFRA" ;;
-    caixa)  TOKEN_VAR="TELEGRAM_TOKEN_CAIXA" ;;
-    obras)  TOKEN_VAR="TELEGRAM_TOKEN_OBRAS" ;;
-    db)     TOKEN_VAR="TELEGRAM_TOKEN_DB" ;;
-    *)      TOKEN_VAR="TELEGRAM_BOT_TOKEN" ;;
+    vendas) TOKEN_VAR=TELEGRAM_TOKEN_VENDAS ;;
+    agenda) TOKEN_VAR=TELEGRAM_TOKEN_AGENDA ;;
+    infra)  TOKEN_VAR=TELEGRAM_TOKEN_INFRA ;;
+    caixa)  TOKEN_VAR=TELEGRAM_TOKEN_CAIXA ;;
+    obras)  TOKEN_VAR=TELEGRAM_TOKEN_OBRAS ;;
+    db)     TOKEN_VAR=TELEGRAM_TOKEN_DB ;;
+    *)      TOKEN_VAR=TELEGRAM_BOT_TOKEN ;;
 esac
 
 # Carrega token do .env
