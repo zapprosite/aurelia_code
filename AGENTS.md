@@ -69,3 +69,7 @@ Todos devem delegar para `AGENTS.md` e para o catálogo em `docs/governance/SKIL
 - Skill `/add-subdomain`: [`.agent/skills/add-subdomain/SKILL.md`](.agent/skills/add-subdomain/SKILL.md)
 - Workflow nonstop: [`.agent/workflows/adr-semparar.md`](.agent/workflows/adr-semparar.md)
 - Voz local: [`docs/jarvis_local_voice_blueprint_20260319.md`](docs/jarvis_local_voice_blueprint_20260319.md)
+## AI Context References
+- Documentation index: `.context/docs/README.md`
+- Agent playbooks: `.context/agents/README.md`
+
