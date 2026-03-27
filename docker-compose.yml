@@ -1,63 +1,31 @@
-version: "3.9"
-
 services:
-  aurelia:
-    build: .
-    restart: unless-stopped
-    ports:
-      - "3334:3334"   # Dashboard
-      - "8484:8484"   # Health
-    volumes:
-      - aurelia_data:/home/aurelia/.aurelia
-    environment:
-      AURELIA_HOME: /home/aurelia/.aurelia
-      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
-      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
-      SUPABASE_URL: ${SUPABASE_URL:-postgresql://aurelia:aurelia@postgres:5432/aurelia}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
-      AURELIA_MODE: ${AURELIA_MODE:-sovereign}
-    depends_on:
-      qdrant:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
   qdrant:
-    image: qdrant/qdrant:v1.13.4
-    restart: unless-stopped
+    image: qdrant/qdrant:latest
     ports:
       - "6333:6333"
+      - "6334:6334"
     volumes:
-      - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:6333/readyz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
+      - ./data/qdrant:/qdrant/storage:z
+  ollama:
+    image: ollama/ollama:latest
     ports:
-      - "54322:5432"
-    environment:
-      POSTGRES_DB: aurelia
-      POSTGRES_USER: aurelia
-      POSTGRES_PASSWORD: aurelia
+      - "11434:11434"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aurelia -d aurelia"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./data/ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - ./data/redis:/data
 
 volumes:
-  aurelia_data:
-  qdrant_data:
-  postgres_data:
+  redis_data:

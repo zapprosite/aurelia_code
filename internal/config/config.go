@@ -43,6 +43,7 @@ const (
 	defaultQdrantEmbeddingModel = "nomic-embed-text"
 	defaultDashboardPort        = 3334
 	defaultHealthPort           = 8484
+	defaultRedisURL            = "localhost:6379"
 )
 
 // BotConfig holds per-bot Telegram configuration for multi-bot support.
@@ -123,6 +124,7 @@ type AppConfig struct {
 	ObsidianVaultPath        string
 	ObsidianSyncEnabled      bool
 	AureliaMode              string // "sovereign" or "lite"
+	RedisURL                 string
 }
 
 type fileConfig struct {
@@ -190,6 +192,7 @@ type fileConfig struct {
 	ObsidianVaultPath        string  `json:"obsidian_vault_path"`
 	ObsidianSyncEnabled      bool    `json:"obsidian_sync_enabled"`
 	AureliaMode              string  `json:"aurelia_mode"`
+	RedisURL                 string  `json:"redis_url"`
 }
 
 // EditableConfig represents the user-editable portion of the runtime config.
@@ -314,6 +317,9 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("AURELIA_MODE"); env != "" {
 		cfg.AureliaMode = strings.ToLower(env)
 	}
+	if env := os.Getenv("REDIS_URL"); env != "" {
+		cfg.RedisURL = env
+	}
 }
 
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {
@@ -361,6 +367,7 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		DashboardPort:            defaultDashboardPort,
 		HealthPort:               defaultHealthPort,
 		AureliaMode:              "sovereign",
+		RedisURL:                 defaultRedisURL,
 	}
 }
 
