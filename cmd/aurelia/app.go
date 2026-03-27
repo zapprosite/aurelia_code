@@ -20,9 +20,11 @@ import (
 	"github.com/kocar/aurelia/internal/gateway"
 	"github.com/kocar/aurelia/internal/health"
 	"github.com/kocar/aurelia/internal/heartbeat"
+	"github.com/kocar/aurelia/internal/infra"
 	"github.com/kocar/aurelia/internal/markdownbrain"
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/middleware"
 	"github.com/kocar/aurelia/internal/metrics"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
@@ -49,8 +51,10 @@ type app struct {
 	mcpManager  *mcp.Manager
 	taskStore   *agent.SQLiteTaskStore
 	llmProvider closableLLMProvider
+	redis       *infra.RedisProvider
 
 	// Features
+	porteiro      *middleware.PorteiroMiddleware
 	pool          *telegram.BotPool       // S-32: multi-bot pool
 	primaryBot    *telegram.BotController // S-32: primary bot reference (aurelia)
 	cronScheduler *cron.Scheduler
@@ -167,6 +171,12 @@ func (a *app) initCore(logger *slog.Logger) error {
 	}
 	a.llmProvider = llmProvider
 
+	redis, err := infra.NewRedisProvider(a.cfg)
+	if err != nil {
+		logger.Warn("falha ao inicializar o Redis (Porteiro operará sem cache)", slog.Any("err", err))
+	}
+	a.redis = redis
+
 	return nil
 }
 
@@ -264,6 +274,18 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 	installSkillTool := tools.NewInstallSkillTool(skillInstaller)
 	registry.Register(installSkillTool.Definition(), installSkillTool.Execute)
 
+	// Porteiro
+	if a.redis != nil {
+		// Criar um provider de LLM dedicado ao Porteiro usando o modelo leve Qwen 0.5b
+		p, err := llm.NewOllamaProvider(a.cfg.OllamaURL, "qwen2.5:0.5b")
+		if err == nil {
+			a.porteiro = middleware.NewPorteiroMiddleware(a.redis, p)
+			logger.Info("Porteiro SOTA 2026 inicializado com sucesso", slog.String("model", "qwen2.5:0.5b"))
+		} else {
+			logger.Warn("falha ao inicializar LLM do Porteiro", slog.Any("err", err))
+		}
+	}
+
 	return loop, nil
 }
 
@@ -332,12 +354,21 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	a.primaryBot.SetSquadReporter(squadStatusAdapter{})
 	a.primaryBot.SetCronJobReporter(&cronNextJobAdapter{store: a.cronStore})
 
-	// Wire gemma3 input guard
+	// Wire gemma3 input guard or Porteiro
 	ollamaURL := a.cfg.OllamaURL
 	if ollamaURL == "" {
 		ollamaURL = "http://localhost:11434"
 	}
-	a.primaryBot.SetInputGuard(telegram.NewInputGuard(ollamaURL))
+
+	if a.porteiro != nil {
+		// Aqui poderíamos injetar a lógica do Porteiro no bot.
+		// O BotController espera algo que implemente InputGuard ou similar.
+		// Vamos adaptar o Porteiro para ser usado pelo bot.
+		a.primaryBot.SetPorteiro(a.porteiro)
+		logger.Info("Proteção de entrada migrada para o Porteiro (Qwen 0.5b + Redis)")
+	} else {
+		a.primaryBot.SetInputGuard(telegram.NewInputGuard(ollamaURL))
+	}
 
 	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, notificationBot, a.taskStore); err != nil {
 		return fmt.Errorf("register spawn agent tool: %w", err)
