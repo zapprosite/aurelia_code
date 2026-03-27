@@ -100,3 +100,5 @@ homelab-bibliotheca/skills/open-claw/skills/
 homelab-bibliotheca/skills/open-claw/repo/
 homelab-bibliotheca/skills/open-claw/temp/
 !homelab-bibliotheca/skills/open-claw/skills-registry.json
+.env
+.env

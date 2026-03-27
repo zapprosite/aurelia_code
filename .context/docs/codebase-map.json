@@ -1,6 +1,6 @@
 {
   "version": "1.2.0",
-  "generated": "2026-03-24T21:07:11Z",
+  "generated": "2026-03-27T03:26:22Z",
   "stack": {
     "primaryLanguage": "go",
     "languages": [
@@ -26,12 +26,12 @@
     "hasCI": true
   },
   "structure": {
-    "totalFiles": 12291,
+    "totalFiles": 247476,
     "rootPath": ".",
     "topDirectories": [
       {
         "name": ".agent",
-        "fileCount": 135,
+        "fileCount": 175,
         "description": "Governance rules, workflows, and reusable skills"
       },
       {
@@ -41,22 +41,22 @@
       },
       {
         "name": ".github",
-        "fileCount": 7,
+        "fileCount": 8,
         "description": "CI workflows and repository automation"
       },
       {
         "name": "cmd",
-        "fileCount": 18,
+        "fileCount": 20,
         "description": "Application entrypoints and composition root"
       },
       {
         "name": "docs",
-        "fileCount": 10,
+        "fileCount": 36,
         "description": "Human-facing architecture, ADRs, and reviews"
       },
       {
         "name": "internal",
-        "fileCount": 216,
+        "fileCount": 232,
         "description": "Core runtime layers and domain logic"
       },
       {
@@ -66,35 +66,35 @@
       },
       {
         "name": "scripts",
-        "fileCount": 33,
+        "fileCount": 41,
         "description": "Build, daemon, and host operations"
       },
       {
         "name": "e2e",
-        "fileCount": 3,
+        "fileCount": 4,
         "description": "End-to-end and smoke tests"
       }
     ],
     "languageDistribution": [
       {
         "extension": ".go",
-        "count": 259
+        "count": 278
       },
       {
         "extension": ".md",
-        "count": 18
+        "count": 44
       },
       {
         "extension": ".sh",
-        "count": 26
+        "count": 41
       },
       {
         "extension": ".json",
-        "count": 8
+        "count": 12
       },
       {
         "extension": ".yml",
-        "count": 0
+        "count": 1
       },
       {
         "extension": ".yaml",
@@ -102,7 +102,7 @@
       },
       {
         "extension": ".png",
-        "count": 4
+        "count": 2
       }
     ]
   },
