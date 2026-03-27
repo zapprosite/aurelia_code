@@ -13,6 +13,7 @@ import (
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/media"
 	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/middleware"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/skill"
@@ -50,11 +51,16 @@ type BotController struct {
 	personasDir      string
 	healthReporter   HealthReporter
 	inputGuard       *InputGuard
+	porteiro         *middleware.PorteiroMiddleware
 	// S-27: Squad and Cron status reporters for /status command
 	squadReporter   SquadStatusReporter
 	cronJobReporter CronNextJobReporter
 	mediaProcessor  *media.Processor
 	llmOverride     ownedLLMProvider
+}
+
+func (c *BotController) SetPorteiro(p *middleware.PorteiroMiddleware) {
+	c.porteiro = p
 }
 
 // BotID returns the identifier of this bot instance.
