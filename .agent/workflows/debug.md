@@ -1,1 +1,103 @@
----\ndescription: Debugging command. Activates DEBUG mode for systematic problem investigation.\n---\n\n# /debug - Systematic Problem Investigation\n\n$ARGUMENTS\n\n---\n\n## Purpose\n\nThis command activates DEBUG mode for systematic investigation of issues, errors, or unexpected behavior.\n\n---\n\n## Behavior\n\nWhen `/debug` is triggered:\n\n1. **Gather information**\n   - Error message\n   - Reproduction steps\n   - Expected vs actual behavior\n   - Recent changes\n\n2. **Form hypotheses**\n   - List possible causes\n   - Order by likelihood\n\n3. **Investigate systematically**\n   - Test each hypothesis\n   - Check logs, data flow\n   - Use elimination method\n\n4. **Fix and prevent**\n   - Apply fix\n   - Explain root cause\n   - Add prevention measures\n\n---\n\n## Output Format\n\n```markdown\n## 🔍 Debug: [Issue]\n\n### 1. Symptom\n[What's happening]\n\n### 2. Information Gathered\n- Error: `[error message]`\n- File: `[filepath]`\n- Line: [line number]\n\n### 3. Hypotheses\n1. ❓ [Most likely cause]\n2. ❓ [Second possibility]\n3. ❓ [Less likely cause]\n\n### 4. Investigation\n\n**Testing hypothesis 1:**\n[What I checked] → [Result]\n\n**Testing hypothesis 2:**\n[What I checked] → [Result]\n\n### 5. Root Cause\n🎯 **[Explanation of why this happened]**\n\n### 6. Fix\n```[language]\n// Before\n[broken code]\n\n// After\n[fixed code]\n```\n\n### 7. Prevention\n🛡️ [How to prevent this in the future]\n```\n\n---\n\n## Examples\n\n```\n/debug login not working\n/debug API returns 500\n/debug form doesn't submit\n/debug data not saving\n```\n\n---\n\n## Key Principles\n\n- **Ask before assuming** - get full error context\n- **Test hypotheses** - don't guess randomly\n- **Explain why** - not just what to fix\n- **Prevent recurrence** - add tests, validation\n
+---
+description: Debugging command. Activates DEBUG mode for systematic problem investigation.
+---
+
+# /debug - Systematic Problem Investigation
+
+$ARGUMENTS
+
+---
+
+## Purpose
+
+This command activates DEBUG mode for systematic investigation of issues, errors, or unexpected behavior.
+
+---
+
+## Behavior
+
+When `/debug` is triggered:
+
+1. **Gather information**
+   - Error message
+   - Reproduction steps
+   - Expected vs actual behavior
+   - Recent changes
+
+2. **Form hypotheses**
+   - List possible causes
+   - Order by likelihood
+
+3. **Investigate systematically**
+   - Test each hypothesis
+   - Check logs, data flow
+   - Use elimination method
+
+4. **Fix and prevent**
+   - Apply fix
+   - Explain root cause
+   - Add prevention measures
+
+---
+
+## Output Format
+
+```markdown
+## 🔍 Debug: [Issue]
+
+### 1. Symptom
+[What's happening]
+
+### 2. Information Gathered
+- Error: `[error message]`
+- File: `[filepath]`
+- Line: [line number]
+
+### 3. Hypotheses
+1. ❓ [Most likely cause]
+2. ❓ [Second possibility]
+3. ❓ [Less likely cause]
+
+### 4. Investigation
+
+**Testing hypothesis 1:**
+[What I checked] → [Result]
+
+**Testing hypothesis 2:**
+[What I checked] → [Result]
+
+### 5. Root Cause
+🎯 **[Explanation of why this happened]**
+
+### 6. Fix
+```[language]
+// Before
+[broken code]
+
+// After
+[fixed code]
+```
+
+### 7. Prevention
+🛡️ [How to prevent this in the future]
+```
+
+---
+
+## Examples
+
+```
+/debug login not working
+/debug API returns 500
+/debug form doesn't submit
+/debug data not saving
+```
+
+---
+
+## Key Principles
+
+- **Ask before assuming** - get full error context
+- **Test hypotheses** - don't guess randomly
+- **Explain why** - not just what to fix
+- **Prevent recurrence** - add tests, validation
