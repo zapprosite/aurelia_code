@@ -68,5 +68,28 @@ Este ecossistema opera sob uma governança industrial rigorosa:
 
 ---
 
+## Deploy via CapRover
+
+O deploy da Aurelia usa o `captain-definition` na raiz do repositório e o `Dockerfile`
+multistage já presente no projeto.
+
+- **Dashboard:** `http://localhost:3334`
+- **Health:** `http://localhost:8484`
+- **Ponto publico:** `https://aurelia.zappro.site`
+- **Roteamento atual:** Terraform + Cloudflare Tunnel apontam `aurelia.zappro.site`
+  para `localhost:3334`
+- **CapRover:** usar o `captain-definition` do repo e configurar a app com
+  `Container HTTP Port = 3334`
+
+Nao e necessario criar novo subdominio, novo tunnel ou novo registro DNS para esse rollout.
+Se a porta do dashboard mudar no futuro, atualize a configuracao de tunnel e a documentacao
+de governanca em conjunto.
+Se o runtime publico migrar do processo local para uma app dentro do CapRover, atualize
+o destino do Cloudflare Tunnel no mesmo change set; hoje ele ainda aponta direto para
+`localhost:3334`.
+Guia detalhado de cutover: [AURELIA_CAPROVER_TERRAFORM_CUTOVER.md](./docs/governance/AURELIA_CAPROVER_TERRAFORM_CUTOVER.md)
+
+---
+
 *Documentação Gerada por Antigravity (Sovereign Engine 2026)*  
 *Consulte [ADR-historico.md](./docs/ADR-historico.md) para linhagem e [REPOSITORY_CONTRACT.md](./docs/governance/REPOSITORY_CONTRACT.md) para governança.*
