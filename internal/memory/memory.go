@@ -77,3 +77,12 @@ func NewMemoryManager(dbPath string, memoryWindowSize int) (*MemoryManager, erro
 func (m *MemoryManager) Close() error {
 	return m.db.Close()
 }
+
+// DB exposes the underlying SQLite handle for auxiliary subsystems that share
+// the same durable state database.
+func (m *MemoryManager) DB() *sql.DB {
+	if m == nil {
+		return nil
+	}
+	return m.db
+}

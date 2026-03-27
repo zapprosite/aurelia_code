@@ -30,7 +30,7 @@ var controleDBCron = cron.CronJob{
 	ScheduleType: "cron",
 	CronExpr:     "0 9 * * 1", // toda segunda-feira às 09:00
 	Prompt: "[sys:controle-db-audit] Você é o CONTROLE DB. Execute a auditoria semanal da camada de dados:" +
-		" 1) Liste todas as collections do Qdrant (curl http://127.0.0.1:6333/collections) e compare com a lista canônica (aurelia_skills, conversation_memory)." +
+		" 1) Liste todas as collections do Qdrant (curl http://127.0.0.1:6333/collections) e compare com a lista canônica (aurelia_skills, conversation_memory, aurelia_markdown_brain)." +
 		" 2) Verifique tamanho do SQLite e integridade (PRAGMA integrity_check)." +
 		" 3) Confirme que db_audit_log existe — se não existir, crie." +
 		" 4) Detecte tabelas fora do schema canônico." +
@@ -119,9 +119,9 @@ func seedHomelabMonitorCron(ctx context.Context, store *cron.SQLiteCronStore, ad
 	logger.Info("seed_homelab_monitor: cron criado", slog.String("expr", def.CronExpr))
 }
 
-// seedObsidianCron registra o cron de sync do Obsidian se habilitado.
-func seedObsidianCron(ctx context.Context, store *cron.SQLiteCronStore, cfg *config.AppConfig, adminChatID int64) {
-	if !cfg.ObsidianSyncEnabled || cfg.ObsidianVaultPath == "" {
+// seedMarkdownBrainCron registra o cron de sync do cérebro Markdown canônico.
+func seedMarkdownBrainCron(ctx context.Context, store *cron.SQLiteCronStore, cfg *config.AppConfig, adminChatID int64) {
+	if cfg == nil || adminChatID == 0 {
 		return
 	}
 	logger := observability.Logger("cmd.seed_crons")
@@ -129,11 +129,11 @@ func seedObsidianCron(ctx context.Context, store *cron.SQLiteCronStore, cfg *con
 
 	existing, err := store.ListJobsByChat(ctx, adminChatID)
 	if err != nil {
-		logger.Warn("seed_obsidian: failed to list jobs", slog.Any("err", err))
+		logger.Warn("seed_markdown_brain: failed to list jobs", slog.Any("err", err))
 		return
 	}
 	for _, j := range existing {
-		if extractSysMarker(j.Prompt) == "[sys:obsidian-sync]" {
+		if extractSysMarker(j.Prompt) == "[sys:markdown-brain-sync]" {
 			return
 		}
 	}
@@ -143,14 +143,16 @@ func seedObsidianCron(ctx context.Context, store *cron.SQLiteCronStore, cfg *con
 		CronExpr:     systemMonitorCronExpr,
 		OwnerUserID:  "system",
 		TargetChatID: adminChatID,
-		Prompt: "[sys:obsidian-sync] Use a ferramenta obsidian_sync para sincronizar o vault do Obsidian com o Qdrant." +
-			" Reporte quantas notas foram indexadas. Se nenhuma mudou, responda: '✓ Obsidian vault sincronizado (sem mudanças)'.",
+		Prompt: "[sys:markdown-brain-sync] Use a ferramenta markdown_brain_sync para sincronizar o cérebro Markdown canônico da Aurelia." +
+			" Sincronize os `.md` do repositório e, se houver vault configurado, as notas externas também." +
+			" Reporte repo_docs, vault_docs, synced_docs, synced_chunks e removed_docs." +
+			" Se nenhuma mudança ocorrer, responda: '✓ Markdown Brain sincronizado (sem mudanças)'.",
 	}
 	if _, err := svc.CreateJob(ctx, job); err != nil {
-		logger.Warn("seed_obsidian: failed to create cron", slog.Any("err", err))
+		logger.Warn("seed_markdown_brain: failed to create cron", slog.Any("err", err))
 		return
 	}
-	logger.Info("seed_obsidian: cron criado", slog.String("vault", cfg.ObsidianVaultPath))
+	logger.Info("seed_markdown_brain: cron criado", slog.String("expr", job.CronExpr))
 }
 
 // seedControleDBCron registra a auditoria semanal de dados (idempotente).
@@ -258,14 +260,12 @@ func reconcileSystemCronCadence(ctx context.Context, store *cron.SQLiteCronStore
 	}
 
 	desired := map[string]string{
-		"[sys:homelab-monitor]":   systemMonitorCronExpr,
-		"[sys:sentinel-watchdog]": systemMonitorCronExpr,
-		"[sys:memory-sync]":       systemMonitorCronExpr,
-		"[sys:gpu-report]":        systemMonitorCronExpr,
-		"[sys:aurelia-ping]":      systemMonitorCronExpr,
-	}
-	if cfg.ObsidianSyncEnabled && cfg.ObsidianVaultPath != "" {
-		desired["[sys:obsidian-sync]"] = systemMonitorCronExpr
+		"[sys:homelab-monitor]":     systemMonitorCronExpr,
+		"[sys:sentinel-watchdog]":   systemMonitorCronExpr,
+		"[sys:memory-sync]":         systemMonitorCronExpr,
+		"[sys:gpu-report]":          systemMonitorCronExpr,
+		"[sys:aurelia-ping]":        systemMonitorCronExpr,
+		"[sys:markdown-brain-sync]": systemMonitorCronExpr,
 	}
 
 	now := time.Now().UTC()

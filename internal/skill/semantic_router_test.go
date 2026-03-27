@@ -63,6 +63,9 @@ func TestSemanticRouter_SyncSkills_WritesCanonicalPayload(t *testing.T) {
 			t.Fatalf("missing canonical key %q in %#v", key, payload)
 		}
 	}
+	if payload["section"] == nil || payload["chunk_id"] == nil || payload["checksum"] == nil {
+		t.Fatalf("missing chunk metadata in %#v", payload)
+	}
 	if payload["source_system"] != "skills" || payload["source_id"] != "skill:controle-db" {
 		t.Fatalf("unexpected source lineage payload: %#v", payload)
 	}

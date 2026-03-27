@@ -161,3 +161,66 @@ func TestBuildBrainRecentHandlerSortsByTimestampDescending(t *testing.T) {
 		t.Fatalf("expected newest point first, got %#v", points[0].ID)
 	}
 }
+
+func TestBuildBrainSearchHandlerForCollectionsMergesMarkdownBrain(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/embed":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"embeddings": [][]float32{{0.1, 0.2, 0.3}},
+			})
+		case "/collections/conversation_memory/points/search":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": []map[string]any{{
+					"id":    "mem-1",
+					"score": 0.81,
+					"payload": map[string]any{
+						"text":       "Memória operacional recente",
+						"created_at": "2026-03-26T10:00:00Z",
+					},
+				}},
+			})
+		case "/collections/aurelia_markdown_brain/points/search":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": []map[string]any{{
+					"id":    "md-1",
+					"score": 0.93,
+					"payload": map[string]any{
+						"text":      "Title: Architecture\nPath: docs/ARCHITECTURE.md\n\nCockpit web e runtime Go unificados",
+						"repo_path": "docs/ARCHITECTURE.md",
+						"section":   "Overview",
+					},
+				}},
+			})
+		default:
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/brain/search?q=architecture", nil)
+	rec := httptest.NewRecorder()
+
+	buildBrainSearchHandlerForCollections(
+		server.URL,
+		[]string{"conversation_memory", "aurelia_markdown_brain"},
+		"",
+		server.URL,
+		"nomic-embed-text",
+	).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var points []brainPoint
+	if err := json.NewDecoder(rec.Body).Decode(&points); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(points) != 2 {
+		t.Fatalf("expected 2 merged points, got %d", len(points))
+	}
+	if points[0].ID != "md-1" {
+		t.Fatalf("expected markdown brain hit first by score, got %#v", points[0].ID)
+	}
+}
