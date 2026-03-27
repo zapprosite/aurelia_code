@@ -1,63 +1,9 @@
-# Tooling & Productivity Guide
-
-The day-to-day tooling for this repository is intentionally simple: Go, Bash, systemd, SQLite-backed local state and a small set of operational scripts. Productivity comes more from disciplined workflows than from heavy framework scaffolding.
-
-## Required Tooling
-
-- **Go 1.25+** — builds and tests the runtime
-- **Bash** — required for the scripts in [`scripts/`](../../scripts)
-- **systemd user services** — expected supervision path for the long-running daemon
-- **curl / jq** — useful for health checks and JSON inspection
-- **npm / npx** — needed when MCP servers are launched through Node-based commands
-- **GitHub Actions awareness** — contributors should understand the active CI workflows
-
-## Recommended Automation
-
-Key scripts shipped in the repository:
-
-- [`scripts/build.sh`](../../scripts/build.sh) — builds the Linux binary
-- [`scripts/install-user-daemon.sh`](../../scripts/install-user-daemon.sh) — installs and restarts the user daemon
-- [`scripts/daemon-status.sh`](../../scripts/daemon-status.sh) — shows service status
-- [`scripts/daemon-logs.sh`](../../scripts/daemon-logs.sh) — tails daemon logs
-- [`scripts/health-check.sh`](../../scripts/health-check.sh) — homelab/system health snapshot
-- [`scripts/gemini-smoke.sh`](../../scripts/gemini-smoke.sh) — validates the local Gemini API key, lists available models and performs a minimal generate-content check without changing the active provider
-- [`scripts/update-ollama.sh`](../../scripts/update-ollama.sh) — pulls the active local model kit (`gemma3:12b`, `gemma3:4b`, `bge-m3`) and keeps `gemma3:27b-it-q4_K_M` as optional laboratory model
-- [`scripts/ollama-local-kit-smoke.sh`](../../scripts/ollama-local-kit-smoke.sh) — validates the local Gemma kit against the Ollama API with `num_ctx=8192`
-- [`aurelia voice enqueue`](../../cmd/aurelia/voice_cli.go) — queues an audio file into the local voice spool for controlled processing
-- local TTS defaults now target `voice-proxy` on `127.0.0.1:8011` with `chatterbox` + `Aurelia.wav` (PT-BR) in `opus` for Telegram voice replies
-- [`scripts/smoke-test-homelab.sh`](../../scripts/smoke-test-homelab.sh) — smoke guidance for end-to-end validation
-- [`scripts/sync-ai-context.sh`](../../scripts/sync-ai-context.sh) — refreshes `ai-context` state and regenerates `.context/docs/codebase-map.json`
-- [`scripts/adr-slice-init.sh`](../../scripts/adr-slice-init.sh) — scaffolds ADR + taskmaster-style continuity artifacts for long slices
-
-Recommended local loop:
-
-1. change code in an isolated branch or worktree
-2. run `go test ./...`
-3. rebuild with `./scripts/build.sh`
-4. run `./scripts/sync-ai-context.sh`
-5. validate the runtime path you changed
-6. update `.context/` with the evidence
-7. keep slice-local plans in `.context/plans/<slice>/`, not in the repository root
-
-## IDE / Editor Setup
-
-At minimum, contributors benefit from:
-
-- Go language support (`gopls`)
-- shell syntax and lint support for Bash scripts
-- quick access to `journalctl`, `systemctl --user` and local health endpoints
-
-The repository does not currently depend on editor-specific config files for correct operation.
-
-## Productivity Tips
-
-- Prefer the repository scripts over ad hoc command sequences when validating service behavior.
-- Use `rg` for fast code and doc discovery across `internal/`, `pkg/` and `.context/`.
-- Treat `.context/` as living operational memory, especially for deployment and reboot investigations.
-- Keep MCP optional in your mental model: if an MCP server is missing, the core runtime should still be understandable and testable.
-- Treat `ai-context` in this repository as two layers: impact detection from the CLI, and curated Markdown docs under `.context/docs/`. The script above is the canonical bridge between them.
-
-## Related Resources
-
-- [Development Workflow](./development-workflow.md)
-- [Testing Strategy](./testing-strategy.md)
+---
+type: doc
+name: tooling
+description: Scripts, IDE settings, automation, and developer productivity tips
+category: tooling
+generated: 2026-03-27
+status: unfilled
+scaffoldVersion: "2.0.0"
+---
