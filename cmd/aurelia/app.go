@@ -20,6 +20,7 @@ import (
 	"github.com/kocar/aurelia/internal/gateway"
 	"github.com/kocar/aurelia/internal/health"
 	"github.com/kocar/aurelia/internal/heartbeat"
+	"github.com/kocar/aurelia/internal/markdownbrain"
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/metrics"
@@ -191,21 +192,44 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 
 	go performOllamaWarmup(a.cfg)
 
+	cwd, _ := os.Getwd()
+	if err := runtime.BootstrapProject(cwd); err != nil {
+		logger.Warn("failed to bootstrap project-local directory", slog.Any("err", err))
+	}
+	projectSkillsDir := runtime.ProjectSkills(cwd)
+	projectSkillOverlayDir := runtime.ProjectSkillOverlay(cwd)
+
+	markdownBrainTool := maybeRegisterMarkdownBrainTool(a.cfg, registry, cwd, a.mem.DB())
+	if markdownBrainTool != nil {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+
+			stats, err := markdownBrainTool.Sync(ctx)
+			if err != nil {
+				logger.Warn("markdown brain bootstrap sync failed", slog.Any("err", err))
+				return
+			}
+			logger.Info("markdown brain bootstrap sync complete",
+				slog.Int("repo_docs", stats.RepoDocs),
+				slog.Int("vault_docs", stats.VaultDocs),
+				slog.Int("synced_docs", stats.SyncedDocs),
+				slog.Int("synced_chunks", stats.SyncedChunks),
+				slog.Int("removed_docs", stats.RemovedDocs),
+			)
+		}()
+	}
+
 	assembler := memory.NewContextAssembler(
 		a.cfg.QdrantURL, a.cfg.QdrantAPIKey,
-		a.cfg.QdrantCollection, a.cfg.QdrantEmbeddingModel,
+		a.cfg.QdrantCollection, markdownbrain.DefaultCollection,
+		a.cfg.QdrantEmbeddingModel,
 		a.cfg.OllamaURL, a.mem,
 	)
 
 	loop := agent.NewLoop(a.llmProvider, registry, a.cfg.MaxIterations).
 		WithMemoryAssembler(assembler).
 		WithToolCatalog(agent.NewToolCatalog(registry), 7)
-
-	cwd, _ := os.Getwd()
-	if err := runtime.BootstrapProject(cwd); err != nil {
-		logger.Warn("failed to bootstrap project-local directory", slog.Any("err", err))
-	}
-	projectSkillsDir := runtime.ProjectSkills(cwd)
 
 	skillInstaller := skill.NewInstaller(a.resolver.Skills(), projectSkillsDir)
 
@@ -214,7 +238,25 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 		a.cfg.QdrantEmbeddingModel, a.cfg.OllamaURL,
 	)
 
-	skillLoader := skill.NewLoader(a.resolver.Skills(), projectSkillsDir)
+	skillLoader := skill.NewLoader(a.resolver.Skills(), projectSkillOverlayDir, projectSkillsDir)
+	if auditReport, err := skill.AuditCatalog(a.resolver.Skills(), projectSkillOverlayDir, projectSkillsDir); err != nil {
+		logger.Warn("skill catalog audit failed", slog.Any("err", err))
+	} else {
+		logger.Info("skill catalog audited",
+			slog.Int("skills", auditReport.ScannedSkills),
+			slog.Int("warnings", auditReport.WarningCount()),
+			slog.Int("errors", auditReport.ErrorCount()),
+		)
+		for _, issue := range auditReport.Issues {
+			logger.Warn("skill catalog issue",
+				slog.String("severity", issue.Severity),
+				slog.String("code", issue.Code),
+				slog.String("skill", issue.SkillName),
+				slog.String("path", issue.Path),
+				slog.String("message", issue.Message),
+			)
+		}
+	}
 	if loadedSkills, err := skillLoader.LoadAll(); err == nil {
 		go semanticRouter.SyncSkills(context.Background(), loadedSkills)
 	}
@@ -226,12 +268,13 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 }
 
 func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
-	logger.Info("Aurelia Daemon starting", 
+	logger.Info("Aurelia Daemon starting",
 		slog.String("mode", string(a.cfg.AureliaMode)),
 		slog.String("version", "starlight-2026"))
 	cwd, _ := os.Getwd()
 	projectPlaybookPath := filepath.Join(cwd, "docs", "PROJECT_PLAYBOOK.md")
 	projectSkillsDir := runtime.ProjectSkills(cwd)
+	projectSkillOverlayDir := runtime.ProjectSkillOverlay(cwd)
 
 	canonicalService := persona.NewCanonicalIdentityService(
 		a.mem,
@@ -248,7 +291,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		return fmt.Errorf("initialize transcriber: %w", err)
 	}
 
-	skillLoader := skill.NewLoader(a.resolver.Skills(), projectSkillsDir)
+	skillLoader := skill.NewLoader(a.resolver.Skills(), projectSkillOverlayDir, projectSkillsDir)
 	skillRouter := skill.NewRouter(a.llmProvider)
 	skillExecutor := skill.NewExecutor(loop)
 
@@ -318,6 +361,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	a.cronCancel = cronCancel
 
 	seedSystemCrons(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
+	seedMarkdownBrainCron(context.Background(), a.cronStore, a.cfg, a.cfg.VoiceReplyChatID)
 	seedRepoGuardianCron(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
 	seedControleDBCron(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
 	reconcileSystemCronCadence(context.Background(), a.cronStore, a.cfg)
@@ -740,8 +784,8 @@ func (a *app) start() {
 		qdrantCollection = "conversation_memory"
 	}
 	qdrantAPIKey := a.cfg.QdrantAPIKey
-	dashboard.RegisterRoute("/api/brain/search", buildBrainSearchHandler(qdrantURL, qdrantCollection, qdrantAPIKey, a.cfg.OllamaURL, a.cfg.QdrantEmbeddingModel))
-	dashboard.RegisterRoute("/api/brain/recent", buildBrainRecentHandler(qdrantURL, qdrantCollection, qdrantAPIKey))
+	dashboard.RegisterRoute("/api/brain/search", buildBrainSearchHandlerForCollections(qdrantURL, []string{qdrantCollection, markdownbrain.DefaultCollection}, qdrantAPIKey, a.cfg.OllamaURL, a.cfg.QdrantEmbeddingModel))
+	dashboard.RegisterRoute("/api/brain/recent", buildBrainRecentHandlerForCollections(qdrantURL, []string{qdrantCollection, markdownbrain.DefaultCollection}, qdrantAPIKey))
 	dashboard.RegisterRoute("/api/homelab", buildHomelabSnapshotHandler())
 	dashboard.RegisterRoute("/api/homelab/status", buildHomelabSnapshotHandler())
 	dashboard.RegisterRoute("/api/vrv", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

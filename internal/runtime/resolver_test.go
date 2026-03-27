@@ -72,7 +72,10 @@ func TestProjectHelpers(t *testing.T) {
 	if got := ProjectRoot(base); got != filepath.Join(base, ".aurelia") {
 		t.Fatalf("ProjectRoot() = %q", got)
 	}
-	if got := ProjectSkills(base); got != filepath.Join(base, ".aurelia", "skills") {
+	if got := ProjectSkills(base); got != filepath.Join(base, ".agent", "skills") {
 		t.Fatalf("ProjectSkills() = %q", got)
+	}
+	if got := ProjectSkillOverlay(base); got != filepath.Join(base, ".aurelia", "skills") {
+		t.Fatalf("ProjectSkillOverlay() = %q", got)
 	}
 }

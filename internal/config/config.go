@@ -258,14 +258,8 @@ func Load(r *runtime.PathResolver) (*AppConfig, error) {
 	// Apply environment variable overrides for secrets
 	applyEnvOverrides(&normalized)
 
-	// Before checking if we should write back, we compare against a version 
-	// that doesn't include secrets if they are just placeholders.
-	// However, the most robust way is to always mask secrets before writing.
-	
 	if !sameFileConfig(normalized, cfg) {
-		masked := normalized
-		maskSecrets(&masked)
-		if err := writeConfigFile(path, masked); err != nil {
+		if err := writeConfigFile(path, normalized); err != nil {
 			return nil, err
 		}
 	}
@@ -319,42 +313,6 @@ func applyEnvOverrides(cfg *fileConfig) {
 	}
 	if env := os.Getenv("AURELIA_MODE"); env != "" {
 		cfg.AureliaMode = strings.ToLower(env)
-	}
-}
-
-func maskSecrets(cfg *fileConfig) {
-	placeholder := "{chave-para-env}"
-	if cfg.TelegramBotToken != "" {
-		cfg.TelegramBotToken = placeholder
-	}
-	if cfg.TelegramNotificationBotID != "" {
-		cfg.TelegramNotificationBotID = placeholder
-	}
-	if cfg.AnthropicAPIKey != "" {
-		cfg.AnthropicAPIKey = placeholder
-	}
-	if cfg.GoogleAPIKey != "" {
-		cfg.GoogleAPIKey = placeholder
-	}
-	if cfg.OpenRouterAPIKey != "" {
-		cfg.OpenRouterAPIKey = placeholder
-	}
-	if cfg.OpenAIAPIKey != "" {
-		cfg.OpenAIAPIKey = placeholder
-	}
-	if cfg.GroqAPIKey != "" {
-		cfg.GroqAPIKey = placeholder
-	}
-	if cfg.MiniMaxAPIKey != "" {
-		cfg.MiniMaxAPIKey = placeholder
-	}
-	if cfg.QdrantAPIKey != "" {
-		cfg.QdrantAPIKey = placeholder
-	}
-	for i := range cfg.Bots {
-		if cfg.Bots[i].Token != "" {
-			cfg.Bots[i].Token = placeholder
-		}
 	}
 }
 
@@ -512,8 +470,7 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.HeartbeatEnabled = editable.HeartbeatEnabled
 	cfg.HeartbeatIntervalMinutes = editable.HeartbeatIntervalMinutes
 	cfg = normalizeFileConfig(cfg, r)
-	
-	maskSecrets(&cfg)
+
 	return writeConfigFile(r.AppConfig(), cfg)
 }
 

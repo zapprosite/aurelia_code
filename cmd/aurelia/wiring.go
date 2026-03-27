@@ -37,25 +37,35 @@ func registerHomelabTool(cfg *config.AppConfig, registry *agent.ToolRegistry) {
 	tools.RegisterHomelabTool(registry, cfg.OllamaURL, cfg.QdrantURL)
 }
 
-func maybeRegisterObsidianTool(cfg *config.AppConfig, registry *agent.ToolRegistry, db *sql.DB) {
-	if !cfg.ObsidianSyncEnabled || cfg.ObsidianVaultPath == "" {
-		return
+func maybeRegisterMarkdownBrainTool(cfg *config.AppConfig, registry *agent.ToolRegistry, repoRoot string, db *sql.DB) *tools.MarkdownBrainSyncTool {
+	if cfg == nil {
+		return nil
 	}
-	tool := tools.NewObsidianSyncTool(
-		cfg.ObsidianVaultPath,
+	vaultPath := ""
+	if cfg.ObsidianSyncEnabled {
+		vaultPath = cfg.ObsidianVaultPath
+	}
+	tool := tools.NewMarkdownBrainSyncTool(
+		repoRoot,
+		vaultPath,
 		cfg.OllamaURL,
 		cfg.QdrantEmbeddingModel,
 		cfg.QdrantURL,
 		cfg.QdrantAPIKey,
-		cfg.QdrantCollection,
+		"",
 		db,
-		observability.Logger("obsidian"),
+		observability.Logger("markdown_brain"),
 	)
 	if tool == nil {
-		return
+		return nil
 	}
 	registry.Register(tool.Definition(), tool.Execute)
-	observability.Logger("cmd.wiring").Info("obsidian_sync tool registered", slog.String("vault", cfg.ObsidianVaultPath))
+	logger := observability.Logger("cmd.wiring")
+	logger.Info("markdown_brain_sync tool registered", slog.String("repo_root", repoRoot))
+	if vaultPath != "" {
+		logger.Info("markdown brain vault source enabled", slog.String("vault", vaultPath))
+	}
+	return tool
 }
 
 func registerScheduleTools(registry *agent.ToolRegistry, cronStore *cron.SQLiteCronStore) *cron.Service {

@@ -116,21 +116,23 @@ Implementar em 4 fases incrementais, na ordem de dependência. Cada fase tem cri
 
 **Critério de aceite:** `docker build -t aurelia . && docker run --rm aurelia --help` sem erro.
 
-### 5C. Obsidian Read-Only Sync → Qdrant
+### 5C. Markdown Brain canônico + Vault Obsidian
 
-**Decisão arquitetural:** Read-only primeiro. Sync bidirecional é fase separada que exige resolução de conflitos.
+**Status de evolução:** esta fatia foi absorvida pelo desenho implementado em [20260327-markdown-brain-aurelia-code.md](20260327-markdown-brain-aurelia-code.md).
 
-**Contrato de payload:** `source_system: "obsidian"`, `source_id: "<vault-relative-path>"`.
+**Decisão arquitetural:** o vault continua read-only, mas agora como uma das fontes do `Markdown Brain` canônico. O repositório `.md` e o vault externo convergem para a mesma collection vetorial.
+
+**Contrato de payload:** `source_system: "repo_markdown"` ou `source_system: "obsidian"`, ambos com `source_id` canônico e chunking por seção.
 
 | # | Ação | Arquivo |
 |---|------|---------|
-| 5C.1 | Campos: `ObsidianVaultPath`, `ObsidianSyncEnabled` | `internal/config/config.go` |
+| 5C.1 | Campos: `ObsidianVaultPath`, `ObsidianSyncEnabled` como gate da fonte externa do vault | `internal/config/config.go` |
 | 5C.2 | Vault reader: walk `.md`, extrair frontmatter YAML + content | `internal/obsidian/reader.go` |
-| 5C.3 | Sync job: embed via Ollama → upsert Qdrant com payload canônico | `internal/obsidian/sync.go` |
-| 5C.4 | Sync state: `obsidian_sync_state(path, sha256, last_synced)` em SQLite | `internal/obsidian/sync.go` |
-| 5C.5 | Registrar como cron job se `ObsidianSyncEnabled` | `cmd/aurelia/seed_crons.go` |
+| 5C.3 | Indexador canônico: repo markdown + vault markdown → embeddings + Qdrant | `internal/markdownbrain/sync.go` |
+| 5C.4 | Sync state: `markdown_brain_sync_state(source_system, source_path, sha256, last_synced)` em SQLite | `internal/markdownbrain/sync.go` |
+| 5C.5 | Registrar tool e cron únicos: `markdown_brain_sync` | `cmd/aurelia/wiring.go`, `cmd/aurelia/seed_crons.go` |
 
-**Critério de aceite:** `go test -tags integration ./internal/obsidian/...` verde com vault real.
+**Critério de aceite:** `go test ./internal/markdownbrain ./internal/memory ./cmd/aurelia` verde.
 
 ### 5D. Homelab Monitoring Cron
 
