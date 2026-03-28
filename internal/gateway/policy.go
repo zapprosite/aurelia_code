@@ -26,7 +26,7 @@ const (
 	modelDeepSeekR1Free = "deepseek/deepseek-r1-0528:free"
 
 	// Local
-	modelGemma3 = "gemma3:12b"
+	modelGemma3 = "gemma3:27b"
 
 	// Existing static defaults
 	defaultAudioModel        = "whisper-large-v3-turbo"

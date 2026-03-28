@@ -10,14 +10,14 @@ Habilita o gerenciamento operacional direto da infraestrutura do Home Lab sob a 
 ## 🛠️ Comandos de Infraestrutura (Ubuntu 24.04 Native)
 
 ### 1. GPU & CUDA (NVIDIA RTX 4090)
-- **Monitoramento**: `nvidia-smi` é a fonte primária. Verifique se o `gemma3:12b` (Ollama) está consumindo os ~795MB necessários de VRAM.
+- **Monitoramento**: `nvidia-smi` é a fonte primária. Verifique se o `gemma3:27b` (Ollama) está consumindo os ~16.5GB necessários de VRAM.
 - **Troubleshooting**: Se o `nvidia-smi` travar, verifique processos zumbis ou atualizações pendentes do `needrestart`.
 - **Ref**: `docs/adr/ADR-20260320-politica-modelos-hardware-vram.md`.
 
 ### 2. Ollama & Sovereign Models
 - **Gestão**: `curl -s http://localhost:11434/api/tags` para listar modelos ativos.
 - **Modelos Pinados (2026)**:
-  - `gemma3:12b`: Modelo residente principal (local, agêntico).
+  - `gemma3:27b`: Modelo residente principal (local, agêntico).
   - `gemma3:27b-it-q4_K_M`: Laboratório — raciocínio profundo local.
   - `bge-m3`: Modelo de embedding para o vetor DB (Qdrant).
   - Cloud: OpenRouter (`google/gemini-2.5-flash`, `google/gemini-2.5-pro`).

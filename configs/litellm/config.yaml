@@ -1,0 +1,34 @@
+model_list:
+  - model_name: aurelia-smart
+    litellm_params:
+      model: ollama/gemma3:27b
+      api_base: http://localhost:11434
+    tpm: 1000000
+    rpm: 5000
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+    tpm: 1000000
+    rpm: 5000
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+    tpm: 100000
+    rpm: 1000
+
+  - model_name: nomic-embed-text
+    litellm_params:
+      model: ollama/nomic-embed-text
+      api_base: http://localhost:11434
+
+router_settings:
+  routing_strategy: usage-based-routing-v2
+  set_verbose: true
+  enable_fallbacks: true
+
+litellm_settings:
+  drop_params: true
+  success_callback: ["prometheus"]
+  telemetry: false

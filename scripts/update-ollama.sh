@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "🤖 Atualizando kit local do Ollama..."
 
-MAIN_MODEL="${MAIN_MODEL:-gemma3:12b}"
+MAIN_MODEL="${MAIN_MODEL:-gemma3:27b}"
 EMBED_MODEL="${EMBED_MODEL:-nomic-embed-text}"
 
 echo "📥 Puxando modelo principal: $MAIN_MODEL"

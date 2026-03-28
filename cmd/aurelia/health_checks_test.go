@@ -73,7 +73,7 @@ func TestBuildPrimaryLLMHealthCheck_OllamaModelInstalledIsOk(t *testing.T) {
 			t.Fatalf("path = %q", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"data":[{"id":"gemma3:12b"}]}`))
+		_, _ = w.Write([]byte(`{"data":[{"id":"gemma3:27b"}]}`))
 	}))
 	defer server.Close()
 	http.DefaultTransport = rewriteLocalhostTransport(t, server)
@@ -81,7 +81,7 @@ func TestBuildPrimaryLLMHealthCheck_OllamaModelInstalledIsOk(t *testing.T) {
 
 	check := buildPrimaryLLMHealthCheck(&config.AppConfig{
 		LLMProvider: "ollama",
-		LLMModel:    "gemma3:12b",
+		LLMModel:    "gemma3:27b",
 	}, nil)
 
 	result := check()
@@ -92,7 +92,7 @@ func TestBuildPrimaryLLMHealthCheck_OllamaModelInstalledIsOk(t *testing.T) {
 
 type fakePrimaryDescriber struct{}
 
-func (fakePrimaryDescriber) PrimaryLLMDescription() string { return "gateway/gemma3:12b" }
+func (fakePrimaryDescriber) PrimaryLLMDescription() string { return "gateway/gemma3:27b" }
 
 func TestBuildPrimaryLLMHealthCheck_UsesProviderDescriptionWhenAvailable(t *testing.T) {
 	t.Parallel()
@@ -106,7 +106,7 @@ func TestBuildPrimaryLLMHealthCheck_UsesProviderDescriptionWhenAvailable(t *test
 	if result.Status != "ok" {
 		t.Fatalf("status = %q", result.Status)
 	}
-	if result.Message != "gateway/gemma3:12b" {
+	if result.Message != "gateway/gemma3:27b" {
 		t.Fatalf("message = %q", result.Message)
 	}
 }

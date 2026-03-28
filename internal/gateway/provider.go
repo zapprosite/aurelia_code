@@ -92,19 +92,31 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		return nil, fmt.Errorf("config is required")
 	}
 	lowTemp := 0.1
-	localFast := llm.NewOllamaProviderWithOptions(cfg.OllamaURL, modelGemma3, llm.OpenAICompatibleRequestOptions{
-		MaxTokens:   192,
-		Temperature: &lowTemp,
-		ExtraFields: map[string]any{"think": false},
+	localFast := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
+		BaseURL: cfg.OllamaURL + "/chat/completions",
+		Model:   "aurelia-smart",
+		Request: llm.OpenAICompatibleRequestOptions{
+			MaxTokens:   192,
+			Temperature: &lowTemp,
+			ExtraFields: map[string]any{"think": false},
+		},
 	})
-	localBalanced := llm.NewOllamaProviderWithOptions(cfg.OllamaURL, modelGemma3, llm.OpenAICompatibleRequestOptions{
-		MaxTokens:   1024,
-		Temperature: &lowTemp,
-		ExtraFields: map[string]any{"think": false},
+	localBalanced := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
+		BaseURL: cfg.OllamaURL + "/chat/completions",
+		Model:   "aurelia-smart",
+		Request: llm.OpenAICompatibleRequestOptions{
+			MaxTokens:   1024,
+			Temperature: &lowTemp,
+			ExtraFields: map[string]any{"think": false},
+		},
 	})
-	localVision := llm.NewOllamaProviderWithOptions(cfg.OllamaURL, modelGemma3, llm.OpenAICompatibleRequestOptions{
-		MaxTokens:   512,
-		Temperature: &lowTemp,
+	localVision := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
+		BaseURL: cfg.OllamaURL + "/chat/completions",
+		Model:   "aurelia-smart",
+		Request: llm.OpenAICompatibleRequestOptions{
+			MaxTokens:   512,
+			Temperature: &lowTemp,
+		},
 	})
 
 	var remoteFree closableProvider
@@ -147,7 +159,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		})
 	}
 
-	judge := NewGemmaJudge(cfg.OllamaURL, "gemma3:12b")
+	judge := NewGemmaJudge(cfg.OllamaURL, "gemma3:27b")
 
 	provider := &Provider{
 		planner:           NewPlanner(),
