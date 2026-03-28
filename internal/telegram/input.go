@@ -61,11 +61,8 @@ func (bc *BotController) handleVoice(c telebot.Context) error {
 
 	transcribedText, err := bc.transcribeAudioFile(filePath)
 	if err != nil {
-		var msgErr sendContextTextError
-		if ok := errorAs(err, &msgErr); ok {
-			return SendContextText(c, msgErr.Error())
-		}
-		return SendContextText(c, audioProcessingFailureMessage)
+		observability.Logger("telegram.input").Warn("silent failure: audio transcription skipped", slog.Any("err", err))
+		return nil
 	}
 	bc.persistAudioTranscript(c, filePath, transcribedText)
 	return bc.processInput(c, transcribedText, true)
