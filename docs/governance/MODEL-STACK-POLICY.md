@@ -13,21 +13,19 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 
 ---
 
-## Motor de Inferência da Aurélia (Stack Canônico Vigente)
+## Motor de Inferência da Aurélia (Stack Canônico Pinado 2026)
 
-> Claude, Antigravity e OpenCode são **orquestradores externos** controlados por Will — não são modelos internos da Aurélia.
+| Tier | Modelo | Provedor | Prioridade | Uso |
+|------|--------|----------|------------|-----|
+| **Nível 0 (Local)** | `gemma3:27b` | Ollama (RTX 4090) | **1** | Juiz/Executor, Timeout 10s |
+| **Nível 1 (Cloud Free)**| `minimax-01:free` | OpenRouter | **2** | Linha de frente gratuita |
+| **Nível 1 (Cloud Free)**| `gemini-2.0-flash` | Google API | **3** | Visão/Arquivos Grandes |
+| **Nível 1 (Cloud Free)**| `llama-3.3-70b` | Groq | **4** | Velocidade absoluta LPU |
+| **Nível 2 (Paid)** | `glm-5` | OpenRouter | **5** | Engenharia/Lógica Densa |
+| **Nível 2 (Paid)** | `minimax-2.7` | OpenRouter | **6** | Precisão Extrema (Refactor) |
+| **Nível 2 (Paid)** | `kimi-2.5` | OpenRouter | **7** | Contexto Massivo (Arquitetura) |
 
-| Tier | Modelo | Provedor | Uso |
-|------|--------|----------|-----|
-| **Tier 0 — Local** | `gemma3:12b` | Ollama (RTX 4090) | Fallback universal, custo zero |
-| **Tier 1 — Cheap Remote** | `deepseek/deepseek-chat-v3.1` | OpenRouter | Curation, structured output, routing |
-| **Tier 2 — Premium Remote** | `minimax/minimax-m2.7` | MiniMax direct | coding_main, critical, execução principal |
-| **Tier 2 — Long Context** | `moonshotai/kimi-k2.5` | OpenRouter | Contexto longo, multimodal |
-| **Embedding** | `nomic-embed-text` | Ollama (RTX 4090) | Qdrant, sempre local |
-| **STT** | `whisper-large-v3-turbo` | Groq | Transcrição rápida PT-BR |
-| **TTS** | `kokoro` | Local CPU | Voz oficial Aurélia, sem XTTS nem proxy |
-
-**Fonte de verdade do roteamento:** `internal/gateway/policy.go`
+**Embedding**: `nomic-embed-text` (Ollama Local)
 
 ---
 
@@ -35,16 +33,9 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 
 | Modelo | Removido em | Substituto no Runtime |
 |--------|------------|----------------------|
-| `gemma3:27b-it-q4_K_M` | 2026-03-26 | `gemma3:12b` |
+| `gemma3:12b` | 2026-03-28 | `gemma3:27b` |
+| `deepseek/chat` | 2026-03-28 | `glm-5` (Tier 2) |
 | `bge-m3` | 2026-03-26 | `nomic-embed-text` |
-| `qwen3.5:9b` | 2026-03-24 | `gemma3:12b` |
-| `qwen3.5:4b` | 2026-03-24 | `gemma3:12b` |
-| `qwen/qwen3*` | 2026-03-26 | `deepseek/deepseek-chat-v3.1` |
-| `voice-proxy` | 2026-03-26 | `kokoro` em `127.0.0.1:8012` |
-| `xtts` / `openedai-speech` | 2026-03-26 | `kokoro` em CPU |
-| `google/gemini-2.5-flash` | 2026-03-25 | `deepseek/deepseek-chat-v3.1` (Tier 1) |
-| `google/gemini-2.5-pro` | 2026-03-25 | `minimax/minimax-m2.7` (Tier 2) |
-| Codex CLI auth | 2026-02 | OpenCode (orquestrador externo) |
 
 ---
 

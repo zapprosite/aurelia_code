@@ -1,31 +1,57 @@
 model_list:
+  # --- NÍVEL 0 (LOCAL SÃO PAULO) ---
   - model_name: aurelia-smart
     litellm_params:
       model: ollama/gemma3:27b
       api_base: http://localhost:11434
+      request_timeout: 10
+      priority: 1
     tpm: 1000000
     rpm: 5000
-
-  - model_name: aurelia-smart
-    litellm_params:
-      model: gemini/gemini-2.0-flash
-    tpm: 1000000
-    rpm: 5000
-
-  - model_name: aurelia-smart
-    litellm_params:
-      model: groq/llama-3.3-70b-versatile
-    tpm: 100000
-    rpm: 1000
 
   - model_name: nomic-embed-text
     litellm_params:
       model: ollama/nomic-embed-text
       api_base: http://localhost:11434
 
+  # --- NÍVEL 1 (FREE CLOUD CASCADE) ---
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/minimax/minimax-01:free
+      api_key: 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
+      priority: 2
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      priority: 3
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      priority: 4
+
+  # --- NÍVEL 2 (PAID ENGINEERING) ---
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/zhipu/glm-5
+      api_key: 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
+      priority: 5
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/minimax/minimax-2.7
+      priority: 6
+      api_key: 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
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/moonshotai/kimi-2.5
+      priority: 7
+      api_key: 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
+
 router_settings:
   routing_strategy: usage-based-routing-v2
-  set_verbose: true
   enable_fallbacks: true
 
 litellm_settings:
