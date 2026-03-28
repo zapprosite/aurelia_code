@@ -16,7 +16,7 @@ type SegmentedSynthesizer struct {
 // NewSegmentedSynthesizer wraps a synthesizer with segmentation logic.
 func NewSegmentedSynthesizer(base Synthesizer, maxChars int) *SegmentedSynthesizer {
 	if maxChars <= 0 {
-		maxChars = 4000 // Safe default for Kodoro/Kokoro
+		maxChars = 2500 // Optimized default for Kodoro/Kokoro SOTA 2026
 	}
 	return &SegmentedSynthesizer{
 		base:     base,
@@ -49,11 +49,14 @@ func (s *SegmentedSynthesizer) Synthesize(ctx context.Context, text string) (Aud
 	var combinedData []byte
 	var lastAudio Audio
 
+	fmt.Printf("TTS: Starting synthesis for %d chunks (Infinite-Voice SOTA 2026)\n", len(chunks))
+
 	for i, chunk := range chunks {
 		select {
 		case <-ctx.Done():
 			return Audio{}, ctx.Err()
 		default:
+			fmt.Printf("TTS: Processing chunk %d/%d (%d chars)...\n", i+1, len(chunks), len(chunk))
 			audio, err := s.base.Synthesize(ctx, chunk)
 			if err != nil {
 				return Audio{}, fmt.Errorf("synthesize chunk %d/%d: %w", i+1, len(chunks), err)
@@ -62,6 +65,8 @@ func (s *SegmentedSynthesizer) Synthesize(ctx context.Context, text string) (Aud
 			lastAudio = audio
 		}
 	}
+
+	fmt.Printf("TTS: Synthesis complete. Total audio size: %d bytes\n", len(combinedData))
 
 	return Audio{
 		Data:        combinedData,

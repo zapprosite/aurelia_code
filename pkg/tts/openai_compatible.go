@@ -50,7 +50,7 @@ func NewOpenAICompatibleSynthesizer(baseURL, model, voice, language, format stri
 		format:   strings.TrimSpace(format),
 		speed:    speed,
 		httpClient: &http.Client{
-			Timeout: 120 * time.Second,
+			Timeout: 600 * time.Second,
 		},
 	}
 }
