@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kocar/aurelia/internal/observability"
+	"github.com/kocar/aurelia/internal/purity/alog"
 )
 
 func main() {
@@ -16,8 +16,8 @@ func main() {
 }
 
 func run(args []string) int {
-	observability.Configure(observability.Options{})
-	logger := observability.Logger("cmd.main")
+	alog.Configure(alog.Options{})
+	logger := alog.Logger("cmd.main")
 
 	if len(args) > 1 {
 		switch args[1] {

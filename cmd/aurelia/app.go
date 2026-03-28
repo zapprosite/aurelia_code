@@ -20,14 +20,13 @@ import (
 	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/gateway"
 	"github.com/kocar/aurelia/internal/health"
-	"github.com/kocar/aurelia/internal/heartbeat"
 	"github.com/kocar/aurelia/internal/infra"
 	"github.com/kocar/aurelia/internal/markdownbrain"
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/middleware"
 	"github.com/kocar/aurelia/internal/metrics"
-	"github.com/kocar/aurelia/internal/observability"
+	"github.com/kocar/aurelia/internal/purity/alog"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/runtime"
 	"github.com/kocar/aurelia/internal/skill"
@@ -61,7 +60,7 @@ type app struct {
 	cronScheduler *cron.Scheduler
 	cronCtx       context.Context
 	cronCancel    context.CancelFunc
-	heartbeat     *heartbeat.HeartbeatService
+	heartbeat     *agent.HeartbeatService
 	healthServer  *health.Server
 
 	// Voice Stack
@@ -82,7 +81,7 @@ type closableVoiceMirror interface {
 
 // bootstrapApp initializes the entire application stack in a modular fashion.
 func bootstrapApp(args []string) (*app, error) {
-	logger := observability.Logger("cmd.bootstrap")
+	logger := alog.Logger("cmd.bootstrap")
 	a := &app{}
 
 	// 1. Initial Infrastructure
@@ -394,7 +393,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	// S-24: Sentinel health probes — updates gemma/sentinel squad status every 30s
 	startSentinelHealthLoop(a.cfg)
 
-	a.heartbeat = heartbeat.NewHeartbeatService(
+	a.heartbeat = agent.NewHeartbeatService(
 		a.resolver.Root(),
 		a.cfg.HeartbeatIntervalMinutes,
 		a.cfg.HeartbeatEnabled,
@@ -751,14 +750,14 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 }
 
 func (a *app) start() {
-	logger := observability.Logger("cmd.app")
+	logger := alog.Logger("cmd.app")
 	go func() {
 		if err := a.cronScheduler.Start(a.cronCtx); err != nil && err != context.Canceled {
 			logger.Warn("cron scheduler stopped with error", slog.Any("err", err))
 		}
 	}()
 	if a.heartbeat != nil {
-		_ = a.heartbeat.Start()
+		a.heartbeat.Start()
 	}
 	if a.healthServer != nil {
 		_ = a.healthServer.Start()
@@ -948,7 +947,7 @@ func performOllamaWarmup(cfg *config.AppConfig) {
 	if cfg.LLMProvider != "ollama" {
 		return
 	}
-	logger := observability.Logger("ollama.warmup")
+	logger := alog.Logger("ollama.warmup")
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 

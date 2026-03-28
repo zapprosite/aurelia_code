@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/kocar/aurelia/internal/purity/alog"
 )
 
 type HealthStatus struct {
@@ -85,7 +85,7 @@ func memorySyncHandler(w http.ResponseWriter, r *http.Request) {
 		"drift_detected":   false,
 	}
 
-	fmt.Printf("🔄 Omni-Memory Sync acionado via %s\n", qdrantURL)
+	alog.Info("omni-memory sync triggered", alog.With("url", qdrantURL))
 	
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(syncInfo)
@@ -102,13 +102,15 @@ func checkTCP(host, port string) string {
 }
 
 func main() {
+	alog.Configure(alog.Options{})
 	port := "8081"
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/env-audit", envAuditHandler)
 	http.HandleFunc("/memory-sync", memorySyncHandler)
 
-	fmt.Printf("🛰️  Aurelia System API ligada na porta %s (Go-Native SOTA 2026)\n", port)
+	alog.Info("Aurelia System API starting", alog.With("port", port), alog.With("mode", "Go-Native SOTA 2026"))
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatal(err)
+		alog.Error("System API failed to start", alog.With("err", err))
+		os.Exit(1)
 	}
 }
