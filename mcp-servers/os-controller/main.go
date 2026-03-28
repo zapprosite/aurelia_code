@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -27,27 +26,11 @@ func main() {
 	// Tool: run_bash_command
 	runBashTool := mcp.NewTool("run_bash_command",
 		mcp.WithDescription("Executa um comando Bash no sistema host com proteção do Execution Guard"),
+		mcp.WithInputSchema[string](),
 	)
-	// Adicionando schema via AddTool manualmente se o helper estiver ausente
-	runBashTool.InputSchema = map[string]interface{}{
-		"type": "object",
-		"properties": map[string]interface{}{
-			"script": map[string]interface{}{
-				"type":        "string",
-				"description": "O script bash ou comando a ser executado",
-			},
-		},
-		"required": []string{"script"},
-	}
 
 	s.AddTool(runBashTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		// Type assertion para []byte
-		argsRaw, ok := request.Params.Arguments.(map[string]interface{})
-		if !ok {
-			return mcp.NewToolResultError("invalid arguments format"), nil
-		}
-		
-		script, _ := argsRaw["script"].(string)
+		script := mcp.ParseString(request, "script", "")
 		if script == "" {
 			return mcp.NewToolResultError("script is required"), nil
 		}
@@ -64,31 +47,19 @@ func main() {
 	// Tool: read_system_log
 	readLogTool := mcp.NewTool("read_system_log",
 		mcp.WithDescription("Lê as últimas N linhas de um log de sistema"),
+		mcp.WithInputSchema[struct {
+			Path  string `json:"path"`
+			Lines int    `json:"lines"`
+		}](),
 	)
-	readLogTool.InputSchema = map[string]interface{}{
-		"type": "object",
-		"properties": map[string]interface{}{
-			"path": map[string]interface{}{
-				"type":        "string",
-				"description": "Caminho absoluto do arquivo de log",
-			},
-			"lines": map[string]interface{}{
-				"type":        "integer",
-				"description": "Número de linhas a serem lidas (default: 50)",
-			},
-		},
-		"required": []string{"path"},
-	}
 
 	s.AddTool(readLogTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		argsRaw, ok := request.Params.Arguments.(map[string]interface{})
-		if !ok {
-			return mcp.NewToolResultError("invalid arguments format"), nil
+		path := mcp.ParseString(request, "path", "")
+		if path == "" {
+			return mcp.NewToolResultError("path is required"), nil
 		}
 
-		path, _ := argsRaw["path"].(string)
-		linesFloat, _ := argsRaw["lines"].(float64) // JSON numbers are float64 in interface{}
-		lines := int(linesFloat)
+		lines := mcp.ParseInt(request, "lines", 50)
 
 		logLines, err := ctrl.ReadLog(ctx, path, lines)
 		if err != nil {
