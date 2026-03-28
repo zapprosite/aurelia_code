@@ -70,6 +70,10 @@ specs/
 
 # Claude Code (local dev tooling)
 .claude/
+!.claude/README.md          # Versionar estrutura padrão
+!.claude/commands/         # Versionar commands
+!.claude/skills/          # Versionar skills (symlinks)
+!.claude/agents/          # Versionar agents (symlinks)
 
 # Local planning workspace
 .planning/
