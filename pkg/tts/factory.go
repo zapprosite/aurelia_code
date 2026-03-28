@@ -13,7 +13,8 @@ func NewSynthesizer(baseURL, provider, model, voice, language, format string, sp
 
 	// Currently, all our providers use the OpenAI-compatible API.
 	// In the future, we could add native support for other engines here.
-	return NewOpenAICompatibleSynthesizer(baseURL, model, voice, language, format, speed)
+	base := NewOpenAICompatibleSynthesizer(baseURL, model, voice, language, format, speed)
+	return NewSegmentedSynthesizer(base, 4000)
 }
 
 // NewDefaultSynthesizer builds the primary TTS engine from the app config.
