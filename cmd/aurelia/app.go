@@ -180,6 +180,14 @@ func (a *app) initCore(logger *slog.Logger) error {
 	}
 	a.redis = redis
 
+	// [SOTA GODMODE] Build and assign the LLM provider so it is non-nil
+	// when registerSpawnAgentTool is called in initFeatures.
+	provider, err := buildLLMProvider(a.cfg, a.resolver)
+	if err != nil {
+		return fmt.Errorf("build llm provider: %w", err)
+	}
+	a.llmProvider = provider
+
 	return nil
 }
 

@@ -28,7 +28,7 @@ func NewGemmaJudge(baseURL, model string) *GemmaJudge {
 	lowTemp := 0.1
 	// [SOTA 2026] Unificação de protocolo: Juiz agora fala OpenAI nativo via LiteLLM na porta 4000
 	provider := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
-		BaseURL: baseURL + "/chat/completions",
+		BaseURL: baseURL + "/v1/chat/completions",
 		Model:   model,
 		Request: llm.OpenAICompatibleRequestOptions{
 			Temperature: &lowTemp,

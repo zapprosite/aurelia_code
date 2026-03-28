@@ -93,7 +93,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 	}
 	lowTemp := 0.1
 	localFast := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
-		BaseURL: cfg.OllamaURL + "/chat/completions",
+		BaseURL: "http://localhost:4000/v1/chat/completions",
 		Model:   "aurelia-smart",
 		Request: llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   192,
@@ -102,7 +102,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		},
 	})
 	localBalanced := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
-		BaseURL: cfg.OllamaURL + "/chat/completions",
+		BaseURL: "http://localhost:4000/v1/chat/completions",
 		Model:   "aurelia-smart",
 		Request: llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
@@ -111,7 +111,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		},
 	})
 	localVision := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
-		BaseURL: cfg.OllamaURL + "/chat/completions",
+		BaseURL: "http://localhost:4000/v1/chat/completions",
 		Model:   "aurelia-smart",
 		Request: llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   512,
