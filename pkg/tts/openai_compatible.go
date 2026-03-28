@@ -99,12 +99,12 @@ func (s *OpenAICompatibleSynthesizer) Synthesize(ctx context.Context, text strin
 		"model":           s.model,
 		"input":           strings.TrimSpace(text) + " . . . . .", // SOTA 2026 Enhanced Tail Padding: prevent abrupt cut-offs
 		"voice":           s.voice,
-		"language":        s.language,
+		"lang_code":       s.language,                             // Extension for Kokoro/Kodoro FastAPI
 		"response_format": s.format,
 		"speed":           s.speed,
 	}
 	if s.language == "" {
-		delete(payload, "language")
+		delete(payload, "lang_code")
 	}
 	body, err := json.Marshal(payload)
 
