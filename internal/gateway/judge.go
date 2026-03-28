@@ -26,16 +26,21 @@ type GemmaJudge struct {
 
 func NewGemmaJudge(baseURL, model string) *GemmaJudge {
 	lowTemp := 0.1
-	// Usamos o provedor Ollama diretamente para o Gemma 3
-	provider := llm.NewOllamaProviderWithOptions(baseURL, model, llm.OpenAICompatibleRequestOptions{
-		Temperature: &lowTemp,
-		MaxTokens:   256,
-		ExtraFields: map[string]any{
-			"format": "json", // Força o Ollama a retornar JSON estruturado se o modelo suportar
+	// [SOTA 2026] Unificação de protocolo: Juiz agora fala OpenAI nativo via LiteLLM na porta 4000
+	provider := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
+		BaseURL: baseURL + "/chat/completions",
+		Model:   model,
+		Request: llm.OpenAICompatibleRequestOptions{
+			Temperature: &lowTemp,
+			MaxTokens:   256,
+			ExtraFields: map[string]any{
+				"format": "json",
+			},
 		},
 	})
 	return &GemmaJudge{provider: provider}
 }
+
 
 const judgeSystemPrompt = `You are a specialized task classifier for an LLM Gateway.
 Your goal is to categorize the user task into one of the following classes:
@@ -46,10 +51,11 @@ Your goal is to categorize the user task into one of the following classes:
 - computer_use_jarvis: Tasks requiring web navigation, GUI interaction, or browser-based actions (clicking, typing, extracting from sites) via Stagehand/MCP.
 - voice_multimodal: Requests specifically asking for voice response, processing audio, or multimodal analysis (images/PDFs/Live Voice).
 - critical: High-stakes decisions, security audits, or complex multi-step reasoning.
+- linux_god_mode: Full OS control, bash commands, system logs, patching, or infrastructure management.
 
 Output ONLY a valid JSON object with this structure:
 {
-  "class": "simple_short | professional | coding_main | computer_use_jarvis | voice_multimodal | critical",
+  "class": "simple_short | professional | coding_main | computer_use_jarvis | voice_multimodal | critical | linux_god_mode",
   "confidence": float (0-1),
   "reason": "short explanation"
 }`
@@ -70,7 +76,6 @@ func (g *GemmaJudge) Judge(ctx context.Context, task string, history []agent.Mes
 	jsonContent := extractJSON(content)
 
 	if err := json.Unmarshal([]byte(jsonContent), &result); err != nil {
-		// Try to extract class from free-form text as last resort.
 		if cls := extractClassFromText(content); cls != "" {
 			return &JudgeResult{Class: cls, Confidence: 0.5, Reason: "text extraction fallback"}, nil
 		}
@@ -80,20 +85,18 @@ func (g *GemmaJudge) Judge(ctx context.Context, task string, history []agent.Mes
 	return &result, nil
 }
 
-// extractJSON finds the first '{' and last '}' to isolate a JSON block.
 func extractJSON(s string) string {
 	start := strings.Index(s, "{")
 	end := strings.LastIndex(s, "}")
 	if start == -1 || end == -1 || start >= end {
-		return s // Return original as fallback
+		return s
 	}
 	return s[start : end+1]
 }
 
-// extractClassFromText tries to find a valid class name in free-form text from the judge.
 func extractClassFromText(s string) string {
 	lower := strings.ToLower(s)
-	classes := []string{"professional", "simple_short", "coding_main", "long_context_or_multimodal", "critical", "curation", "maintenance"}
+	classes := []string{"professional", "simple_short", "coding_main", "long_context_or_multimodal", "critical", "linux_god_mode"}
 	for _, cls := range classes {
 		if strings.Contains(lower, cls) {
 			return cls

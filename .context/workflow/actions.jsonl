@@ -150,3 +150,5 @@
 {"timestamp":"2026-03-28T12:56:36.573Z","tool":"context","action":"init","status":"success","details":{"params":{"action":"init","repoPath":"/home/will/aurelia","type":"both","semantic":true,"autoFill":true},"result":{"status":"error"}}}
 {"timestamp":"2026-03-28T13:15:53.129Z","tool":"context","action":"init","status":"success","details":{"params":{"action":"init","repoPath":"/home/will/aurelia","type":"both","semantic":true,"autoFill":true},"result":{"status":"error"}}}
 {"timestamp":"2026-03-28T13:47:19.923Z","tool":"sync","action":"exportContext","status":"success","details":{"params":{"action":"exportContext","preset":"gemini","force":true,"docsIndexMode":"all"},"result":{"success":true}}}
+{"timestamp":"2026-03-28T14:29:25.109Z","tool":"sync","action":"exportContext","status":"success","details":{"params":{"action":"exportContext","preset":"gemini"},"result":{"success":true}}}
+{"timestamp":"2026-03-28T14:29:35.596Z","tool":"sync","action":"exportContext","status":"success","details":{"params":{"action":"exportContext","preset":"gemini","docsIndexMode":"all","agentMode":"markdown"},"result":{"success":true}}}
