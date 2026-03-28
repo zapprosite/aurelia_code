@@ -1,49 +1,23 @@
 ---
-description: Impede improviso estrutural em Supabase, Qdrant, SQLite e Obsidian sem contrato e ADR.
+description: Governa a stack de dados, bancos e infraestrutura de vetores.
 id: 14-data-stack-governance
 ---
 
-# 🗃️ Regra 14: Governança do Data Stack
+# 📦 Regra 14: Governança de Data Stack (SOTA 2026.1)
 
-`Supabase`, `Qdrant`, `SQLite` e `Obsidian CLI` operam sob contrato rígido.
-Nenhum agente pode reorganizar essas camadas por conveniência local.
+Aurelia mantém soberania absoluta sobre seus dados.
 
-<directives>
-1. **Fonte de verdade obrigatória**:
-   - `Supabase` = registro canônico
-   - `SQLite` = runtime local e estado curto
-   - `Qdrant` = índice derivado
-   - `Obsidian` = superfície editorial controlada
+## 1. Persistência Estruturada
+- **Relacional**: PostgreSQL (Docker) para faturamento, usuários e metadados.
+- **Lite**: SQLite para cache local e estados voláteis de agentes.
 
-2. **Leitura obrigatória** antes de qualquer mudança estrutural:
-   - `docs/governance/DATA_STACK_STANDARD.md`
-   - `docs/governance/SCHEMA_REGISTRY.md`
-   - `docs/governance/OBSIDIAN_VAULT_STANDARD.md`
-   - `docs/governance/DATA_GOVERNANCE.md`
+## 2. Memória Inteligente (Sovereign Hub)
+- **Vetor**: Qdrant operando em porta `6333`.
+- **Sync**: A sincronização semântica deve seguir o motor `memory-sync-vector-db` em conformidade com o `obsidian-sync.sh`.
 
-3. **É proibido sem ADR**:
-   - criar schema novo fora de `core`, `ops`, `memory`, `app_<slug>`
-   - criar collection por bot, repo, chat ou experimento
-   - escrever dado original diretamente no `Qdrant`
-   - adicionar arquivo SQLite persistente fora do registry
-   - criar pasta canônica nova no vault fora do padrão
-   - mudar os campos-base `app_id`, `repo_id`, `environment`, `canonical_bot_id`, `source_system`, `source_id`
+## 3. Segurança
+- Zero Hardcode em qualquer camada de dados.
+- Auditoria periódica via `/env-audit`.
 
-4. **Lineage obrigatório**:
-   Todo registro canônico ou derivado precisa carregar provenance mínima conforme `DATA_STACK_STANDARD.md`.
-
-5. **Templates oficiais**:
-   Novos apps devem começar pelos templates em `docs/governance/templates/`.
-   Se os templates não servirem, isso é sinal de ADR, não de improviso.
-
-6. **Owner operacional**:
-   `controle-db` é o guardião da higiene e governança operacional da camada de dados.
-</directives>
-
-## Referências
-
-- [`docs/adr/20260325-data-stack-contract-and-templates.md`](../../docs/adr/20260325-data-stack-contract-and-templates.md)
-- [`docs/governance/DATA_STACK_STANDARD.md`](../../docs/governance/DATA_STACK_STANDARD.md)
-- [`docs/governance/SCHEMA_REGISTRY.md`](../../docs/governance/SCHEMA_REGISTRY.md)
-- [`docs/governance/OBSIDIAN_VAULT_STANDARD.md`](../../docs/governance/OBSIDIAN_VAULT_STANDARD.md)
-- [`docs/governance/DATA_GOVERNANCE.md`](../../docs/governance/DATA_GOVERNANCE.md)
+---
+*Assinado: Aurélia (Arquiteta Líder) — Março 2026*

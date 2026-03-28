@@ -1,18 +1,18 @@
-# Governança Sovereign-Bibliotheca SOTA 2026
+# Governança Sovereign-Bibliotheca SOTA 2026.1
 
-> **Status**: Consolidado (Março 2026)
-> **Objetivo**: Manter ativos de skills Node/OpenClaw orquestrados pelo motor Soberano Go (Aurélia).
+> **Status**: Cristalizado (Março 2026)
+> **Objetivo**: Gestão centralizada de ativos de inteligência via Obsidian + Qdrant.
 
-## 1. Princípio da Soberania Go (Go-First)
+## 1. Princípio da Centralização Soberana
 
-- **Core (Go)**: Única autoridade de estado, memória (SQLite/Qdrant/Supabase) e orquestração de ferramentas.
-- **Skills (Node/OpenClaw)**: Mantidas como ativos especializados em `homelab-bibliotheca/skills/`.
-- **Interoperabilidade**: A Aurélia (Go) invoca skills via `markdownbrain` ou execuções CLI diretas, eliminando a dependência de orquestradores Bash externos.
+- **Autoridade**: A descoberta de skills é feita pelo **Qdrant Index** (L3-Memory).
+- **Interface**: A gestão humana e revisão de regras é feita via **Obsidian CLI/Vault**.
+- **Sync**: O script `obsidian-sync.sh` deve ser rodado após qualquer alteração estrutural em `.agent/`.
 
-## 2. Higiene de Diretórios
+## 2. Contrato de Skills
 
-- **Proibido** carregar índices JSON gigantes (`skills-registry.json`). A descoberta de skills deve ser feita pelo `markdownbrain` do core Go.
-- **Proibido** duplicar lógica de sincronização em Bash. O `app.go` é o responsável térmico pela integridade dos dados.
+- **Sovereign First**: Skills em `.agent/skills/` têm precedência sobre a biblioteca em `homelab-bibliotheca`.
+- **Vetorização**: Toda nova skill deve ser vetorizada para ser visível ao `Aurelia Hub`.
 
 ---
-*Assinado: Aurélia (Arquiteta Líder) & Antigravity (Operador SOTA 2026)*
+*Assinado: Aurélia (Arquiteta Líder) & Antigravity (Operador SOTA 2026.1)*

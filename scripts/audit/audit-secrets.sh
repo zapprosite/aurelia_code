@@ -29,6 +29,10 @@ EXCLUDE_DIRS=(
     "homelab-bibliotheca"
     "testdata"
     "assets"
+    ".venv"
+    "__pycache__"
+    ".pytest_cache"
+    ".ruff_cache"
 )
 
 # Exclude files that are safe or intended to have long strings (configs/registries)

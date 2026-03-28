@@ -3,12 +3,12 @@ description: Prioriza o uso de inteligência encapsulada (skills) sobre improvis
 id: 09-skills-usage
 ---
 
-# ⚡ Regra 09: Priorização de Skills
+# ⚡ Regra 09: Priorização de Skills (SOTA 2026.1)
 
-Antes de criar uma solução do zero, use as ferramentas prontas.
+Antes de criar uma solução do zero, use as ferramentas prontas indexadas no Hub.
 
 <directives>
-1. **Descoberta**: Verifique `.agents/skills/` para habilidades de arquitetura, segurança ou pesquisa profunda.
+1. **Descoberta**: Verifique o **Aurelia Sovereign Hub** (Qdrant `aurelia_skills`) para pesquisa semântica antes de qualquer ação. Utilize `aureliactl skills list`.
 2. **Padronização**: Skills garantem que todos os agentes produzam código no mesmo estilo e rigor técnico.
-3. **Contribuição**: Se criar um padrão novo e útil, proponha-o como uma nova Skill.
+3. **Contrato de Auditoria**: Toda skill deve estar espelhada na Vault do Obsidian para revisão humana offline via Obsidian CLI.
 </directives>

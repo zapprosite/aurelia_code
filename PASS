@@ -1,0 +1,6 @@
+FAIL	- [setup failed]
+ok  	github.com/kocar/aurelia/internal/agent	(cached)
+ok  	github.com/kocar/aurelia/internal/memory	(cached)
+?   	github.com/kocar/aurelia/internal/purity/aflow	[no test files]
+ok  	github.com/kocar/aurelia/internal/purity/alog	(cached)
+FAIL

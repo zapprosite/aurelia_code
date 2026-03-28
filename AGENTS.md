@@ -22,6 +22,7 @@ Contrato operacional canônico do repositório `aurelia`.
 6. [`.agent/workflows/README.md`](.agent/workflows/README.md)
 7. [`.agent/skills/README.md`](.agent/skills/README.md)
 8. [`docs/adr/README.md`](docs/adr/README.md)
+9. [`.agent/rules/16-testing-governance.md`](.agent/rules/16-testing-governance.md)
 
 ## Estrutura canônica
 
@@ -67,6 +68,7 @@ Todos devem delegar para `AGENTS.md` e para o catálogo em `docs/governance/SKIL
 - Contrato do repositório: [`docs/governance/REPOSITORY_CONTRACT.md`](docs/governance/REPOSITORY_CONTRACT.md)
 - Catálogo de skills: [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md)
 - Skill `/add-subdomain`: [`.agent/skills/add-subdomain/SKILL.md`](.agent/skills/add-subdomain/SKILL.md)
+- Workflow `//test-all`: [`.agent/workflows/test-all.md`](.agent/workflows/test-all.md)
 - Workflow nonstop: [`.agent/workflows/adr-semparar.md`](.agent/workflows/adr-semparar.md)
 - Voz local: [`docs/jarvis_local_voice_blueprint_20260319.md`](docs/jarvis_local_voice_blueprint_20260319.md)
 

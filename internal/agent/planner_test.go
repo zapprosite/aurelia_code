@@ -2,9 +2,15 @@ package agent
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProposePlanTool_RequiresBackoutPlan(t *testing.T) {
+	t.Parallel()
+	SetupTest()
+
 	reg := NewToolRegistry()
 	reg.RegisterPlannerTools()
 
@@ -16,39 +22,24 @@ func TestProposePlanTool_RequiresBackoutPlan(t *testing.T) {
 		}
 	}
 
-	if planner == nil {
-		t.Fatal("propose_plan tool not registered")
-	}
+	require.NotNil(t, planner, "propose_plan tool should be registered")
 
 	// Verificar se 'backout_plan' está na lista de required no JSONSchema
 	requiredRaw, ok := planner.JSONSchema["required"]
-	if !ok {
-		t.Fatal("JSONSchema required field is missing")
-	}
+	require.True(t, ok, "JSONSchema required field is missing")
 
-	required, ok := requiredRaw.([]string)
-	if !ok {
-		// Tentar []interface{} se []string falhar (comum em Go maps literais)
-		if interf, ok := requiredRaw.([]interface{}); ok {
-			for _, v := range interf {
-				if s, ok := v.(string); ok {
-					required = append(required, s)
-				}
+	var required []string
+	if interf, ok := requiredRaw.([]interface{}); ok {
+		for _, v := range interf {
+			if s, ok := v.(string); ok {
+				required = append(required, s)
 			}
-		} else {
-			t.Fatal("JSONSchema required field is not a string slice or interface slice")
 		}
+	} else if ss, ok := requiredRaw.([]string); ok {
+		required = ss
+	} else {
+		require.Fail(t, "JSONSchema required field is not a string slice or interface slice")
 	}
 
-	found := false
-	for _, field := range required {
-		if field == "backout_plan" {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		t.Error("backout_plan should be a required field in propose_plan tool")
-	}
+	assert.Contains(t, required, "backout_plan", "backout_plan should be a required field in propose_plan tool")
 }

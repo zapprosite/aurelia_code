@@ -1,25 +1,17 @@
 ---
-description: Define os limites de permissão automática baseados em risco.
+description: Define os níveis de permissão e modelos baseados em criticidade.
 id: 03-tiers-autonomy
 ---
 
-# 🛡️ Regra 03: Tiers de Autonomia (Risco)
+# 🛡️ Regra 03: Tiers de Autonomia (SOTA 2026.1)
 
-A execução é governada por níveis de risco definidos em `AGENTS.md` § 5.
-
-> **Diretiva do Humano (2026-03-20):** Autonomia total habilitada (`sudo=1`).
-> O operador mantém backup completo e aceita os riscos operacionais.
+A autonomia de ação é escalonada pelo risco e capacidade de raciocínio do modelo.
 
 <directives>
-1. **Tier A (Read-only)**: Auto-approve 100%.
-2. **Tier B (Local Edit)**: Auto-approve 100%. Preferência por Worktrees para isolamento.
-3. **Tier C (High-risk)**: Auto-approve com **log obrigatório** para:
-   - Modificações em rede/firewall.
-   - Gestão de segredos e chaves API.
-   - Operações de deploy ou exclusão em massa.
-   - Comandos `sudo`.
-4. **Segurança Compensatória**:
-   - Todo comando `sudo` deve ser registrado em log estruturado.
-   - Dry-run sempre que possível para `docker-compose` e scripts bash.
-   - Auditoria de segredos antes de `git push` continua ativa.
+1. **Tier 0 (Soberano/Local)**: Gestão de arquivos, builds e auditoria de segredos. 
+   - **Model**: Gemma 3 (Ollama/TensorRT).
+2. **Tier 1 (Design/Tech Spec)**: Decisões arquiteturais e PRDs.
+   - **Model**: Claude 3.7 (Architect) / Gemini 2.0 (Deep Research).
+3. **Tier 2 (Rápida Execução)**: Implementação de código desacoplado e tRPC.
+   - **Model**: MiniMax 2.7 / Qwen 2.5 (Fast Reasoning).
 </directives>
