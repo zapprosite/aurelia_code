@@ -11,7 +11,7 @@
 
 ## Implementada (código existe e foi validado)
 
-- [20260328-adr-semparar-docs-adr-resolve.md](20260328-adr-semparar-docs-adr-resolve.md) — **conformidade Semparar** — 26 ADRs com links, 6 JSONs taskmaster ✅
+- [20260328-adr-semparar-docs-adr-resolve.md](ADR-20260328-adr-semparar-docs-adr-resolve.md) — **conformidade Semparar** — 26 ADRs com links, 6 JSONs taskmaster ✅
 - [20260327-markdown-brain-aurelia-code.md](20260327-markdown-brain-aurelia-code.md) — cérebro Markdown canônico para o `aurelia_code`
 - [20260326-homelab-dashboard-native.md](20260326-homelab-dashboard-native.md) — absorção nativa do monitor do homelab no dashboard da Aurelia
 - [20260325-slice-voice-capture-readiness.md](20260325-slice-voice-capture-readiness.md) — voice capture pipeline e config normalizado
@@ -45,8 +45,8 @@
 
 | ADR | Status | Progress | taskmaster |
 |---|---|---|---|
-| [20260328-adr-semparar-docs-adr-resolve.md](20260328-adr-semparar-docs-adr-resolve.md) | ✅ Aceito | 100% | [JSON](./taskmaster/ADR-20260328-adr-semparar-docs-adr-resolve.json) |
-| [20260328-claude-folder-reorganize.md](20260328-claude-folder-reorganize.md) | ✅ Aceito | 100% | [JSON](./taskmaster/ADR-20260328-claude-folder-reorganize.json) |
+| [20260328-adr-semparar-docs-adr-resolve.md](ADR-20260328-adr-semparar-docs-adr-resolve.md) | ✅ Aceito | 100% | [JSON](./taskmaster/ADR-20260328-adr-semparar-docs-adr-resolve.json) |
+| [20260328-claude-folder-reorganize.md](ADR-20260328-claude-folder-reorganize.md) | ✅ Aceito | 100% | [JSON](./taskmaster/ADR-20260328-claude-folder-reorganize.json) |
 | [20260328-implementacao-jarvis-voice-e-computer-use.md](20260328-implementacao-jarvis-voice-e-computer-use.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-jarvis-voice-computer-use.json) |
 | [20260328-implementacao-linux-god-mode.md](20260328-implementacao-linux-god-mode.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-linux-god-mode.json) |
 
@@ -72,7 +72,7 @@
 ## Referências Obrigatórias
 
 - [AGENTS.md](../../AGENTS.md)
-- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [REPOSITORY_CONTRACT.md](../governance/REPOSITORY_CONTRACT.md)
 
 ---
 

@@ -2,12 +2,13 @@ package telegram
 
 import (
 	"context"
-	"path/filepath"
+	"database/sql"
 	"strings"
 	"testing"
 
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/memory"
+	_ "modernc.org/sqlite"
 )
 
 func TestFormatAudioTranscriptArchiveContent(t *testing.T) {
@@ -25,10 +26,11 @@ func TestFormatAudioTranscriptArchiveContent(t *testing.T) {
 }
 
 func TestPersistAudioTranscript_AddsArchiveEntry(t *testing.T) {
-	mem, err := memory.NewMemoryManager(filepath.Join(t.TempDir(), "audio.db"), 5)
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		t.Fatalf("NewMemoryManager() error = %v", err)
+		t.Fatalf("failed to open sqlite: %v", err)
 	}
+	mem := memory.NewMemoryManager(db, nil)
 	t.Cleanup(func() {
 		_ = mem.Close()
 	})

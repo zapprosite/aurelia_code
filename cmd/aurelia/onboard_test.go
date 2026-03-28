@@ -17,7 +17,7 @@ func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 	t.Setenv("AURELIA_HOME", tmpDir)
 
 	input := strings.Join([]string{
-		"",               // LLM provider (default: ollama)
+		"ollama",         // LLM provider
 		"gemma3:27b",     // LLM model
 		"groq-key",       // Groq API key
 		"telegram-token",  // Telegram bot token

@@ -2,24 +2,23 @@ package memory
 
 import (
 	"context"
-	"os"
-	"path/filepath"
+	"database/sql"
 	"strings"
 	"testing"
+
+	_ "modernc.org/sqlite"
 )
 
 func setupTestDB(t *testing.T) *MemoryManager {
-	// Create a temporary file for the database since walking WAL might be tricky in pure :memory:
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "test.db")
-
-	mm, err := NewMemoryManager(dbPath, 5)
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		t.Fatalf("failed to create memory manager: %v", err)
+		t.Fatalf("failed to open sqlite: %v", err)
 	}
+
+	mm := NewMemoryManager(db, nil)
+	mm.memoryWindowSize = 5
 	t.Cleanup(func() {
 		_ = mm.Close()
-		_ = os.RemoveAll(tempDir)
 	})
 	return mm
 }

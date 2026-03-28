@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func initializeDB(db *sql.DB) error {
+func InitializeDB(db *sql.DB) error {
 	query := `
 	CREATE TABLE IF NOT EXISTS conversations (
 		id TEXT PRIMARY KEY,

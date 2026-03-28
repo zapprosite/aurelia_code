@@ -166,3 +166,6 @@
 {"timestamp":"2026-03-28T17:50:26.527Z","tool":"context","action":"listToFill","status":"success","details":{"params":{"action":"listToFill","repoPath":"/home/will/aurelia","target":"all"},"result":{"success":true}}}
 {"timestamp":"2026-03-28T17:51:12.906Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","repoPath":"/home/will/aurelia","target":"all"},"result":{"success":true}}}
 {"timestamp":"2026-03-28T17:51:20.926Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","repoPath":"/home/will/aurelia","target":"all","offset":3,"limit":24},"result":{"success":true}}}
+{"timestamp":"2026-03-28T18:08:06.191Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
+{"timestamp":"2026-03-28T19:01:02.757Z","tool":"context","action":"check","status":"success","details":{"params":{"action":"check","repoPath":"/home/will/aurelia"}}}
+{"timestamp":"2026-03-28T19:01:04.045Z","tool":"workflow-status","action":"workflow-status","status":"success","details":{"params":{},"result":{"success":true,"currentPhase":{"code":"P","name":"Planning"},"scale":"Medium"}}}

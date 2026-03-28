@@ -68,6 +68,7 @@ type MemoryManager struct {
 
 // NewMemoryManager creates a new MemoryManager instance
 func NewMemoryManager(db *sql.DB, llm Summarizer) *MemoryManager {
+	_ = InitializeDB(db) // Ensure tables exist
 	return &MemoryManager{
 		db:               db,
 		memoryWindowSize: 200,

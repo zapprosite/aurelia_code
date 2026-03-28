@@ -2,6 +2,7 @@ package persona
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kocar/aurelia/internal/memory"
+	_ "modernc.org/sqlite"
 )
 
 func TestCanonicalIdentityService_ConversationDoesNotOverrideBootstrap(t *testing.T) {
@@ -347,10 +349,11 @@ func TestCanonicalIdentityService_DebugLongTermMemory(t *testing.T) {
 
 func setupCanonicalMemory(t *testing.T) *memory.MemoryManager {
 	t.Helper()
-	mem, err := memory.NewMemoryManager(filepath.Join(t.TempDir(), "canonical.db"), 5)
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		t.Fatalf("NewMemoryManager() error = %v", err)
+		t.Fatalf("failed to open sqlite: %v", err)
 	}
+	mem := memory.NewMemoryManager(db, nil)
 	t.Cleanup(func() { _ = mem.Close() })
 	return mem
 }

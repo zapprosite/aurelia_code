@@ -1,52 +1,44 @@
 # LiteLLM Configuration — Aurelia Smart Router
-# ⚠️ API KEYS via Environment Variables (não hardcoded)
+# ⚠️ API KEYS via Environment Variables
 
 model_list:
   # --- NÍVEL 1 (SOBERANO LOCAL) ---
+  - model_name: aurelia-smart
+    litellm_params:
+      model: ollama/gemma3:27b
+      api_base: http://localhost:11434
+  
+  - model_name: gemma3:27b
+    litellm_params:
+      model: ollama/gemma3:27b
+      api_base: http://localhost:11434
+
   - model_name: gemma3-local
     litellm_params:
       model: ollama/gemma3:12b
       api_base: http://localhost:11434
-      priority: 1
-
-  - model_name: gemma3-27b-lab
-    litellm_params:
-      model: ollama/gemma3:27b-it-q4_K_M
-      api_base: http://localhost:11434
-      priority: 2
 
   # --- NÍVEL 2 (PAID ENGINEERING) ---
   - model_name: groq-cheap
     litellm_params:
       model: groq/llama-3.1-8b-instant
-      api_key: GROQ_API_KEY_PLACEHOLDER
-      priority: 3
+      api_key: "os.environ/GROQ_API_KEY"
 
   - model_name: groq-smart
     litellm_params:
       model: groq/llama-3.3-70b-versatile
-      api_key: GROQ_API_KEY_PLACEHOLDER
-      priority: 3
+      api_key: "os.environ/GROQ_API_KEY"
 
   # --- NÍVEL 3 (PREMIUM) ---
   - model_name: openrouter-minimax
     litellm_params:
       model: openrouter/minimaxai/minimax-abliter:latest
-      api_key: OPENROUTER_API_KEY_PLACEHOLDER
-      priority: 4
+      api_key: "os.environ/OPENROUTER_API_KEY"
 
   - model_name: openrouter-claude
     litellm_params:
       model: openrouter/anthropic/claude-3.5-sonnet
-      api_key: OPENROUTER_API_KEY_PLACEHOLDER
-      priority: 4
-
-  # --- JUDGE (SOBERANO) ---
-  - model_name: judge
-    litellm_params:
-      model: ollama/gemma3:27b-it-q4_K_M
-      api_base: http://localhost:11434
-      priority: 0
+      api_key: "os.environ/OPENROUTER_API_KEY"
 
 router_settings:
   redis_host: localhost
@@ -60,3 +52,4 @@ litellm_settings:
   drop_params: true
   set_verbose: false
   json_response: true
+

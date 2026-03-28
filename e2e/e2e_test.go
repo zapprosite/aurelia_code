@@ -2,6 +2,7 @@ package e2e_test
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/tools"
+	_ "modernc.org/sqlite"
 )
 
 type scriptedLLM struct {
@@ -323,10 +325,11 @@ func TestE2E_CronScheduleLifecycle(t *testing.T) {
 func newCanonicalServiceForE2E(t *testing.T) (*memory.MemoryManager, *persona.CanonicalIdentityService) {
 	t.Helper()
 
-	mem, err := memory.NewMemoryManager(filepath.Join(t.TempDir(), "e2e-memory.db"), 8)
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		t.Fatalf("NewMemoryManager() error = %v", err)
+		t.Fatalf("failed to open sqlite: %v", err)
 	}
+	mem := memory.NewMemoryManager(db, nil)
 	t.Cleanup(func() { _ = mem.Close() })
 
 	dir := t.TempDir()

@@ -1,3 +1,7 @@
+---
+name: communication-refinery
+description: Skill especializada em refinamento iterativo das saídas da Aurélia (Markdown + Voz).
+---
 # Communication Refinery 💎
 
 Skill especializada em refinamento iterativo das saídas da Aurélia (Markdown + Voz).

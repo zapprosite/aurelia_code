@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/memory"
+	_ "modernc.org/sqlite"
 	"gopkg.in/telebot.v3"
 )
 
@@ -273,10 +275,11 @@ func TestSyncSoulPersonaFile(t *testing.T) {
 
 func memoryForBootstrapTest(t *testing.T) *memory.MemoryManager {
 	t.Helper()
-	mem, err := memory.NewMemoryManager(t.TempDir()+"\\bootstrap.db", 5)
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		t.Fatalf("failed to create memory manager: %v", err)
+		t.Fatalf("failed to open sqlite: %v", err)
 	}
+	mem := memory.NewMemoryManager(db, nil)
 	t.Cleanup(func() {
 		_ = mem.Close()
 	})
