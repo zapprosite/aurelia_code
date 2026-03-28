@@ -87,6 +87,7 @@ stress-test-simulations.js
 scripts/test_tts.py
 
 # Build artifacts
+/bin/
 /build/
 *.png
 aurelia-linux-bin
