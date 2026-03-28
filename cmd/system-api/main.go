@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -30,7 +31,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		Services: map[string]string{
 			"ollama":   checkService(getEnv("OLLAMA_URL", "http://localhost:11434")),
 			"qdrant":   checkService(getEnv("QDRANT_URL", "http://localhost:6333") + "/readyz"),
-			"postgres": "🟢 UP (Soberano)",
+			"postgres": checkTCP(getEnv("POSTGRES_HOST", "localhost"), getEnv("POSTGRES_PORT", "5432")),
 		},
 	}
 
@@ -88,6 +89,16 @@ func memorySyncHandler(w http.ResponseWriter, r *http.Request) {
 	
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(syncInfo)
+}
+
+func checkTCP(host, port string) string {
+	timeout := 2 * time.Second
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+	if err != nil {
+		return "🔴 DOWN"
+	}
+	conn.Close()
+	return "🟢 UP"
 }
 
 func main() {
