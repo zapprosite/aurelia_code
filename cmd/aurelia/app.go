@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -12,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	_ "modernc.org/sqlite"
 
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/config"
@@ -147,10 +150,16 @@ func (a *app) initInfrastructure(args []string, logger *slog.Logger) error {
 }
 
 func (a *app) initCore(logger *slog.Logger) error {
-	mem, err := memory.NewMemoryManager(a.cfg.DBPath, a.cfg.MemoryWindowSize)
+	db, err := sql.Open("sqlite", a.cfg.DBPath)
 	if err != nil {
-		return fmt.Errorf("initialize memory manager: %w", err)
+		return fmt.Errorf("open sqlite db: %w", err)
 	}
+
+	// Inicializar provedor de LLM temporário para o summarizer de memória
+	p := llm.NewOllamaProvider(a.cfg.OllamaURL, a.cfg.LLMModel)
+	wrapper := &memoryWrapper{llm: p}
+
+	mem := memory.NewMemoryManager(db, wrapper)
 	a.mem = mem
 
 	cronStore, err := cron.NewSQLiteCronStore(a.cfg.DBPath)
@@ -271,8 +280,7 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 	// Porteiro
 	if a.redis != nil {
 		// Criar um provider de LLM dedicado ao Porteiro usando o modelo leve Qwen 0.5b
-		p, err := llm.NewOllamaProvider(a.cfg.OllamaURL, "qwen2.5:0.5b")
-		if err == nil {
+		p := llm.NewOllamaProvider(a.cfg.OllamaURL, "qwen2.5:0.5b")
 			a.porteiro = middleware.NewPorteiroMiddleware(a.redis, p)
 			logger.Info("Porteiro SOTA 2026 inicializado com sucesso", slog.String("model", "qwen2.5:0.5b"))
 		} else {
@@ -996,8 +1004,8 @@ func (w *memoryWrapper) Summarize(ctx context.Context, history string) (string, 
 prompt := "Sintetize os pontos principais da conversa de forma extremamente concisa. Responda apenas o resumo Markdown."
 msgs := []agent.Message{{Role: "user", Content: history}}
 resp, err := w.llm.GenerateContent(ctx, prompt, msgs, nil)
-if err != nil {
- "", err
-}
+	if err != nil {
+		return "", err
+	}
 return resp.Content, nil
 }
