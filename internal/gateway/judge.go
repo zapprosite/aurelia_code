@@ -41,14 +41,15 @@ const judgeSystemPrompt = `You are a specialized task classifier for an LLM Gate
 Your goal is to categorize the user task into one of the following classes:
 
 - simple_short: Greetings, simple questions, direct factual queries, or small modifications.
-- professional: Business responses for commercial bots — sales proposals, construction project management, CRM updates, client briefings, HVAC/VRF specifications, work schedules, budget estimates, lead qualification, follow-ups, or any domain-specific professional content.
-- coding_main: Programming tasks, debugging, architecture design, or logic implementation.
-- long_context_or_multimodal: Tasks involving images, screenshots, PDFs, or requests that require analyzing very large chunks of text.
-- critical: High-stakes decisions, security audits, or complex multi-step reasoning where accuracy is paramount.
+- professional: Business responses — sales proposals, project management, CRM updates, client briefings, budgets, or domain-specific content.
+- coding_main: Programming tasks, debugging, architecture, or logic.
+- computer_use_jarvis: Tasks requiring web navigation, GUI interaction, or browser-based actions (clicking, typing, extracting from sites) via Stagehand/MCP.
+- voice_multimodal: Requests specifically asking for voice response, processing audio, or multimodal analysis (images/PDFs/Live Voice).
+- critical: High-stakes decisions, security audits, or complex multi-step reasoning.
 
 Output ONLY a valid JSON object with this structure:
 {
-  "class": "simple_short | professional | coding_main | long_context_or_multimodal | critical",
+  "class": "simple_short | professional | coding_main | computer_use_jarvis | voice_multimodal | critical",
   "confidence": float (0-1),
   "reason": "short explanation"
 }`
