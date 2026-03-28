@@ -1,18 +1,85 @@
-# CLAUDE.md
+# Project Rules and Guidelines
 
-Adaptador fino para Claude no repositório `aurelia`.
+> Auto-generated from .context/docs on 2026-03-28T02:51:14.723Z
 
-## Ordem de leitura
+## README
 
-1. [`AGENTS.md`](AGENTS.md)
-2. [`docs/governance/REPOSITORY_CONTRACT.md`](docs/governance/REPOSITORY_CONTRACT.md)
-3. [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md)
-4. [`.agent/rules/README.md`](.agent/rules/README.md)
-5. [`docs/adr/README.md`](docs/adr/README.md)
+# Documentation Index
 
-## Contrato
+Welcome to the repository knowledge base. Start with the project overview, then dive into specific guides as needed.
 
-- Este arquivo não é autoridade. A autoridade está em [`AGENTS.md`](AGENTS.md).
-- Use [`.agent/skills/`](.agent/skills), [`.agent/workflows/`](.agent/workflows) e [`.agent/rules/`](.agent/rules) como caminhos canônicos.
-- Trate `.agents` como legado e corrija referências quando encontradas.
-- Skills, roteamento semântico e auditoria do catálogo são definidos em [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md).
+## Core Guides
+- [Project Overview](./project-overview.md)
+- [Architecture Notes](./architecture.md)
+- [Development Workflow](./development-workflow.md)
+- [Testing Strategy](./testing-strategy.md)
+- [Glossary & Domain Concepts](./glossary.md)
+- [Data Flow & Integrations](./data-flow.md)
+- [Security & Compliance Notes](./security.md)
+- [Tooling & Productivity Guide](./tooling.md)
+
+## Repository Snapshot
+- `AGENTS.md/`
+- `CLAUDE.md/`
+- `cmd/`
+- `CONTRIBUTING.md/`
+- `docker-compose.yml/`
+- `docs/` — Living documentation produced by this tool.
+- `e2e/`
+- `frontend/`
+- `GEMINI.md/`
+- `homelab-bibliotheca/`
+- `iniciar.sh/`
+- `internal/`
+- `knowledge/`
+- `mcp_servers.example.json/`
+- `MODEL.md/`
+- `package-lock.json/`
+- `package.json/`
+- `packages/` — Workspace packages or modules.
+- `pkg/`
+- `README.md/`
+- `scripts/`
+- `SECURITY.md/`
+
+## Document Map
+| Guide | File | Primary Inputs |
+| --- | --- | --- |
+| Project Overview | `project-overview.md` | Roadmap, README, stakeholder notes |
+| Architecture Notes | `architecture.md` | ADRs, service boundaries, dependency graphs |
+| Development Workflow | `development-workflow.md` | Branching rules, CI config, contributing guide |
+| Testing Strategy | `testing-strategy.md` | Test configs, CI gates, known flaky suites |
+| Glossary & Domain Concepts | `glossary.md` | Business terminology, user personas, domain rules |
+| Data Flow & Integrations | `data-flow.md` | System diagrams, integration specs, queue topics |
+| Security & Compliance Notes | `security.md` | Auth model, secrets management, compliance requirements |
+| Tooling & Productivity Guide | `tooling.md` | CLI scripts, IDE configs, automation workflows |
+
+
+## qa/README
+
+# Q&A Index
+
+Project type: **library**
+
+Generated: 2026-03-27T10:44:47.032Z
+
+## Getting-started
+
+- [How do I set up and run this project?](./getting-started.md)
+
+## Architecture
+
+- [How is the codebase organized?](./project-structure.md)
+
+## Features
+
+- [How is data stored and accessed?](./database.md)
+- [What API endpoints are available?](./api-endpoints.md)
+
+## Operations
+
+- [How does caching work?](./caching.md)
+- [How are errors handled?](./error-handling.md)
+- [How do background jobs work?](./background-jobs.md)
+- [How do I deploy this project?](./deployment.md)
+
