@@ -8,6 +8,7 @@ export LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export BIBLIOTHECA_ROOT="$(dirname "$LIB_DIR")"
 export PROJECT_ROOT="$(dirname "$BIBLIOTHECA_ROOT")"
 export SKILLS_DIR="$BIBLIOTHECA_ROOT/skills/open-claw"
+export AURELIA_SKILLS_DIR="$BIBLIOTHECA_ROOT/skills/aurelia"
 
 # Configurações de API (Local first)
 export QDRANT_URL="http://localhost:6333"

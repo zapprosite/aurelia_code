@@ -36,14 +36,15 @@ function generate_manifest() {
     
     echo "[" > "$MANIFEST_FILE"
     FIRST=true
-    # Otimizado: evita grep em binários e usa head para velocidade
-    find "$SKILLS_DIR/skills" -maxdepth 3 -name "SKILL.md" -type f | while read -r line; do
+    
+    # Scannear ambos os diretórios (Open-Claw e Aurelia)
+    find "$SKILLS_DIR/skills" "$AURELIA_SKILLS_DIR" -maxdepth 3 -name "SKILL.md" -type f 2>/dev/null | while read -r line; do
         if [ "$FIRST" = true ]; then FIRST=false; else echo "," >> "$MANIFEST_FILE"; fi
         
         NAME=$(basename "$(dirname "$line")")
         PATH_REL=${line#$PROJECT_ROOT/}
         
-        # Extrair descrição de forma segura via head (evita grep pesado em binários)
+        # Extrair descrição de forma segura via head
         DESC=$(head -n 20 "$line" | grep -v "^#" | grep -v "^$" | head -n 1 | tr -d '"' | tr -d '\n' | tr -d '\r' | cut -c 1-100)
         
         printf '  {"name": "%s", "path": "%s", "description": "%s"}' "$NAME" "$PATH_REL" "$DESC" >> "$MANIFEST_FILE"
