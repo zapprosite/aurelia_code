@@ -281,11 +281,8 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 	if a.redis != nil {
 		// Criar um provider de LLM dedicado ao Porteiro usando o modelo leve Qwen 0.5b
 		p := llm.NewOllamaProvider(a.cfg.OllamaURL, "qwen2.5:0.5b")
-			a.porteiro = middleware.NewPorteiroMiddleware(a.redis, p)
-			logger.Info("Porteiro SOTA 2026 inicializado com sucesso", slog.String("model", "qwen2.5:0.5b"))
-		} else {
-			logger.Warn("falha ao inicializar LLM do Porteiro", slog.Any("err", err))
-		}
+		a.porteiro = middleware.NewPorteiroMiddleware(a.redis, p)
+		logger.Info("Porteiro SOTA 2026 inicializado com sucesso", slog.String("model", "qwen2.5:0.5b"))
 	}
 
 	return loop, nil
@@ -749,7 +746,7 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 	case "google":
 		return llm.NewGeminiProvider(context.Background(), cfg.GoogleAPIKey, cfg.LLMModel)
 	case "ollama":
-		return llm.NewOllamaProvider(cfg.OllamaEndpoint, cfg.OllamaModel), nil
+		return llm.NewOllamaProvider(cfg.OllamaURL, cfg.LLMModel), nil
 	case "openrouter":
 		return llm.NewOpenRouterProvider(cfg.OpenRouterAPIKey, cfg.LLMModel), nil
 	case "openai":

@@ -49,7 +49,7 @@ func (s *SegmentedSynthesizer) Synthesize(ctx context.Context, text string) (Aud
 	var combinedData []byte
 	var lastAudio Audio
 
-	fmt.Printf("TTS: Starting synthesis for %d chunks (Infinite-Voice SOTA 2026)\n", len(chunks))
+	fmt.Printf("TTS: Starting synthesis for %d chunks (Infinite-Voice SOTA 2026.1)\n", len(chunks))
 
 	for i, chunk := range chunks {
 		select {
@@ -61,7 +61,17 @@ func (s *SegmentedSynthesizer) Synthesize(ctx context.Context, text string) (Aud
 			if err != nil {
 				return Audio{}, fmt.Errorf("synthesize chunk %d/%d: %w", i+1, len(chunks), err)
 			}
-			combinedData = append(combinedData, audio.Data...)
+
+			dataToAdd := audio.Data
+			// Binary Stream Healing SOTA 2026.1:
+			// Se o áudio for WAV (RIFF), removemos o cabeçalho de 44 bytes de todos os chunks após o primeiro.
+			// Isso garante que o bitstream seja interpretado como um único arquivo contínuo.
+			if i > 0 && len(dataToAdd) > 44 && string(dataToAdd[:4]) == "RIFF" {
+				fmt.Printf("TTS: Stripping RIFF header from chunk %d\n", i+1)
+				dataToAdd = dataToAdd[44:]
+			}
+
+			combinedData = append(combinedData, dataToAdd...)
 			lastAudio = audio
 		}
 	}
@@ -117,22 +127,38 @@ func splitText(text string, maxChars int) []string {
 }
 
 func findSplitPoint(s string) int {
-	if idx := strings.LastIndex(s, "\n\n"); idx != -1 {
+	// Prioridade 1: Parágrafos (Luxo SOTA 2026)
+	if idx := strings.LastIndex(s, "\n\n"); idx != -1 && idx > len(s)/2 {
 		return idx + 2
 	}
-	if idx := strings.LastIndex(s, "\n"); idx != -1 {
+	// Prioridade 2: Quebra de linha simples
+	if idx := strings.LastIndex(s, "\n"); idx != -1 && idx > len(s)/2 {
 		return idx + 1
 	}
+	// Prioridade 3: Pontuação forte (fim de sentença)
 	terminators := []string{". ", "? ", "! ", "; "}
 	bestIdx := -1
+	// Procuramos o último terminador que esteja pelo menos no último terço do chunk
+	// para evitar chunks pequenos demais que prejudiquem a prosódia.
 	for _, term := range terminators {
-		if idx := strings.LastIndex(s, term); idx > bestIdx {
+		if idx := strings.LastIndex(s, term); idx > bestIdx && idx > len(s)/3 {
 			bestIdx = idx + len(term)
 		}
 	}
 	if bestIdx != -1 {
 		return bestIdx
 	}
+	// Fallback 1: Vírgula ou Dois Pontos
+	fallbacks := []string{", ", ": "}
+	for _, term := range fallbacks {
+		if idx := strings.LastIndex(s, term); idx > bestIdx && idx > len(s)/2 {
+			bestIdx = idx + len(term)
+		}
+	}
+	if bestIdx != -1 {
+		return bestIdx
+	}
+	// Fallback 2: Espaço
 	if idx := strings.LastIndex(s, " "); idx != -1 {
 		return idx + 1
 	}
