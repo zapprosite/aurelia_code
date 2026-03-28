@@ -15,8 +15,8 @@ const (
 		"O serviço de transcrição ainda não foi ativado.\n\n" +
 		"Para habilitar, configure a `groq_api_key` em suas definições de sistema."
 
-	audioProcessingFailureMessage = "❌ **Erro de Transcrição**\n\n" +
-		"Não consegui processar seu áudio com clareza. Poderia repetir ou enviar uma mensagem de texto?"
+	audioProcessingFailureMessage = "🎙️ **Serviço de Voz**\n\n" +
+		"Desculpe, não consegui converter seu áudio em texto com a clareza necessária agora. Poderia repetir ou enviar uma mensagem de texto?"
 
 	emptyAudioMessage = "⚠️ **Áudio sem conteúdo**\n\n" +
 		"O arquivo de áudio parece estar vazio ou inaudível. Poderia verificar e reenviar?"
