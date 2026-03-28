@@ -97,7 +97,7 @@ func (s *OpenAICompatibleSynthesizer) Synthesize(ctx context.Context, text strin
 	}
 	payload := map[string]any{
 		"model":           s.model,
-		"input":           strings.TrimSpace(text),
+		"input":           strings.TrimSpace(text) + " . . .", // SOTA 2026 Tail Padding: prevent abrupt cut-offs
 		"voice":           s.voice,
 		"language":        s.language,
 		"response_format": s.format,
