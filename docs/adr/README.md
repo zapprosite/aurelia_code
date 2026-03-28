@@ -11,6 +11,7 @@
 
 ## Implementada (código existe e foi validado)
 
+- [20260328-adr-semparar-docs-adr-resolve.md](20260328-adr-semparar-docs-adr-resolve.md) — **conformidade Semparar** — 26 ADRs com links, 6 JSONs taskmaster ✅
 - [20260327-markdown-brain-aurelia-code.md](20260327-markdown-brain-aurelia-code.md) — cérebro Markdown canônico para o `aurelia_code`
 - [20260326-homelab-dashboard-native.md](20260326-homelab-dashboard-native.md) — absorção nativa do monitor do homelab no dashboard da Aurelia
 - [20260325-slice-voice-capture-readiness.md](20260325-slice-voice-capture-readiness.md) — voice capture pipeline e config normalizado
@@ -44,7 +45,7 @@
 
 | ADR | Status | Progress | taskmaster |
 |---|---|---|---|
-| [20260328-adr-semparar-docs-adr-resolve.md](20260328-adr-semparar-docs-adr-resolve.md) | Em Execução | 15% | [JSON](./taskmaster/ADR-20260328-adr-semparar-docs-adr-resolve.json) |
+| [20260328-adr-semparar-docs-adr-resolve.md](20260328-adr-semparar-docs-adr-resolve.md) | ✅ Aceito | 100% | [JSON](./taskmaster/ADR-20260328-adr-semparar-docs-adr-resolve.json) |
 | [20260328-implementacao-jarvis-voice-e-computer-use.md](20260328-implementacao-jarvis-voice-e-computer-use.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-jarvis-voice-computer-use.json) |
 | [20260328-implementacao-linux-god-mode.md](20260328-implementacao-linux-god-mode.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-linux-god-mode.json) |
 
@@ -53,6 +54,17 @@
 ## Substituída
 
 - [20260325-basico-bem-feito-swarm-memoria-dashboard.md](20260325-basico-bem-feito-swarm-memoria-dashboard.md) — duplicata; substituída por `basico-bem-feito-v2-implementation.md`
+
+---
+
+## Documentação Relacionada
+
+### PR Reviews
+- [docs/pr-review/README.md](../pr-review/) — Índice de revisões de PRs
+- [docs/pr-review/PR-0008-INDUSTRIALIZE-SOTA-2026.md](../pr-review/PR-0008-INDUSTRIALIZE-SOTA-2026.md) — Revisão completa do PR #8 (854 arquivos, 55k+ linhas)
+
+### Workflows
+- [.agent/workflows/super-git.md](../../.agent/workflows/super-git.md) — Combo soberano de build + delivery com gate secret scanning
 
 ---
 
@@ -68,10 +80,11 @@
 Execute para verificar conformidade Semparar:
 ```bash
 grep -l 'AGENTS.md' docs/adr/*.md | wc -l  # deve ser 26 (todos os ADRs)
-find docs/adr/taskmaster/ -name '*.json' | wc -l  # deve ser 3+
+find docs/adr/taskmaster/ -name '*.json' | wc -l  # deve ser 6+
 ```
 
 ---
 
 **Última atualização**: 2026-03-28
-**Conformidade Semparar**: 3/3 taskmaster JSONs criados
+**Conformidade Semparar**: ✅ 26/26 ADRs com links | ✅ 6/6 JSONs taskmaster
+**Slice completada**: 20260328-adr-semparar-docs-adr-resolve ✅
