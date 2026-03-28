@@ -1,49 +1,56 @@
-# LiteLLM Configuration — Aurelia Smart Router
+# LiteLLM Configuration — Aurelia Smart Router (SOTA 2026)
 # ⚠️ API KEYS via Environment Variables
 
 model_list:
-  # --- NÍVEL 1 (SOBERANO LOCAL) ---
+  # --- NÍVEL 0 (LOCAL SÃO PAULO) ---
   - model_name: aurelia-smart
     litellm_params:
       model: ollama/gemma3:27b
       api_base: http://localhost:11434
+      timeout: 10
   
-  - model_name: gemma3:27b
+  - model_name: nomic-embed-text
     litellm_params:
-      model: ollama/gemma3:27b
+      model: ollama/nomic-embed-text
       api_base: http://localhost:11434
 
-  - model_name: gemma3-local
+  # --- NÍVEL 1 (FREE CLOUD CASCADE) ---
+  - model_name: aurelia-smart
     litellm_params:
-      model: ollama/gemma3:12b
-      api_base: http://localhost:11434
-
-  # --- NÍVEL 2 (PAID ENGINEERING) ---
-  - model_name: groq-cheap
-    litellm_params:
-      model: groq/llama-3.1-8b-instant
-      api_key: "os.environ/GROQ_API_KEY"
-
-  - model_name: groq-smart
-    litellm_params:
-      model: groq/llama-3.3-70b-versatile
-      api_key: "os.environ/GROQ_API_KEY"
-
-  # --- NÍVEL 3 (PREMIUM) ---
-  - model_name: openrouter-minimax
-    litellm_params:
-      model: openrouter/minimaxai/minimax-abliter:latest
+      model: openrouter/minimax/minimax-m2.5:free
       api_key: "os.environ/OPENROUTER_API_KEY"
 
-  - model_name: openrouter-claude
+  - model_name: aurelia-smart
     litellm_params:
-      model: openrouter/anthropic/claude-3.5-sonnet
+      model: openrouter/google/gemini-2.0-flash-001
+      api_key: "os.environ/OPENROUTER_API_KEY"
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: groq/llama-3.3-70b
+      api_key: "os.environ/GROQ_API_KEY"
+
+  # --- NÍVEL 2 (PAID ENGINEERING) ---
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/zhipu/glm-5.1
+      api_key: "os.environ/OPENROUTER_API_KEY"
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/minimax/minimax-m2.7
+      api_key: "os.environ/OPENROUTER_API_KEY"
+
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/moonshotai/kimi-k2.5
       api_key: "os.environ/OPENROUTER_API_KEY"
 
 router_settings:
   redis_host: localhost
   redis_port: 6379
-  routing_strategy: latency-based
+  routing_strategy: simple-shuffle
+  enable_fallbacks: true
   retry_policy:
     max_retries: 3
     timeout: 30
@@ -52,4 +59,3 @@ litellm_settings:
   drop_params: true
   set_verbose: false
   json_response: true
-
