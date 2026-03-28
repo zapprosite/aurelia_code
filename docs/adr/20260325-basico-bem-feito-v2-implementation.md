@@ -216,3 +216,12 @@ Proibido no ecossistema Aurélia após este ADR:
 5. Adicionar dump de sessão de terminal como documento de governança.
 
 O padrão é: **sistema que degrada explicitamente é melhor que sistema que falha silenciosamente.**
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

@@ -20,3 +20,12 @@ Isolar `homelab-bibliotheca/skills/open-claw/skills/` como módulo Go separado v
 - o acervo permanece preservado, sem deleção destrutiva
 - qualquer execução Go dentro desse vault passa a ser decisão explícita e local
 
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

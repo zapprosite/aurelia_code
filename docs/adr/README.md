@@ -5,6 +5,7 @@
 ## Naming
 - Padrão: `YYYYMMDD-slug.md`
 - ADR estrutural obrigatória para: storage, memória, runtime, governança, segurança, rede, modelos, deploy
+- **Conformidade Semparar**: ADRs estruturais têm par `.md + taskmaster/*.json`
 
 ---
 
@@ -39,6 +40,38 @@
 
 ---
 
+## Slices em Execução (ADR Semparar)
+
+| ADR | Status | Progress | taskmaster |
+|---|---|---|---|
+| [20260328-adr-semparar-docs-adr-resolve.md](20260328-adr-semparar-docs-adr-resolve.md) | Em Execução | 15% | [JSON](./taskmaster/ADR-20260328-adr-semparar-docs-adr-resolve.json) |
+| [20260328-implementacao-jarvis-voice-e-computer-use.md](20260328-implementacao-jarvis-voice-e-computer-use.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-jarvis-voice-computer-use.json) |
+| [20260328-implementacao-linux-god-mode.md](20260328-implementacao-linux-god-mode.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-linux-god-mode.json) |
+
+---
+
 ## Substituída
 
 - [20260325-basico-bem-feito-swarm-memoria-dashboard.md](20260325-basico-bem-feito-swarm-memoria-dashboard.md) — duplicata; substituída por `basico-bem-feito-v2-implementation.md`
+
+---
+
+## Referências Obrigatórias
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+
+---
+
+## Validação
+
+Execute para verificar conformidade Semparar:
+```bash
+grep -l 'AGENTS.md' docs/adr/*.md | wc -l  # deve ser 26 (todos os ADRs)
+find docs/adr/taskmaster/ -name '*.json' | wc -l  # deve ser 3+
+```
+
+---
+
+**Última atualização**: 2026-03-28
+**Conformidade Semparar**: 3/3 taskmaster JSONs criados

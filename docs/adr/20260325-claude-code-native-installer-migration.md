@@ -22,3 +22,12 @@ Migrar imediatamente o Claude Code CLI para o instalador nativo oficial.
 ---
 **Status:** ✅ Decidido e Implementado (2026-03-25)
 **Autoridade:** Antigravity Gemini p/ Aurélia
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

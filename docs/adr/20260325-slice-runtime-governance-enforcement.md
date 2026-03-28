@@ -52,3 +52,12 @@ curl -sS http://127.0.0.1:3334/api/status
 ## Dependência
 
 Pode começar depois da Slice 1. Não depende da Slice 3.
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

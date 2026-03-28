@@ -28,3 +28,12 @@ Adotar **Zero Hardcode** com escopo explícito:
 - onboarding e `SaveEditable` preservam credenciais reais da instância local
 - o contrato de segurança passa a ser coerente com o runtime soberano
 - a proteção obrigatória fica concentrada onde faz sentido: código, docs, exemplos, logs e UI
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

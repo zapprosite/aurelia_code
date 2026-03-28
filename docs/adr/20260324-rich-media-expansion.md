@@ -17,3 +17,12 @@ Implementar um pipeline unificado de processamento de mídias ricas que:
 - **Positivas**: Melhor UX para consumo de conteúdo denso; maior utilidade da Aurélia como assistente de pesquisa.
 - **Negativas**: Aumento do consumo de recursos (banda para download de vídeos, tokens para resumo).
 - **Mitigação**: Uso de `yt-dlp` com extração apenas de áudio e limites de duração/tamanho conforme a política de governança de hardware.
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

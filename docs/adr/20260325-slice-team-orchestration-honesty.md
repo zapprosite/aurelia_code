@@ -51,3 +51,12 @@ curl -sS http://127.0.0.1:3334/api/bots
 ## Dependência
 
 Deve começar depois da Slice 2 para não renomear antes de endurecer contratos.
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

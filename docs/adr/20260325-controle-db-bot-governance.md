@@ -58,3 +58,12 @@ Instituir um novo bot oficial no pool da Aurélia:
 - prompt com política de limpeza segura
 - foco em evidência e relatório
 - governança registrada em `docs/governance/DATA_GOVERNANCE.md`
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

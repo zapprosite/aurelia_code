@@ -341,3 +341,12 @@ Esta ADR escolhe um caminho menos glamouroso e mais profissional:
 - mais verdade operacional
 
 Esse e o padrao minimo para a Aurelia funcionar como sistema serio, e nao apenas como uma colecao de componentes interessantes.
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

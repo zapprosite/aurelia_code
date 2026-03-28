@@ -67,3 +67,12 @@ O arquivo `~/.claude/settings.json` será atualizado para incluir o servidor MCP
 - [ ] `go test ./internal/tools/... -run WebSearch -v` (Teste unitário).
 - [ ] `/mcp` no Claude Code para validar o status do servidor Tavily.
 - [ ] Smoke test do daemon com a nova env.
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

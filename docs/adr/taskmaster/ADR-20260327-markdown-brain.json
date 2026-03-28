@@ -1,0 +1,18 @@
+{
+  "adr_id": "20260327-markdown-brain",
+  "title": "Markdown Brain — Cérebro Markdown canônico",
+  "status": "accepted",
+  "progress": 100,
+  "goal": "Cérebro Markdown canônico para aurelia_code",
+  "next_actions": [],
+  "handoff": {
+    "resume_prompt": "ADR completo. Markdown brain implementado.",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T12:00:00Z"
+  },
+  "test_commands": ["go build ./..."],
+  "curl_checks": [],
+  "dependencies": [],
+  "blockers": [],
+  "notes": "Implementado com sucesso"
+}

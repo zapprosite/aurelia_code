@@ -25,5 +25,11 @@ A interação com o mundo exterior (navegação web/GUI) não será hardcoded no
 - **Desafios**: Latência marginal na comunicação via buffers de áudio; necessidade de gerenciar o lifecycle do servidor MCP.
 
 ## Referências
-- [internal/gateway/provider.go](file:///home/will/aurelia/internal/gateway/provider.go) (LiteLLM Gateway)
-- [configs/litellm/config.yaml](file:///home/will/aurelia/configs/litellm/config.yaml) (Smart Router)
+- [internal/gateway/provider.go](../../internal/gateway/provider.go) (LiteLLM Gateway)
+- [configs/litellm/config.yaml](../../configs/litellm/config.yaml) (Smart Router)
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

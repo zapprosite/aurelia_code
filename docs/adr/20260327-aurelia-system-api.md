@@ -15,3 +15,12 @@ Implementar uma API centralizada em Go (`services/aurelia-api`) para:
 ## Consequências
 - **Positivas**: Centralização de logs, auditabilidade de chaves e facilidade de setup para novos desenvolvedores/agentes.
 - **Negativas**: Introduz uma dependência de runtime (a API precisa estar UP para os agentes funcionarem 100%).
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

@@ -33,3 +33,12 @@ Implementamos a **Sovereign-Bibliotheca v2**, uma camada de abstração unificad
 ---
 **Status:** ✅ Decidido e Implementado (2026-03-25)
 **Autoridade:** Antigravity Gemini p/ Aurélia
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

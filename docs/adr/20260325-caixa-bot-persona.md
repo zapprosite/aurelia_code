@@ -17,3 +17,12 @@ Implementar um novo bot no pool de bots da Aurélia com as seguintes caracterís
 - Aumento da proatividade do sistema em tarefas administrativas.
 - Necessidade de garantir que o bot tenha permissão para criar schedules vinculados ao ID do Master.
 - O pool de bots agora gerencia mais de um bot simultaneamente, testando a escalabilidade do `BotPool`.
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

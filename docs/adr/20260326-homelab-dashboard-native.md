@@ -44,3 +44,12 @@ desnecessário para uma visão que já pertence ao dashboard principal da Aureli
 - `frontend/src/components/dashboard/HomelabTab.tsx` — aba nativa do homelab
 - `frontend/src/App.tsx` — integração da aba nova
 - `frontend/src/components/sidebar/Sidebar.tsx` — renome de navegação
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

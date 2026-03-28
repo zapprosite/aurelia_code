@@ -1,0 +1,28 @@
+{
+  "adr_id": "20260328-adr-semparar-docs-adr-resolve",
+  "title": "ADR Semparar — Resolução e Conformidade do Slice docs/adr",
+  "status": "accepted",
+  "progress": 100,
+  "goal": "Conformar todos os ADRs existentes com o padrão Semparar (links obrigatórios + taskmaster JSON)",
+  "next_actions": [
+    "1. Adicionar links obrigatórios aos 24 ADRs existentes",
+    "2. Gerar JSON taskmaster para os 10 ADRs estruturais",
+    "3. Corrigir linux-god-mode.md (Status + Consequências)",
+    "4. Atualizar README.md do index com conformidade Semparar",
+    "5. Validar com scripts de auditoria"
+  ],
+  "handoff": {
+    "resume_prompt": "Continuar resolução de ADRs. Status: taskmaster/ criado, 2 JSONs gerados, 24 ADRs precisam links. Prioridade: adicionar links obrigatórios a todos os ADRs e criar JSONs para ADRs estruturais restantes.",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T12:00:00Z"
+  },
+  "test_commands": [
+    "grep -l 'AGENTS.md' docs/adr/*.md | wc -l",
+    "find docs/adr/taskmaster/ -name '*.json' | wc -l",
+    "go build ./..."
+  ],
+  "curl_checks": [],
+  "dependencies": [],
+  "blockers": [],
+  "notes": "Slice executada via Claude Code /code-review + /adr-semparar"
+}

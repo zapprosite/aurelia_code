@@ -79,3 +79,12 @@ apenas 1 bot (1 token, 1 BotController). O dashboard React existe como monitorin
 - `frontend/src/components/dashboard/BotCard.tsx` — card reutilizável
 - `frontend/src/components/dashboard/CreateBotModal.tsx` — formulário
 - `frontend/src/components/dashboard/BotDetail.tsx` — detalhe/edição
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

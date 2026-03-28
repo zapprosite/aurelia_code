@@ -52,3 +52,12 @@ go test ./internal/markdownbrain ./internal/memory ./cmd/aurelia
 - collection `aurelia_markdown_brain` criada e sincronizada
 - `aurelia_code` recupera contexto de `.md` no prompt de execução
 - repo markdown e vault markdown convergem no mesmo pipeline
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

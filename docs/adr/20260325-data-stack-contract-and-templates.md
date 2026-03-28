@@ -134,3 +134,12 @@ Qualquer mudança estrutural em `Supabase`, `Qdrant`, `SQLite` ou `Obsidian` for
 - [OBSIDIAN_VAULT_STANDARD.md](/home/will/aurelia/docs/governance/OBSIDIAN_VAULT_STANDARD.md)
 - [14-data-stack-governance.md](/home/will/aurelia/.agent/rules/14-data-stack-governance.md)
 - [templates/README.md](/home/will/aurelia/docs/governance/templates/README.md)
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

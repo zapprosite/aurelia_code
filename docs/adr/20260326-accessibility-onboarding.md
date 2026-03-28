@@ -15,3 +15,12 @@ O ecossistema Aurelia foi desenvolvido com foco em "Soberania Industrial", exigi
 ## Consequências
 - **Prós**: Maior base de usuários; facilidade de demonstração; redução da barreira de entrada.
 - **Contras**: Maior complexidade na manutenção de caminhos de execução alternativos (Cloud vs Local).
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

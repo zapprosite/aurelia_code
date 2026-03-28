@@ -51,3 +51,12 @@ curl -sS http://127.0.0.1:3334/api/status
 ## Dependência
 
 Nenhuma. Esta slice deve vir primeiro porque limpa o ruído operacional antes das slices estruturais seguintes.
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)

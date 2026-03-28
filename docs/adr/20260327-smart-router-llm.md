@@ -26,3 +26,12 @@ Implementar um **Roteador Automático** no LiteLLM via `model_group` nomeado `au
 - **Positivas**: Redução drástica de custos (Sovereign First), resiliência em falhas locais, acesso a modelos SOTA globais.
 - **Negativas**: Pequena latência adicional na camada de gateway do LiteLLM (ms).
 - **Segurança**: Auditoria contínua de chaves via `audit-secrets.sh`.
+
+
+---
+
+## Links Obrigatórios
+
+- [AGENTS.md](../../AGENTS.md)
+- [REPOSITORY_CONTRACT.md](../REPOSITORY_CONTRACT.md)
+- [ADR Index](./README.md)
