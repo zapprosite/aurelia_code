@@ -1,0 +1,26 @@
+{
+  "adr_id": "20260328-claude-folder-reorganize",
+  "title": "Reorganização do .claude — Padrão Claude Code SOTA 2026",
+  "status": "accepted",
+  "progress": 100,
+  "goal": "Organizar .claude seguindo padrão Claude Code SOTA 2026",
+  "next_actions": [
+    "1. Adicionar symlinks para workflows restantes",
+    "2. Criar settings.json do projeto",
+    "3. Testar slash commands",
+    "4. Commitar e pushar"
+  ],
+  "handoff": {
+    "resume_prompt": "Continuar reorganização do .claude. Estrutura criada: commands/ com 6 workflows, skills/ com 6 symlinks, agents/ com 1 symlink. Pendente: settings.json, testes.",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T13:30:00Z"
+  },
+  "test_commands": [
+    "ls -la .claude/",
+    "find .claude/ -type l | head -20"
+  ],
+  "curl_checks": [],
+  "dependencies": [],
+  "blockers": [],
+  "notes": "Padrão Claude Code: .claude/{commands,agents,skills,settings.json}"
+}

@@ -46,6 +46,7 @@
 | ADR | Status | Progress | taskmaster |
 |---|---|---|---|
 | [20260328-adr-semparar-docs-adr-resolve.md](20260328-adr-semparar-docs-adr-resolve.md) | ✅ Aceito | 100% | [JSON](./taskmaster/ADR-20260328-adr-semparar-docs-adr-resolve.json) |
+| [20260328-claude-folder-reorganize.md](20260328-claude-folder-reorganize.md) | ✅ Aceito | 100% | [JSON](./taskmaster/ADR-20260328-claude-folder-reorganize.json) |
 | [20260328-implementacao-jarvis-voice-e-computer-use.md](20260328-implementacao-jarvis-voice-e-computer-use.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-jarvis-voice-computer-use.json) |
 | [20260328-implementacao-linux-god-mode.md](20260328-implementacao-linux-god-mode.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-linux-god-mode.json) |
 
