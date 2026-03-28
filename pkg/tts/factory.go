@@ -14,7 +14,7 @@ func NewSynthesizer(baseURL, provider, model, voice, language, format string, sp
 	// Currently, all our providers use the OpenAI-compatible API.
 	// In the future, we could add native support for other engines here.
 	base := NewOpenAICompatibleSynthesizer(baseURL, model, voice, language, format, speed)
-	return NewSegmentedSynthesizer(base, 4000)
+	return NewSegmentedSynthesizer(base, 1200) // Reduced from 4000 to safely fit in Kokoro 510-token window (SOTA 2026.03.28)
 }
 
 // NewDefaultSynthesizer builds the primary TTS engine from the app config.
