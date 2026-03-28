@@ -16,7 +16,7 @@ import (
 const (
 	inputGuardTimeout   = 8 * time.Second
 	inputGuardMaxTokens = 48
-	inputGuardModel     = "gemma3:12b"
+	inputGuardModel     = "gemma3:27b"
 )
 
 const inputGuardSystemPrompt = `You are a security classifier. Analyze the user message and reply ONLY with valid JSON — nothing else.

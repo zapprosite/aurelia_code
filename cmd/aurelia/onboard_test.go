@@ -18,7 +18,7 @@ func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 
 	input := strings.Join([]string{
 		"",               // LLM provider (default: ollama)
-		"gemma3:12b",     // LLM model
+		"gemma3:27b",     // LLM model
 		"groq-key",       // Groq API key
 		"telegram-token",  // Telegram bot token
 		"101,202",        // Telegram allowed user IDs
@@ -46,7 +46,7 @@ func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 	if cfg.STTProvider != "groq" {
 		t.Fatalf("STTProvider = %q", cfg.STTProvider)
 	}
-	if cfg.LLMModel != "gemma3:12b" {
+	if cfg.LLMModel != "gemma3:27b" {
 		t.Fatalf("LLMModel = %q", cfg.LLMModel)
 	}
 	if cfg.TelegramBotToken != "telegram-token" {
@@ -82,7 +82,7 @@ func TestRunOnboard_PreservesExistingValuesOnBlankInput(t *testing.T) {
 	}
 	if err := config.SaveEditable(resolver, config.EditableConfig{
 		LLMProvider:            "ollama",
-		LLMModel:               "gemma3:12b",
+		LLMModel:               "gemma3:27b",
 		STTProvider:            "groq",
 		TelegramBotToken:       "old-telegram",
 		TelegramAllowedUserIDs: []int64{42},
@@ -109,7 +109,7 @@ func TestRunOnboard_PreservesExistingValuesOnBlankInput(t *testing.T) {
 	if cfg.TelegramBotToken != "old-telegram" || cfg.AnthropicAPIKey != "old-anthropic" || cfg.GoogleAPIKey != "old-google" || cfg.OpenRouterAPIKey != "old-openrouter" || cfg.OpenAIAPIKey != "old-openai" || cfg.GroqAPIKey != "old-groq" {
 		t.Fatalf("expected secrets to be preserved, got %+v", cfg)
 	}
-	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "gemma3:12b" || cfg.STTProvider != "groq" {
+	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "gemma3:27b" || cfg.STTProvider != "groq" {
 		t.Fatalf("expected providers to be preserved, got llm=%q model=%q stt=%q", cfg.LLMProvider, cfg.LLMModel, cfg.STTProvider)
 	}
 	if len(cfg.TelegramAllowedUserIDs) != 1 || cfg.TelegramAllowedUserIDs[0] != 42 {
@@ -197,7 +197,7 @@ func TestOnboardingUI_ModelSelectionPersistsChoice(t *testing.T) {
 	ui := newOnboardingUI(config.DefaultEditableConfig())
 	ui.step = stepLLMModel
 	ui.modelOptions = []llm.ModelOption{
-		{ID: "gemma3:12b", Name: "Gemma3 12B"},
+		{ID: "gemma3:27b", Name: "Gemma3 27B"},
 	}
 	ui.menuIndex = 0
 
@@ -205,7 +205,7 @@ func TestOnboardingUI_ModelSelectionPersistsChoice(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleKey() error = %v", err)
 	}
-	if ui.cfg.LLMModel != "gemma3:12b" {
+	if ui.cfg.LLMModel != "gemma3:27b" {
 		t.Fatalf("LLMModel = %q", ui.cfg.LLMModel)
 	}
 	if ui.step != stepSTTProvider {
@@ -233,7 +233,7 @@ func TestOnboardingUI_AnthropicKeyInputTargetsAnthropicSecret(t *testing.T) {
 func TestOnboardingUI_OllamaSkipsAPIKeyStep(t *testing.T) {
 	ui := newOnboardingUI(config.EditableConfig{
 		LLMProvider:            "ollama",
-		LLMModel:               "gemma3:12b",
+		LLMModel:               "gemma3:27b",
 		MemoryWindowSize:       20,
 		MaxIterations:          500,
 		STTProvider:            "groq",
@@ -305,12 +305,12 @@ func TestOnboardingUI_OpenRouterModelSearchFiltersResults(t *testing.T) {
 
 func TestFilterModelOptions_VisionOnly(t *testing.T) {
 	options := []llm.ModelOption{
-		{ID: "gemma3:12b", Name: "Gemma3 12B", SupportsImageInput: true},
+		{ID: "gemma3:27b", Name: "Gemma3 27B", SupportsImageInput: true},
 		{ID: "mistral:7b", Name: "Mistral 7B"},
 	}
 
 	filtered := filterModelOptions(config.EditableConfig{LLMProvider: "ollama"}, options, "", modelCapabilityVision)
-	if len(filtered) != 1 || filtered[0].ID != "gemma3:12b" {
+	if len(filtered) != 1 || filtered[0].ID != "gemma3:27b" {
 		t.Fatalf("filtered = %+v", filtered)
 	}
 }

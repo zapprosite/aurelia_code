@@ -14,8 +14,8 @@ import (
 const (
 	defaultMaxIterations    = 500
 	defaultMemoryWindowSize = 20
-	defaultLLMProvider      = "ollama"
-	defaultLLMModel         = "gemma3:12b"
+	defaultLLMProvider      = "openai_compatible"
+	defaultLLMModel         = "aurelia-smart"
 	defaultSTTProvider      = "groq"
 	defaultSTTLanguage      = "pt"
 	defaultGroqSTTBaseURL   = "https://api.groq.com/openai/v1"
@@ -363,7 +363,7 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		GroqHardCapDaily:         defaultGroqHardCapDaily,
 		QdrantCollection:         defaultQdrantCollection,
 		QdrantEmbeddingModel:     defaultQdrantEmbeddingModel,
-		OllamaURL:                "http://127.0.0.1:11434",
+		OllamaURL:                "http://127.0.0.1:4000/v1",
 		DashboardPort:            defaultDashboardPort,
 		HealthPort:               defaultHealthPort,
 		AureliaMode:              "sovereign",

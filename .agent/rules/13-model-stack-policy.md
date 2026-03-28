@@ -17,7 +17,7 @@ Esta regra define o **motor interno** do daemon Go `aurelia`.
 
 | Tier | Modelo | Provedor | Uso |
 |------|--------|----------|-----|
-| **Tier 0 — Local** | `gemma3:12b` | Ollama local (RTX 4090) | Fallback universal, custo zero |
+| **Tier 0 — Local** | `gemma3:27b` | Ollama local (RTX 4090) | Soberania Industrial, Máxima Inteligência |
 | **Tier 0 — Local Lab** | `gemma3:27b-it-q4_K_M` | Ollama local | Raciocínio profundo, uso manual |
 | **Tier 1 — Cheap Remote** | `deepseek/deepseek-chat-v3.1` | OpenRouter | Curation, structured output, routing barato |
 | **Tier 2 — Premium Remote** | `minimax/minimax-m2.7` | MiniMax direct | coding_main, critical, execução principal |

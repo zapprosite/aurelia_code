@@ -10,7 +10,7 @@ type ModelCost struct {
 // Prices sourced from OpenRouter/provider pricing pages.
 var modelCosts = map[string]ModelCost{
 	// Tier 0 — Local (free)
-	"gemma3:12b": {InputPerMToken: 0, OutputPerMToken: 0},
+	"gemma3:27b": {InputPerMToken: 0, OutputPerMToken: 0},
 
 	// Tier 1 — Remote Cheap (OpenRouter)
 	"mistralai/devstral-2512":     {InputPerMToken: 0.05, OutputPerMToken: 0.22},  // cheapest paid Tier1
