@@ -97,7 +97,7 @@ func (s *OpenAICompatibleSynthesizer) Synthesize(ctx context.Context, text strin
 	}
 	payload := map[string]any{
 		"model":           s.model,
-		"input":           strings.TrimSpace(text) + " . . . . .", // SOTA 2026 Enhanced Tail Padding: prevent abrupt cut-offs
+		"input":           strings.TrimSpace(text) + " . . . . . ", // SOTA 2026 Enhanced Tail Padding: prevent abrupt cut-offs
 		"voice":           s.voice,
 		"lang_code":       s.language,                             // Extension for Kokoro/Kodoro FastAPI
 		"response_format": s.format,

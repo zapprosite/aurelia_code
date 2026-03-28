@@ -38,6 +38,15 @@ Esta skill habilita o Antigravity a gerenciar a voz oficial da Aurélia e o proc
 - O processamento de áudio local deve ser pinado nos núcleos de performance do 7900x para evitar jitter.
 - Monitore a VRAM se o Kokoro estiver rodando via CUDA.
 
+## 💎 Protocolo de Perfeição Portuguesa (Aurelia Serene Audio)
+
+Para evitar cortes na última palavra e garantir uma prosódia natural em PT-BR:
+
+1. **Tail Padding**: Todo texto enviado ao motor deve terminar com a sequência `" . . . . . "` para garantir o decaimento natural do áudio.
+2. **Fonetizador Nativo**: O payload deve incluir explicitamente `"lang_code": "pt-br"` para disparar o `espeak-ng` nativo.
+3. **Chunking de Segurança**: O limite máximo de caracteres por fragmento deve ser de **1200**, respeitando o limite de 510 tokens do Kokoro-82M.
+4. **Rescisão Educada**: O sistema deve garantir que frases nunca sejam cortadas no meio de uma palavra (Split by sentence).
+
 ## 📍 Quando usar
 - Para transcrever vídeos do YouTube ou áudios do Telegram.
 - Para gerar respostas em voz (TTS) para o usuário.
