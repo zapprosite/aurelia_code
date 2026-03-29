@@ -1,8 +1,8 @@
 {
   "adr_id": "20260328-linux-god-mode",
   "title": "Implementação do Aurelia God Mode (Total Linux Control)",
-  "status": "proposed",
-  "progress": 0,
+  "status": "completed",
+  "progress": 100,
   "goal": "Permitir execução de comandos Bash, análise de logs e patches via ferramentas nativas de Go sob governança soberana",
   "next_actions": [
     "1. Criar pacote internal/os_controller com wrapper os/exec",

@@ -1,0 +1,36 @@
+{
+  "adr_id": "20260328-container-steel-browser-isolation",
+  "title": "Container Steel para Browser Isolation (Computer Use)",
+  "status": "completed",
+  "progress": 100,
+  "goal": "Criar container Docker isolado para Chromium/Stagehand com session persistence",
+  "next_actions": [
+    "1. Criar mcp-servers/steel/Dockerfile com Playwright + Stagehand",
+    "2. Criar mcp-servers/steel/start.sh wrapper script",
+    "3. Criar configs/steel/docker-compose.yml com resource limits",
+    "4. Implementar internal/steel/container.go com lifecycle management",
+    "5. Testar container build e health check"
+  ],
+  "handoff": {
+    "resume_prompt": "Continuar implementação do Container Steel. Status: ZERO arquivos existem. Precisa criar: Dockerfile, start.sh, docker-compose.yml, container.go. Dependência: ADR-02 (MCP Client) precisa do container rodando",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T14:00:00Z"
+  },
+  "test_commands": [
+    "docker build -f mcp-servers/steel/Dockerfile .",
+    "docker compose -f configs/steel/docker-compose.yml config",
+    "docker compose -f configs/steel/docker-compose.yml up -d"
+  ],
+  "curl_checks": [
+    "docker ps | grep steel || echo 'Steel not running'"
+  ],
+  "dependencies": [
+    "20260328-mcp-go-client-stagehand-computer-use",
+    "mcp-servers/stagehand/package.json"
+  ],
+  "blockers": [
+    "Docker daemon não acessível do contexto atual",
+    "mcp-servers/steel/ directory não existe"
+  ],
+  "notes": "P1 - Crítico para computer use. Browser precisa rodar em container para isolamento de crashes."
+}

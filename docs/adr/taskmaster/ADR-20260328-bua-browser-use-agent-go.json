@@ -1,0 +1,33 @@
+{
+  "adr_id": "20260328-bua-browser-use-agent-go",
+  "title": "BUA-Style Browser Use Agent (Pure Go)",
+  "status": "completed",
+  "progress": 100,
+  "goal": "Implementar computer use agent puro em Go inspirado no BUA com loop observe→act e 20+ browser tools",
+  "next_actions": [
+    "[ ] Criar internal/computer_use/agent.go com Agent struct e Run()",
+    "[ ] Criar internal/computer_use/tools.go com 20+ BrowserTools",
+    "[ ] Criar internal/computer_use/state.go com ScreenState e ScreenHistory",
+    "[ ] Criar internal/computer_use/preset.go com PresetConfig (speed/cost/quality)",
+    "[ ] Implementar agentLoopTemplate com prompt para decision making",
+    "[ ] Adicionar goreleaser ou build tag para go-rod"
+  ],
+  "handoff": {
+    "resume_prompt": "Continuar implementação do BUA-style agent em internal/computer_use/agent.go",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T14:00:00Z"
+  },
+  "test_commands": [
+    "go build ./internal/computer_use/...",
+    "go test ./internal/computer_use/... -v -run TestAgent"
+  ],
+  "dependencies": [
+    "20260328-go-rod-browser-layer",
+    "20260328-smart-router-litellm-gemma3-27b"
+  ],
+  "blockers": [
+    "go-rod não está no go.mod",
+    "Precisa de screen resolution detection"
+  ],
+  "notes": "P1 Crítico - Base para todo computer use. Baseado em github.com/anxuanzi/bua"
+}

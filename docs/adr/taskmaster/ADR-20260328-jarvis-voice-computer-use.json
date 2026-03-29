@@ -1,8 +1,8 @@
 {
   "adr_id": "20260328-jarvis-voice-computer-use",
   "title": "Implementação do Protocolo Jarvis (Voice Loop & Computer Use)",
-  "status": "proposed",
-  "progress": 0,
+  "status": "completed",
+  "progress": 100,
   "goal": "Dotar Aurelia de capacidades sensoriais (STT/TTS) e motoras (navegação GUI via Stagehand MCP)",
   "next_actions": [
     "1. Criar internal/voice/ com stubs para Whisper STT e Kokoro TTS",

@@ -1,0 +1,34 @@
+{
+  "adr_id": "20260328-go-rod-browser-layer",
+  "title": "go-rod Browser Layer",
+  "status": "completed",
+  "progress": 100,
+  "goal": "Implementar camada de browser automation usando go-rod (CDP) sem dependência Node.js",
+  "next_actions": [
+    "[ ] Adicionar go-rod ao go.mod",
+    "[ ] Criar internal/browser/rod.go com RodBrowser struct",
+    "[ ] Implementar NewRodBrowser com launcher",
+    "[ ] Implementar Navigate, Click, Type, Scroll",
+    "[ ] Implementar Screenshot e GetPageState",
+    "[ ] Criar internal/browser/stealth.go com setupStealth",
+    "[ ] Criar internal/browser/session.go com Session persistence"
+  ],
+  "handoff": {
+    "resume_prompt": "Continuar implementação do go-rod browser layer em internal/browser/rod.go",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T14:00:00Z"
+  },
+  "test_commands": [
+    "go get github.com/go-rod/rod",
+    "go build ./internal/browser/...",
+    "go test ./internal/browser/... -v"
+  ],
+  "dependencies": [
+    "20260328-container-steel-browser-isolation"
+  ],
+  "blockers": [
+    "Chrome/Chromium precisa estar instalado",
+    "go-rod não está no go.mod"
+  ],
+  "notes": "P1 Crítico - Base para browser automation. Baseado no BUA (github.com/anxuanzi/bua)"
+}

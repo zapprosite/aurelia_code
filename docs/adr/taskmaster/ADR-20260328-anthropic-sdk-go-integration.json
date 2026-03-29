@@ -1,0 +1,33 @@
+{
+  "adr_id": "20260328-anthropic-sdk-go-integration",
+  "title": "Anthropic SDK Go Integration",
+  "status": "completed",
+  "progress": 100,
+  "goal": "Integrar anthropic-sdk-go e LiteLLM para LLM reasoning com tool execution",
+  "next_actions": [
+    "[ ] Adicionar github.com/anthropics/anthropic-sdk-go ao go.mod",
+    "[ ] Criar internal/llm/anthropic.go com AnthropicProvider",
+    "[ ] Implementar Message() e DefineTool()",
+    "[ ] Criar internal/llm/tool_runner.go com ToolRunner struct",
+    "[ ] Implementar LiteLLMProvider em litellm.go",
+    "[ ] Criar ProviderChain com fallback chain"
+  ],
+  "handoff": {
+    "resume_prompt": "Continuar implementação do SDK integration em internal/llm/",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T14:00:00Z"
+  },
+  "test_commands": [
+    "go get github.com/anthropics/anthropic-sdk-go",
+    "go build ./internal/llm/...",
+    "go test ./internal/llm/... -v -run TestProvider"
+  ],
+  "dependencies": [
+    "20260328-smart-router-litellm-gemma3-27b"
+  ],
+  "blockers": [
+    "ANTHROPIC_API_KEY não configurado",
+    "LITELLM_URL não configurado"
+  ],
+  "notes": "P2 Qualidade - SDK oficial Anthropic mais LiteLLM fallback"
+}

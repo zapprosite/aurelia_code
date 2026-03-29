@@ -1,0 +1,34 @@
+{
+  "adr_id": "20260328-normalized-coordinates-hitl",
+  "title": "Normalized Coordinates + HitL Safety",
+  "status": "completed",
+  "progress": 100,
+  "goal": "Implementar sistema de coordenadas normalizadas (0-999) e safety guardrails com HitL",
+  "next_actions": [
+    "[ ] Criar internal/computer_use/coordinates.go com CoordinateSystem",
+    "[ ] Implementar NormalizeToGrid/DenormalizeFromGrid",
+    "[ ] Implementar RegionToGrid",
+    "[ ] Criar internal/computer_use/hitl.go com HitLGate",
+    "[ ] Implementar RequestConfirmation/Approve/Reject",
+    "[ ] Criar internal/computer_use/safety.go com SafetyGuard",
+    "[ ] Implementar ValidateAction com dangerous patterns",
+    "[ ] Criar internal/computer_use/middleware.go com SafetyMiddleware"
+  ],
+  "handoff": {
+    "resume_prompt": "Continuar implementação de coordinates e safety em internal/computer_use/",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T14:00:00Z"
+  },
+  "test_commands": [
+    "go build ./internal/computer_use/...",
+    "go test ./internal/computer_use/... -v -run TestCoordinates",
+    "go test ./internal/computer_use/... -v -run TestSafety"
+  ],
+  "dependencies": [
+    "20260328-bua-browser-use-agent-go"
+  ],
+  "blockers": [
+    "Nenhum blocker direto - pode ser implementado em paralelo"
+  ],
+  "notes": "P1 Crítico - Safety é obrigatório para computer use em produção"
+}

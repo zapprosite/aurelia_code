@@ -1,0 +1,37 @@
+{
+  "adr_id": "20260328-whisper-groq-gpu-budget",
+  "title": "Otimização de GPU Budget (Whisper Medium + Groq STT)",
+  "status": "proposed",
+  "progress": 0,
+  "goal": "Mudar Whisper large-v3 → medium e adicionar Groq como primary STT",
+  "next_actions": [
+    "1. Executar 'ollama pull whisper:medium'",
+    "2. Configurar Groq como primary STT em app.json",
+    "3. Implementar fallback chain em internal/voice/processor.go",
+    "4. Implementar silent fallback UX em internal/telegram/messages.go",
+    "5. Monitorar VRAM usage com GPUMonitor"
+  ],
+  "handoff": {
+    "resume_prompt": "Continuar otimização GPU. Status: Whisper large-v3 ainda em uso. Precisa: pull whisper:medium, configurar Groq, refatorar processor.go para fallback chain. Dependência: GROQ_API_KEY",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-28T14:00:00Z"
+  },
+  "test_commands": [
+    "ollama list | grep whisper",
+    "go build ./internal/voice/...",
+    "go test ./internal/voice/... -v"
+  ],
+  "curl_checks": [
+    "curl -s http://localhost:11434/api/tags | jq '.models[] | select(.name | contains(\"whisper\"))'",
+    "curl -s https://api.groq.com/openai/v1/models | jq '.data[] | select(.id | contains(\"whisper\"))'"
+  ],
+  "dependencies": [
+    "internal/voice/processor.go",
+    "internal/telegram/messages.go"
+  ],
+  "blockers": [
+    "GROQ_API_KEY environment var não existe",
+    "ollama whisper:medium não baixado"
+  ],
+  "notes": "P2 - Resolve CUDA OOM errors. Economia de ~2GB VRAM com modelo medium."
+}
