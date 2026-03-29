@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
@@ -13,6 +14,13 @@ import (
 )
 
 const anthropicDefaultMaxTokens = 4096
+
+// anthropicPendingTool accumulates partial_json fragments for a streaming tool call.
+type anthropicPendingTool struct {
+	id   string
+	name string
+	json strings.Builder
+}
 
 // AnthropicProvider implements agent.LLMProvider using Anthropic's official Go SDK.
 type AnthropicProvider struct {
@@ -71,40 +79,85 @@ func (p *AnthropicProvider) GenerateStream(
 	history []agent.Message,
 	tools []agent.Tool,
 ) (<-chan agent.StreamResponse, error) {
+	if err := ensureVisionSupport("anthropic", p.model, history); err != nil {
+		return nil, err
+	}
 	params := anthropic.MessageNewParams{
 		Model:     anthropic.Model(p.model),
 		MaxTokens: anthropicDefaultMaxTokens,
 		Messages:  buildAnthropicMessages(history),
 	}
-
 	if systemPrompt != "" {
 		params.System = []anthropic.TextBlockParam{{Text: systemPrompt}}
 	}
+	if len(tools) != 0 {
+		params.Tools = buildAnthropicTools(tools)
+		params.ToolChoice = anthropic.ToolChoiceUnionParam{
+			OfAuto: &anthropic.ToolChoiceAutoParam{},
+		}
+	}
 
+	stream := p.client.Messages.NewStreaming(ctx, params)
 	ch := make(chan agent.StreamResponse, 100)
+
 	go func() {
 		defer close(ch)
-		// Anthropic streaming requires handling events
-		stream := p.client.Messages.NewStreaming(ctx, params)
+		defer stream.Close()
+
+		// toolsByIndex accumulates partial_json fragments per block index during streaming.
+		toolsByIndex := make(map[int64]*anthropicPendingTool)
+		var inputTokens, outputTokens int64
+
 		for stream.Next() {
 			event := stream.Current()
-			switch delta := event.AsAny().(type) {
+			switch variant := event.AsAny().(type) {
+			case anthropic.ContentBlockStartEvent:
+				if tu, ok := variant.ContentBlock.AsAny().(anthropic.ToolUseBlock); ok {
+					toolsByIndex[variant.Index] = &anthropicPendingTool{id: tu.ID, name: tu.Name}
+				}
 			case anthropic.ContentBlockDeltaEvent:
-				if delta.Delta.Text != "" {
-					ch <- agent.StreamResponse{Content: delta.Delta.Text}
+				switch delta := variant.Delta.AsAny().(type) {
+				case anthropic.TextDelta:
+					if delta.Text != "" {
+						ch <- agent.StreamResponse{Content: delta.Text}
+					}
+				case anthropic.InputJSONDelta:
+					if pt, ok := toolsByIndex[variant.Index]; ok {
+						pt.json.WriteString(delta.PartialJSON)
+					}
 				}
 			case anthropic.MessageStartEvent:
-				// Metadata could be extracted here
+				// Input tokens are reported once at stream start.
+				inputTokens = variant.Message.Usage.InputTokens
 			case anthropic.MessageDeltaEvent:
-				if delta.Usage.OutputTokens > 0 {
-					ch <- agent.StreamResponse{OutputTokens: int(delta.Usage.OutputTokens)}
-				}
-			case anthropic.MessageStopEvent:
-				ch <- agent.StreamResponse{Done: true}
+				// Output tokens are reported in the final delta event.
+				outputTokens = variant.Usage.OutputTokens
 			}
 		}
+
 		if err := stream.Err(); err != nil {
-			ch <- agent.StreamResponse{Err: err}
+			ch <- agent.StreamResponse{Err: fmt.Errorf("anthropic stream error: %w", err)}
+			return
+		}
+
+		var toolCalls []agent.ToolCall
+		for _, pt := range toolsByIndex {
+			args := make(map[string]any)
+			if raw := pt.json.String(); raw != "" {
+				_ = json.Unmarshal([]byte(raw), &args)
+			}
+			toolCalls = append(toolCalls, agent.ToolCall{
+				ID:        pt.id,
+				Name:      pt.name,
+				Arguments: args,
+			})
+		}
+
+		ch <- agent.StreamResponse{
+			Done:         true,
+			ToolCalls:    toolCalls,
+			InputTokens:  int(inputTokens),
+			OutputTokens: int(outputTokens),
 		}
 	}()
 

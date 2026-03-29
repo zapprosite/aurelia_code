@@ -1,3 +1,9 @@
+---
+name: junior-mode
+description: Alterna a persona da Aurélia para modo Junior Developer — tom didático e humilde.
+phases: [C]
+---
+
 # Skill: Junior Mode 🐣
 
 Esta skill permite alternar a persona da Aurélia para o modo "Junior Developer".

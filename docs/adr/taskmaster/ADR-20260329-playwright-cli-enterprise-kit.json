@@ -19,6 +19,18 @@
     "npx playwright --version",
     "go test ./internal/computer_use/enterprise_kit_test.go"
   ],
+  "reversion_plan": {
+    "title": "Reversão de Código (Padrão 28/03/2026)",
+    "steps": [
+      "Identificar todos os arquivos modificados desde 2026-03-28 23:59:59.",
+      "Executar git checkout para restaurar esses arquivos ao estado da última tag estável de ontem.",
+      "Arquivos críticos identificados: pkg/llm/anthropic.go, internal/middleware/porteiro.go, internal/telegram/input_guard.go, internal/streaming/actor.go"
+    ],
+    "infrastructure_sanitization": [
+      "Reiniciar o serviço aurelia para aplicar as mudanças de código.",
+      "Limpar chaves de cache no Redis relacionadas ao porteiro:cache."
+    ]
+  },
   "dependencies": [
     "mcp-servers/steel",
     "internal/computer_use"

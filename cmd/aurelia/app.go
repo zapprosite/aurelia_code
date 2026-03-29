@@ -375,6 +375,13 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		logger.Info("Proteção de entrada migrada para o Porteiro (Qwen 0.5b + Redis)")
 	}
 
+	// Wire InputGuard (fast local prompt injection detector) to all bots in the pool
+	inputGuard := telegram.NewInputGuard(ollamaURL)
+	for _, bc := range pool.All() {
+		bc.SetInputGuard(inputGuard)
+	}
+	logger.Info("InputGuard wired to all bots", slog.String("model", "qwen2.5:0.5b"))
+
 	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, notificationBot, a.taskStore); err != nil {
 		return fmt.Errorf("register spawn agent tool: %w", err)
 	}
