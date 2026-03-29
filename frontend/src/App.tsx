@@ -13,6 +13,7 @@ import { Badge } from "./components/ui/Badge";
 import { Layout } from "lucide-react";
 import { BrainSearch } from "./components/dashboard/BrainSearch";
 import { BotsTab } from "./components/dashboard/BotsTab";
+import { ComputerUseTab } from "./components/dashboard/ComputerUseTab";
 import { useSystemMetrics } from "./hooks/useSystemMetrics";
 import { type SquadAgent } from "./components/dashboard/SquadGrid";
 import { HomelabTab } from "./components/dashboard/HomelabTab";
@@ -41,6 +42,7 @@ function getInitialTab(): TabId {
     case "brain":
     case "roadmap":
     case "homelab":
+    case "computer":
       return tab;
     default:
       return "timeline";
@@ -127,6 +129,7 @@ function App() {
     switch (activeTab) {
       case "timeline": return "Main Floor — Activity Stream";
       case "bots":     return "Team Bots — Multi-Bot Manager";
+      case "computer": return "Computer Use — Jarvis Browser";
       case "squad":    return "Squad View — Agent Status";
       case "brain":    return "The Brain — Semantic Context";
       case "roadmap":  return "Master Plan — Feature Roadmap";
@@ -166,6 +169,10 @@ function App() {
               >
                 {activeTab === "bots" && (
                   <BotsTab feed={feed} />
+                )}
+
+                {activeTab === "computer" && (
+                  <ComputerUseTab />
                 )}
 
                 {activeTab === "timeline" && (

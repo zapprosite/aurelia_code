@@ -1,0 +1,96 @@
+# Steel Docker Compose - Browser Isolation
+# ADR: 20260328-container-steel-browser-isolation
+
+services:
+  steel:
+    build:
+      context: ../..
+      dockerfile: mcp-servers/steel/Dockerfile
+    image: aurelia/steel:latest
+    container_name: aurelia-steel-01
+    environment:
+      # LiteLLM Gateway
+      - STAGEHAND_MODEL=aurelia-smart
+      - LITELLM_BASE_URL=http://litellm:4000/v1
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-dummy}
+      # Node
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+    ports:
+      - "9222:9222"  # DevTools debugging
+      - "3000:3000"  # Health check
+    volumes:
+      - steel-sessions:/app/sessions
+      - steel-cache:/app/.cache
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - aurelia-net
+
+  # LiteLLM gateway (paradevelopment/testing)
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: aurelia-litellm
+    environment:
+      - DATABASE_URL=sqlite:///data/litellm.db
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-dummy}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    ports:
+      - "4000:4000"
+    volumes:
+      - litellm-data:/data
+      - ../litellm/config.yaml:/app/config.yaml:ro
+    command: --config /app/config.yaml --port 4000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - aurelia-net
+    depends_on:
+      - ollama
+
+  # Ollama (para Tier 0 local)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: aurelia-ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - aurelia-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  steel-sessions:
+  steel-cache:
+  litellm-data:
+  ollama-data:
+
+networks:
+  aurelia-net:
+    driver: bridge

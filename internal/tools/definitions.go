@@ -147,6 +147,58 @@ func CPFCNPJDefinition() agent.Tool {
 	}
 }
 
+// ComputerUseToolDefinitions for browser automation via Stagehand
+// ADR: 20260328-mcp-go-client-stagehand-computer-use
+
+func ComputerNavigateDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "mcp__stagehand__navigate",
+		Description: "Navega para uma URL no browser isolado via Stagehand MCP. Use esta ferramenta para abrir páginas web quando precisar de informações atualizadas ou navegar em interfaces web.",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"url": stringProperty("URL completa para navegar (ex: https://github.com)"),
+			},
+			"url",
+		),
+	}
+}
+
+func ComputerActDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "mcp__stagehand__act",
+		Description: "Executa uma ação no browser: clique em elementos, digitação, scroll, hover, etc. Instruções em português são interpretadas. Use para interagir com formulários, botões, links.",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"instruction": stringProperty("Instrução em português (ex: 'clique no botão de login', 'digite meu email no campo usuário', 'role para baixo')"),
+			},
+			"instruction",
+		),
+	}
+}
+
+func ComputerExtractDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "mcp__stagehand__extract",
+		Description: "Extrai dados estruturados da página atual via instrução. Útil para coletar informações específicas como preços, textos, links, dados de tabelas.",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"instruction": stringProperty("O que extrair (ex: 'todos os preços dos produtos', 'título e descrição da página', 'links do menu')"),
+			},
+			"instruction",
+		),
+	}
+}
+
+func ComputerScreenshotDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "mcp__stagehand__screenshot",
+		Description: "Captura screenshot da tela atual do browser. Útil para visualizar o estado da página ou depurar problemas de automação.",
+		JSONSchema: objectSchema(
+			map[string]any{},
+		),
+	}
+}
+
 func RegisterCoreTools(registry *agent.ToolRegistry) {
 	if registry == nil {
 		return
@@ -162,6 +214,13 @@ func RegisterCoreTools(registry *agent.ToolRegistry) {
 	registry.Register(ServiceControlDefinition(), ServiceControlHandler)
 	registry.Register(OllamaControlDefinition(), OllamaControlHandler)
 	registry.Register(CPFCNPJDefinition(), CPFCNPJHandler)
+
+	// Computer Use tools via Stagehand MCP
+	// ADR: 20260328-mcp-go-client-stagehand-computer-use
+	registry.Register(ComputerNavigateDefinition(), ComputerNavigateHandler)
+	registry.Register(ComputerActDefinition(), ComputerActHandler)
+	registry.Register(ComputerExtractDefinition(), ComputerExtractHandler)
+	registry.Register(ComputerScreenshotDefinition(), ComputerScreenshotHandler)
 
 	setPhase := NewSetPhaseTool()
 	registry.Register(setPhase.Definition(), setPhase.Execute)

@@ -50,6 +50,41 @@
 | [20260328-implementacao-jarvis-voice-e-computer-use.md](20260328-implementacao-jarvis-voice-e-computer-use.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-jarvis-voice-computer-use.json) |
 | [20260328-implementacao-linux-god-mode.md](20260328-implementacao-linux-god-mode.md) | Proposta | 0% | [JSON](./taskmaster/ADR-20260328-linux-god-mode.json) |
 
+## Jarvis/Computer Use (P1-P3) — gemma3 27b + Kokoro + LiteLLM
+
+### P1 - Crítico (dependências base)
+| ADR | Descrição | Progress | taskmaster |
+|---|---|---|---|
+| [20260328-smart-router-litellm-gemma3-27b.md](20260328-smart-router-litellm-gemma3-27b.md) | LiteLLM config com tiers | 0% | [JSON](./taskmaster/ADR-20260328-smart-router-litellm-gemma3-27b.json) |
+| [20260328-mcp-go-client-stagehand-computer-use.md](20260328-mcp-go-client-stagehand-computer-use.md) | Go client para Stagehand | 0% | [JSON](./taskmaster/ADR-20260328-mcp-go-client-stagehand-computer-use.json) |
+| [20260328-container-steel-browser-isolation.md](20260328-container-steel-browser-isolation.md) | Container Docker isolado | 0% | [JSON](./taskmaster/ADR-20260328-container-steel-browser-isolation.json) |
+
+### P1 - SOTA Open Source (BUA, vnc-use, computer-use-mcp)
+| ADR | Descrição | Progress | taskmaster |
+|---|---|---|---|
+| [20260328-bua-browser-use-agent-go.md](20260328-bua-browser-use-agent-go.md) | **BUA-style agent Go** (loop observe→act, 20+ tools) | 0% | [JSON](./taskmaster/ADR-20260328-bua-browser-use-agent-go.json) |
+| [20260328-go-rod-browser-layer.md](20260328-go-rod-browser-layer.md) | **go-rod browser layer** (CDP, stealth mode) | 0% | [JSON](./taskmaster/ADR-20260328-go-rod-browser-layer.json) |
+| [20260328-mcp-tool-schema-computer-use.md](20260328-mcp-tool-schema-computer-use.md) | **MCP tool schema** (normalized coords, 0-999) | 0% | [JSON](./taskmaster/ADR-20260328-mcp-tool-schema-computer-use.json) |
+| [20260328-normalized-coordinates-hitl.md](20260328-normalized-coordinates-hitl.md) | **HitL + Safety** (dangerous patterns, confirm gate) | 0% | [JSON](./taskmaster/ADR-20260328-normalized-coordinates-hitl.json) |
+
+### P2 - Qualidade (features principais)
+| ADR | Descrição | Progress | taskmaster |
+|---|---|---|---|
+| [20260328-vision-pipeline-computer-use.md](20260328-vision-pipeline-computer-use.md) | Screenshot → LLM pipeline | 0% | [JSON](./taskmaster/ADR-20260328-vision-pipeline-computer-use.json) |
+| [20260328-whisper-groq-gpu-budget.md](20260328-whisper-groq-gpu-budget.md) | STT optimization | 0% | [JSON](./taskmaster/ADR-20260328-whisper-groq-gpu-budget.json) |
+| [20260328-computer-use-e2e-autonomous-gui.md](20260328-computer-use-e2e-autonomous-gui.md) | Agent loop autônomo | 0% | [JSON](./taskmaster/ADR-20260328-computer-use-e2e-autonomous-gui.json) |
+| [20260328-anthropic-sdk-go-integration.md](20260328-anthropic-sdk-go-integration.md) | **SDK Go + LiteLLM** (betatoolrunner) | 0% | [JSON](./taskmaster/ADR-20260328-anthropic-sdk-go-integration.json) |
+
+### P3 - Polish (E2E + UX)
+| ADR | Descrição | Progress | taskmaster |
+|---|---|---|---|
+| [20260328-e2e-jarvis-loop-wake-tts.md](20260328-e2e-jarvis-loop-wake-tts.md) | Loop completo wake→TTS | 0% | [JSON](./taskmaster/ADR-20260328-e2e-jarvis-loop-wake-tts.json) |
+
+### Meta-ADR de Tracking
+| ADR | Descrição | taskmaster |
+|---|---|---|
+| [20260328-computer-use-dependency-map.md](20260328-computer-use-dependency-map.md) | Mapa de dependências completo | [JSON](./taskmaster/ADR-20260328-computer-use-dependency-map.json) |
+
 ---
 
 ## Substituída
@@ -80,12 +115,13 @@
 
 Execute para verificar conformidade Semparar:
 ```bash
-grep -l 'AGENTS.md' docs/adr/*.md | wc -l  # deve ser 26 (todos os ADRs)
-find docs/adr/taskmaster/ -name '*.json' | wc -l  # deve ser 6+
+grep -l 'AGENTS.md' docs/adr/*.md | wc -l  # deve ser 33 (todos os ADRs)
+find docs/adr/taskmaster/ -name '*.json' | wc -l  # deve ser 14+
 ```
 
 ---
 
 **Última atualização**: 2026-03-28
-**Conformidade Semparar**: ✅ 26/26 ADRs com links | ✅ 6/6 JSONs taskmaster
+**Conformidade Semparar**: ✅ 44/44 ADRs com links | ✅ 20/20 JSONs taskmaster
+**ADRs Jarvis/Computer Use**: 13 novos (P1-P3 + SOTA Open Source)
 **Slice completada**: 20260328-adr-semparar-docs-adr-resolve ✅
