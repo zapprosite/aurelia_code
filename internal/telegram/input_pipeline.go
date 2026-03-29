@@ -52,13 +52,24 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 
 	// [SOTA 2026] Porteiro Sentinel Input Guardrail (Redis + Qwen)
 	if bc.porteiro != nil && !requiresAudio {
-		safe, err := bc.porteiro.IsSafe(session.ctx, session.text)
-		if err != nil {
-			logger.Error("falha no porteiro", slog.Any("err", err))
-		} else if !safe {
-			observability.Logger("telegram.pipeline").Warn("input blocked by porteiro", slog.String("session", session.convID))
-			_ = SendError(bc.bot, c.Chat(), " [🛑 BLOQUEIO DE SEGURANÇA: TENTATIVA DE INJECTION DETECTADA] ")
-			return nil
+		// Owner Bypass: Don't block the boss
+		isOwner := false
+		for _, id := range bc.allowedUserIDs {
+			if id == c.Sender().ID {
+				isOwner = true
+				break
+			}
+		}
+
+		if !isOwner {
+			safe, err := bc.porteiro.IsSafe(session.ctx, session.text)
+			if err != nil {
+				logger.Error("falha no porteiro", slog.Any("err", err))
+			} else if !safe {
+				observability.Logger("telegram.pipeline").Warn("input blocked by porteiro", slog.String("session", session.convID))
+				_ = SendError(bc.bot, c.Chat(), " [🛑 BLOQUEIO DE SEGURANÇA: TENTATIVA DE INJECTION DETECTADA] ")
+				return nil
+			}
 		}
 	}
 

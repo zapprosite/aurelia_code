@@ -36,10 +36,25 @@ type ModelResponse struct {
 	Metadata         map[string]string // Capture headers like X-RateLimit-*
 }
 
-// LLMProvider is the interface for different AI providers (Gemini, DeepSeek, etc)
+// StreamResponse is the incremental data sent by GenerateStream
+type StreamResponse struct {
+	Content      string
+	Done         bool
+	InputTokens  int
+	OutputTokens int
+	Err          error
+	ToolCalls    []ToolCall
+	History      []Message
+}
+
+// LLMProvider is the interface for different AI providers (Gemini, Qwen, etc)
 type LLMProvider interface {
 	// GenerateContent sends a prompt with history and available tools, returning a response
 	GenerateContent(ctx context.Context, systemPrompt string, history []Message, tools []Tool) (*ModelResponse, error)
+
+	// GenerateStream returns a channel of incremental responses.
+	// IMPORTANT for SOTA 2026: Enables movie-like fluidity and real-time TTS synthesis.
+	GenerateStream(ctx context.Context, systemPrompt string, history []Message, tools []Tool) (<-chan StreamResponse, error)
 }
 
 // Message is the standard internal representation of a chat message in the loop

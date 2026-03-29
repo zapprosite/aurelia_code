@@ -16,7 +16,7 @@ Esta skill governa a evolução da infraestrutura e segurança da Aurélia, gara
 - **Observabilidade**: Dashboards de saúde via tRPC refletindo o status real da CPU/GPU.
 
 ### 2. Soberania de Modelos
-- **Tiering**: Fiscalização do uso correto de MiniMax (Arquitetura) vs DeepSeek (Roteamento) vs Gemma3 (Local).
+- **Tiering**: Fiscalização do uso correto de MiniMax (Arquitetura) vs DeepSeek (Roteamento) vs Qwen 3.5 (Local).
 - **VRAM**: Manutenção do teto de memória para evitar pânico de kernel ou OOM na RTX 4090.
 
 ### 3. Documentação e Evolução

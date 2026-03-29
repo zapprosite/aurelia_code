@@ -49,8 +49,8 @@ Integração industrial do ecossistema SOTA 2026.1 com foco em:
 - ⚠️ **Referência quebrada**: `docs/governance/S-23-cloudflare-access.md` — verificar se existe
 
 #### .agent/rules/13-model-stack-policy.md (+20)
-- ✅ Stack de modelos SOTA clara (Claude 3.7, Gemma 3, MiniMax 2.7)
-- ⚠️ **"modelos sem suporte a Function Calling"** — Gemma 3 local pode não suportar — documentar fallback
+- ✅ Stack de modelos SOTA clara (Claude 3.7, Qwen 3.5 (VL), MiniMax 2.7)
+- ⚠️ **"modelos sem suporte a Function Calling"** — Qwen 3.5 (VL) local pode não suportar — documentar fallback
 
 #### .agent/skills/security-audit/SKILL.md (+24)
 - ✅ Checklist de auditoria relevante
@@ -107,7 +107,7 @@ Integração industrial do ecossistema SOTA 2026.1 com foco em:
 
 #### .agent/skills/homelab-control/SKILL.md (+46)
 - ✅ Comandos concretos (nvidia-smi, zpool status, docker ps)
-- ✅ VRAM management para Gemma3 na RTX 4090
+- ✅ VRAM management para Qwen 3.5 na RTX 4090
 - ✅ Anti-padrões claros
 
 ---
@@ -229,7 +229,7 @@ Executada validação com `python3 -m py_compile`:
 
 3. **Padronizar SKILL.md frontmatter** — criar JSON Schema
 
-4. **Auditar VRAM** — Gemma3 12B fits in 795MB VRAM? Validar nvidia-smi output
+4. **Auditar VRAM** — Qwen 3.5 12B fits in 795MB VRAM? Validar nvidia-smi output
 
 ---
 

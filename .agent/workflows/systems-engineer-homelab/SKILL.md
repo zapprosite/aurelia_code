@@ -13,7 +13,7 @@ Garantir que o Home Lab opere com 99.9% de disponibilidade, utilizando a arquite
 ## 🏛️ Governança de Execução (Triple-Tier)
 1. **Tier 1 (Premium - MiniMax 2.7)**: Use para diagnósticos complexos de kernel, depuração de drivers NVIDIA ou arquitetura de redes ZFS/Docker.
 2. **Tier 2 (Structured - DeepSeek 3.1)**: Use para automação de scripts, roteamento de logs e parsing de estados de containers.
-3. **Tier 3 (Local Sovereign - Gemma 3)**: O executor padrão para comandos `sudo`, correções rápidas e manutenção de rotina quando a privacidade é crítica ou o OpenRouter está indisponível.
+3. **Tier 3 (Local Sovereign - Qwen 3.5 (VL))**: O executor padrão para comandos `sudo`, correções rápidas e manutenção de rotina quando a privacidade é crítica ou o OpenRouter está indisponível.
 
 ## 🛡️ Guardrails e Protocolos (Industrial)
 
@@ -23,7 +23,7 @@ Garantir que o Home Lab opere com 99.9% de disponibilidade, utilizando a arquite
 - **Auditoria de Segredos**: Nunca exponha chaves em logs ou commits. Use `/security-audit` se necessário.
 
 ### 2. Observabilidade de Infra
-- **GPU**: Monitore VRAM (`nvidia-smi`) para garantir que o Gemma 3 tenha espaço para inferência.
+- **GPU**: Monitore VRAM (`nvidia-smi`) para garantir que o Qwen 3.5 (VL) tenha espaço para inferência.
 - **Containers**: Verifique logs de containers (`docker logs --tail 50 <name>`) antes de reiniciar serviços.
 - **Estabilidade**: Se o sistema estiver instável, use o script `scripts/health-check.sh`.
 

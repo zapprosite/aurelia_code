@@ -43,6 +43,18 @@ func run(args []string) int {
 				return 1
 			}
 			return 0
+		case "tutor":
+			if err := runTutorCommand(args[2:], os.Stdout); err != nil {
+				logger.Error("failed to run tutor command", slog.Any("err", err))
+				return 1
+			}
+			return 0
+		case "live":
+			if err := runLiveCommand(args[2:], os.Stdout); err != nil {
+				logger.Error("failed to run live command", slog.Any("err", err))
+				return 1
+			}
+			return 0
 		default:
 			logger.Error("unknown command", slog.String("command", args[1]))
 			return 1

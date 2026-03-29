@@ -5,7 +5,7 @@ description: Sincroniza a memória do repositório (markdown) -> Qdrant (embeddi
 
 # 🧠 Memory Sync: Sovereign Vector Architecture
 
-Esta skill governa o fluxo de persistência e recuperação de memória semântica da Aurélia, permitindo que LLMs locais (Gemma 3) ou remotas (MiniMax 2.7) acessem o histórico de decisões e código sem depender de busca textual pura.
+Esta skill governa o fluxo de persistência e recuperação de memória semântica da Aurélia, permitindo que LLMs locais (Qwen 3.5 (VL)) ou remotas (MiniMax 2.7) acessem o histórico de decisões e código sem depender de busca textual pura.
 
 ## 🏗️ Arquitetura de Memória (2026)
 

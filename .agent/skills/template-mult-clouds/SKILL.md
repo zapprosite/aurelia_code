@@ -8,7 +8,7 @@ description: Bootstrap universal do repositório multi-agente com Antigravity + 
 Skill estratégica para orquestrar a colaboração entre múltiplos provedores de nuvem (Cloud) e o host local (Sovereign) com Antigravity + Claude + OpenCode, garantindo redundância e performance.
 
 ## 🏛️ Estratégia de Provedores (Soberana)
-- **Sovereign Host**: Ollama `gemma3:27b` rodando na RTX 4090 local (Tier 0 — custo zero).
+- **Sovereign Host**: Ollama `qwen3.5` rodando na RTX 4090 local (Tier 0 — custo zero).
 - **Cloud Rápido**: OpenRouter `google/gemini-2.5-flash` (Tier 1 — baixo custo).
 - **Cloud Profundo**: OpenRouter `google/gemini-2.5-pro` (Tier 2 — raciocínio avançado).
 - **Orquestração**: Antigravity + Claude + OpenCode como motores de execução.

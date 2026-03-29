@@ -54,10 +54,10 @@ func (bc *BotController) handleStart(c telebot.Context) error {
 		_ = bc.seedBootstrapIdentity(c, preset)
 	}
 
-	welcome := "━━━━━━ Aurelia Sovereign 2026 ━━━━━━\n\n" +
-		"🛰️ **Soberania Ativa.**\n" +
-		"Bem-vindo ao cockpit de comando, Master. O sistema está operando em regime industrial com **Gemma 3** e **RTX 4090**.\n\n" +
-		"Toda a verbosidade técnica foi movida para o dashboard para manter este canal limpo e estratégico."
+	welcome := "━━━━━━ Aurelia Sovereign 2026.2 💎 ━━━━━━\n\n" +
+		"🛰️ **Soberania Industrial Ativa.**\n" +
+		"Bem-vindo ao cockpit de comando, Master. O sistema está operando em regime industrial SOTA 2026.2 com **Qwen 3.5 9B VL** e **Barge-in (Interrupção por Voz)**.\n\n" +
+		"A arquitetura de Atores (SAP) garante fluidez cinematográfica e auto-cura em tempo real."
 
 	menu := &telebot.ReplyMarkup{}
 	btnDashboard := menu.URL("🛰️ Dashboard Operacional", "https://aurelia.zappro.site/")

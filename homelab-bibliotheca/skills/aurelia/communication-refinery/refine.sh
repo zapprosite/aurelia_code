@@ -79,7 +79,7 @@ CLEAN_TEXT=$(echo "$TEXT" | tr '\n' ' ' | sed 's/"/\\"/g')
 
 REFINED_TEXT=$(curl -s -X POST "http://127.0.0.1:11434/api/generate" \
     -d "{
-        \"model\": \"gemma3:12b\",
+        \"model\": \"qwen3.5\",
         \"prompt\": \"PERSONA: $SOUL_PROMPT\n\nREWRITE EXACTLY IN THE TONE OF THE PERSONA FOR TELEGRAM MARKDOWN. BE DIRECT, PREMIUM AND SENIOR. USE THE EMOJIS FROM PERSONA.\n\nORIGINAL TEXT: $CLEAN_TEXT\",
         \"stream\": false,
         \"options\": {\"temperature\": 0.3}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MODEL="${MODEL:-gemma3:27b}"
+MODEL="${MODEL:-qwen3.5}"
 PROMPT="${PROMPT:-Responda apenas OK.}"
 
 export OLLAMA_NUM_PARALLEL="${OLLAMA_NUM_PARALLEL:-1}"

@@ -83,15 +83,31 @@ type LoopOptions struct {
 }
 
 func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message, string, error) {
-	logger := observability.Logger("agent.loop")
-	currentHistory := opts.InitialHistory
-
-	// Atualizar squad status quando inicia
-	agentName, _ := AgentContextFromContext(ctx)
-	if agentName != "" {
-		UpdateSquadAgentStatus(agentName, "busy", 50)
-		defer UpdateSquadAgentStatus(agentName, "online", 0)
+	ch, err := l.RunWithOptionsStream(ctx, opts)
+	if err != nil {
+		return opts.InitialHistory, "", err
 	}
+
+	var currentHistory []Message
+	var lastContent string
+	for resp := range ch {
+		if resp.Err != nil {
+			return currentHistory, "", resp.Err
+		}
+		if resp.Done && resp.History != nil {
+			currentHistory = resp.History
+		}
+		if resp.Content != "" {
+			lastContent = resp.Content
+		}
+	}
+	return currentHistory, lastContent, nil
+}
+
+// RunWithOptionsStream é a nova versão industrial que suporta streaming em tempo real
+func (l *Loop) RunWithOptionsStream(ctx context.Context, opts LoopOptions) (<-chan StreamResponse, error) {
+	logger := observability.Logger("agent.loop")
+	ch := make(chan StreamResponse, 100)
 
 	if opts.MaxIterations <= 0 {
 		opts.MaxIterations = l.maxIterations
@@ -102,109 +118,109 @@ func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message,
 	opts.SystemPrompt = augmentSystemPromptWithRuntimeCapabilities(opts.SystemPrompt, opts.ToolDefinitions)
 	opts.SystemPrompt = l.augmentSystemPromptWithMemory(ctx, opts.SystemPrompt, opts.Task, opts.InitialHistory)
 
-	for i := 0; i < opts.MaxIterations; i++ {
-		// Stop if context cancelled
-		select {
-		case <-ctx.Done():
-			return currentHistory, "", ctx.Err()
-		default:
-		}
+	go func() {
+		defer close(ch)
+		currentHistory := opts.InitialHistory
 
-		if opts.InterruptHandler != nil && opts.InterruptHandler() {
-			return currentHistory, "Interrompido pelo usuário.", nil
-		}
-
-		// Adicionar orientação sobre a fase atual no System Prompt dinâmico
-		currentPhase, _ := PrevPhaseFromContext(ctx)
-		dynamicSystemPrompt := augmentSystemPromptWithPhase(opts.SystemPrompt, currentPhase)
-		// O provedor de LLM PRECISA das ferramentas registradas (usar filtradas se disponíveis)
-		resp, err := l.llm.GenerateContent(ctx, dynamicSystemPrompt, currentHistory, opts.ToolDefinitions)
-		if err != nil {
-			return currentHistory, "", fmt.Errorf("generate content error: %w", err)
-		}
-
-		// Handle completion
-		if len(resp.ToolCalls) == 0 {
-			if resp.Content != "" || resp.ReasoningContent != "" {
-				currentHistory = append(currentHistory, Message{
-					Role:             "assistant",
-					Content:          resp.Content,
-					ReasoningContent: resp.ReasoningContent,
-				})
-			}
-			return currentHistory, resp.Content, nil
-		}
-
-		// AI wants to call tools
-		currentHistory = append(currentHistory, Message{
-			Role:             "assistant",
-			Content:          resp.Content,
-			ReasoningContent: resp.ReasoningContent,
-			ToolCalls:        resp.ToolCalls,
-		})
-
-		for _, call := range resp.ToolCalls {
-			logger.Info("executing tool", slog.String("tool_name", call.Name), slog.Any("arg_keys", observability.MapKeys(call.Arguments)))
-
-			dashboard.Publish(dashboard.Event{
-				Type:      "agent_tool",
-				Agent:     "Aurelia",
-				Action:    "Executando tool: " + call.Name,
-				Payload:   call.Arguments,
-				Timestamp: time.Now().Format("15:04:05"),
-			})
-
-			resultStr, toolErr := l.registry.Execute(ctx, call.Name, call.Arguments)
-			if toolErr != nil {
-				errorPayload, _ := json.Marshal(map[string]string{
-					"error": toolErr.Error(),
-				})
-				resultStr = string(errorPayload)
+		for i := 0; i < opts.MaxIterations; i++ {
+			select {
+			case <-ctx.Done():
+				ch <- StreamResponse{Err: ctx.Err()}
+				return
+			default:
 			}
 
-			// Interceptador global do PREV (Hard-Gate)
-			if call.Name == "set_phase" {
-				if newPhase, ok := call.Arguments["phase"].(string); ok {
-					if newPhase == "EXECUTION" {
-						if plan.GlobalPlanStore.HasPending() {
-							resultStr = "BLOQUEIO DE SEGURANÇA: Existem planos propostos aguardando aprovação humana no Cockpit. Você NÃO pode iniciar a execução sem o OK do usuário."
-							dashboard.Publish(dashboard.Event{
-								Type:      "security_alert",
-								Agent:     "Aurelia",
-								Action:    "Tentativa de Execução Bloqueada",
-								Payload:   "Aguardando aprovação de plano pendente.",
-								Timestamp: time.Now().Format("15:04:05"),
-							})
+			if opts.InterruptHandler != nil && opts.InterruptHandler() {
+				ch <- StreamResponse{Content: "Interrompido pelo usuário.", Done: true, History: currentHistory}
+				return
+			}
 
-							currentHistory = append(currentHistory, Message{
-								Role:    "tool",
-								Content: resultStr,
-							})
-							continue // Não muda a fase
-						}
-					}
-					ctx = WithPrevPhase(ctx, newPhase)
+			currentPhase, _ := PrevPhaseFromContext(ctx)
+			dynamicSystemPrompt := augmentSystemPromptWithPhase(opts.SystemPrompt, currentPhase)
+
+			stream, err := l.llm.GenerateStream(ctx, dynamicSystemPrompt, currentHistory, opts.ToolDefinitions)
+			if err != nil {
+				ch <- StreamResponse{Err: fmt.Errorf("generate stream error: %w", err)}
+				return
+			}
+
+			var fullContent strings.Builder
+			var toolCalls []ToolCall
+
+			for resp := range stream {
+				if resp.Err != nil {
+					ch <- resp
+					return
+				}
+				if resp.Content != "" {
+					fullContent.WriteString(resp.Content)
+					ch <- resp // Forward token to caller (Jarvis TTS/UI)
+				}
+				if resp.Done {
+					toolCalls = resp.ToolCalls
 				}
 			}
 
-			const maxToolResultLength = 32768
-			if len(resultStr) > maxToolResultLength {
-				resultStr = resultStr[:maxToolResultLength] + "\n\n... [TRUNCATED]"
+			// Se não tem tool calls, terminou a jornada
+			if len(toolCalls) == 0 {
+				currentHistory = append(currentHistory, Message{
+					Role:    "assistant",
+					Content: fullContent.String(),
+				})
+				ch <- StreamResponse{Done: true, History: currentHistory}
+				return
 			}
 
+			// Execução de tools
 			currentHistory = append(currentHistory, Message{
-				Role:       "tool",
-				Content:    resultStr,
-				ToolCallID: call.ID,
+				Role:      "assistant",
+				Content:   fullContent.String(),
+				ToolCalls: toolCalls,
 			})
 
-			if call.Name == "handoff_to_agent" {
-				return currentHistory, resultStr, nil
+			for _, call := range toolCalls {
+				logger.Info("executing tool", slog.String("tool_name", call.Name))
+				dashboard.Publish(dashboard.Event{
+					Type:      "agent_tool",
+					Agent:     "Aurelia",
+					Action:    "Executando tool: " + call.Name,
+					Payload:   call.Arguments,
+					Timestamp: time.Now().Format("15:04:05"),
+				})
+
+				resultStr, toolErr := l.registry.Execute(ctx, call.Name, call.Arguments)
+				if toolErr != nil {
+					errorPayload, _ := json.Marshal(map[string]string{"error": toolErr.Error()})
+					resultStr = string(errorPayload)
+				}
+
+				// Lógica de fases
+				if call.Name == "set_phase" {
+					if newPhase, ok := call.Arguments["phase"].(string); ok {
+						if newPhase == "EXECUTION" && plan.GlobalPlanStore.HasPending() {
+							resultStr = "PLANOS PENDENTES: Aprovação necessária."
+						} else {
+							ctx = WithPrevPhase(ctx, newPhase)
+						}
+					}
+				}
+
+				currentHistory = append(currentHistory, Message{
+					Role:       "tool",
+					Content:    resultStr,
+					ToolCallID: call.ID,
+				})
+
+				if call.Name == "handoff_to_agent" {
+					ch <- StreamResponse{Done: true, History: currentHistory}
+					return
+				}
 			}
 		}
-	}
+		ch <- StreamResponse{Err: fmt.Errorf("max iterations reached"), History: currentHistory}
+	}()
 
-	return currentHistory, "Max iterations reached", fmt.Errorf("max iterations reached")
+	return ch, nil
 }
 
 func (l *Loop) resolveToolDefinitions(history []Message, allowedTools []string) []Tool {

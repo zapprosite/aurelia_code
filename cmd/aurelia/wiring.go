@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/kocar/aurelia/internal/agent"
+	"github.com/kocar/aurelia/internal/computer_use"
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/cron"
 	"github.com/kocar/aurelia/internal/gateway"
@@ -30,6 +31,37 @@ func buildToolRegistry() *agent.ToolRegistry {
 	registry.RegisterPlannerTools()
 	registry.RegisterMemoryTools()
 	registry.RegisterVerifierTools()
+
+	// Enterprise Kit (SOTA 2026)
+	ek := computer_use.NewEnterpriseKit("https://google.com")
+	registry.Register(agent.Tool{
+		Name:        "playwright_codegen",
+		Description: "Abre o gravador do Playwright para gerar scripts de automação. Reclama um URL.",
+		JSONSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"url": map[string]any{"type": "string"},
+			},
+		},
+	}, func(ctx context.Context, args map[string]any) (string, error) {
+		url, _ := args["url"].(string)
+		return ek.PlaywrightCodeGen(url)
+	})
+
+	registry.Register(agent.Tool{
+		Name:        "inspect_dom",
+		Description: "Extrai a árvore de acessibilidade/DOM de um URL para análise profunda.",
+		JSONSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"url": map[string]any{"type": "string"},
+			},
+		},
+	}, func(ctx context.Context, args map[string]any) (string, error) {
+		url, _ := args["url"].(string)
+		return ek.InspectDOM(url)
+	})
+
 	return registry
 }
 
@@ -95,6 +127,8 @@ func maybeRegisterMCPTools(cfg *config.AppConfig, registry *agent.ToolRegistry) 
 		return nil, loggableError("failed to start MCP Manager: %v", err)
 	}
 	tools.RegisterMCPTools(registry, mcpManager)
+	// Inject MCP manager for computer use tools (stagehand handlers)
+	tools.SetGlobalMCPManager(mcpManager)
 	observability.Logger("cmd.wiring").Info("MCP manager initialized", slog.Int("tool_count", len(mcpManager.ToolSpecs())))
 	return mcpManager, nil
 }

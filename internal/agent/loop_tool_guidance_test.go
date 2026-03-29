@@ -15,6 +15,22 @@ func (c *capturePromptProvider) GenerateContent(ctx context.Context, systemPromp
 	return &ModelResponse{Content: "ok"}, nil
 }
 
+func (c *capturePromptProvider) GenerateStream(ctx context.Context, systemPrompt string, history []Message, tools []Tool) (<-chan StreamResponse, error) {
+	resp, err := c.GenerateContent(ctx, systemPrompt, history, tools)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan StreamResponse, 10)
+	go func() {
+		defer close(ch)
+		if resp != nil {
+			ch <- StreamResponse{Content: resp.Content}
+		}
+		ch <- StreamResponse{Done: true}
+	}()
+	return ch, nil
+}
+
 func TestLoop_Run_AppendsToolUsageGuidanceForLocalExecution(t *testing.T) {
 	t.Parallel()
 

@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/google/generative-ai-go/genai"
@@ -133,6 +134,79 @@ func (p *GeminiProvider) GenerateContent(ctx context.Context, systemPrompt strin
 	}
 
 	return parseGeminiResponse(resp)
+}
+
+func (p *GeminiProvider) GenerateStream(
+	ctx context.Context,
+	systemPrompt string,
+	history []agent.Message,
+	tools []agent.Tool,
+) (<-chan agent.StreamResponse, error) {
+	if err := ensureVisionSupport("google", p.name, history); err != nil {
+		return nil, err
+	}
+	// Copy logic from GenerateContent but use stream
+	p.model.SystemInstruction = genai.NewUserContent(genai.Text(systemPrompt))
+
+	var contents []*genai.Content
+	var lastPart genai.Part
+	chat := p.model.StartChat()
+
+	for i, msg := range history {
+		role := "user"
+		if msg.Role == "assistant" || msg.Role == "tool" {
+			role = "model"
+		}
+		var parts []genai.Part
+		if msg.Role == "tool" {
+			parts = []genai.Part{genai.FunctionResponse{
+				Name:     msg.ToolCallID,
+				Response: map[string]any{"result": msg.Content},
+			}}
+		} else {
+			parts = buildGeminiParts(msg)
+		}
+
+		if i == len(history)-1 && role == "user" {
+			if len(parts) > 0 {
+				lastPart = parts[0]
+				// Note: Gemini SDK SendMessageStream currently handles multiple parts well
+			}
+			break
+		}
+		contents = append(contents, &genai.Content{Role: role, Parts: parts})
+	}
+	chat.History = contents
+
+	if lastPart == nil {
+		lastPart = genai.Text("")
+	}
+
+	ch := make(chan agent.StreamResponse, 100)
+	go func() {
+		defer close(ch)
+		iter := chat.SendMessageStream(ctx, lastPart)
+		for {
+			resp, err := iter.Next()
+			if err == io.EOF {
+				ch <- agent.StreamResponse{Done: true}
+				return
+			}
+			if err != nil {
+				ch <- agent.StreamResponse{Err: err}
+				return
+			}
+			if len(resp.Candidates) > 0 && resp.Candidates[0].Content != nil {
+				for _, part := range resp.Candidates[0].Content.Parts {
+					if t, ok := part.(genai.Text); ok {
+						ch <- agent.StreamResponse{Content: string(t)}
+					}
+				}
+			}
+		}
+	}()
+
+	return ch, nil
 }
 
 func buildGeminiParts(msg agent.Message) []genai.Part {

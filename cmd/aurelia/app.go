@@ -70,6 +70,9 @@ type app struct {
 	voiceProcessor *voice.Processor
 	voiceCapture   *voice.CaptureWorker
 	voiceMirrorDB  closableVoiceMirror
+
+	// Agent Loop (Streaming Support 2026.1)
+	agentLoop *agent.Loop
 }
 
 type closableLLMProvider interface {
@@ -104,6 +107,7 @@ func bootstrapApp(args []string) (*app, error) {
 		a.close()
 		return nil, err
 	}
+	a.agentLoop = loop
 
 	// 4. Features & Interfaces
 	if err := a.initFeatures(loop, logger); err != nil {
@@ -361,20 +365,14 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	a.primaryBot.SetSquadReporter(squadStatusAdapter{})
 	a.primaryBot.SetCronJobReporter(&cronNextJobAdapter{store: a.cronStore})
 
-	// Wire gemma3 input guard or Porteiro
 	ollamaURL := a.cfg.OllamaURL
 	if ollamaURL == "" {
 		ollamaURL = "http://localhost:11434"
 	}
 
 	if a.porteiro != nil {
-		// Aqui poderíamos injetar a lógica do Porteiro no bot.
-		// O BotController espera algo que implemente InputGuard ou similar.
-		// Vamos adaptar o Porteiro para ser usado pelo bot.
 		a.primaryBot.SetPorteiro(a.porteiro)
 		logger.Info("Proteção de entrada migrada para o Porteiro (Qwen 0.5b + Redis)")
-	} else {
-		a.primaryBot.SetInputGuard(telegram.NewInputGuard(ollamaURL))
 	}
 
 	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, notificationBot, a.taskStore); err != nil {

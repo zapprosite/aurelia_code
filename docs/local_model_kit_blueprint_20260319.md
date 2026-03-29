@@ -22,7 +22,7 @@ Fechar o kit local de modelos da Aurelia para:
 
 ### Modelo principal
 
-- `gemma3:27b-it-q4_K_M`
+- `qwen3.5-it-q4_K_M`
 
 Papel:
 
@@ -54,7 +54,7 @@ Papel:
 
 ### Modelo leve
 
-- `gemma3:12b`
+- `qwen3.5`
 
 Papel:
 
@@ -72,7 +72,7 @@ Papel:
 
 ## Decisao Final
 
-Escolher `gemma3:27b-it-q4_K_M` como default local.
+Escolher `qwen3.5-it-q4_K_M` como default local.
 
 Motivo:
 
@@ -109,8 +109,8 @@ Subir para `12288` ou `16384` so depois de prova real de estabilidade.
 ## Kit de Pull
 
 ```bash
-ollama pull gemma3:27b-it-q4_K_M
-ollama pull gemma3:12b
+ollama pull qwen3.5-it-q4_K_M
+ollama pull qwen3.5
 ollama pull bge-m3:latest
 ```
 
@@ -161,7 +161,7 @@ Regra:
 
 - LLM remoto principal quando necessario: `openrouter/minimax/minimax-m2.7`
 - STT: `Groq`
-- LLM local principal: `gemma3:27b-it-q4_K_M`
+- LLM local principal: `qwen3.5-it-q4_K_M`
 - embedding: `bge-m3`
 - browser: `agent-browser`
 - desktop fallback: `xdotool` / `wmctrl`

@@ -6,7 +6,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql://postgres:${SUPABASE_POSTGRES_PASSWORD}@localhost:5435/postgres"
+        "postgresql://postgres:e719cdbeb82c4ab1a7d964cb5328e2c0@localhost:5435/postgres"
       ],
       "env": {}
     },
@@ -16,7 +16,7 @@
       "args": [],
       "env": {
         "QDRANT_URL": "http://localhost:6333",
-        "QDRANT_API_KEY": "${QDRANT_API_KEY}",
+        "QDRANT_API_KEY": "71cae77676e2a5fd552d172caa1c3200",
         "COLLECTION_NAME": "aurelia_skills",
         "QDRANT_SEARCH_LIMIT": "10"
       }

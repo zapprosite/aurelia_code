@@ -31,6 +31,27 @@ func (s *scriptedLLM) GenerateContent(ctx context.Context, systemPrompt string, 
 	return s.handler(systemPrompt, history, defs)
 }
 
+func (s *scriptedLLM) GenerateStream(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (<-chan agent.StreamResponse, error) {
+	resp, err := s.GenerateContent(ctx, systemPrompt, history, tools)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan agent.StreamResponse, 10)
+	go func() {
+		defer close(ch)
+		if resp != nil {
+			ch <- agent.StreamResponse{
+				Content:   resp.Content,
+				ToolCalls: resp.ToolCalls,
+				Done:      true,
+			}
+		} else {
+			ch <- agent.StreamResponse{Done: true}
+		}
+	}()
+	return ch, nil
+}
+
 type queuedLLM struct {
 	mu        sync.Mutex
 	responses []*agent.ModelResponse
@@ -56,6 +77,27 @@ func (q *queuedLLM) GenerateContent(ctx context.Context, systemPrompt string, hi
 	resp := q.responses[0]
 	q.responses = q.responses[1:]
 	return resp, nil
+}
+
+func (q *queuedLLM) GenerateStream(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (<-chan agent.StreamResponse, error) {
+	resp, err := q.GenerateContent(ctx, systemPrompt, history, tools)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan agent.StreamResponse, 10)
+	go func() {
+		defer close(ch)
+		if resp != nil {
+			ch <- agent.StreamResponse{
+				Content:   resp.Content,
+				ToolCalls: resp.ToolCalls,
+				Done:      true,
+			}
+		} else {
+			ch <- agent.StreamResponse{Done: true}
+		}
+	}()
+	return ch, nil
 }
 
 type loopExecutorAdapter struct {

@@ -16,7 +16,7 @@ const (
 	defaultMemoryWindowSize = 20
 	defaultLLMProvider      = "openai_compatible"
 	defaultLLMModel         = "aurelia-smart"
-	defaultSTTProvider      = "groq"
+	defaultSTTProvider      = "local"
 	defaultSTTLanguage      = "pt"
 	defaultGroqSTTBaseURL   = "https://api.groq.com/openai/v1"
 	defaultGroqSTTModel     = "whisper-large-v3-turbo"
@@ -613,7 +613,7 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	// Apply Lite Mode overrides if enabled
 	if cfg.AureliaMode == "lite" {
 		if cfg.LLMProvider == "ollama" {
-			// If no keys for cloud, we keep ollama but maybe a smaller model
+			// If no keys for cloud, we keep qwen3.5
 			// But usually lite means preference for Cloud to save local resources
 			if cfg.OpenRouterAPIKey != "" {
 				cfg.LLMProvider = "openrouter"
@@ -877,7 +877,7 @@ func defaultLLMModelForProvider(provider string) string {
 	case "google":
 		return "gemini-2.5-pro"
 	case "ollama":
-		return "gemma3:12b"
+		return "qwen3.5"
 	case "openrouter":
 		return "openrouter/auto"
 	case "openai":

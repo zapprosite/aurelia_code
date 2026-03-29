@@ -15,9 +15,8 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 
 ## Motor de Inferência da Aurélia (Stack Canônico Pinado 2026)
 
-| Tier | Modelo | Provedor | Prioridade | Uso |
-|------|--------|----------|------------|-----|
-| **Nível 0 (Local)** | `gemma3:27b` | Ollama (RTX 4090) | **1** | Juiz/Executor, Timeout 10s |
+| **Nível 0 (Local)** | `qwen3.5` | Ollama (RTX 4090) | **1** | Juiz/Executor/Visão, SOTA 2026 (VL) |
+| **Nível 0 (Local)** | `faster-whisper-v3` | Local CPU | **1** | STT Soberano (Egisper) |
 | **Nível 1 (Cloud Free)**| `minimax-01:free` | OpenRouter | **2** | Linha de frente gratuita |
 | **Nível 1 (Cloud Free)**| `gemini-2.0-flash` | Google API | **3** | Visão/Arquivos Grandes |
 | **Nível 1 (Cloud Free)**| `llama-3.3-70b` | Groq | **4** | Velocidade absoluta LPU |
@@ -29,11 +28,11 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 
 ---
 
-## Modelos Removidos do Runtime (PROIBIDO reintroduzir)
-
 | Modelo | Removido em | Substituto no Runtime |
 |--------|------------|----------------------|
-| `gemma3:12b` | 2026-03-28 | `gemma3:27b` |
+| `gemma3:27b` | 2026-03-29 | `qwen3.5:9b-vl` (Superior) |
+| `gemma3:12b` | 2026-03-29 | `qwen3.5:9b-vl` |
+| `groq/whisper` | 2026-03-29 | `faster-whisper-v3` (Local) |
 | `deepseek/chat` | 2026-03-28 | `glm-5` (Tier 2) |
 | `bge-m3` | 2026-03-26 | `nomic-embed-text` |
 
@@ -67,9 +66,14 @@ scripts/update-ollama.sh           ← MAIN_MODEL / EMBED_MODEL
 
 Se um agente reintroduzir modelo proibido ou confundir orquestrador com motor interno:
 ```bash
-# Detectar modelos legados no runtime
-grep -r "qwen3\.5\|qwen/qwen3\|bge-m3\|gemma3:27b\|gemini-2\.5\|gemini-flash\|gemini-pro\|google/gemini" internal/ cmd/ scripts/
-# Detectar orquestradores no runtime (não deveriam estar aqui)
+# Detectar ## Modelos PROIBIDOS (legado — não reintroduzir)
+
+gemma3:27b        ← removido em 2026-03-29, substituído por qwen3.5
+gemma3:12b        ← removido em 2026-03-29
+gemma/gemma3-*    ← removido do Tier 1/2
+google/gemini-*   ← removido do motor interno (era placeholder, substituído por DeepSeek/MiniMax/Kimi)
+codex             ← CLI auth removida, não reintroduzir
+
 grep -r "anthropic/claude\|opencode\|antigravity" internal/gateway/ internal/config/
 ```
 Se retornar algo além de docs históricos → **reverter imediatamente**.

@@ -47,7 +47,7 @@ func TestBuildLLMProvider_Google(t *testing.T) {
 func TestBuildLLMProvider_Ollama(t *testing.T) {
 	cfg := &config.AppConfig{
 		LLMProvider: "ollama",
-		LLMModel:    "gemma3:12b",
+		LLMModel:    "qwen3.5",
 	}
 
 	provider, err := buildLLMProvider(cfg, nil)
@@ -64,7 +64,7 @@ func TestBuildLLMProvider_Ollama(t *testing.T) {
 func TestBuildLLMProvider_OllamaIgnoresOpenRouterKey(t *testing.T) {
 	cfg := &config.AppConfig{
 		LLMProvider:      "ollama",
-		LLMModel:         "gemma3:12b",
+		LLMModel:         "qwen3.5",
 		OpenRouterAPIKey: "secret",
 	}
 

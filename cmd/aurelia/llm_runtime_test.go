@@ -13,7 +13,7 @@ func TestBuildLLMRuntimeSnapshot_DirectProvider(t *testing.T) {
 	a := &app{
 		cfg: &config.AppConfig{
 			LLMProvider: "ollama",
-			LLMModel:    "gemma3:27b",
+			LLMModel:    "qwen3.5",
 		},
 	}
 

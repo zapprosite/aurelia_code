@@ -53,9 +53,9 @@ var (
 			IconName: "Clock",
 		},
 		{
-			ID:       "gemma",
-			Name:     "Gemma3",
-			Role:     "Executor Local · Ollama",
+			ID:       "qwen",
+			Name:     "Qwen3.5",
+			Role:     "Executor Local · SOTA 2026 (VL)",
 			Status:   "online",
 			Load:     0,
 			Color:    "text-green-400",
@@ -139,9 +139,9 @@ func updateLiveLoad(cronScheduler CronActiveCounter, ollamaURL, openrouterKey st
 		UpdateSquadAgentStatus("cronus", "online", cronusLoad)
 	}
 
-	// gemma: probe Ollama /api/tags
-	gemmaStatus, gemmaLoad := probeOllama(ollamaURL)
-	UpdateSquadAgentStatus("gemma", gemmaStatus, gemmaLoad)
+	// qwen: probe Ollama /api/tags
+	qwenStatus, qwenLoad := probeOllama(ollamaURL)
+	UpdateSquadAgentStatus("qwen", qwenStatus, qwenLoad)
 
 	// openrouter: probe OpenRouter /api/v1/models
 	orStatus, orLoad := probeOpenRouter(openrouterKey)

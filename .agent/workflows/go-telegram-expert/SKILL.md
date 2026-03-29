@@ -10,7 +10,7 @@ Habilita o Antigravity a projetar e implementar handlers de alta performance par
 ## 🏗️ Arquitetura de Comunicação (Triple-Tier)
 1. **Premium (MiniMax 2.7)**: Use para gerar respostas empáticas, criativas ou realizar análise de sentimentos profunda em mensagens de voz/texto.
 2. **Structured (DeepSeek 3.1)**: Use para parsing de comandos complexos, extração de entidades e roteamento de lógica de fluxos (FSM).
-3. **Local (Gemma 3)**: Use para validação de sintaxe, respostas curtas de status e filtragem de spam.
+3. **Local (Qwen 3.5 (VL))**: Use para validação de sintaxe, respostas curtas de status e filtragem de spam.
 
 ## 🚀 Padrões de Implementação (Industrial)
 

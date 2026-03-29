@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/bench/stress_test.sh - SOTA 2026.1
-# Teste de estresse mesclado: 25 TTS + 25 LLM (Gemma 3 27B)
+# Teste de estresse mesclado: 25 TTS + 25 LLM (Qwen 3.5 (VL) 27B)
 
 CONCURRENCY=5
 TOTAL_REQ=25
@@ -8,7 +8,7 @@ LOG_DIR="scripts/bench/logs"
 mkdir -p $LOG_DIR
 
 echo "--- INICIANDO STRESS TEST SOTA 2026.1 ---"
-echo "Alvo LLM: gemma3:27b"
+echo "Alvo LLM: qwen3.5"
 echo "Alvo TTS: localhost:8012 (Kodoro)"
 echo "-----------------------------------------"
 
@@ -29,7 +29,7 @@ stress_tts() {
 stress_llm() {
     local id=$1
     local start=$(date +%s%N)
-    ollama run gemma3:27b "Responda de forma concisa: Qual a importância da soberania digital em 2026?" > /dev/null 2>&1
+    ollama run qwen3.5 "Responda de forma concisa: Qual a importância da soberania digital em 2026?" > /dev/null 2>&1
     local end=$(date +%s%N)
     local diff=$(( (end - start) / 1000000 ))
     echo "LLM #$id: ${diff}ms" >> $LOG_DIR/results.log

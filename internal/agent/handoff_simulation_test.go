@@ -36,6 +36,27 @@ func (m *MockHandoffLLM) GenerateContent(ctx context.Context, systemPrompt strin
 	return &ModelResponse{Content: "Ok, sou o coder e terminei."}, nil
 }
 
+func (m *MockHandoffLLM) GenerateStream(ctx context.Context, systemPrompt string, history []Message, tools []Tool) (<-chan StreamResponse, error) {
+	resp, err := m.GenerateContent(ctx, systemPrompt, history, tools)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan StreamResponse, 10)
+	go func() {
+		defer close(ch)
+		if resp != nil {
+			ch <- StreamResponse{
+				Content:   resp.Content,
+				ToolCalls: resp.ToolCalls,
+				Done:      true,
+			}
+		} else {
+			ch <- StreamResponse{Done: true}
+		}
+	}()
+	return ch, nil
+}
+
 func TestNativeHandoffSimulation(t *testing.T) {
 	ctx := context.Background()
 	// Usar um path temporário único para evitar conflitos de teste

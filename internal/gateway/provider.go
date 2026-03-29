@@ -159,7 +159,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		})
 	}
 
-	judge := NewGemmaJudge(cfg.OllamaURL, "gemma3:27b")
+	judge := NewGemmaJudge(cfg.OllamaURL, "qwen3.5")
 
 	provider := &Provider{
 		planner:           NewPlanner(),
@@ -231,11 +231,11 @@ func (p *Provider) Close() {
 }
 
 func (p *Provider) PrimaryLLMDescription() string {
-	return "gateway/" + modelGemma3
+	return "gateway/" + modelQwen35
 }
 
 // modelSupportsTools returns whether the model supports OpenAI-style tool calling.
-// Gemma3 does not support tools via Ollama's OpenAI-compatible API.
+// Qwen 3.5 does not support tools via Ollama's OpenAI-compatible API.
 func modelSupportsTools(model string) bool {
 	switch {
 	case strings.HasPrefix(model, "gemma"):
@@ -246,75 +246,12 @@ func modelSupportsTools(model string) bool {
 }
 
 func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (*agent.ModelResponse, error) {
-	opts, _ := agent.RunOptionsFromContext(ctx)
-
-	// Calculate context size roughly
-	contextSize := len(systemPrompt)
-	for _, m := range history {
-		contextSize += len(m.Content)
-	}
-
-	// 1. Call Judge for classification
-	var latestUser string
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Role == "user" {
-			latestUser = history[i].Content
-			break
-		}
-	}
-
-	judgeRes, err := p.judge.Judge(ctx, latestUser, history)
+	candidates, req, effectiveSystemPrompt, judgeRes, err := p.planRequest(ctx, systemPrompt, history, tools)
 	if err != nil {
-		// Judge failed (gemma3 returned non-JSON). Use keyword-based classifier as fallback.
-		fallbackClass := classifyTask(DryRunRequest{Task: latestUser})
-		if fallbackClass == "general" || fallbackClass == "" {
-			fallbackClass = "simple_short" // unknown → treat as simple, route local
-		}
-		observability.Logger("gateway.provider").Warn("judge failed, using keyword fallback",
-			slog.String("error", err.Error()),
-			slog.String("fallback_class", fallbackClass),
-		)
-		judgeRes = &JudgeResult{Class: fallbackClass, Confidence: 0.4, Reason: "keyword fallback"}
+		return nil, err
 	}
-
-	// Inject "Be concise" only for simple/curation tasks.
-	// Professional and other classes get full token budget without truncation pressure.
-	const conciseInstruction = "Be concise. Avoid unnecessary explanations. Output minimal sufficient answer."
-	switch judgeRes.Class {
-	case "simple_short", "curation":
-		if !strings.Contains(systemPrompt, conciseInstruction) {
-			systemPrompt = conciseInstruction + "\n" + systemPrompt
-		}
-	}
-
-	req := DryRunRequest{
-		Task:            latestUser,
-		JudgeClass:      judgeRes.Class,
-		JudgeConfidence: judgeRes.Confidence,
-		ContextSize:     contextSize,
-		RequiresVision:  hasVisionParts(history),
-		// Add other flags if needed
-	}
-
-	if opts.LocalOnly {
-		req.LocalOnly = true
-	}
-	req.OutputMode = opts.OutputMode
-
-	degraded := p.IsDegraded()
-	if degraded.Active && degraded.RemoteDisabled {
-		req.LocalOnly = true
-	}
-
-	candidates := p.planner.Plan(req)
 
 	logger := observability.Logger("gateway.provider")
-	logger.Info("gateway routing attempt",
-		slog.String("class", judgeRes.Class),
-		slog.Float64("confidence", judgeRes.Confidence),
-		slog.Int("candidates", len(candidates)),
-	)
-
 	var lastErr error
 	var previousCandidate *RouteCandidate
 	var failureReasons []string
@@ -325,6 +262,7 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 			continue
 		}
 
+		degraded := p.IsDegraded()
 		if degraded.Active && degraded.RemoteDisabled && candidate.UseRemote {
 			continue
 		}
@@ -333,11 +271,8 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 			p.recordFallback(*previousCandidate, candidate)
 		}
 
-		// Trim history per tier to reduce input tokens.
-		// Local: last 6 turns (cheap, fast). Remote cheap: 12. Remote premium: 20.
 		trimmedHistory := trimHistory(history, historyWindowFor(candidate))
-
-		resp, err := p.generateWithDecision(ctx, candidate, systemPrompt, trimmedHistory, tools)
+		resp, err := p.generateWithDecision(ctx, candidate, effectiveSystemPrompt, trimmedHistory, tools)
 
 		if err != nil {
 			failureReasons = append(failureReasons,
@@ -347,15 +282,12 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 			continue
 		}
 
-		// LocalProbe quality gate: if this was a local probe, check if response
-		// is good enough before accepting it. If not, escalate silently (no failure).
 		if candidate.LocalProbe && resp != nil {
-			if !localProbeQualityOK(latestUser, resp.Content) {
+			if !localProbeQualityOK(req.Task, resp.Content) {
 				logger.Info("local probe quality gate failed, escalating to remote",
 					slog.String("class", judgeRes.Class),
 					slog.Int("response_len", len(resp.Content)),
 				)
-				// Don't record as failure — probe rejection is expected behavior.
 				previousCandidate = nil
 				continue
 			}
@@ -375,6 +307,94 @@ func (p *Provider) GenerateContent(ctx context.Context, systemPrompt string, his
 	return nil, lastErr
 }
 
+func (p *Provider) GenerateStream(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (<-chan agent.StreamResponse, error) {
+	candidates, req, effectiveSystemPrompt, _, err := p.planRequest(ctx, systemPrompt, history, tools)
+	if err != nil {
+		return nil, err
+	}
+
+	// For simplicity, for now we only stream from the first viable candidate
+	// Real failover for streams is complex because state change is irreversible
+	var candidate *RouteCandidate
+	for _, c := range candidates {
+		if req.LocalOnly && c.UseRemote {
+			continue
+		}
+		degraded := p.IsDegraded()
+		if degraded.Active && degraded.RemoteDisabled && c.UseRemote {
+			continue
+		}
+		candidate = &c
+		break
+	}
+
+	if candidate == nil {
+		return nil, fmt.Errorf("no viable route candidate for streaming")
+	}
+
+	trimmedHistory := trimHistory(history, historyWindowFor(*candidate))
+	return p.generateStreamWithDecision(ctx, *candidate, effectiveSystemPrompt, trimmedHistory, tools)
+}
+
+func (p *Provider) planRequest(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) ([]RouteCandidate, DryRunRequest, string, *JudgeResult, error) {
+	opts, _ := agent.RunOptionsFromContext(ctx)
+
+	contextSize := len(systemPrompt)
+	for _, m := range history {
+		contextSize += len(m.Content)
+	}
+
+	var latestUser string
+	for i := len(history) - 1; i >= 0; i-- {
+		if history[i].Role == "user" {
+			latestUser = history[i].Content
+			break
+		}
+	}
+
+	judgeRes, err := p.judge.Judge(ctx, latestUser, history)
+	if err != nil {
+		fallbackClass := classifyTask(DryRunRequest{Task: latestUser})
+		if fallbackClass == "general" || fallbackClass == "" {
+			fallbackClass = "simple_short"
+		}
+		observability.Logger("gateway.provider").Warn("judge failed, using keyword fallback",
+			slog.String("error", err.Error()),
+			slog.String("fallback_class", fallbackClass),
+		)
+		judgeRes = &JudgeResult{Class: fallbackClass, Confidence: 0.4, Reason: "keyword fallback"}
+	}
+
+	const conciseInstruction = "Be concise. Avoid unnecessary explanations. Output minimal sufficient answer."
+	switch judgeRes.Class {
+	case "simple_short", "curation":
+		if !strings.Contains(systemPrompt, conciseInstruction) {
+			systemPrompt = conciseInstruction + "\n" + systemPrompt
+		}
+	}
+
+	req := DryRunRequest{
+		Task:            latestUser,
+		JudgeClass:      judgeRes.Class,
+		JudgeConfidence: judgeRes.Confidence,
+		ContextSize:     contextSize,
+		RequiresVision:  hasVisionParts(history),
+		OutputMode:      opts.OutputMode,
+	}
+
+	if opts.LocalOnly {
+		req.LocalOnly = true
+	}
+
+	degraded := p.IsDegraded()
+	if degraded.Active && degraded.RemoteDisabled {
+		req.LocalOnly = true
+	}
+
+	candidates := p.planner.Plan(req)
+	return candidates, req, systemPrompt, judgeRes, nil
+}
+
 func (p *Provider) StatusSnapshot() StatusSnapshot {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -390,7 +410,7 @@ func (p *Provider) StatusSnapshot() StatusSnapshot {
 
 	return StatusSnapshot{
 		PrimaryLane: "local",
-		PrimaryMode: modelGemma3,
+		PrimaryMode: modelQwen35,
 		Budgets:     budgets,
 		Routes:      routes,
 		Degraded:    p.degraded,
@@ -473,7 +493,7 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 		Timestamp: time.Now().Format("15:04:05"),
 	})
 
-	// Strip tools for local models that don't support tool calling (e.g. gemma3).
+	// Strip tools for local models that don't support tool calling (e.g. qwen3.5).
 	effectiveTools := tools
 	toolsStripped := false
 	if !decision.UseRemote && !modelSupportsTools(decision.Model) {
@@ -509,6 +529,79 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 	}
 	p.observeResult(decision, "success", time.Since(startedAt))
 	return resp, nil
+}
+
+func (p *Provider) generateStreamWithDecision(ctx context.Context, decision RouteCandidate, systemPrompt string, history []agent.Message, tools []agent.Tool) (<-chan agent.StreamResponse, error) {
+	startedAt := time.Now()
+	providerKey := decision.Provider + ":" + decision.Model
+	if p.breakerOpen(providerKey) {
+		p.observeResult(decision, "breaker_open", time.Since(startedAt))
+		return nil, fmt.Errorf("route breaker open for %s", providerKey)
+	}
+	if p.budgetExceeded(decision.BudgetLane) {
+		p.observeResult(decision, "budget_exceeded", time.Since(startedAt))
+		return nil, fmt.Errorf("budget exceeded for %s", decision.BudgetLane)
+	}
+	if p.costExceeded(decision.BudgetLane) {
+		p.observeResult(decision, "cost_exceeded", time.Since(startedAt))
+		return nil, fmt.Errorf("cost limit exceeded for %s", decision.BudgetLane)
+	}
+
+	provider := p.providerFor(decision.Lane)
+	if provider == nil {
+		p.observeResult(decision, "provider_unavailable", time.Since(startedAt))
+		return nil, fmt.Errorf("provider unavailable for %s", providerKey)
+	}
+
+	systemPrompt = applyGuards(systemPrompt, decision)
+	p.markRequest(decision.BudgetLane, providerKey, decision.Model)
+
+	dashboard.Publish(dashboard.Event{
+		Type:      "route_decision",
+		Agent:     "Gateway",
+		Action:    fmt.Sprintf("stream:%s → %s:%s", decision.BudgetLane, decision.Provider, decision.Model),
+		Timestamp: time.Now().Format("15:04:05"),
+	})
+
+	effectiveTools := tools
+	if !decision.UseRemote && !modelSupportsTools(decision.Model) {
+		effectiveTools = nil
+	}
+
+	ch, err := provider.GenerateStream(ctx, systemPrompt, history, effectiveTools)
+	if err != nil {
+		p.markFailure(decision.BudgetLane, providerKey, err.Error())
+		p.observeResult(decision, "error", time.Since(startedAt))
+		return nil, err
+	}
+
+	// Dynamic wrapper to track tokens and success/failure from the stream
+	out := make(chan agent.StreamResponse, 100)
+	go func() {
+		defer close(out)
+		var totalOutputTokens int
+		var streamErr error
+		for resp := range ch {
+			if resp.Err != nil {
+				streamErr = resp.Err
+			}
+			if resp.OutputTokens > 0 {
+				totalOutputTokens += resp.OutputTokens
+			}
+			out <- resp
+		}
+
+		if streamErr != nil {
+			p.markFailure(decision.BudgetLane, providerKey, streamErr.Error())
+			p.observeResult(decision, "stream_error", time.Since(startedAt))
+		} else {
+			p.markSuccess(providerKey)
+			p.recordTokens(decision.BudgetLane, providerKey, decision.Model, 0, totalOutputTokens, nil)
+			p.observeResult(decision, "success", time.Since(startedAt))
+		}
+	}()
+
+	return out, nil
 }
 
 func (p *Provider) providerFor(lane string) agent.LLMProvider {
@@ -624,7 +717,7 @@ func responseSatisfies(decision DryRunDecision, resp *agent.ModelResponse) bool 
 	}
 
 	// Se o modo é 'minimize', exigimos conteúdo textual final (Content).
-	// No entanto, se o modelo for local (Gemma 3), aceitamos o ReasoningContent
+	// No entanto, se o modelo for local (Qwen 3.5), aceitamos o ReasoningContent
 	// como resposta se ele não estiver vazio (às vezes o provider falha em separar).
 	if decision.Guards.ReasoningMode == "minimize" && decision.UseRemote {
 		return false
@@ -945,7 +1038,7 @@ func localProbeQualityOK(query, response string) bool {
 	respLower := strings.ToLower(resp)
 
 	// Too short for a professional query (< 80 words is suspicious for business content).
-	// Previously 40 — raised because gemma3 was passing long-but-vague responses.
+	// Previously 40 — raised because qwen3.5 was passing long-but-vague responses.
 	wordCount := len(strings.Fields(resp))
 	if wordCount < 80 {
 		return false

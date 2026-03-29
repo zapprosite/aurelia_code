@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -90,6 +91,171 @@ func (p *OpenAICompatibleProvider) GenerateContent(
 	}
 
 	return parseChatCompletionResponse(respBody, headers)
+}
+
+func (p *OpenAICompatibleProvider) GenerateStream(
+	ctx context.Context,
+	systemPrompt string,
+	history []agent.Message,
+	tools []agent.Tool,
+) (<-chan agent.StreamResponse, error) {
+	if err := ensureVisionSupport(p.provider, p.model, history); err != nil {
+		return nil, err
+	}
+	reqBody, err := buildOpenAICompatibleRequest(p.model, systemPrompt, history, tools, p.request)
+	if err != nil {
+		return nil, err
+	}
+	reqBody["stream"] = true
+
+	// Stream options if supported by provider
+	reqBody["stream_options"] = map[string]any{"include_usage": true}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.baseURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create http request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	if p.apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+p.apiKey)
+	}
+	if p.userAgent != "" {
+		req.Header.Set("User-Agent", p.userAgent)
+	}
+	for key, value := range p.headers {
+		req.Header.Set(key, value)
+	}
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("http request failed: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		if isVisionUnsupportedAPIResponse(resp.StatusCode, respBody) {
+			return nil, VisionUnsupportedError{provider: p.provider, model: p.model}
+		}
+		return nil, fmt.Errorf("openai-compatible API error: %d, response: %s", resp.StatusCode, string(respBody))
+	}
+
+	ch := make(chan agent.StreamResponse, 100)
+	go func() {
+		defer func() {
+			_ = resp.Body.Close()
+			close(ch)
+		}()
+
+		scanner := bufio.NewScanner(resp.Body)
+		// Max buffer size for large responses (standard is 64k, we might need more for huge tool calls)
+		buf := make([]byte, 0, 512*1024)
+		scanner.Buffer(buf, 1024*1024)
+
+		type toolCallDelta struct {
+			ID   string
+			Name string
+			Args strings.Builder
+		}
+		deltas := make(map[int]*toolCallDelta)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			if !strings.HasPrefix(line, "data: ") {
+				continue
+			}
+			data := strings.TrimPrefix(line, "data: ")
+			data = strings.TrimSpace(data)
+			if data == "" || data == "[DONE]" {
+				continue
+			}
+
+			var chunk struct {
+				Choices []struct {
+					Delta struct {
+						Content   string `json:"content"`
+						ToolCalls []struct {
+							Index    int    `json:"index"`
+							ID       string `json:"id"`
+							Function struct {
+								Name      string `json:"name"`
+								Arguments string `json:"arguments"`
+							} `json:"function"`
+						} `json:"tool_calls"`
+					} `json:"delta"`
+					FinishReason string `json:"finish_reason"`
+				} `json:"choices"`
+				Usage struct {
+					PromptTokens     int `json:"prompt_tokens"`
+					CompletionTokens int `json:"completion_tokens"`
+				} `json:"usage"`
+			}
+			if err := json.Unmarshal([]byte(data), &chunk); err != nil {
+				continue
+			}
+
+			if len(chunk.Choices) > 0 {
+				choice := chunk.Choices[0]
+				// 1. Content
+				if choice.Delta.Content != "" {
+					ch <- agent.StreamResponse{Content: choice.Delta.Content}
+				}
+
+				// 2. Tool Calls
+				for _, tc := range choice.Delta.ToolCalls {
+					if _, ok := deltas[tc.Index]; !ok {
+						deltas[tc.Index] = &toolCallDelta{}
+					}
+					d := deltas[tc.Index]
+					if tc.ID != "" {
+						d.ID = tc.ID
+					}
+					if tc.Function.Name != "" {
+						d.Name = tc.Function.Name
+					}
+					if tc.Function.Arguments != "" {
+						d.Args.WriteString(tc.Function.Arguments)
+					}
+				}
+
+				// 3. Finish Reason
+				if choice.FinishReason != "" {
+					// Finalize tool calls
+					var finalToolCalls []agent.ToolCall
+					for _, d := range deltas {
+						var args map[string]any
+						_ = json.Unmarshal([]byte(d.Args.String()), &args)
+						finalToolCalls = append(finalToolCalls, agent.ToolCall{
+							ID:        d.ID,
+							Name:      d.Name,
+							Arguments: args,
+						})
+					}
+					ch <- agent.StreamResponse{Done: true, ToolCalls: finalToolCalls}
+				}
+			}
+
+			// Usage
+			if chunk.Usage.PromptTokens > 0 || chunk.Usage.CompletionTokens > 0 {
+				ch <- agent.StreamResponse{
+					InputTokens:  chunk.Usage.PromptTokens,
+					OutputTokens: chunk.Usage.CompletionTokens,
+				}
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			ch <- agent.StreamResponse{Err: fmt.Errorf("stream scanner error: %w", err)}
+		}
+	}()
+
+	return ch, nil
 }
 
 func buildOpenAICompatibleRequest(

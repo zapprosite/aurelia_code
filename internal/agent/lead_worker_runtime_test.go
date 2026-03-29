@@ -520,6 +520,22 @@ func (q *queuedLLMProvider) GenerateContent(ctx context.Context, systemPrompt st
 	return resp, nil
 }
 
+func (q *queuedLLMProvider) GenerateStream(ctx context.Context, systemPrompt string, history []Message, tools []Tool) (<-chan StreamResponse, error) {
+	resp, err := q.GenerateContent(ctx, systemPrompt, history, tools)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan StreamResponse, 10)
+	go func() {
+		defer close(ch)
+		if resp != nil {
+			ch <- StreamResponse{Content: resp.Content}
+		}
+		ch <- StreamResponse{Done: true}
+	}()
+	return ch, nil
+}
+
 type capturingToolProvider struct {
 	mu        sync.Mutex
 	toolNames []string
@@ -539,6 +555,22 @@ func (c *capturingToolProvider) GenerateContent(ctx context.Context, systemPromp
 		return c.response, nil
 	}
 	return &ModelResponse{Content: "done"}, nil
+}
+
+func (c *capturingToolProvider) GenerateStream(ctx context.Context, systemPrompt string, history []Message, tools []Tool) (<-chan StreamResponse, error) {
+	resp, err := c.GenerateContent(ctx, systemPrompt, history, tools)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan StreamResponse, 10)
+	go func() {
+		defer close(ch)
+		if resp != nil {
+			ch <- StreamResponse{Content: resp.Content}
+		}
+		ch <- StreamResponse{Done: true}
+	}()
+	return ch, nil
 }
 
 func (c *capturingToolProvider) CapturedTools() []string {

@@ -15,7 +15,8 @@ Se o seu sistema já tem o Docker instalado, siga estes passos:
 
 ## 🌟 O que a Aurélia pode fazer por você?
 
-- **Voz Natural**: Ela fala com você usando uma voz humanizada (Kokoro).
+- **Voz Natural**: Ela fala com você usando uma voz humanizada (Kokoro) e prosódia dinâmica.
+- **Barge-in (Interrupção)**: Se você falar por cima, ela para de falar na hora para te ouvir.
 - **Memória Infinita**: Ela lembra de conversas passadas e aprende com você.
 - **Automação**: Ela pode agendar lembretes e executar scripts para você.
 - **Privacidade**: No modo "Soberano", nada do que você fala sai do seu hardware.

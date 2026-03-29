@@ -17,8 +17,8 @@ Esta regra define o **motor interno** do daemon Go `aurelia`.
 
 | Tier | Modelo | Provedor | Uso |
 |------|--------|----------|-----|
-| **Tier 0 — Local** | `gemma3:27b` | Ollama local (RTX 4090) | Soberania Industrial, Máxima Inteligência |
-| **Tier 0 — Local Lab** | `gemma3:27b-it-q4_K_M` | Ollama local | Raciocínio profundo, uso manual |
+| **Tier 0 — Local** | `qwen3.5` | Ollama local (RTX 4090) | Soberania Industrial, Máxima Inteligência |
+| **Tier 0 — Local Lab** | `qwen3.5-it-q4_K_M` | Ollama local | Raciocínio profundo, uso manual |
 | **Tier 1 — Cheap Remote** | `deepseek/deepseek-chat-v3.1` | OpenRouter | Curation, structured output, routing barato |
 | **Tier 2 — Premium Remote** | `minimax/minimax-m2.7` | MiniMax direct | coding_main, critical, execução principal |
 | **Tier 2 — Long Context** | `moonshotai/kimi-k2.5` | OpenRouter | Contexto longo, multimodal, análise profunda |
@@ -45,9 +45,9 @@ Esta regra define o **motor interno** do daemon Go `aurelia`.
 ## Modelos PROIBIDOS (legado — não reintroduzir)
 
 ```
-qwen3.5:9b        ← removido em 2026-03-24, substituído por gemma3:12b
-qwen3.5:4b        ← removido em 2026-03-24
-qwen/qwen3.5-*    ← removido do Tier 1/2
+gemma3:27b        ← removido em 2026-03-29, substituído por qwen3.5
+gemma3:12b        ← removido em 2026-03-29
+gemma/gemma3-*    ← removido do Tier 1/2
 google/gemini-*   ← removido do motor interno (era placeholder, substituído por DeepSeek/MiniMax/Kimi)
 codex             ← CLI auth removida, não reintroduzir
 ```

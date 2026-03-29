@@ -8,7 +8,7 @@ const BANTER: Array<{ from: string; to: string; msg: string }> = [
   { from: "aurelia",    to: "cronus",      msg: "Jobs de manutenção agendados?" },
   { from: "cronus",     to: "aurelia",     msg: "4 jobs ativos. Sentinel-watchdog em T-2min." },
   { from: "aurelia",    to: "gemma",       msg: "Estado do motor Tier 0?" },
-  { from: "gemma",      to: "aurelia",     msg: "gemma3:12b (Resident) ✓  VRAM: 8.2GB livre." },
+  { from: "gemma",      to: "aurelia",     msg: "qwen3.5 (Resident) ✓  VRAM: 8.2GB livre." },
   { from: "openrouter", to: "aurelia",     msg: "Tier 1 (DeepSeek) e Tier 2 (MiniMax) operacionais." },
   { from: "sentinel",   to: "cronus",      msg: "GPU 42°C · drivers NVIDIA v550.67." },
   { from: "cronus",     to: "sentinel",    msg: "Watchdog executado · 0 alertas · Logs limpos." },

@@ -16,7 +16,7 @@ func TestPlannerDecide_MaintenancePrefersOpenRouterWithOllamaFallback(t *testing
 	if len(opts) == 0 {
 		t.Fatalf("expected at least one candidate")
 	}
-	if opts[0].Provider != "local" || opts[0].Model != modelGemma3 {
+	if opts[0].Provider != "local" || opts[0].Model != modelQwen35 {
 		t.Fatalf("unexpected primary route for maintenance: %+v", opts[0])
 	}
 	if !opts[0].UseTools {
@@ -53,7 +53,7 @@ func TestPlannerDecide_VisionUsesRemoteVisionLane(t *testing.T) {
 		RequiresVision: true,
 	})
 
-	if got.Lane != "local-vision" || got.Model != modelGemma3 {
+	if got.Lane != "local-vision" || got.Model != modelQwen35 {
 		t.Fatalf("unexpected route: %+v", got)
 	}
 }
@@ -77,7 +77,7 @@ func TestPlannerDecide_LocalOnlyStructuredStaysLocal(t *testing.T) {
 		LocalOnly:  true,
 	})
 
-	if got.Provider != "local" || got.Model != modelGemma3 {
+	if got.Provider != "local" || got.Model != modelQwen35 {
 		t.Fatalf("unexpected route: %+v", got)
 	}
 }

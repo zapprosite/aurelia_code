@@ -27,7 +27,7 @@ Estado atual:
 - [x] Telegram gera prompt automatico para tarefa `light`
 - [x] Blueprint de audio PT-BR com Groq registrado
 - [x] Blueprint de voz local/JARVIS registrado
-- [x] Kit local `gemma3:27b-it-q4_K_M` instalado e smokeado
+- [x] Kit local `qwen3.5-it-q4_K_M` instalado e smokeado
 - [x] Runtime ganhou suporte real a `provider=ollama`
 - [x] Runtime de deploy validado sem Gemini no caminho ativo
 - [ ] Mic daemon com wake word implementado
@@ -77,25 +77,25 @@ Documentos que agora governam o plano:
 
 ### Modelos locais escolhidos
 
-- principal pesado: `gemma3:27b-it-q4_K_M`
-- alternativa pesada: `gemma3:12b:27b-q4_K_M`
-- escalonamento manual: `gemma3:27b-coder:30b`
-- leve/roteador/fallback: `gemma3:12b`
+- principal pesado: `qwen3.5-it-q4_K_M`
+- alternativa pesada: `27b:12b:27b-q4_K_M`
+- escalonamento manual: `qwen3.5-coder:30b`
+- leve/roteador/fallback: `27b:12b`
 - embedding unico: `bge-m3`
 
 ### Regras de uso
 
-- `gemma3:27b-it-q4_K_M` entra como padrao local para instrucao e orquestracao
-- `gemma3:27b-it-q4_K_M` fica como alternativa técnica, não como default
+- `qwen3.5-it-q4_K_M` entra como padrao local para instrucao e orquestracao
+- `qwen3.5-it-q4_K_M` fica como alternativa técnica, não como default
 - `OpenRouter` entra apenas para escalonamento manual, não residente
-- `gemma3:12b` entra para roteamento curto, degradacao e resposta leve
+- `27b:12b` entra para roteamento curto, degradacao e resposta leve
 - embeddings rodam fora do caminho sincrono principal
 
 ### Justificativa final
 
-- `gemma3:27b-it-q4_K_M` encaixa melhor quando o local e orquestrador e o executor pesado fica externo
-- `gemma3:12b` residente (+ browser) deixa ram para compilação local
-- `gemma3:12b` continua forte e residente junto com browser e automação
+- `qwen3.5-it-q4_K_M` encaixa melhor quando o local e orquestrador e o executor pesado fica externo
+- `27b:12b` residente (+ browser) deixa ram para compilação local
+- `27b:12b` continua forte e residente junto com browser e automação
 
 ### Limites e degradacao
 
@@ -367,8 +367,8 @@ MIC
 - [x] Criado o blueprint de voz local/JARVIS com governor
 - [x] Criado o blueprint do kit local de modelos
 - [x] Validado o deploy runtime sem Gemini na worktree `/home/will/aurelia-24x7`
-- [x] Revisada a escolha final de modelo local com foco no papel de orquestrador: `gemma3:27b-it-q4_K_M`
-- [x] Executado o kit local do Ollama com `gemma3:27b-it-q4_K_M`, `gemma3:12b` e `bge-m3`
+- [x] Revisada a escolha final de modelo local com foco no papel de orquestrador: `qwen3.5-it-q4_K_M`
+- [x] Executado o kit local do Ollama com `qwen3.5-it-q4_K_M`, `27b:12b` e `bge-m3`
 - [x] Validado smoke real do modelo local com `ctx=8192` retornando `OK`
 - [x] Ligado `provider=ollama` no app com catalogo, onboarding e health reais
 

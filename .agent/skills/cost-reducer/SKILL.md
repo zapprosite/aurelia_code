@@ -9,7 +9,7 @@ phases: [P]
 Skill estratégica faturista da Aurélia para garantir que a inteligência de nível industrial não gere custos descontrolados em provedores de nuvem.
 
 ## 🏛️ Política de Custos (Triple-Tier)
-1. **Sovereign First**: SEMPRE use o Tier 3 (Gemma3 Local) para tarefas secundárias (Resumo de logs, correção de typos, ajuda rápida).
+1. **Sovereign First**: SEMPRE use o Tier 3 (Qwen 3.5 Local) para tarefas secundárias (Resumo de logs, correção de typos, ajuda rápida).
 2. **Batch Processing**: Agrupe requisições externas para o Tier 1 (MiniMax/DeepSeek) em vez de mensagens atômicas.
 3. **Prompt Optmization**: Use a skill `/documentation` para gerar prompts mais concisos que consomem menos tokens de input/output.
 

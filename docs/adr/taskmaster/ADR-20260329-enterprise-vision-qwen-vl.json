@@ -1,0 +1,30 @@
+{
+  "adr_id": "20260329-enterprise-vision-qwen-vl",
+  "title": "Migração para Qwen 2.5-VL 14B (Vision-Language SOTA 2026)",
+  "status": "completed",
+  "progress": 100,
+  "goal": "Substituir Gemma 3:27b por Qwen 2.5-VL 14B quantizado (4-bit/6-bit) para raciocínio visual superior e economia de VRAM",
+  "next_actions": [
+    "1. Baixar modelo via Ollama (`ollama pull qwen2.5-vl:14b`)",
+    "2. Atualizar configs/litellm/config.yaml com o novo tier",
+    "3. Implementar Vision Cache em internal/vision/cache.go",
+    "4. Testar inferência OCR com imagens complexas"
+  ],
+  "handoff": {
+    "resume_prompt": "Iniciar download do Qwen 2.5-VL 14B e configurar roteamento no LiteLLM.",
+    "owner_engine": "claude",
+    "last_updated": "2026-03-29T00:30:00Z"
+  },
+  "test_commands": [
+    "ollama run qwen2.5-vl:14b 'What is in this image?'",
+    "curl http://localhost:4000/v1/models"
+  ],
+  "dependencies": [
+    "internal/vision"
+  ],
+  "blockers": [
+    "VRAM disponível deve ser monitorada para evitar swap (mínimo 16GB free)",
+    "Modelo Qwen-VL exige suporte a multimodal no LiteLLM"
+  ],
+  "notes": "P1 - Essencial para Enterprise. O Qwen-VL 14B é superior a modelos de 27B puros em navegação GUI."
+}

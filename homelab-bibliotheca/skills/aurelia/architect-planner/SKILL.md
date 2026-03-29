@@ -12,7 +12,7 @@ Habilita o Antigravity a atuar como o Arquiteto Principal da Aurélia, garantind
 ### 1. Seleção de Motor (Triple-Tier)
 - **Design & Lógica (MiniMax 2.7)**: Utilize o MiniMax para definir padrões de código, estruturas de diretórios e lógica de negócios complexa.
 - **Roteamento & Validação (DeepSeek 3.1)**: Utilize para validar conformidade com esquemas Zod e roteamento tRPC.
-- **Verificação Local (Gemma 3)**: Utilize para testes unitários no host e pequenas correções de infra.
+- **Verificação Local (Qwen 3.5 (VL))**: Utilize para testes unitários no host e pequenas correções de infra.
 
 ### 2. Governança de Decisões (ADR)
 - **Regra de Ouro**: Mudanças estruturais (pastas, DB, integrações) **DEVEM** ser precedidas por um ADR em `docs/adr/YYYYMMDD-titulo.md` seguindo o formato padrão.

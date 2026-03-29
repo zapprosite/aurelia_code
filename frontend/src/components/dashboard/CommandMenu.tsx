@@ -21,11 +21,11 @@ const COMMANDS: CommandOption[] = [
   },
   {
     id: "gemma",
-    label: "Set Model: Gemma 3",
-    description: "Switch primary LLM to Gemma 3 12B (Local)",
+    label: "Set Model: Qwen 3.5 (VL)",
+    description: "Switch primary LLM to Qwen 3.5 (VL) 12B (Local)",
     icon: Cpu,
     action: "set_model",
-    params: { model: "gemma3:12b" }
+    params: { model: "qwen3.5" }
   },
   {
     id: "flush",

@@ -88,54 +88,24 @@ Motivo:
 
 ### 3. STT
 
-Use `Groq whisper-large-v3-turbo`.
+Use `Faster-Whisper (distil-large-v3)`.
 
-Parametros padrao:
-
-- `model=whisper-large-v3-turbo`
-- `language=pt`
-- `temperature=0`
-
-Fallback:
-
-- Whisper local apenas quando Groq falhar
+Motivo:
+- roda 100% local (soberania total)
+- latência mínima em CPU/GPU local
+- alta precisão para PT-BR
 
 ### 4. Modelo Local Principal
 
 Escolha principal:
+- `qwen3.5:9b-vl` (Multimodal Soberano)
 
-- `gemma3:27b-it-q4_K_M`
+### 5. SAP Architecture (Sovereign Actor Pipeline)
 
-Alternativas:
-
-- `qwen3.5:27b-q4_K_M`
-- `qwen3-coder:30b` apenas para escalonamento manual
-
-Escolha de operacao:
-
-- concorrencia: `1`
-- contexto operacional inicial: `8K`
-- `OLLAMA_NUM_PARALLEL=1`
-- `OLLAMA_FLASH_ATTENTION=1`
-- `OLLAMA_KV_CACHE_TYPE=q4_0`
-
-Motivo:
-
-- melhor encaixe para o papel de orquestrador local
-- function calling e structured output pesam a favor no comando do agente
-- mais prudente para `RTX 4090 24 GiB` deixar o contexto inicial curto e estavel
-
-Observacao:
-
-- `gemma3:27b-it-q4_K_M` vira o default local
-- `qwen3.5:27b-q4_K_M` fica como alternativa tecnica, nao como padrao
-- `qwen3-coder:30b` continua forte, mas apertado demais para ficar residente no host
-
-### 5. Embedding Unico para Qdrant
-
-Regra 1:
-
-- usar `bge-m3` como contrato unico
+Novo padrão 2026.2:
+- **Barge-in (VAD)**: Interrupção instantânea da fala (< 150ms).
+- **Self-Healing**: Supervisor de atores para resiliência sub-zero.
+- **Serene Prosody**: Análise emocional para ajuste dinâmico de voz Isabela (Kokoro).
 
 Contrato:
 
@@ -324,7 +294,7 @@ Reacoes:
 
 ### Slice 3. Local Brain
 
-- instalar `gemma3:27b-it-q4_K_M`
+- instalar `qwen3.5-it-q4_K_M`
 - ajustar contexto curto e seguro
 - limitar concorrencia
 
@@ -352,7 +322,7 @@ O desenho forte em `2026-03-19` para esta maquina e:
 - acordar com wake word local
 - recortar fala com VAD
 - transcrever na Groq
-- pensar com `gemma3:27b-it-q4_K_M`
+- pensar com `qwen3.5-it-q4_K_M`
 - agir com `agent-browser` / `browser-use` / CLI
 - lembrar com `Supabase + Qdrant + bge-m3`
 - proteger tudo com rate limit e degradacao por recurso
@@ -370,8 +340,8 @@ O maior erro seria tentar:
 - Groq Whisper Turbo: https://console.groq.com/docs/model/whisper-large-v3-turbo
 - Groq Speech-to-Text: https://console.groq.com/docs/speech-to-text
 - Groq Spend Limits: https://console.groq.com/docs/spend-limits
-- Google Gemma 3: https://blog.google/innovation-and-ai/technology/developers-tools/gemma-3/
-- Ollama `gemma3`: https://ollama.com/library/gemma3
+- Google Qwen 3.5 (VL): https://blog.google/innovation-and-ai/technology/developers-tools/gemma-3/
+- Ollama `27b`: https://ollama.com/library/27b
 - Ollama `qwen3.5`: https://ollama.com/library/qwen3.5
 - Ollama `qwen3-coder`: https://ollama.com/library/qwen3-coder
 - BGE-M3 oficial: https://huggingface.co/BAAI/bge-m3

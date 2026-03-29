@@ -15,7 +15,7 @@ Habilita o Antigravity a criar suítes de teste robustas que garantem a estabili
 - **TS (Zod)**: Teste esquemas contra inputs válidos e inválidos.
 
 ### 2. Testes de Gateway (Soberanos)
-- **Gemma3 Judge**: Utilize o padrão de mock de juiz local para validar se as respostas do roteador satisfazem os guardrails sem gastar tokens premium.
+- **Qwen 3.5 Judge**: Utilize o padrão de mock de juiz local para validar se as respostas do roteador satisfazem os guardrails sem gastar tokens premium.
 - **Dry-Run**: Sempre teste os fluxos de fallback (Tier 1 -> Tier 3).
 
 ### 3. Testes de Infra (Sudo=1)

@@ -20,8 +20,8 @@ func TestFallbackModels_UnknownProviderReturnsEmpty(t *testing.T) {
 func TestModelOptionLabel(t *testing.T) {
 	t.Parallel()
 
-	option := ModelOption{ID: "Gemma33.5:9b", Name: "Gemma3 3.5 9B"}
-	if got := option.Label(); got != "Gemma3 3.5 9B (Gemma33.5:9b)" {
+	option := ModelOption{ID: "Qwen 3.53.5:9b", Name: "Qwen 3.5 3.5 9B"}
+	if got := option.Label(); got != "Qwen 3.5 3.5 9B (Qwen 3.53.5:9b)" {
 		t.Fatalf("Label() = %q", got)
 	}
 
@@ -83,8 +83,8 @@ func TestListOllamaModels(t *testing.T) {
 		_, _ = w.Write([]byte(`{
 			"data": [
 				{"id":"nomic-embed-text:latest"},
-				{"id":"Gemma33.5:9b"},
-				{"id":"gemma3:12b"},
+				{"id":"Qwen 3.53.5:9b"},
+				{"id":"qwen3.5"},
 				{"id":"llama3.2:3b"}
 			]
 		}`))
@@ -99,11 +99,11 @@ func TestListOllamaModels(t *testing.T) {
 		t.Fatalf("expected 3 chat models, got %d", len(models))
 	}
 	got := []string{models[0].ID, models[1].ID, models[2].ID}
-	if !containsModelID(got, "Gemma33.5:9b") {
-		t.Fatalf("models missing Gemma33.5:9b: %v", got)
+	if !containsModelID(got, "Qwen 3.53.5:9b") {
+		t.Fatalf("models missing Qwen 3.53.5:9b: %v", got)
 	}
-	if !containsModelID(got, "gemma3:12b") {
-		t.Fatalf("models missing gemma3:12b: %v", got)
+	if !containsModelID(got, "qwen3.5") {
+		t.Fatalf("models missing qwen3.5: %v", got)
 	}
 	if !containsModelID(got, "llama3.2:3b") {
 		t.Fatalf("models missing llama3.2:3b: %v", got)
@@ -117,7 +117,7 @@ func TestFallbackModels_Ollama(t *testing.T) {
 	if len(models) == 0 {
 		t.Fatal("expected ollama fallback catalog")
 	}
-	if models[0].ID != "gemma3:12b" {
+	if models[0].ID != "qwen3.5" {
 		t.Fatalf("first model = %+v", models[0])
 	}
 }

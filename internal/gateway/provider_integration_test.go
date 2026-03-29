@@ -30,7 +30,7 @@ func TestProvider_LocalLane_GenerateContent(t *testing.T) {
 	cfg := &config.AppConfig{
 		OllamaURL:    ollamaURLForTest(t),
 		LLMProvider:  "ollama",
-		LLMModel:     "gemma3:12b",
+		LLMModel:     "qwen3.5",
 		DBPath:       t.TempDir() + "/gateway_integration.db",
 		GroqSoftCapDaily: 800,
 		GroqHardCapDaily: 1200,
@@ -51,7 +51,7 @@ func TestProvider_LocalLane_GenerateContent(t *testing.T) {
 		nil,
 	)
 	if err != nil {
-		t.Fatalf("GenerateContent() error = %v (Ollama com gemma3:12b rodando em %s?)", err, cfg.OllamaURL)
+		t.Fatalf("GenerateContent() error = %v (Ollama com qwen3.5 rodando em %s?)", err, cfg.OllamaURL)
 	}
 	if resp.Content == "" {
 		t.Fatalf("esperava resposta não vazia")

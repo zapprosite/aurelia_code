@@ -27,7 +27,7 @@ func TestCalculateCostUSD_MiniMaxM2_7(t *testing.T) {
 
 func TestCalculateCostUSD_LocalModelFree(t *testing.T) {
 	t.Parallel()
-	cost := CalculateCostUSD("gemma3:12b", 10000, 5000)
+	cost := CalculateCostUSD("qwen3.5", 10000, 5000)
 	if cost != 0 {
 		t.Fatalf("cost = %f, want 0 for local model", cost)
 	}

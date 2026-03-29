@@ -65,6 +65,52 @@ func (p *AnthropicProvider) GenerateContent(
 	return parseAnthropicMessage(message)
 }
 
+func (p *AnthropicProvider) GenerateStream(
+	ctx context.Context,
+	systemPrompt string,
+	history []agent.Message,
+	tools []agent.Tool,
+) (<-chan agent.StreamResponse, error) {
+	params := anthropic.MessageNewParams{
+		Model:     anthropic.Model(p.model),
+		MaxTokens: anthropicDefaultMaxTokens,
+		Messages:  buildAnthropicMessages(history),
+	}
+
+	if systemPrompt != "" {
+		params.System = []anthropic.TextBlockParam{{Text: systemPrompt}}
+	}
+
+	ch := make(chan agent.StreamResponse, 100)
+	go func() {
+		defer close(ch)
+		// Anthropic streaming requires handling events
+		stream := p.client.Messages.NewStreaming(ctx, params)
+		for stream.Next() {
+			event := stream.Current()
+			switch delta := event.AsAny().(type) {
+			case anthropic.ContentBlockDeltaEvent:
+				if delta.Delta.Text != "" {
+					ch <- agent.StreamResponse{Content: delta.Delta.Text}
+				}
+			case anthropic.MessageStartEvent:
+				// Metadata could be extracted here
+			case anthropic.MessageDeltaEvent:
+				if delta.Usage.OutputTokens > 0 {
+					ch <- agent.StreamResponse{OutputTokens: int(delta.Usage.OutputTokens)}
+				}
+			case anthropic.MessageStopEvent:
+				ch <- agent.StreamResponse{Done: true}
+			}
+		}
+		if err := stream.Err(); err != nil {
+			ch <- agent.StreamResponse{Err: err}
+		}
+	}()
+
+	return ch, nil
+}
+
 func buildAnthropicMessages(history []agent.Message) []anthropic.MessageParam {
 	params := make([]anthropic.MessageParam, 0, len(history))
 	for _, msg := range history {

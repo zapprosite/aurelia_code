@@ -93,9 +93,9 @@ func looksLikeOllamaChatModel(modelID string) bool {
 
 func rankOllamaModel(modelID string) int {
 	switch {
-	case strings.HasPrefix(modelID, "gemma3:27b"):
+	case strings.HasPrefix(modelID, "qwen3.5"):
 		return 0
-	case strings.HasPrefix(modelID, "gemma3:12b"):
+	case strings.HasPrefix(modelID, "qwen3.5"):
 		return 1
 	default:
 		return 10

@@ -24,6 +24,22 @@ func (f *fakeProvider) GenerateContent(ctx context.Context, systemPrompt string,
 	return f.response, f.err
 }
 
+func (f *fakeProvider) GenerateStream(ctx context.Context, systemPrompt string, history []agent.Message, tools []agent.Tool) (<-chan agent.StreamResponse, error) {
+	resp, err := f.GenerateContent(ctx, systemPrompt, history, tools)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan agent.StreamResponse, 10)
+	go func() {
+		defer close(ch)
+		if resp != nil {
+			ch <- agent.StreamResponse{Content: resp.Content}
+		}
+		ch <- agent.StreamResponse{Done: true}
+	}()
+	return ch, nil
+}
+
 func (f *fakeProvider) Close() {}
 
 type fakeJudge struct {
@@ -78,7 +94,7 @@ func TestProviderGenerateContent_MaintenancePrefersLocalBalanced(t *testing.T) {
 		t.Fatalf("local balanced calls = %d", len(localBalanced.prompts))
 	}
 
-	state := provider.StatusSnapshot().Routes["local:"+modelGemma3]
+	state := provider.StatusSnapshot().Routes["local:"+modelQwen35]
 	if state.Requests != 1 {
 		t.Fatalf("requests = %d", state.Requests)
 	}
@@ -118,9 +134,9 @@ func TestProviderGenerateContent_FallsBackWhenGuardedResponseIsEmpty(t *testing.
 	if len(remoteCheap.prompts) != 1 {
 		t.Fatalf("remote cheap calls = %d", len(remoteCheap.prompts))
 	}
-	state := provider.StatusSnapshot().Routes["local:"+modelGemma3]
+	state := provider.StatusSnapshot().Routes["local:"+modelQwen35]
 	if state.Failures != 1 {
-		t.Fatalf("gemma3 failures = %d", state.Failures)
+		t.Fatalf("qwen3.5 failures = %d", state.Failures)
 	}
 }
 
@@ -166,7 +182,7 @@ func TestProviderStatusHandler_ReturnsSnapshot(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
 		t.Fatalf("Decode() error = %v", err)
 	}
-	if payload.PrimaryMode != modelGemma3 {
+	if payload.PrimaryMode != modelQwen35 {
 		t.Fatalf("primary_mode = %q", payload.PrimaryMode)
 	}
 	if payload.Routes["local"].Requests != 2 {
@@ -189,7 +205,7 @@ func TestSQLiteStateStore_PersistsAcrossReload(t *testing.T) {
 		ConsecutiveFails:  1,
 		BreakerState:      "half-open",
 		LastError:         "boom",
-		LastDecisionModel: "gemma3:12b",
+		LastDecisionModel: "qwen3.5",
 	}
 	if err := store.Save("remote_structured", state); err != nil {
 		t.Fatalf("Save() error = %v", err)

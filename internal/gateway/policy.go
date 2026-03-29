@@ -26,7 +26,7 @@ const (
 	modelDeepSeekR1Free = "deepseek/deepseek-r1-0528:free"
 
 	// Local
-	modelGemma3 = "gemma3:27b"
+	modelQwen35 = "qwen3.5"
 
 	// Existing static defaults
 	defaultAudioModel        = "whisper-large-v3-turbo"
@@ -139,9 +139,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "local-balanced",
 				Provider:   "local",
-				Model:      modelGemma3,
+				Model:      modelQwen35,
 				UseRemote:  false,
-				Reason:     fmt.Sprintf("%s: gemma3 local first (cost sovereign).", taskClass),
+				Reason:     fmt.Sprintf("%s: qwen3.5 local first (cost sovereign).", taskClass),
 				Guards:     guardsFor(req.OutputMode, false),
 				BudgetLane: "local",
 				Class:      taskClass,
@@ -166,7 +166,7 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 		//
 		// Cascade:
 		//   hard  → Groq (free, 0.8s) → DeepSeek V3.1 → M2.7 ($0.30/$1.20)
-		//   soft  → gemma3 probe (free, 2s) → Groq (free) → DeepSeek V3.1 → M2.7
+		//   soft  → qwen3.5 probe (free, 2s) → Groq (free) → DeepSeek V3.1 → M2.7
 		if isHardProfessional(req.Task) {
 			candidates = []RouteCandidate{
 				{
@@ -208,10 +208,10 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 				{
 					Lane:       "local-balanced",
 					Provider:   "local",
-					Model:      modelGemma3,
+					Model:      modelQwen35,
 					UseRemote:  false,
 					LocalProbe: true,
-					Reason:     "professional[soft]: gemma3 probe — free, zero cost if ≥80w confident.",
+					Reason:     "professional[soft]: qwen3.5 probe — free, zero cost if ≥80w confident.",
 					Guards:     guardsForProfessional(req.OutputMode, false),
 					BudgetLane: "local",
 					Class:      taskClass,
@@ -258,7 +258,7 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "local-balanced",
 				Provider:   "local",
-				Model:      modelGemma3,
+				Model:      modelQwen35,
 				UseRemote:  false,
 				Reason:     "maintenance: local-balanced preferred for homelab stability.",
 				Guards:     guardsFor(req.OutputMode, false),
@@ -325,9 +325,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 		candidates = append(candidates, RouteCandidate{
 			Lane:       "local-balanced",
 			Provider:   "local",
-			Model:      modelGemma3,
+			Model:      modelQwen35,
 			UseRemote:  false,
-			Reason:     fmt.Sprintf("%s: gemma3 local fallback.", taskClass),
+			Reason:     fmt.Sprintf("%s: qwen3.5 local fallback.", taskClass),
 			Guards:     guardsFor(req.OutputMode, false),
 			BudgetLane: "local",
 			Class:      taskClass,
@@ -339,9 +339,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "local-vision",
 				Provider:   "local",
-				Model:      modelGemma3,
+				Model:      modelQwen35,
 				UseRemote:  false,
-				Reason:     "long_context_or_multimodal: gemma3 12b local multimodal.",
+				Reason:     "long_context_or_multimodal: qwen3.5 12b local multimodal.",
 				Guards:     guardsFor(req.OutputMode, false),
 				BudgetLane: "local",
 				Class:      taskClass,
@@ -387,9 +387,9 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:       "local-balanced",
 				Provider:   "local",
-				Model:      modelGemma3,
+				Model:      modelQwen35,
 				UseRemote:  false,
-				Reason:     "critical: gemma3 local emergency fallback.",
+				Reason:     "critical: qwen3.5 local emergency fallback.",
 				Guards:     guardsFor(req.OutputMode, false),
 				BudgetLane: "local",
 				Class:      taskClass,
@@ -411,7 +411,7 @@ func (p *Planner) Plan(req DryRunRequest) []RouteCandidate {
 			{
 				Lane:      "local-balanced",
 				Provider:  "local",
-				Model:     modelGemma3,
+				Model:     modelQwen35,
 				UseRemote: false,
 				Reason:    "default: local fallback.",
 				Guards:    guardsFor(req.OutputMode, false),
@@ -557,7 +557,7 @@ func guardsFor(outputMode string, remote bool) ResponseGuards {
 				SoftTimeoutMS:   30000,
 			}
 		}
-		// Para modelos locais (predominantemente gemma3:12b),
+		// Para modelos locais (predominantemente qwen3.5),
 		// permitimos o raciocínio por padrão para evitar respostas vazias.
 		// S-30: Polish Premium — expandindo buffers para formatação industrial.
 		return ResponseGuards{
