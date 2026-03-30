@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -251,6 +252,15 @@ func (bc *BotController) isAllowedUser(userID int64) bool {
 		}
 	}
 	return false
+}
+
+// PolishText utiliza o Porteiro para converter eventuais respostas em JSON (de modelos locais)
+// em um Markdown 2026 profissional e limpo.
+func (bc *BotController) PolishText(ctx context.Context, text string) string {
+	if bc.porteiro == nil {
+		return text
+	}
+	return bc.porteiro.PolishOutput(ctx, text)
 }
 
 func (bc *BotController) setupRoutes() {
