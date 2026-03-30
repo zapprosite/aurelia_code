@@ -161,8 +161,9 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
 
-	// [SOTA 2026] Secret Sentinel Output Guardrail
+	// [SOTA 2026] Secret Sentinel Output Guardrail & Polisher
 	if bc.porteiro != nil {
+		finalAnswer = bc.porteiro.PolishOutput(session.ctx, finalAnswer)
 		finalAnswer = bc.porteiro.SecureOutput(finalAnswer)
 	}
 
@@ -338,9 +339,9 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		return err
 	}
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
-
-	// [SOTA 2026] Secret Sentinel Output Guardrail
+	// [SOTA 2026] Secret Sentinel Output Guardrail & Polisher
 	if bc.porteiro != nil {
+		finalAnswer = bc.porteiro.PolishOutput(ctx, finalAnswer)
 		finalAnswer = bc.porteiro.SecureOutput(finalAnswer)
 	}
 

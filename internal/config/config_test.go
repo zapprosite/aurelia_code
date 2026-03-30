@@ -13,6 +13,7 @@ import (
 func TestLoad_CreatesDefaultAppConfigWhenMissing(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("AURELIA_HOME", tmpDir)
+	t.Setenv("TELEGRAM_BOT_TOKEN", "") // isolate from real env
 
 	r, err := runtime.New()
 	if err != nil {
@@ -58,6 +59,13 @@ func TestLoad_CreatesDefaultAppConfigWhenMissing(t *testing.T) {
 func TestLoad_UsesJSONConfigValues(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("AURELIA_HOME", tmpDir)
+	// isolate from real env so test uses only the JSON file values
+	for _, k := range []string{
+		"TELEGRAM_BOT_TOKEN", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY",
+		"OPENAI_API_KEY", "GROQ_API_KEY", "OPENROUTER_API_KEY",
+	} {
+		t.Setenv(k, "")
+	}
 
 	r, err := runtime.New()
 	if err != nil {
@@ -175,6 +183,7 @@ func TestLoad_UsesJSONConfigValues(t *testing.T) {
 func TestLoad_NormalizesMissingFieldsWithDefaults(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("AURELIA_HOME", tmpDir)
+	t.Setenv("TELEGRAM_BOT_TOKEN", "") // isolate from real env
 
 	r, err := runtime.New()
 	if err != nil {

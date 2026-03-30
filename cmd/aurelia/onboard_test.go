@@ -15,12 +15,18 @@ import (
 func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("AURELIA_HOME", tmpDir)
+	for _, k := range []string{
+		"TELEGRAM_BOT_TOKEN", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY",
+		"OPENAI_API_KEY", "GROQ_API_KEY", "OPENROUTER_API_KEY",
+	} {
+		t.Setenv(k, "")
+	}
 
 	input := strings.Join([]string{
 		"ollama",         // LLM provider
-		"qwen3.5",     // LLM model
+		"qwen3.5",        // LLM model
 		"groq-key",       // Groq API key
-		"telegram-token",  // Telegram bot token
+		"telegram-token", // Telegram bot token
 		"101,202",        // Telegram allowed user IDs
 		"700",            // Max iterations
 		"33",             // Memory window size
@@ -72,6 +78,12 @@ func TestRunOnboard_SavesInteractiveConfig(t *testing.T) {
 func TestRunOnboard_PreservesExistingValuesOnBlankInput(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("AURELIA_HOME", tmpDir)
+	for _, k := range []string{
+		"TELEGRAM_BOT_TOKEN", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY",
+		"OPENAI_API_KEY", "GROQ_API_KEY", "OPENROUTER_API_KEY",
+	} {
+		t.Setenv(k, "")
+	}
 
 	resolver, err := runtime.New()
 	if err != nil {
@@ -252,7 +264,6 @@ func TestOnboardingUI_OllamaSkipsAPIKeyStep(t *testing.T) {
 		t.Fatalf("step = %v, want %v", ui.step, stepLLMModel)
 	}
 }
-
 
 func TestFilterModelOptions_OpenRouterMatchesProviderAndModel(t *testing.T) {
 	options := []llm.ModelOption{

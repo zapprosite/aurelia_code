@@ -108,3 +108,4 @@ homelab-bibliotheca/skills/open-claw/temp/
 .env
 .env
 data/qdrant/
+data/
