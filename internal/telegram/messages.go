@@ -21,21 +21,13 @@ const (
 	emptyAudioMessage = "⚠️ **Áudio sem conteúdo**\n\n" +
 		"O arquivo de áudio parece estar vazio ou inaudível. Poderia verificar e reenviar?"
 
-	alreadyConfiguredMessage = "✨ **Sistema Operacional**\n\n" +
-		"A Aurélia já está configurada e pronta para auxiliá-lo. Como posso ser útil hoje?"
+	alreadyConfiguredMessage = "**Aurélia online.** Manda sua tarefa."
 
-	bootstrapWelcomeMessage = "💎 **Boas-vindas à Aurélia**\n\n" +
-		"Sou sua nova assistente de inteligência artificial de elite.\n\n" +
-		"Para começarmos, selecione o perfil de atuação que melhor atende às suas necessidades atuais:"
+	bootstrapWelcomeMessage = "**Aurélia** — selecione o perfil:"
 
-	bootstrapFailureMessage = "❌ **Falha na Inicialização**\n\n" +
-		"Ocorreu um erro técnico ao criar seus arquivos de identidade. Por favor, contate o administrador."
+	bootstrapFailureMessage = "Erro ao criar identidade. Tenta `/start` novamente."
 
-	bootstrapProfileMessage = "✅ **Perfil Inicial Configurado**\n\n" +
-		"Excelente escolha. Agora, por favor, informe seu nome e como você gostaria que eu me dirigisse a você (formal ou informal).\n\n" +
-		"Exemplo: `Sou o Rafael e prefiro uma comunicação direta e formal.`"
+	bootstrapProfileMessage = "Perfil configurado. Qual é o seu nome e como prefere ser tratado?"
 
-	bootstrapSuccessMessage = "🎯 **Configuração Concluída**\n\n" +
-		"Seus protocolos de identidade foram salvos com sucesso.\n\n" +
-		"Estou pronta para atuar. Sinta-se à vontade para enviar textos, comandos, áudios ou imagens para análise."
+	bootstrapSuccessMessage = "Pronta. Manda sua tarefa — texto, áudio, imagem ou comando."
 )

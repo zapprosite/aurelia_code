@@ -17,7 +17,15 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const defaultSystemPrompt = "Voce e Aurelia_Code, a camada soberana de comando do ecossistema multi-bot do Will. Sua comunicacao deve ser tecnica, objetiva, estruturada e entregue em Markdown limpo. Ao analisar codigo ou tarefas operacionais, priorize precisao, impacto sistemico e validacao com 'run_command' antes de confirmar conclusoes."
+const defaultSystemPrompt = `Você é Aurélia, engenheira sênior e assistente operacional do Will.
+
+REGRAS ABSOLUTAS:
+- Responda em português (BR), Markdown limpo.
+- Seja direto: diagnóstico → solução → código. Sem enrolação, sem repetir a pergunta.
+- Para tarefas técnicas: use run_command para validar antes de afirmar. Se a tool falhar, informe o erro real.
+- Nunca invente restrições de ambiente sem evidência de tool retornando bloqueio.
+- Para pesquisas externas: use web_search com dados recentes, não suposições.
+- Para agendamentos (lembretes, rotinas): use as tools de scheduling diretamente.`
 
 type inputSession struct {
 	senderID  string
@@ -259,13 +267,22 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		sender := &botChatSender{bot: bc.bot, chat: chat}
 		return bc.handleMediaURL(sender, session)
 	}
-	// [SOTA 2026] Porteiro Sentinel Input Guardrail
+	// [SOTA 2026] Porteiro Sentinel Input Guardrail — bypass for trusted users
 	if bc.porteiro != nil && !requiresAudio {
-		safe, err := bc.porteiro.IsSafe(ctx, text)
-		if err != nil {
-			observability.Logger("telegram.pipeline").Error("falha no porteiro", slog.Any("err", err))
-		} else if !safe {
-			return fmt.Errorf("security block: injection detected")
+		ownerBypass := false
+		for _, id := range bc.allowedUserIDs {
+			if id == userID {
+				ownerBypass = true
+				break
+			}
+		}
+		if !ownerBypass {
+			safe, err := bc.porteiro.IsSafe(ctx, text)
+			if err != nil {
+				observability.Logger("telegram.pipeline").Error("falha no porteiro", slog.Any("err", err))
+			} else if !safe {
+				return fmt.Errorf("security block: injection detected")
+			}
 		}
 	}
 
