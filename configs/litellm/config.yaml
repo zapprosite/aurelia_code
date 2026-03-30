@@ -2,92 +2,142 @@
 # RTX 4090 24GB VRAM — 50-80% requests served locally, cloud fallback
 # Cascade: local → qwen3.6-free → minimax-free → groq-free → paid
 # ADR: 20260330-qwen36-free-litellm-cascade.md
+# Valid routing strategies: simple-shuffle | least-busy | latency-based-routing |
+#   cost-based-routing | usage-based-routing-v2 | provider-budget-routing
+# Note: "priority" routing NOT available in this LiteLLM version
+# Cascade via model_fallbacks + least-busy (prefere menos ocupado = prefere local)
 # API KEYS via Environment Variables
 
 model_list:
-  # ─── Priority 1: LOCAL (RTX 4090 24GB) ─────────────────────────────
+  # ─── TIER 1: LOCAL (RTX 4090 24GB) — lowest rpm para least-busy preferir ──
   - model_name: aurelia-smart
     litellm_params:
       model: ollama/qwen3.5:9b
       api_base: http://host.docker.internal:11434
       timeout: 45
+      rpm: 1  # baixa rpm = menos ocupado = preferível pelo least-busy
+      extra_body:
+        think: false  # desabilita reasoning chain do qwen3.5 → content fica em vez de vazio
     model_info:
       tier: free
+      friendly_name: "qwen3.5:9b local RTX 4090"
+    model_fallbacks:
+      - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
 
+  # ─── TIER 2: QWEN 3.6 PLUS FREE (OpenRouter) ──────────────────────────
+  - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
+    litellm_params:
+      model: openrouter/qwen/qwen-3.6-plus-preview:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 60
+    model_info:
+      tier: free
+      friendly_name: "Qwen 3.6 Plus Free"
+    model_fallbacks:
+      - model_name: openrouter/minimax/minimax-2.5:free
+
+  # ─── TIER 3: MINIMAX 2.5 FREE (OpenRouter) ──────────────────────────
+  - model_name: openrouter/minimax/minimax-2.5:free
+    litellm_params:
+      model: openrouter/minimax/minimax-2.5:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 60
+    model_info:
+      tier: free
+      friendly_name: "Minimax 2.5 Free"
+    model_fallbacks:
+      - model_name: groq/llama-3.3-70b-versatile
+
+  # ─── TIER 4: GROQ FREE ────────────────────────────────────────────────
+  - model_name: groq/llama-3.3-70b-versatile
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+      timeout: 30
+      rpm: 480
+    model_info:
+      tier: free
+      friendly_name: "Groq Llama 3.3 70B"
+    model_fallbacks:
+      - model_name: openrouter/minimax/minimax-m2.7
+
+  # ─── TIER 10: PAID — último recurso ──────────────────────────────────
+  - model_name: openrouter/minimax/minimax-m2.7
+    litellm_params:
+      model: openrouter/minimax/minimax-m2.7
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 1000
+    model_info:
+      tier: paid
+      friendly_name: "Minimax M2.7 Paid"
+    model_fallbacks:
+      - model_name: openrouter/moonshotai/kimi-k2.5
+
+  - model_name: openrouter/moonshotai/kimi-k2.5
+    litellm_params:
+      model: openrouter/moonshotai/kimi-k2.5
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 1000
+    model_info:
+      tier: paid
+      friendly_name: "Kimi K2.5 Paid"
+
+  # ─── VISION & FAST aliases (apontam pro mesmo local) ─────────────────
   - model_name: aurelia-vision
     litellm_params:
       model: ollama/qwen3.5:9b
       api_base: http://host.docker.internal:11434
       timeout: 45
+      rpm: 1
+      extra_body:
+        think: false
+    model_info:
+      tier: free
+    model_fallbacks:
+      - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
 
   - model_name: aurelia-fast
     litellm_params:
       model: ollama/qwen3.5:9b
       api_base: http://host.docker.internal:11434
       timeout: 30
+      rpm: 1
+      extra_body:
+        think: false
+    model_info:
+      tier: free
+    model_fallbacks:
+      - model_name: groq/llama-3.3-70b-versatile
 
+  # ─── EMBEDDINGS ───────────────────────────────────────────────────────
   - model_name: nomic-embed-text
     litellm_params:
       model: ollama/nomic-embed-text
       api_base: http://host.docker.internal:11434
     model_info:
       mode: embedding
-
-  # ─── Priority 2: QWEN 3.6 PLUS FREE (OpenRouter) ──────────────────
-  - model_name: aurelia-smart
-    litellm_params:
-      model: openrouter/qwen/qwen-3.6-plus-preview:free
-      api_key: os.environ/OPENROUTER_API_KEY
-      timeout: 60
-    model_info:
       tier: free
-
-  # ─── Priority 3: MINIMAX 2.5 FREE (OpenRouter) ──────────────────
-  - model_name: aurelia-smart
-    litellm_params:
-      model: openrouter/minimax/minimax-2.5:free
-      api_key: os.environ/OPENROUTER_API_KEY
-      timeout: 60
-    model_info:
-      tier: free
-
-  # ─── Priority 4: GROQ FREE ───────────────────────────────────────
-  - model_name: aurelia-smart
-    litellm_params:
-      model: groq/llama-3.3-70b-versatile
-      api_key: os.environ/GROQ_API_KEY
-      timeout: 30
-    model_info:
-      tier: free
-
-  # ─── Priority 10+: PAID (último recurso) ─────────────────────────
-  - model_name: aurelia-smart
-    litellm_params:
-      model: openrouter/minimax/minimax-m2.7
-      api_key: os.environ/OPENROUTER_API_KEY
-      timeout: 60
-    model_info:
-      tier: paid
-
-  - model_name: aurelia-smart
-    litellm_params:
-      model: openrouter/moonshotai/kimi-k2.5
-      api_key: os.environ/OPENROUTER_API_KEY
-      timeout: 60
-    model_info:
-      tier: paid
 
 router_settings:
-  routing_strategy: priority
-  num_retries: 3
-  allowed_fails: 2
-  cooldown_time: 30
-  retry_after: 2
-  timeout: 90
+  routing_strategy: least-busy        # prefere menos ocupado = prefere local
+  num_retries: 3                     # retry automático em falha
+  allowed_fails: 2                   # marca como down após 2 falhas consecutivas
+  cooldown_time: 30                  # tempo antes de re-tentar deployment em cooldown
+  timeout: 90                        # timeout global
   retry_policy:
     RateLimitError:
       num_retries: 3
       retry_after: 10
+    InternalServerError:
+      num_retries: 3
+      retry_after: 5
+    APITimeoutError:
+      num_retries: 3
+      retry_after: 3
 
 litellm_settings:
   drop_params: true

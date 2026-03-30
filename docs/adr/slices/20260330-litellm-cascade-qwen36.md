@@ -19,12 +19,25 @@ LiteLLM proxy já rodando via Docker Compose (serviço `smart-router` na porta 4
 
 ## Configuração (`configs/litellm/config.yaml`)
 ```yaml
+# Note: routing_strategy "priority" NÃO existe no LiteLLM main-stable
+# Solução: least-busy (prefere menos ocupado = local) + model_fallbacks explícitos
+# Fix: 2026-03-30 — extra_body: {think: false} dentro de litellm_params (não no nível do model_list)
+
 router_settings:
-  routing_strategy: priority   # ← ao invés de latency-based
+  routing_strategy: least-busy   # prefere menos ocupado = prefere local RTX 4090
   num_retries: 3
   allowed_fails: 2
   cooldown_time: 30
   timeout: 90
+```
+
+### Cascade de modelos (model_fallbacks chain)
+```
+aurelia-smart (local) ─[fallback]→ qwen3.6-plus-preview:free
+                                    ─[fallback]→ minimax-2.5:free
+                                    ─[fallback]→ groq/llama-3.3-70b-versatile
+                                    ─[fallback]→ minimax-m2.7 (paid)
+                                    ─[fallback]→ kimi-k2.5 (paid)
 ```
 
 ## Integração Go
