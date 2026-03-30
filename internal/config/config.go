@@ -89,6 +89,7 @@ type AppConfig struct {
 	OpenAIAPIKey             string
 	GroqAPIKey               string
 	MiniMaxAPIKey            string
+	LiteLLMKey               string
 	MaxIterations            int
 	DBPath                   string
 	MemoryWindowSize         int
@@ -157,6 +158,7 @@ type fileConfig struct {
 	OpenAIAPIKey             string  `json:"openai_api_key"`
 	GroqAPIKey               string  `json:"groq_api_key"`
 	MiniMaxAPIKey            string  `json:"minimax_api_key"`
+	LiteLLMKey               string  `json:"litellm_key"`
 	MaxIterations            int     `json:"max_iterations"`
 	DBPath                   string  `json:"db_path"`
 	MemoryWindowSize         int     `json:"memory_window_size"`
@@ -222,6 +224,7 @@ type EditableConfig struct {
 	OpenAIAPIKey             string
 	GroqAPIKey               string
 	MiniMaxAPIKey            string
+	LiteLLMKey               string
 	MaxIterations            int
 	MemoryWindowSize         int
 	HeartbeatEnabled         bool
@@ -307,6 +310,9 @@ func applyEnvOverrides(cfg *fileConfig) {
 	}
 	if env := os.Getenv("MINIMAX_API_KEY"); env != "" {
 		cfg.MiniMaxAPIKey = env
+	}
+	if env := os.Getenv("LITELLM_MASTER_KEY"); env != "" {
+		cfg.LiteLLMKey = env
 	}
 	if env := os.Getenv("SUPABASE_URL"); env != "" {
 		cfg.SupabaseURL = env
@@ -435,6 +441,7 @@ func LoadEditable(r *runtime.PathResolver) (*EditableConfig, error) {
 		OpenAIAPIKey:             cfg.OpenAIAPIKey,
 		GroqAPIKey:               cfg.GroqAPIKey,
 		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
+		LiteLLMKey:               cfg.LiteLLMKey,
 		MaxIterations:            cfg.MaxIterations,
 		MemoryWindowSize:         cfg.MemoryWindowSize,
 		HeartbeatEnabled:         cfg.HeartbeatEnabled,
@@ -472,6 +479,7 @@ func SaveEditable(r *runtime.PathResolver, editable EditableConfig) error {
 	cfg.OpenAIAPIKey = editable.OpenAIAPIKey
 	cfg.GroqAPIKey = editable.GroqAPIKey
 	cfg.MiniMaxAPIKey = editable.MiniMaxAPIKey
+	cfg.LiteLLMKey = editable.LiteLLMKey
 	cfg.MaxIterations = editable.MaxIterations
 	cfg.MemoryWindowSize = editable.MemoryWindowSize
 	cfg.HeartbeatEnabled = editable.HeartbeatEnabled
@@ -727,6 +735,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		OpenAIAPIKey:             cfg.OpenAIAPIKey,
 		GroqAPIKey:               cfg.GroqAPIKey,
 		MiniMaxAPIKey:            cfg.MiniMaxAPIKey,
+		LiteLLMKey:               cfg.LiteLLMKey,
 		MaxIterations:            cfg.MaxIterations,
 		DBPath:                   cfg.DBPath,
 		MemoryWindowSize:         cfg.MemoryWindowSize,

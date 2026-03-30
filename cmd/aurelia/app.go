@@ -375,6 +375,13 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		logger.Info("Proteção de entrada migrada para o Porteiro (Qwen 0.5b + Redis)")
 	}
 
+	// Wire InputGuard (fast local prompt injection detector) to all bots in the pool
+	inputGuard := telegram.NewInputGuard(ollamaURL)
+	for _, bc := range pool.All() {
+		bc.SetInputGuard(inputGuard)
+	}
+	logger.Info("InputGuard wired to all bots", slog.String("model", "qwen2.5:0.5b"))
+
 	if err := registerSpawnAgentTool(a.cfg, loop.Registry(), a.llmProvider, notificationBot, a.taskStore); err != nil {
 		return fmt.Errorf("register spawn agent tool: %w", err)
 	}
@@ -742,6 +749,121 @@ func (a *app) effectiveBotLLM(botCfg config.BotConfig, appCfg *config.AppConfig)
 	return telegram.EffectiveBotLLM(botCfg, snapshot.EffectiveProvider, snapshot.EffectiveModel)
 }
 
+// registerChatAPIRoutes registers the Jarvis Chat API for the dashboard web UI.
+// POST /api/chat streams LLM tokens via SSE; GET /api/chat/history returns conversation history.
+func (a *app) registerChatAPIRoutes() {
+	corsSSE := func(w http.ResponseWriter) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	}
+
+	// POST /api/chat — stream LLM response tokens
+	dashboard.RegisterRoute("/api/chat", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			corsSSE(w)
+			return
+		}
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		corsSSE(w)
+
+		var req struct {
+			Message string `json:"message"`
+			BotID   string `json:"bot_id"`
+			UserID  int64  `json:"user_id"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		if strings.TrimSpace(req.Message) == "" {
+			http.Error(w, "message is required", http.StatusBadRequest)
+			return
+		}
+		// Default user: owner from config
+		if req.UserID == 0 && len(a.cfg.TelegramAllowedUserIDs) > 0 {
+			req.UserID = a.cfg.TelegramAllowedUserIDs[0]
+		}
+
+		// Resolve target bot
+		target := a.primaryBot
+		if req.BotID != "" {
+			if bc := a.pool.Get(req.BotID); bc != nil {
+				target = bc
+			}
+		}
+		if target == nil {
+			http.Error(w, "no bot available", http.StatusServiceUnavailable)
+			return
+		}
+
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "streaming not supported", http.StatusInternalServerError)
+			return
+		}
+
+		tokenCh := target.StreamChat(r.Context(), req.UserID, req.Message)
+		for token := range tokenCh {
+			data, _ := json.Marshal(token)
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+		}
+	}))
+
+	// GET /api/chat/history — return recent conversation messages
+	dashboard.RegisterRoute("/api/chat/history", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		botID := r.URL.Query().Get("bot_id")
+		target := a.primaryBot
+		if botID != "" {
+			if bc := a.pool.Get(botID); bc != nil {
+				target = bc
+			}
+		}
+		if target == nil {
+			_ = json.NewEncoder(w).Encode([]any{})
+			return
+		}
+
+		var userID int64
+		if len(a.cfg.TelegramAllowedUserIDs) > 0 {
+			userID = a.cfg.TelegramAllowedUserIDs[0]
+		}
+
+		history, err := target.ChatHistory(r.Context(), userID)
+		if err != nil {
+			_ = json.NewEncoder(w).Encode([]any{})
+			return
+		}
+
+		type chatMsg struct {
+			Role    string `json:"role"`
+			Content string `json:"content"`
+		}
+		msgs := make([]chatMsg, 0, len(history))
+		for _, m := range history {
+			if m.Role == "tool" {
+				continue
+			}
+			msgs = append(msgs, chatMsg{Role: m.Role, Content: m.Content})
+		}
+		_ = json.NewEncoder(w).Encode(msgs)
+	}))
+}
+
 func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (closableLLMProvider, error) {
 	if cfg.LLMProvider == "openrouter" && cfg.OpenRouterAPIKey != "" {
 		return gateway.NewProvider(cfg)
@@ -830,6 +952,9 @@ func (a *app) start() {
 	dashboard.RegisterRoute("/api/vrv/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/?tab=homelab", http.StatusTemporaryRedirect)
 	}))
+
+	// Jarvis Chat API — streams LLM responses to the dashboard UI
+	a.registerChatAPIRoutes()
 
 	// S-32: REST API for multi-bot management
 	resolver := a.resolver

@@ -21,7 +21,7 @@ func (bc *BotController) handleText(c telebot.Context) error {
 func (bc *BotController) handleDocument(c telebot.Context) error {
 	doc := c.Message().Document
 	if doc == nil {
-		return nil
+		return SendContextText(c, "Não consegui processar o documento enviado.")
 	}
 
 	if !isSupportedDocument(doc.FileName, doc.MIME) {
@@ -46,7 +46,7 @@ func (bc *BotController) handleDocument(c telebot.Context) error {
 func (bc *BotController) handleVoice(c telebot.Context) error {
 	fileID, filename, ok := resolveAudioAttachment(c)
 	if !ok {
-		return nil
+		return SendContextText(c, "Formato de áudio não suportado. Envie como mensagem de voz ou arquivo .ogg/.mp3.")
 	}
 
 	stopRecording := startChatActionLoop(bc.bot, c.Chat(), telebot.RecordingAudio, 4*time.Second)
@@ -61,8 +61,12 @@ func (bc *BotController) handleVoice(c telebot.Context) error {
 
 	transcribedText, err := bc.transcribeAudioFile(filePath)
 	if err != nil {
-		observability.Logger("telegram.input").Warn("silent failure: audio transcription skipped", slog.Any("err", err))
-		return nil
+		observability.Logger("telegram.input").Warn("audio transcription failed", slog.Any("err", err))
+		var userMsg sendContextTextError
+		if errorAs(err, &userMsg) {
+			return SendContextText(c, string(userMsg))
+		}
+		return SendContextText(c, "Não consegui transcrever o áudio. Tente enviar como texto.")
 	}
 	bc.persistAudioTranscript(c, filePath, transcribedText)
 	return bc.processInput(c, transcribedText, true)

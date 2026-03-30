@@ -23,11 +23,26 @@ func (e *Executor) GetLoop() *agent.Loop {
 
 // Execute wraps the ReAct loop injecting the targeted skill file cleanly without polluting history
 func (e *Executor) Execute(ctx context.Context, baseSystemPrompt string, skill *Skill, history []agent.Message, allowedTools []string) ([]agent.Message, string, error) {
-	// Dynamically inject the huge skill.md markdown
-	finalSystemPrompt := baseSystemPrompt
-	if skill != nil {
-		finalSystemPrompt += "\n\n# ACTIVE SKILL CONTEXT:\n" + skill.Content
-	}
-
+	finalSystemPrompt := buildSkillPrompt(baseSystemPrompt, skill)
 	return e.loop.Run(ctx, finalSystemPrompt, history, allowedTools)
+}
+
+// ExecuteStream is the streaming variant — returns a channel of tokens/tool events.
+func (e *Executor) ExecuteStream(ctx context.Context, baseSystemPrompt string, skill *Skill, history []agent.Message, allowedTools []string) (<-chan agent.StreamResponse, error) {
+	finalSystemPrompt := buildSkillPrompt(baseSystemPrompt, skill)
+
+	opts := agent.LoopOptions{
+		SystemPrompt:    finalSystemPrompt,
+		InitialHistory:  history,
+		MaxIterations:   e.loop.MaxIterations(),
+		ToolDefinitions: e.loop.ResolveToolDefinitions(history, allowedTools),
+	}
+	return e.loop.RunWithOptionsStream(ctx, opts)
+}
+
+func buildSkillPrompt(base string, skill *Skill) string {
+	if skill != nil {
+		return base + "\n\n# ACTIVE SKILL CONTEXT:\n" + skill.Content
+	}
+	return base
 }

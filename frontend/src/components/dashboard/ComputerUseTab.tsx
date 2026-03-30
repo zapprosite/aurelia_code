@@ -10,10 +10,11 @@ import {
   ChevronRight,
   Zap,
   Bot,
-  MessageSquare
+  MessageSquare,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
+import { Input as _Input } from "../ui/Input";
 import { Card, CardContent } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { ScrollArea } from "../ui/ScrollArea";
@@ -43,9 +44,9 @@ export function ComputerUseTab({ className }: ComputerUseTabProps) {
     },
   ]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [screenshot, setScreenshot] = React.useState<string | null>(null);
-  const [copied, setCopied] = React.useState<string | null>(null);
-  const [stagehandStatus, setStagehandStatus] = React.useState<"connected" | "disconnected" | "loading">("connected");
+  const [screenshot, _setScreenshot] = React.useState<string | null>(null);
+  const [_copied, setCopied] = React.useState<string | null>(null);
+  const [stagehandStatus, _setStagehandStatus] = React.useState<"connected" | "disconnected" | "loading">("connected");
 
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -79,7 +80,7 @@ export function ComputerUseTab({ className }: ComputerUseTabProps) {
 
     try {
       // Call backend API
-      const response = await fetch("/v1/telegram/impersonate", {
+      await fetch("/v1/telegram/impersonate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,11 +121,13 @@ export function ComputerUseTab({ className }: ComputerUseTabProps) {
     }
   };
 
+  void setCopied; // used in copyToClipboard below
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
   };
+  void copyToClipboard;
 
   return (
     <div className={`space-y-6 ${className}`}>

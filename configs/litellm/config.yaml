@@ -1,68 +1,85 @@
 # LiteLLM Configuration — Aurelia Smart Router (SOTA 2026)
-# ⚠️ API KEYS via Environment Variables
+# API KEYS via Environment Variables
 
 model_list:
-  # --- NÍVEL 0 (LOCAL SÃO PAULO) ---
-  - model_name: aurelia-vision
-    litellm_params:
-      model: ollama/qwen3.5
-      api_base: http://localhost:11434
-      timeout: 30
-
+  # --- TIER 0: LOCAL (Ollama @ Sao Paulo) ---
   - model_name: aurelia-smart
     litellm_params:
-      model: ollama/qwen3.5
-      api_base: http://localhost:11434
+      model: ollama/qwen3.5:9b
+      api_base: http://host.docker.internal:11434
+      timeout: 30
+    model_info:
+      tier: free
+
+  - model_name: aurelia-vision
+    litellm_params:
+      model: ollama/qwen3.5:9b
+      api_base: http://host.docker.internal:11434
       timeout: 30
 
   - model_name: nomic-embed-text
     litellm_params:
       model: ollama/nomic-embed-text
-      api_base: http://localhost:11434
+      api_base: http://host.docker.internal:11434
+    model_info:
+      mode: embedding
 
-  # --- NÍVEL 1 (FREE CLOUD CASCADE) ---
+  # --- TIER 1: FREE CLOUD CASCADE ---
   - model_name: aurelia-smart
     litellm_params:
-      model: openrouter/minimax/minimax-m2.5:free
-      api_key: "os.environ/OPENROUTER_API_KEY"
-
-  - model_name: aurelia-smart
-    litellm_params:
-      model: openrouter/google/gemini-2.0-flash-001
-      api_key: "os.environ/OPENROUTER_API_KEY"
-
-  - model_name: aurelia-smart
-    litellm_params:
-      model: groq/llama-3.3-70b
+      model: groq/llama-3.3-70b-versatile
       api_key: "os.environ/GROQ_API_KEY"
+      timeout: 30
+    model_info:
+      tier: free
 
-  # --- NÍVEL 2 (PAID ENGINEERING) ---
-  - model_name: aurelia-smart
-    litellm_params:
-      model: openrouter/zhipu/glm-5.1
-      api_key: "os.environ/OPENROUTER_API_KEY"
+  # gemini/gemini-2.0-flash — free tier exhausted (limit: 0), disabled
+  # - model_name: aurelia-smart
+  #   litellm_params:
+  #     model: gemini/gemini-2.0-flash
+  #     api_key: "os.environ/GOOGLE_API_KEY"
 
+  # minimax-m2.5:free — blocked by OpenRouter data policy restrictions
+  # - model_name: aurelia-smart
+  #   litellm_params:
+  #     model: openrouter/minimax/minimax-m2.5:free
+  #     api_key: "os.environ/OPENROUTER_API_KEY"
+  #     timeout: 30
+
+  # --- TIER 2: PAID ENGINEERING (ultimo recurso) ---
   - model_name: aurelia-smart
     litellm_params:
       model: openrouter/minimax/minimax-m2.7
       api_key: "os.environ/OPENROUTER_API_KEY"
+      timeout: 45
+    model_info:
+      tier: paid
 
   - model_name: aurelia-smart
     litellm_params:
       model: openrouter/moonshotai/kimi-k2.5
       api_key: "os.environ/OPENROUTER_API_KEY"
+      timeout: 45
+    model_info:
+      tier: paid
 
 router_settings:
-  redis_host: localhost
-  redis_port: 6379
-  routing_strategy: simple-shuffle
-  enable_fallbacks: true
+  routing_strategy: latency-based-routing
+  num_retries: 3
+  allowed_fails: 1
+  cooldown_time: 60
+  retry_after: 2
+  timeout: 60
   retry_policy:
-    max_retries: 3
-    timeout: 30
+    RateLimitError:
+      num_retries: 3
+      retry_after: 5
 
 litellm_settings:
   drop_params: true
   set_verbose: false
-  json_response: true
-  cache: true 
+  cache: true
+  cache_params:
+    type: redis
+    host: redis
+    port: 6379

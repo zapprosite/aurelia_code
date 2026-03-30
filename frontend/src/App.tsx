@@ -17,6 +17,7 @@ import { ComputerUseTab } from "./components/dashboard/ComputerUseTab";
 import { useSystemMetrics } from "./hooks/useSystemMetrics";
 import { type SquadAgent } from "./components/dashboard/SquadGrid";
 import { HomelabTab } from "./components/dashboard/HomelabTab";
+import { ChatTab } from "./components/dashboard/ChatTab";
 
 // Initial Feed Placeholder
 const INITIAL_FEED: FeedItemProps[] = [
@@ -33,10 +34,11 @@ const INITIAL_FEED: FeedItemProps[] = [
 
 function getInitialTab(): TabId {
   if (typeof window === "undefined") {
-    return "timeline";
+    return "chat";
   }
   const tab = new URLSearchParams(window.location.search).get("tab");
   switch (tab) {
+    case "chat":
     case "bots":
     case "squad":
     case "brain":
@@ -44,8 +46,10 @@ function getInitialTab(): TabId {
     case "homelab":
     case "computer":
       return tab;
+    case "timeline":
+      return tab;
     default:
-      return "timeline";
+      return "chat";
   }
 }
 
@@ -127,6 +131,7 @@ function App() {
 
   const getTabTitle = () => {
     switch (activeTab) {
+      case "chat":     return "Jarvis Chat — Command Center";
       case "timeline": return "Main Floor — Activity Stream";
       case "bots":     return "Team Bots — Multi-Bot Manager";
       case "computer": return "Computer Use — Jarvis Browser";
@@ -167,6 +172,10 @@ function App() {
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="min-h-full"
               >
+                {activeTab === "chat" && (
+                  <ChatTab />
+                )}
+
                 {activeTab === "bots" && (
                   <BotsTab feed={feed} />
                 )}

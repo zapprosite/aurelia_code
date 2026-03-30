@@ -169,3 +169,4 @@
 {"timestamp":"2026-03-28T18:08:06.191Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
 {"timestamp":"2026-03-28T19:01:02.757Z","tool":"context","action":"check","status":"success","details":{"params":{"action":"check","repoPath":"/home/will/aurelia"}}}
 {"timestamp":"2026-03-28T19:01:04.045Z","tool":"workflow-status","action":"workflow-status","status":"success","details":{"params":{},"result":{"success":true,"currentPhase":{"code":"P","name":"Planning"},"scale":"Medium"}}}
+{"timestamp":"2026-03-29T23:32:50.667Z","tool":"sync","action":"exportContext","status":"success","details":{"params":{"action":"exportContext","skipDocs":true,"skipAgents":true,"skipSkills":true},"result":{"success":true}}}
