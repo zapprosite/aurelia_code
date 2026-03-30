@@ -107,3 +107,4 @@ homelab-bibliotheca/skills/open-claw/temp/
 !homelab-bibliotheca/skills/open-claw/skills-registry.json
 .env
 .env
+data/qdrant/
