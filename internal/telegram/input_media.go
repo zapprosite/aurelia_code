@@ -32,7 +32,7 @@ func (bc *BotController) handleMediaURL(c contextSender, session inputSession) e
 func (bc *BotController) handleVideo(c telebot.Context) error {
 	video := c.Message().Video
 	if video == nil {
-		return nil
+		return SendContextText(c, "Não consegui processar o vídeo enviado.")
 	}
 
 	stopTyping := startChatActionLoop(bc.bot, c.Chat(), telebot.Typing, 4*time.Second)

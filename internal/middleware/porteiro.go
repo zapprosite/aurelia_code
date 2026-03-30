@@ -40,11 +40,13 @@ func (p *PorteiroMiddleware) IsSafe(ctx context.Context, prompt string) (bool, e
 		return true, nil
 	}
 
-	// 1. Check Cache
+	// 1. Check Cache (3s timeout — skip cache on timeout)
 	hash := p.calcHash(prompt)
 	cacheKey := fmt.Sprintf("porteiro:cache:%s", hash)
-	
-	val, err := p.redis.Client.Get(ctx, cacheKey).Result()
+
+	redisCtx, redisCancel := context.WithTimeout(ctx, 3*time.Second)
+	val, err := p.redis.Client.Get(redisCtx, cacheKey).Result()
+	redisCancel()
 	if err == nil {
 		if val == "SAFE" {
 			return true, nil
@@ -71,7 +73,9 @@ TEXTO: %s`
 		{Role: "user", Content: fmt.Sprintf("ANALISAR: %s", prompt)},
 	}
 
-	resp, err := p.llm.GenerateContent(ctx, fmt.Sprintf(systemPrompt, prompt), history, nil)
+	llmCtx, llmCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer llmCancel()
+	resp, err := p.llm.GenerateContent(llmCtx, fmt.Sprintf(systemPrompt, prompt), history, nil)
 	if err != nil {
 		slog.Error("falha na análise do Porteiro", "err", err)
 		return true, nil // Fail-open

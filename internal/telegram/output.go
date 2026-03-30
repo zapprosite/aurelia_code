@@ -226,7 +226,9 @@ func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer t
 		return nil
 	}
 
-	audio, err := synthesizer.Synthesize(context.Background(), speechText)
+	ttsCtx, ttsCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ttsCancel()
+	audio, err := synthesizer.Synthesize(ttsCtx, speechText)
 	if err != nil {
 		log.Printf("TTS synthesis failed (%v).", err)
 		return nil // Don't fail the whole response if only audio fails
@@ -290,7 +292,9 @@ func deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesize
 		if speechText := sanitizeTextForSpeech(text, limit); speechText != "" {
 			ttsCh = make(chan ttsAsyncResult, 1)
 			go func() {
-				audio, err := synthesizer.Synthesize(context.Background(), speechText)
+				ttsCtx, ttsCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer ttsCancel()
+				audio, err := synthesizer.Synthesize(ttsCtx, speechText)
 				ttsCh <- ttsAsyncResult{audio, err}
 			}()
 		}

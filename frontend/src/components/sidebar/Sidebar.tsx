@@ -1,10 +1,10 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
-import { Sparkles, Activity, Users, Brain, Map, Settings, ChevronLeft, ChevronRight, Server, Bot, Monitor } from "lucide-react";
+import { Sparkles, Activity, Users, Brain, Map, Settings, ChevronLeft, ChevronRight, Server, Bot, Monitor, MessageCircle } from "lucide-react";
 import { Button } from "../ui/Button";
 import { motion } from "framer-motion";
 
-export type TabId = "timeline" | "bots" | "squad" | "brain" | "roadmap" | "homelab" | "computer";
+export type TabId = "chat" | "timeline" | "bots" | "squad" | "brain" | "roadmap" | "homelab" | "computer";
 
 interface SidebarProps {
   activeTab: TabId;
@@ -15,13 +15,14 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [collapsed, setCollapsed] = React.useState(false);
 
   const navItems = [
-    { id: "timeline", label: "Timeline & Feed", icon: Activity },
-    { id: "bots",     label: "Team Bots",        icon: Bot },
-    { id: "computer", label: "Computer Use",    icon: Monitor },
-    { id: "squad",    label: "Squad (Agentes)",   icon: Users },
+    { id: "chat",     label: "Jarvis Chat",        icon: MessageCircle },
+    { id: "timeline", label: "Timeline & Feed",    icon: Activity },
+    { id: "bots",     label: "Team Bots",          icon: Bot },
+    { id: "computer", label: "Computer Use",       icon: Monitor },
+    { id: "squad",    label: "Squad (Agentes)",    icon: Users },
     { id: "brain",    label: "The Brain (.context)", icon: Brain },
-    { id: "roadmap",  label: "Roadmap Slices",    icon: Map },
-    { id: "homelab",  label: "Homelab",           icon: Server },
+    { id: "roadmap",  label: "Roadmap Slices",     icon: Map },
+    { id: "homelab",  label: "Homelab",            icon: Server },
   ];
 
   return (

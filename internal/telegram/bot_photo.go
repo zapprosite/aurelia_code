@@ -79,7 +79,10 @@ func (bc *BotController) processAlbum(c telebot.Context, albumID string) {
 		})
 	}
 
-	_ = bc.processInputWithParts(c, parts)
+	if err := bc.processInputWithParts(c, parts); err != nil {
+		observability.Logger("telegram.vision").Warn("album processing failed", slog.Any("err", err))
+		_ = SendError(bc.bot, c.Chat(), "Falha ao processar o álbum de fotos.")
+	}
 }
 
 func (bc *BotController) storeAlbumPhoto(albumID string, messageID int, caption string, photo telebot.Photo) bool {

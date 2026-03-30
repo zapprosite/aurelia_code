@@ -35,6 +35,12 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 
 func (bc *BotController) processInputSession(c telebot.Context, session inputSession, requiresAudio bool) error {
 	logger := observability.Logger("telegram.pipeline")
+
+	// P0: Global 90s timeout — prevents infinite hangs (Telegram timeout ~120s).
+	ctx, cancel := context.WithTimeout(session.ctx, 90*time.Second)
+	defer cancel()
+	session.ctx = ctx
+
 	session.text = strings.ReplaceAll(session.text, "\x00", "")
 	session.voiceMode = requiresAudio
 
@@ -66,8 +72,10 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 			if err != nil {
 				logger.Error("falha no porteiro", slog.Any("err", err))
 			} else if !safe {
-				observability.Logger("telegram.pipeline").Warn("input blocked by porteiro", slog.String("session", session.convID))
-				_ = SendError(bc.bot, c.Chat(), " [🛑 BLOQUEIO DE SEGURANÇA: TENTATIVA DE INJECTION DETECTADA] ")
+				logger.Warn("input blocked by porteiro", slog.String("session", session.convID))
+				if sendErr := SendError(bc.bot, c.Chat(), " [🛑 BLOQUEIO DE SEGURANÇA: TENTATIVA DE INJECTION DETECTADA] "); sendErr != nil {
+					logger.Warn("failed to send porteiro block message", slog.Any("err", sendErr))
+				}
 				return nil
 			}
 		}
@@ -75,9 +83,11 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 
 	// [SOTA 2026] Context Window Compression Trigger
 	if bc.memory != nil {
-		if err := bc.memory.Compress(session.ctx, session.convID); err != nil {
+		compressCtx, compressCancel := context.WithTimeout(session.ctx, 5*time.Second)
+		if err := bc.memory.Compress(compressCtx, session.convID); err != nil {
 			logger.Warn("falha na compressão de contexto", slog.Any("err", err))
 		}
+		compressCancel()
 	}
 
 	if err := bc.persistIncomingContext(session, c.Sender().ID); err != nil {
@@ -94,7 +104,9 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 
 	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
 	if err != nil {
-		_ = SendError(bc.bot, c.Chat(), err.Error())
+		if sendErr := SendError(bc.bot, c.Chat(), err.Error()); sendErr != nil {
+			logger.Warn("failed to send prepareExecution error", slog.Any("err", sendErr))
+		}
 		return nil
 	}
 
@@ -120,7 +132,16 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 			bc.persistAssistantAnswer(session, finalAnswer)
 			return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
 		}
-		_ = SendError(bc.bot, c.Chat(), err.Error())
+		// P0: Timeout-specific friendly message
+		if ctx.Err() != nil {
+			if sendErr := SendError(bc.bot, c.Chat(), "Desculpe, demorei demais para processar. Tente novamente."); sendErr != nil {
+				logger.Warn("failed to send timeout fallback", slog.Any("err", sendErr))
+			}
+			return nil
+		}
+		if sendErr := SendError(bc.bot, c.Chat(), err.Error()); sendErr != nil {
+			logger.Warn("failed to send error to user", slog.Any("err", sendErr))
+		}
 		return nil
 	}
 
@@ -250,7 +271,9 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 
 	// [SOTA 2026] Context Window Compression Trigger
 	if bc.memory != nil {
-		_ = bc.memory.Compress(ctx, session.convID)
+		compressCtx, compressCancel := context.WithTimeout(ctx, 5*time.Second)
+		_ = bc.memory.Compress(compressCtx, session.convID)
+		compressCancel()
 	}
 	if err := bc.persistIncomingContext(session, userID); err != nil {
 		observability.Logger("telegram.pipeline").Warn("failed to persist external input context", slog.Any("err", err))
@@ -258,14 +281,16 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 
 	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
 	if err != nil {
-		_ = SendError(bc.bot, chat, err.Error())
+		if sendErr := SendError(bc.bot, chat, err.Error()); sendErr != nil {
+			slog.Warn("failed to send prepareExecution error (external)", slog.Any("err", sendErr))
+		}
 		return err
 	}
 
 	finalAnswer, err := bc.executeExternalConversation(chat, session, activeSkill, history, systemPrompt, allowedTools)
 	if err != nil {
-		logger := observability.Logger("telegram.pipeline")
-		logger.Error("external conversation execution failed",
+		extLogger := observability.Logger("telegram.pipeline")
+		extLogger.Error("external conversation execution failed",
 			slog.Any("err", err),
 			slog.String("user_id", fmt.Sprintf("%d", userID)),
 			slog.String("text", session.text),
@@ -277,14 +302,16 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 			strings.Contains(err.Error(), "budget exceeded") ||
 			strings.Contains(err.Error(), "empty guarded content")
 		if gatewayFailure && finalAnswer != "" {
-			logger.Info("using partial answer despite gateway failure",
+			extLogger.Info("using partial answer despite gateway failure",
 				slog.String("partial_answer_len", fmt.Sprintf("%d", len(finalAnswer))),
 			)
 			finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
 			bc.persistAssistantAnswer(session, finalAnswer)
 			return bc.deliverFinalAnswerToChat(chat, finalAnswer, false)
 		}
-		_ = SendError(bc.bot, chat, err.Error())
+		if sendErr := SendError(bc.bot, chat, err.Error()); sendErr != nil {
+			extLogger.Warn("failed to send error to user (external)", slog.Any("err", sendErr))
+		}
 		return err
 	}
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)

@@ -46,6 +46,16 @@ func (l *Loop) Registry() *ToolRegistry {
 	return l.registry
 }
 
+// MaxIterations returns the configured max iteration count.
+func (l *Loop) MaxIterations() int {
+	return l.maxIterations
+}
+
+// ResolveToolDefinitions exposes tool resolution for external callers (e.g. ExecuteStream).
+func (l *Loop) ResolveToolDefinitions(history []Message, allowedTools []string) []Tool {
+	return l.resolveToolDefinitions(history, allowedTools)
+}
+
 // GetLLMProvider returns the underlying LLM provider
 func (l *Loop) GetLLMProvider() LLMProvider {
 	return l.llm
@@ -85,14 +95,18 @@ type LoopOptions struct {
 func (l *Loop) RunWithOptions(ctx context.Context, opts LoopOptions) ([]Message, string, error) {
 	ch, err := l.RunWithOptionsStream(ctx, opts)
 	if err != nil {
-		return opts.InitialHistory, "", err
+		return opts.InitialHistory, "Desculpe, ocorreu um erro ao processar sua mensagem.", err
 	}
 
 	var currentHistory []Message
 	var lastContent string
 	for resp := range ch {
 		if resp.Err != nil {
-			return currentHistory, "", resp.Err
+			// Return accumulated content if available, otherwise a user-friendly fallback.
+			if lastContent == "" {
+				lastContent = "Desculpe, ocorreu um erro durante o processamento."
+			}
+			return currentHistory, lastContent, resp.Err
 		}
 		if resp.Done && resp.History != nil {
 			currentHistory = resp.History
@@ -217,7 +231,8 @@ func (l *Loop) RunWithOptionsStream(ctx context.Context, opts LoopOptions) (<-ch
 				}
 			}
 		}
-		ch <- StreamResponse{Err: fmt.Errorf("max iterations reached"), History: currentHistory}
+		// Emit accumulated content before the error so callers can use partial results.
+		ch <- StreamResponse{Err: fmt.Errorf("max iterations reached (%d)", opts.MaxIterations), Done: true, History: currentHistory}
 	}()
 
 	return ch, nil
