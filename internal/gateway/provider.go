@@ -94,24 +94,25 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 	lowTemp := 0.1
 	localFast := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
 		BaseURL: "http://localhost:4000/v1/chat/completions",
+		APIKey:  cfg.LiteLLMKey,
 		Model:   "aurelia-smart",
 		Request: llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   192,
 			Temperature: &lowTemp,
-			ExtraFields: map[string]any{"think": false},
 		},
 	})
 	localBalanced := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
 		BaseURL: "http://localhost:4000/v1/chat/completions",
+		APIKey:  cfg.LiteLLMKey,
 		Model:   "aurelia-smart",
 		Request: llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
-			ExtraFields: map[string]any{"think": false},
 		},
 	})
 	localVision := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{
 		BaseURL: "http://localhost:4000/v1/chat/completions",
+		APIKey:  cfg.LiteLLMKey,
 		Model:   "aurelia-smart",
 		Request: llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   512,
@@ -137,7 +138,6 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		remoteCheapLong = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelDeepSeekV31, llm.OpenAICompatibleRequestOptions{
 			MaxTokens:   1024,
 			Temperature: &lowTemp,
-			ExtraFields: map[string]any{"include_reasoning": false},
 		})
 		// Long context / vision
 		remoteCheapVision = llm.NewOpenRouterProviderWithOptions(cfg.OpenRouterAPIKey, modelLlama4Scout, llm.OpenAICompatibleRequestOptions{
@@ -159,7 +159,7 @@ func NewProvider(cfg *config.AppConfig) (*Provider, error) {
 		})
 	}
 
-	judge := NewGemmaJudge(cfg.OllamaURL, "qwen3.5:9b")
+	judge := NewGemmaJudge(cfg.OllamaURL, "qwen2.5:0.5b")
 
 	provider := &Provider{
 		planner:           NewPlanner(),
@@ -516,6 +516,12 @@ func (p *Provider) generateWithDecision(ctx context.Context, decision DryRunDeci
 	// Clean up thought tags for local models that might mix them in.
 	if resp != nil {
 		resp.Content = stripThoughtTags(resp.Content)
+		// Thinking models (e.g. qwen3.5:9b via LiteLLM) return the answer in
+		// reasoning_content with an empty content field — promote it.
+		if strings.TrimSpace(resp.Content) == "" && strings.TrimSpace(resp.ReasoningContent) != "" {
+			resp.Content = strings.TrimSpace(resp.ReasoningContent)
+			resp.ReasoningContent = ""
+		}
 	}
 	// Se tools foram stripped para modelo local e a resposta tem conteudo, aceitar sem guard.
 	if toolsStripped && resp != nil && strings.TrimSpace(resp.Content) != "" {

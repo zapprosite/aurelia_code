@@ -81,7 +81,8 @@ TEXTO: %s`
 		return true, nil // Fail-open
 	}
 
-	isSafe := strings.Contains(strings.ToUpper(resp.Content), "[SAFE]")
+	upper := strings.ToUpper(resp.Content)
+	isSafe := strings.Contains(upper, "[SAFE]") || (strings.Contains(upper, "SAFE") && !strings.Contains(upper, "UNSAFE"))
 	
 	// 3. Update Cache
 	status := "UNSAFE"
