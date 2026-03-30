@@ -99,5 +99,5 @@ func (bc *BotController) handleSquadStatus(c telebot.Context) error {
 	minutes := int(uptime.Minutes()) % 60
 	sb.WriteString(fmt.Sprintf("\n⚙️ Uptime: %dh%02dmin\n", hours, minutes))
 
-	return SendContextText(c, sb.String())
+	return bc.SendPolishedContextText(c, sb.String())
 }
