@@ -621,17 +621,13 @@ func normalizeFileConfig(cfg fileConfig, r *runtime.PathResolver) fileConfig {
 	// Apply Lite Mode overrides if enabled
 	if cfg.AureliaMode == "lite" {
 		if cfg.LLMProvider == "ollama" {
-			// If no keys for cloud, we keep qwen3.5
-			// But usually lite means preference for Cloud to save local resources
+			// lite = prefer cloud to save local GPU resources
 			if cfg.OpenRouterAPIKey != "" {
 				cfg.LLMProvider = "openrouter"
 				cfg.LLMModel = "anthropic/claude-3-haiku"
-			} else if cfg.GoogleAPIKey != "" {
-				cfg.LLMProvider = "google"
-				cfg.LLMModel = "gemini-2.0-flash"
 			}
 		}
-		// In lite mode, we might want to disable local voice capture if not configured
+		// In lite mode, disable local voice capture unless explicitly configured
 		cfg.VoiceEnabled = cfg.TelegramBotToken != "" && cfg.VoiceEnabled
 	}
 

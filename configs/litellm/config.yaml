@@ -1,17 +1,26 @@
-# LiteLLM Configuration — Aurelia Smart Router (SOTA 2026)
+# LiteLLM Configuration — Cascade Jarvis Local-First (SOTA 2026)
+# RTX 4090 24GB VRAM — 50-80% requests served locally, cloud fallback
+# Cascade: local → qwen3.6-free → minimax-free → groq-free → paid
+# ADR: 20260330-qwen36-free-litellm-cascade.md
 # API KEYS via Environment Variables
 
 model_list:
-  # --- TIER 0: LOCAL (Ollama @ Sao Paulo) ---
+  # ─── Priority 1: LOCAL (RTX 4090 24GB) ─────────────────────────────
   - model_name: aurelia-smart
     litellm_params:
       model: ollama/qwen3.5:9b
       api_base: http://host.docker.internal:11434
-      timeout: 30
+      timeout: 45
     model_info:
       tier: free
 
   - model_name: aurelia-vision
+    litellm_params:
+      model: ollama/qwen3.5:9b
+      api_base: http://host.docker.internal:11434
+      timeout: 45
+
+  - model_name: aurelia-fast
     litellm_params:
       model: ollama/qwen3.5:9b
       api_base: http://host.docker.internal:11434
@@ -24,56 +33,61 @@ model_list:
     model_info:
       mode: embedding
 
-  # --- TIER 1: FREE CLOUD CASCADE ---
+  # ─── Priority 2: QWEN 3.6 PLUS FREE (OpenRouter) ──────────────────
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/qwen/qwen-3.6-plus-preview:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+    model_info:
+      tier: free
+
+  # ─── Priority 3: MINIMAX 2.5 FREE (OpenRouter) ──────────────────
+  - model_name: aurelia-smart
+    litellm_params:
+      model: openrouter/minimax/minimax-2.5:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+    model_info:
+      tier: free
+
+  # ─── Priority 4: GROQ FREE ───────────────────────────────────────
   - model_name: aurelia-smart
     litellm_params:
       model: groq/llama-3.3-70b-versatile
-      api_key: "os.environ/GROQ_API_KEY"
+      api_key: os.environ/GROQ_API_KEY
       timeout: 30
     model_info:
       tier: free
 
-  # gemini/gemini-2.0-flash — free tier exhausted (limit: 0), disabled
-  # - model_name: aurelia-smart
-  #   litellm_params:
-  #     model: gemini/gemini-2.0-flash
-  #     api_key: "os.environ/GOOGLE_API_KEY"
-
-  # minimax-m2.5:free — blocked by OpenRouter data policy restrictions
-  # - model_name: aurelia-smart
-  #   litellm_params:
-  #     model: openrouter/minimax/minimax-m2.5:free
-  #     api_key: "os.environ/OPENROUTER_API_KEY"
-  #     timeout: 30
-
-  # --- TIER 2: PAID ENGINEERING (ultimo recurso) ---
+  # ─── Priority 10+: PAID (último recurso) ─────────────────────────
   - model_name: aurelia-smart
     litellm_params:
       model: openrouter/minimax/minimax-m2.7
-      api_key: "os.environ/OPENROUTER_API_KEY"
-      timeout: 45
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
     model_info:
       tier: paid
 
   - model_name: aurelia-smart
     litellm_params:
       model: openrouter/moonshotai/kimi-k2.5
-      api_key: "os.environ/OPENROUTER_API_KEY"
-      timeout: 45
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
     model_info:
       tier: paid
 
 router_settings:
-  routing_strategy: latency-based-routing
+  routing_strategy: priority
   num_retries: 3
-  allowed_fails: 1
-  cooldown_time: 60
+  allowed_fails: 2
+  cooldown_time: 30
   retry_after: 2
-  timeout: 60
+  timeout: 90
   retry_policy:
     RateLimitError:
       num_retries: 3
-      retry_after: 5
+      retry_after: 10
 
 litellm_settings:
   drop_params: true

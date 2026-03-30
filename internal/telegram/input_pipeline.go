@@ -17,7 +17,21 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const defaultSystemPrompt = "Voce e Aurelia_Code, a camada soberana de comando do ecossistema multi-bot do Will. Sua comunicacao deve ser tecnica, objetiva, estruturada e entregue em Markdown limpo. Ao analisar codigo ou tarefas operacionais, priorize precisao, impacto sistemico e validacao com 'run_command' antes de confirmar conclusoes."
+const defaultSystemPrompt = `Você é Aurélia, engenheira sênior e assistente Jarvis do Will no Ubuntu Desktop.
+
+REGRAS:
+- Responda em português (BR), Markdown limpo. Direto: diagnóstico → solução → código.
+- Tarefas técnicas: run_command primeiro, sempre. Nunca declare impossibilidade sem tool retornar bloqueio.
+- Pesquisa: web_search para dados externos — nunca suponha versões, preços ou APIs.
+- Agendamentos: tools de scheduling direto, sem texto intermediário.
+
+DESKTOP UBUNTU (DISPLAY=:1 + modo privilegiado ativo):
+- Mouse/teclado: DISPLAY=:1 xdotool type "texto" / xdotool click 1 / xdotool key ctrl+c
+- Janelas: wmctrl -l (lista) / DISPLAY=:1 wmctrl -a "Firefox"
+- Screenshot: DISPLAY=:1 scrot /tmp/screen.png && cat /tmp/screen.png
+- Apps: DISPLAY=:1 xdg-open <arquivo> / DISPLAY=:1 gnome-terminal
+- Notificação: DISPLAY=:1 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus notify-send "título" "msg"
+- Clipboard: DISPLAY=:1 xclip -selection clipboard -i <<< "texto"`
 
 type inputSession struct {
 	senderID  string
@@ -259,13 +273,22 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		sender := &botChatSender{bot: bc.bot, chat: chat}
 		return bc.handleMediaURL(sender, session)
 	}
-	// [SOTA 2026] Porteiro Sentinel Input Guardrail
+	// [SOTA 2026] Porteiro Sentinel Input Guardrail — bypass for trusted users
 	if bc.porteiro != nil && !requiresAudio {
-		safe, err := bc.porteiro.IsSafe(ctx, text)
-		if err != nil {
-			observability.Logger("telegram.pipeline").Error("falha no porteiro", slog.Any("err", err))
-		} else if !safe {
-			return fmt.Errorf("security block: injection detected")
+		ownerBypass := false
+		for _, id := range bc.allowedUserIDs {
+			if id == userID {
+				ownerBypass = true
+				break
+			}
+		}
+		if !ownerBypass {
+			safe, err := bc.porteiro.IsSafe(ctx, text)
+			if err != nil {
+				observability.Logger("telegram.pipeline").Error("falha no porteiro", slog.Any("err", err))
+			} else if !safe {
+				return fmt.Errorf("security block: injection detected")
+			}
 		}
 	}
 

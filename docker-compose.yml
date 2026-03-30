@@ -49,5 +49,29 @@ services:
       timeout: 10s
       retries: 3
 
+  # Kokoro TTS — 100% local (CPU fallback, GPU preferred)
+  # ADR: 20260330-kokoro-gpu-local.md
+  kokoro-tts:
+    container_name: aurelia-kokoro
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:latest
+    ports:
+      - "8012:8880"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8880/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
 volumes:
   redis_data:

@@ -40,6 +40,7 @@ func (bc *BotController) handleStatus(c telebot.Context) error {
 func (bc *BotController) setupBootstrapRoutes() {
 	bc.bot.Handle("/start", bc.handleStart)
 	bc.bot.Handle("/status", bc.handleStatus)
+	bc.bot.Handle("\fbtn_status", bc.handleStatus)
 	bc.bot.Handle("\fbtn_coder", bc.handleBootstrapChoice("coder"))
 	bc.bot.Handle("\fbtn_assist", bc.handleBootstrapChoice("assist"))
 }
@@ -48,23 +49,19 @@ func (bc *BotController) handleStart(c telebot.Context) error {
 	identityExists := bootstrapIdentityExists(bc.personasDir)
 
 	if !identityExists {
-		// Inicializa silenciosamente com o preset de coder (padrão sênior)
 		preset, _ := bootstrapPresetForChoice("coder")
 		_ = writeBootstrapPreset(bc.personasDir, preset)
 		_ = bc.seedBootstrapIdentity(c, preset)
 	}
 
-	welcome := "━━━━━━ Aurelia Sovereign 2026.2 💎 ━━━━━━\n\n" +
-		"🛰️ **Soberania Industrial Ativa.**\n" +
-		"Bem-vindo ao cockpit de comando, Master. O sistema está operando em regime industrial SOTA 2026.2 com **Qwen 3.5 9B VL** e **Barge-in (Interrupção por Voz)**.\n\n" +
-		"A arquitetura de Atores (SAP) garante fluidez cinematográfica e auto-cura em tempo real."
+	welcome := "**Aurélia online.** Manda sua tarefa — código, infra, análise, pesquisa.\n\n" +
+		"Capacidades: execução de comandos, web search, leitura de arquivos, agendamentos, visão e voz."
 
 	menu := &telebot.ReplyMarkup{}
-	btnDashboard := menu.URL("🛰️ Dashboard Operacional", "https://aurelia.zappro.site/")
-	btnStatus := menu.Data("📊 Status do Sistema", "btn_status")
+	btnDashboard := menu.URL("Dashboard", "https://aurelia.zappro.site/")
+	btnStatus := menu.Data("Status do sistema", "btn_status")
 	menu.Inline(
-		menu.Row(btnDashboard),
-		menu.Row(btnStatus),
+		menu.Row(btnDashboard, btnStatus),
 	)
 
 	return c.Send(welcome, menu, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
