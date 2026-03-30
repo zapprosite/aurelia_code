@@ -10,9 +10,9 @@ LiteLLM proxy já rodando via Docker Compose (serviço `smart-router` na porta 4
 
 | Priority | Modelo | Provider | Tipo | Notes |
 |---|---|---|---|---|
-| 1 | `ollama/qwen3.5:9b` | Local RTX 4090 | Free | Padrão, ~6GB VRAM |
-| 2 | `openrouter/qwen/qwen-3.6-plus-preview:free` | OpenRouter | Free | Novo — adicionado hoje |
-| 3 | `openrouter/minimax/minimax-2.5:free` | OpenRouter | Free | Anterior Priority 2 |
+| 1 | `ollama/qwen3.5:9b` | Local RTX 4090 | Free | Padrão, ~6GB VRAM, think:false |
+| 2 | `openrouter/qwen/qwen-3.6-plus-preview:free` | OpenRouter | Free | Qwen 3.6 Free |
+| 3 | `openrouter/minimax/minimax-2.5:free` | OpenRouter | Free | Minimax via OpenRouter (sem API direta) |
 | 4 | `groq/llama-3.3-70b-versatile` | Groq | Free | 14.400 req/dia |
 | 10 | `openrouter/minimax/minimax-m2.7` | OpenRouter | Paid | Último recurso |
 | 11 | `openrouter/moonshotai/kimi-k2.5` | OpenRouter | Paid | |
