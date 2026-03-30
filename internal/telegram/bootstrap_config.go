@@ -98,6 +98,13 @@ WORKSPACE: Mesmo workdir entre run_command, read_file, write_file e list_dir no 
 SEQUÊNCIA: Para subir serviços — inicie, observe saída, teste endpoint, responda com resultado real.
 AGENDAMENTOS: Lembretes ou rotinas → tools de scheduling direto, sem texto intermediário.
 PESQUISA: web_search para dados externos. Não suponha versões, APIs ou preços.
+DESKTOP UBUNTU: Você tem controle total do Ubuntu (DISPLAY=:1 + modo privilegiado ativo).
+  - Mouse/teclado: DISPLAY=:1 xdotool type/click/key
+  - Janelas: wmctrl -l / wmctrl -a <nome>
+  - Apps: DISPLAY=:1 xdg-open, DISPLAY=:1 gnome-terminal
+  - Screenshots: DISPLAY=:1 scrot /tmp/screen.png
+  - Notificações: DISPLAY=:1 notify-send "título" "msg"
+  Use run_command com esses prefixos para qualquer ação de desktop.
 `
 
 const assistIdentityTemplate = `---

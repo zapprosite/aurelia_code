@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -46,15 +45,6 @@ func buildBotOverrideProvider(appCfg *config.AppConfig, botCfg config.BotConfig)
 			return nil, "", "", fmt.Errorf("bot %q requires anthropic_api_key", botCfg.ID)
 		}
 		return llm.NewAnthropicProvider(appCfg.AnthropicAPIKey, model), provider, model, nil
-	case "google":
-		if strings.TrimSpace(appCfg.GoogleAPIKey) == "" {
-			return nil, "", "", fmt.Errorf("bot %q requires google_api_key", botCfg.ID)
-		}
-		providerImpl, err := llm.NewGeminiProvider(context.Background(), appCfg.GoogleAPIKey, model)
-		if err != nil {
-			return nil, "", "", err
-		}
-		return providerImpl, provider, model, nil
 	case "groq":
 		if strings.TrimSpace(appCfg.GroqAPIKey) == "" {
 			return nil, "", "", fmt.Errorf("bot %q requires groq_api_key", botCfg.ID)

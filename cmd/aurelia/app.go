@@ -871,8 +871,6 @@ func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (cl
 	switch cfg.LLMProvider {
 	case "anthropic":
 		return llm.NewAnthropicProvider(cfg.AnthropicAPIKey, cfg.LLMModel), nil
-	case "google":
-		return llm.NewGeminiProvider(context.Background(), cfg.GoogleAPIKey, cfg.LLMModel)
 	case "ollama":
 		return llm.NewOllamaProvider(cfg.OllamaURL, cfg.LLMModel), nil
 	case "openrouter":

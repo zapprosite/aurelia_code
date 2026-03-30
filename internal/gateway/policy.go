@@ -11,7 +11,6 @@ const (
 
 	// Tier 1 — remote cheap (paid)
 	modelDeepSeekV31 = "deepseek/deepseek-chat-v3.1" // Tier 1 cheap remote standard
-	modelDevstral2   = "mistralai/devstral-2512"     // optional cheap coding fallback
 
 	// Tier 2 — remote premium (paid)
 	modelMiniMaxM27    = "minimax/minimax-m2.7"
@@ -20,7 +19,6 @@ const (
 
 	// Long context — Llama 4 Scout: 10M ctx at $0.08/$0.30 (-85% vs Kimi)
 	modelLlama4Scout = "meta-llama/llama-4-scout"
-	modelKimiK25     = "moonshotai/kimi-k2.5" // kept as vision fallback
 
 	// Free reasoning (rate-limited: 1000 req/day with $10+ credit)
 	modelDeepSeekR1Free = "deepseek/deepseek-r1-0528:free"
