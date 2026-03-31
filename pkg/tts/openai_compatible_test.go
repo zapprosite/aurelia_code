@@ -74,9 +74,9 @@ func TestOpenAICompatibleSynthesizer_SynthesizeAPIError(t *testing.T) {
 func TestOpenAICompatibleSynthesizer_NormalizesLegacyPTBRAlias(t *testing.T) {
 	t.Parallel()
 
-	synth := NewOpenAICompatibleSynthesizer("http://127.0.0.1:8012", "kokoro", "pt-br", "pt", "opus", 1)
-	if synth.voice != "pf_dora" {
-		t.Fatalf("voice = %q, want pf_dora", synth.voice)
+	synth := NewOpenAICompatibleSynthesizer("http://127.0.0.1:8012", "mistralai/Voxtral-4B-TTS-2603", "pt-br", "pt", "opus", 1)
+	if synth.voice != "aurelia-jarvis" {
+		t.Fatalf("voice = %q, want aurelia-jarvis", synth.voice)
 	}
 }
 func TestOpenAICompatibleSynthesizer_MaxChars(t *testing.T) {
@@ -89,6 +89,7 @@ func TestOpenAICompatibleSynthesizer_MaxChars(t *testing.T) {
 		{"kokoro", 50000},
 		{"kodoro", 50000},
 		{"KOKORO-v1", 50000},
+		{"mistralai/Voxtral-4B-TTS-2603", 50000},
 		{"tts-1", 3000},
 		{"", 3000},
 	}

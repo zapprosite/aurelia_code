@@ -44,5 +44,17 @@ a.porteiro = middleware.NewPorteiroMiddleware(a.redis, p)
 - **Soberania**: 100% da análise é local (Ollama), sem envio de dados para APIs externas durante a triagem de segurança.
 - **Pruning-Safe**: Este modelo é explicitamente mantido na whitelist de VRAM (junto com Emblend, Kodoro e Qwen 3.5).
 
+## Manual de Operação (SOTA 2026.2)
+
+### Níveis de Rigor (PORTEIRO_MODE)
+O comportamento do Sentinela pode ser ajustado via variável de ambiente no `.env`:
+- **STRICT** (Padrão): Bloqueia ativamente ameaças detectadas.
+- **LOG_ONLY**: Monitora e loga ataques sem bloquear (ideal para desenvolvimento).
+- **OFF**: Ignora completamente a camada de segurança (latência zero).
+
+### Gestão Industrial (porteiro-ops)
+Para gerenciar o cache do Redis e ajustar o Sentinela em tempo real, utilize a skill:
+- **[porteiro-ops](file:///.agent/skills/porteiro-ops/SKILL.md)**
+
 ---
-*Documentação Gerada via SOTA 2026.1 Industrial Workflow.*
+*Documentação Atualizada via SOTA 2026.2 Industrial Workflow.*

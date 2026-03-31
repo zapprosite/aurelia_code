@@ -100,16 +100,37 @@ export function ComputerUseTab({ className }: ComputerUseTabProps) {
       };
       setMessages(prev => [...prev, assistantMsg]);
 
-      // Simulate response (replace with actual SSE/WebSocket later)
+      // Listen for SSE response from backend
+      const evtSource = new EventSource("/api/events");
+      const msgId = assistantMsg.id;
+      const handleEvent = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "computer_use" || data.type === "tool_result") {
+            setMessages(prev => prev.map(m =>
+              m.id === msgId
+                ? { ...m, content: data.content || `Ação ${activeAction} executada com sucesso!`, status: "success" }
+                : m
+            ));
+            setIsLoading(false);
+            setInstruction("");
+            evtSource.close();
+          }
+        } catch { /* ignore non-JSON events */ }
+      };
+      evtSource.addEventListener("message", handleEvent);
+      // Timeout fallback: close SSE after 30s if no response
       setTimeout(() => {
-        setMessages(prev => prev.map(m =>
-          m.id === assistantMsg.id
-            ? { ...m, content: `Ação ${activeAction} executada com sucesso!`, status: "success" }
-            : m
-        ));
-        setIsLoading(false);
-        setInstruction("");
-      }, 2000);
+        if (isLoading) {
+          setMessages(prev => prev.map(m =>
+            m.id === msgId
+              ? { ...m, content: "Timeout: sem resposta do backend em 30s.", status: "error" }
+              : m
+          ));
+          setIsLoading(false);
+          evtSource.close();
+        }
+      }, 30000);
 
     } catch (error) {
       setMessages(prev => prev.map(m =>
