@@ -48,6 +48,9 @@ func (p *PorteiroMiddleware) Redis() *infra.RedisProvider {
 
 // Deduplicate impede que a mesma mensagem do usuário seja processada mais de uma vez (locks de rede).
 func (p *PorteiroMiddleware) Deduplicate(ctx context.Context, userID, messageID string) (bool, error) {
+	if os.Getenv("PORTEIRO_DEDUPLICATE") == "OFF" {
+		return false, nil
+	}
 	if messageID == "" {
 		return false, nil
 	}
