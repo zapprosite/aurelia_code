@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kocar/aurelia/pkg/tts"
+	"github.com/kocar/aurelia/pkg/voice/tts"
 	"gopkg.in/telebot.v3"
 )
 

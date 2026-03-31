@@ -2,13 +2,15 @@ package markdownbrain
 
 import (
 	"bufio"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/kocar/aurelia/internal/obsidian"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/parser"
 )
 
 const (
@@ -16,6 +18,11 @@ const (
 	repoSourceSystem  = "repo_markdown"
 	vaultSourceSystem = "obsidian"
 )
+
+type Metadata struct {
+	Title string
+	Tags  []string
+}
 
 type Document struct {
 	SourceSystem string

@@ -18,8 +18,8 @@ import (
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/skill"
-	"github.com/kocar/aurelia/pkg/stt"
-	"github.com/kocar/aurelia/pkg/tts"
+	"github.com/kocar/aurelia/pkg/voice/stt"
+	"github.com/kocar/aurelia/pkg/voice/tts"
 )
 
 // HealthReporter exposes gateway diagnostics as JSON.

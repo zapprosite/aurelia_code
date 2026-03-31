@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/kocar/aurelia/internal/health"
-	"github.com/kocar/aurelia/pkg/stt"
+	"github.com/kocar/aurelia/pkg/voice/stt"
 )
 
 type fakeTranscriber struct {
