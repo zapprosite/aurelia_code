@@ -81,7 +81,7 @@ Capacidades ativas: /status, /master-skill, Vision, Parallel-TTS.`
 	)
 
 	// SOTA 2026: Entrega premium com áudio paralelo (Kododo)
-	return bc.deliverWithParallelTTS(bc.bot, c.Chat(), bc.tts, welcome, menu)
+	return bc.deliverWithParallelTTS(bc.bot, c.Chat(), bc.tts, welcome, false, menu)
 }
 
 func (bc *BotController) handleBootstrapChoice(choice string) func(telebot.Context) error {

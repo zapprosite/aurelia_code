@@ -240,12 +240,12 @@ func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer t
 // deliverWithParallelTTS sends text to the user while concurrently synthesizing
 // TTS audio, then sends the audio once both are ready. This hides Kokoro latency
 // (~0.5-1.5s) behind the Telegram SendText round-trip for lower perceived latency.
-// deliverWithParallelTTS sends text to the user while concurrently synthesizing
-// TTS audio, then sends the audio once both are ready. This hides Kokoro latency
-// (~0.5-1.5s) behind the Telegram SendText round-trip for lower perceived latency.
-func (bc *BotController) deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string, opts ...interface{}) error {
+// Audio is only sent if requiresAudio is true (i.e., user sent a voice message).
+func (bc *BotController) deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string, requiresAudio bool, opts ...interface{}) error {
 	var ttsCh chan ttsAsyncResult
-	if synthesizer != nil && synthesizer.IsAvailable() {
+
+	// Only synthesize audio when user sent a voice message.
+	if requiresAudio && synthesizer != nil && synthesizer.IsAvailable() {
 		limit := synthesizer.MaxChars()
 		if speechText := sanitizeTextForSpeech(text, limit); speechText != "" {
 			ttsCh = make(chan ttsAsyncResult, 1)
