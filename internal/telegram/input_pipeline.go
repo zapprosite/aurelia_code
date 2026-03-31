@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/memory"
+	"github.com/kocar/aurelia/internal/middleware"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/skill"
@@ -92,12 +93,13 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		}
 
 		if !isOwner {
-			safe, err := bc.porteiro.IsSafe(session.ctx, session.text)
+			result, err := bc.porteiro.IsSafe(session.ctx, session.text)
 			if err != nil {
 				logger.Error("falha no porteiro", slog.Any("err", err))
-			} else if !safe {
-				logger.Warn("input blocked by porteiro", slog.String("session", session.convID))
-				if sendErr := SendError(bc.bot, c.Chat(), " [BLOQUEIO DE SEGURANÇA: TENTATIVA DE INJECTION DETECTADA] "); sendErr != nil {
+			} else if result != middleware.ResultSafe {
+				logger.Warn("input blocked by porteiro", slog.String("session", session.convID), slog.String("result", string(result)))
+				msg := bc.porteiro.GetRejectionMessage(result)
+				if sendErr := SendError(bc.bot, c.Chat(), msg); sendErr != nil {
 					logger.Warn("failed to send porteiro block message", slog.Any("err", sendErr))
 				}
 				return nil
@@ -286,11 +288,11 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 			}
 		}
 		if !ownerBypass {
-			safe, err := bc.porteiro.IsSafe(ctx, text)
+			result, err := bc.porteiro.IsSafe(ctx, text)
 			if err != nil {
 				observability.Logger("telegram.pipeline").Error("falha no porteiro", slog.Any("err", err))
-			} else if !safe {
-				return fmt.Errorf("security block: injection detected")
+			} else if result != middleware.ResultSafe {
+				return fmt.Errorf("security block: %s", result)
 			}
 		}
 	}
@@ -567,10 +569,10 @@ func (bc *BotController) deliverFinalAnswer(c telebot.Context, finalAnswer strin
 	if bc.tts != nil && bc.tts.IsAvailable() {
 		requiresAudio = true
 	}
-	return deliverWithParallelTTS(bc.bot, c.Chat(), bc.tts, finalAnswer)
+	return bc.deliverWithParallelTTS(bc.bot, c.Chat(), bc.tts, finalAnswer)
 }
 
 func (bc *BotController) deliverFinalAnswerToChat(chat *telebot.Chat, finalAnswer string, requiresAudio bool) error {
 	// Send text and synthesize TTS in parallel; audio follows once ready.
-	return deliverWithParallelTTS(bc.bot, chat, bc.tts, finalAnswer)
+	return bc.deliverWithParallelTTS(bc.bot, chat, bc.tts, finalAnswer)
 }
