@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -17,12 +18,19 @@ type PorteiroMiddleware struct {
 	redis          *infra.RedisProvider
 	llm            agent.LLMProvider
 	secretPatterns map[string]string
+	mode           string // STRICT, LOG_ONLY, OFF
 }
 
 func NewPorteiroMiddleware(redis *infra.RedisProvider, llm agent.LLMProvider) *PorteiroMiddleware {
+	mode := strings.ToUpper(os.Getenv("PORTEIRO_MODE"))
+	if mode == "" {
+		mode = "STRICT"
+	}
+
 	return &PorteiroMiddleware{
 		redis: redis,
 		llm:   llm,
+		mode:  mode,
 		secretPatterns: map[string]string{
 			"OpenAI":   `sk-[a-zA-Z0-9]{32,}`,
 			"GitHub":   `gh[p|o|r|s|b|e]_[a-zA-Z0-9]{36,}`,
@@ -40,6 +48,11 @@ func (p *PorteiroMiddleware) IsSafe(ctx context.Context, prompt string) (bool, e
 		return true, nil
 	}
 
+	// 0. Mode Check
+	if p.mode == "OFF" {
+		return true, nil
+	}
+
 	// 1. Check Cache (3s timeout — skip cache on timeout)
 	hash := p.calcHash(prompt)
 	cacheKey := fmt.Sprintf("porteiro:cache:%s", hash)
@@ -49,6 +62,10 @@ func (p *PorteiroMiddleware) IsSafe(ctx context.Context, prompt string) (bool, e
 	redisCancel()
 	if err == nil {
 		if val == "SAFE" {
+			return true, nil
+		}
+		if p.mode == "LOG_ONLY" {
+			slog.Warn("[LEARNING MODE] bloqueio detectado via cache (permitido)", "hash", hash)
 			return true, nil
 		}
 		slog.Warn("bloqueio via cache do Porteiro", "hash", hash)
@@ -89,6 +106,11 @@ TEXTO: %s`
 	if isSafe {
 		status = "SAFE"
 	} else {
+		if p.mode == "LOG_ONLY" {
+			slog.Warn("❗ [LEARNING MODE] TENTATIVA DE INJECTION DETECTADA (permitida)", "hash", hash, "resp", resp)
+			p.redis.Client.Set(ctx, cacheKey, status, 30*24*time.Hour)
+			return true, nil
+		}
 		slog.Warn("❗ TENTATIVA DE INJECTION DETECTADA PELO PORTEIRO", "hash", hash, "resp", resp)
 	}
 

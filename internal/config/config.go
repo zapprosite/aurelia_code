@@ -21,9 +21,9 @@ const (
 	defaultGroqSTTBaseURL   = "https://api.groq.com/openai/v1"
 	defaultGroqSTTModel     = "whisper-large-v3-turbo"
 	defaultTTSProvider      = "openai_compatible"
-	defaultLocalTTSBaseURL  = "http://127.0.0.1:8012" // Kokoro TTS runtime
-	defaultLocalTTSModel    = "kokoro"
-	defaultLocalTTSVoice    = "pt-br" // Legacy app alias mapped internally to a feminine PT Kokoro voice
+	defaultLocalTTSBaseURL  = "http://127.0.0.1:8012" // Voxtral TTS via vLLM-Omni
+	defaultLocalTTSModel    = "mistralai/Voxtral-4B-TTS-2603"
+	defaultLocalTTSVoice    = "aurelia-jarvis" // Cloned feminine PT-BR voice from assets/voice/aurelia.mp3
 	defaultTTSLanguage      = "pt"
 	defaultLocalTTSFormat   = "opus"
 

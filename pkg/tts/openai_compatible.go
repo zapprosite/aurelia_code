@@ -63,12 +63,8 @@ func normalizeVoiceAlias(model, voice string) string {
 
 	switch strings.ToLower(normalizedVoice) {
 	case "pt-br", "pt_br", "ptbr":
-		// Preserve the historic app-level alias while translating it to a real
-		// Kokoro feminine PT voice that the current image exposes.
-		switch strings.ToLower(strings.TrimSpace(model)) {
-		case "kokoro", "tts-1", "tts-1-hd":
-			return "pf_dora"
-		}
+		// Map legacy app-level alias to the registered cloned voice.
+		return "aurelia-jarvis"
 	}
 
 	return normalizedVoice
@@ -82,9 +78,9 @@ func (s *OpenAICompatibleSynthesizer) MaxChars() int {
 	if s == nil {
 		return 3000
 	}
-	// Kokoro/Kodoro (GPU) handles long text with internal chunking.
 	m := strings.ToLower(s.model)
-	if strings.Contains(m, "kokoro") || strings.Contains(m, "kodoro") {
+	// Local GPU models handle long text with internal chunking.
+	if strings.Contains(m, "kokoro") || strings.Contains(m, "kodoro") || strings.Contains(m, "voxtral") {
 		return 50000
 	}
 	// Default safety limit for external APIs (OpenAI standard)
@@ -97,14 +93,14 @@ func (s *OpenAICompatibleSynthesizer) Synthesize(ctx context.Context, text strin
 	}
 	payload := map[string]any{
 		"model":           s.model,
-		"input":           strings.TrimSpace(text) + " . . . . . ", // SOTA 2026 Enhanced Tail Padding: prevent abrupt cut-offs
+		"input":           strings.TrimSpace(text),
 		"voice":           s.voice,
-		"lang_code":       s.language,                             // Extension for Kokoro/Kodoro FastAPI
 		"response_format": s.format,
 		"speed":           s.speed,
 	}
-	if s.language == "" {
-		delete(payload, "lang_code")
+	// Kokoro/Kodoro requires lang_code extension; Voxtral infers language from voice.
+	if s.language != "" && !strings.Contains(strings.ToLower(s.model), "voxtral") {
+		payload["lang_code"] = s.language
 	}
 	body, err := json.Marshal(payload)
 

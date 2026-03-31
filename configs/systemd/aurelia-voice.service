@@ -1,0 +1,16 @@
+[Unit]
+Description=Aurelia Voice Daemon (Jarvis 24/7 Her-Mode)
+After=pulseaudio.service graphical-session.target
+Wants=pulseaudio.service
+
+[Service]
+Type=simple
+ExecStart=/home/will/aurelia/bin/aurelia live
+Restart=always
+RestartSec=5
+Environment=PULSE_SERVER=unix:/run/user/1000/pulse/native
+Environment=AURELIA_VOICE_CAPTURE_CMD=python3 /home/will/aurelia/scripts/voice-capture-openwakeword.py --output-dir /tmp/aurelia-voice
+EnvironmentFile=/home/will/.config/aurelia/voice.env
+
+[Install]
+WantedBy=default.target

@@ -242,4 +242,14 @@
 - chore: inicialização do AI-Context e diretório de governança (ADR) (76ba3bb)
 
 ---
-Gerado automaticamente pela Aurélia em Fri Mar 27 01:20:28 PM -03 2026
+Gerado automaticamente pela Aurélia em Mon Mar 31 02:23:00 PM -03 2026
+
+---
+
+## [2026-03-31] v1.1.0
+
+### 🚀 Features
+- feat(skills): atualizar antigravity-gemini-operator para v1.1.0 — MODEL-STACK-POLICY compliance, frontmatter completo, quota management, stack de modelos proibidos (5f2e87d)
+
+### 📝 Documentation
+- docs(adr): criar ADR-20260331 para rastreabilidade da skill Antigravity v1.1.0 e conformidade Semparar (5f2e87d)
