@@ -68,7 +68,7 @@ Todos devem delegar para `AGENTS.md` e para o catálogo em `docs/governance/SKIL
 - Catálogo de skills: [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md)
 - Skill `/add-subdomain`: [`.agent/skills/add-subdomain/SKILL.md`](.agent/skills/add-subdomain/SKILL.md)
 - Workflow nonstop: [`.agent/workflows/adr-semparar.md`](.agent/workflows/adr-semparar.md)
-- Voz local: [`docs/jarvis_local_voice_blueprint_20260319.md`](docs/jarvis_local_voice_blueprint_20260319.md)
+- Voz local: Configuração via `scripts/setup-kokoro-gpu.sh`
 
 ## Serviços de Sistema (SOTA 2026)
 - **Aurelia System API**: Gateway de governança em Go na porta `8080`. Gerencia paridade de `.env` e saúde do cluster.
@@ -82,7 +82,7 @@ Todos devem delegar para `AGENTS.md` e para o catálogo em `docs/governance/SKIL
 ## Guardrails de Codificação Assistida (Enterprise 2026)
 
 > **Referência canônica:** [`.cursorrules`](.cursorrules) + [CONSTITUTION.md](CONSTITUTION.md)
-> **ADR:** [`docs/adr/20260330-enterprise-skills-governance.md`](docs/adr/20260330-enterprise-skills-governance.md)
+> **ADR:** [`docs/adr/README.md`](docs/adr/README.md)
 
 ### Regras Obrigatórias para Agentes
 1. **Leitura obrigatória antes de qualquer código**: `AGENTS.md` → `CONSTITUTION.md` → ADR relevante.
