@@ -10,13 +10,6 @@ This directory contains ready-to-customize playbooks for AI agents collaborating
 - [Test Writer](./test-writer.md) — Write comprehensive unit and integration tests
 - [Documentation Writer](./documentation-writer.md) — Create clear, comprehensive documentation
 - [Performance Optimizer](./performance-optimizer.md) — Identify performance bottlenecks
-- [Security Auditor](./security-auditor.md) — Identify security vulnerabilities
-- [Backend Specialist](./backend-specialist.md) — Design and implement server-side architecture
-- [Frontend Specialist](./frontend-specialist.md) — Design and implement user interfaces
-- [Architect Specialist](./architect-specialist.md) — Design overall system architecture and patterns
-- [Devops Specialist](./devops-specialist.md) — Design and maintain CI/CD pipelines
-- [Database Specialist](./database-specialist.md) — Design and optimize database schemas
-- [Mobile Specialist](./mobile-specialist.md) — Develop native and cross-platform mobile applications
 
 ## How To Use These Playbooks
 1. Pick the agent that matches your task.

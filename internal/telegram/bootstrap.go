@@ -17,19 +17,25 @@ func (bc *BotController) handleStatus(c telebot.Context) error {
 
 	// Fallback to gateway status
 	if bc.healthReporter == nil {
-		return SendContextText(c, "Diagnostico indisponivel neste runtime.")
+		return SendContextText(c, "Diagnostico indisponivel.")
 	}
 
-	// Persistir o comando do usuário para manter contexto (ex: "Resolva !")
+	// Persistir o comando do usuário para manter contexto
 	session := bc.newInputSession(c, c.Text())
 	_ = bc.persistIncomingContext(session, c.Sender().ID)
 
 	data, err := bc.healthReporter.GatewayStatusJSON()
 	if err != nil {
-		return SendContextText(c, "Erro ao obter status do gateway.")
+		return SendContextText(c, "Erro ao obter status.")
 	}
 
-	reply := "Gateway Status:\n```json\n" + string(data) + "\n```"
+	reply := "Status do sistema:\n```json\n" + string(data) + "\n```"
+
+	// Polimento e Segurança
+	if bc.porteiro != nil {
+		reply = bc.PolishText(session.ctx, reply)
+		reply = bc.porteiro.SecureOutput(reply)
+	}
 
 	// Persistir a resposta da assistente
 	bc.persistAssistantAnswer(session, reply)

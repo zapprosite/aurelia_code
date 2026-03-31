@@ -179,3 +179,6 @@
 {"timestamp":"2026-03-31T02:06:28.634Z","tool":"context","action":"listToFill","status":"success","details":{"params":{"action":"listToFill","repoPath":"/home/will/aurelia","target":"docs"},"result":{"success":true}}}
 {"timestamp":"2026-03-31T02:06:31.736Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","repoPath":"/home/will/aurelia","target":"docs"},"result":{"success":true}}}
 {"timestamp":"2026-03-31T02:06:38.225Z","tool":"context","action":"getMap","status":"success","details":{"params":{"action":"getMap","repoPath":"/home/will/aurelia","section":"stats"},"result":{"success":true}}}
+{"timestamp":"2026-03-31T07:47:59.536Z","tool":"context","action":"check","status":"success","details":{"params":{"action":"check","repoPath":"/home/will/aurelia"}}}
+{"timestamp":"2026-03-31T07:48:13.445Z","tool":"context","action":"getMap","status":"error","details":{"params":{"action":"getMap","section":"all"},"result":{"success":false}},"error":"Codebase map not found at /home/will/aurelia/.context/docs/codebase-map.json. Run initialization with --semantic flag first."}
+{"timestamp":"2026-03-31T07:48:20.734Z","tool":"context","action":"init","status":"success","details":{"params":{"action":"init","semantic":true,"autoFill":true,"skipContentGeneration":true},"result":{"status":"incomplete"}}}

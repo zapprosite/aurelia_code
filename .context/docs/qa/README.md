@@ -1,8 +1,8 @@
 # Q&A Index
 
-Project type: **library**
+Project type: **cli**
 
-Generated: 2026-03-27T10:44:47.032Z
+Generated: 2026-03-31T07:48:20.733Z
 
 ## Getting-started
 
@@ -14,12 +14,10 @@ Generated: 2026-03-27T10:44:47.032Z
 
 ## Features
 
-- [How is data stored and accessed?](./database.md)
-- [What API endpoints are available?](./api-endpoints.md)
+- [What commands are available?](./cli-commands.md)
+- [How do I pass arguments and options?](./cli-arguments.md)
 
 ## Operations
 
-- [How does caching work?](./caching.md)
-- [How are errors handled?](./error-handling.md)
 - [How do background jobs work?](./background-jobs.md)
 - [How do I deploy this project?](./deployment.md)

@@ -7,9 +7,11 @@ created: 2026-03-19
 
 # Contrato do Repositório
 
+> **Autoridade**: [AGENTS.md](../../AGENTS.md) | **Soberania 2026**
+
 Este é o índice central de governança para humanos e agentes.
 
-## Cadeia de autoridade
+## 1. Cadeia de Autoridade
 
 1. Humanos operadores
 2. `AGENTS.md`
@@ -18,7 +20,7 @@ Este é o índice central de governança para humanos e agentes.
 5. ADRs em `docs/adr/`
 6. Contexto operacional em `.context/`
 
-## Ordem de leitura obrigatória
+## 2. Ordem de Leitura Obrigatória
 
 1. [AGENTS.md](../../AGENTS.md)
 2. [README.md](../../README.md)
@@ -30,7 +32,7 @@ Este é o índice central de governança para humanos e agentes.
 8. [ADR Index](../adr/README.md)
 9. [.context/docs/README.md](../../.context/docs/README.md)
 
-## Fontes permanentes de governança
+## 3. Fontes Permanentes de Governança
 
 - [DATA_POLICY.md](./DATA_POLICY.md)
 - [OBSIDIAN_VAULT_STANDARD.md](./OBSIDIAN_VAULT_STANDARD.md)
@@ -39,38 +41,30 @@ Este é o índice central de governança para humanos e agentes.
 - [SECRETS.md](./SECRETS.md)
 - [S-23-cloudflare-access.md](./S-23-cloudflare-access.md)
 
-## Regra profissional adotada
+## 4. Regras Profissionais (2026)
 
-- ADR obrigatória por slice estrutural
-- nenhuma mudança estrutural só no chat
-- contratos permanentes em `docs/governance/`
-- regras executáveis em `.agent/rules/`
-- `sync-ai-context` obrigatório em slice não trivial, handoff e merge
-- `sync-ai-context` dispensável em microedições sem drift semântico
-- **Paridade .env**: .env e .env.example devem ser espelhos estruturais (Zero Drift)
-- **Zero Hardcode**: placeholders {chave-para-env} obrigatórios para segredos no código
-- **Segredos operacionais locais**: `app.json` pode persistir segredos da instância; mascaramento é obrigatório em UI, logs, docs e exemplos
-- **Persistência**: Proibida a deleção do arquivo .env por agentes (Permissão Humana Exclusiva)
+- **ADR Obrigatória**: Necessária para cada slice estrutural.
+- **Mudança Estrutural**: Proibida via chat; deve ser documentada em ADR.
+- **Contratos**: Permanentes em `docs/governance/`.
+- **Regras Executáveis**: Localizadas em `.agent/rules/`.
+- **Sincronização**: `sync-ai-context` obrigatório em slices não triviais, handoffs e merges.
+- **Paridade .env**: `.env` e `.env.example` devem ser espelhos estruturais (Zero Drift).
+- **Zero Hardcode**: Placeholders `{chave-para-env}` obrigatórios para segredos.
+- **Segredos Locais**: `app.json` pode persistir segredos; mascaramento obrigatório em UI, logs e docs.
+- **Persistência**: Proibida a deleção do arquivo `.env` por agentes (Permissão Humana Exclusiva).
 
-Comando canônico:
+Comando canônico: `./scripts/sync-ai-context.sh`
 
-- `./scripts/sync-ai-context.sh`
+## 5. Higiene da Raiz
 
-## Higiene da raiz
+**Devem ficar na raiz:**
+- Contratos e adaptadores vigentes (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `MODEL.md`)
+- Docs de entrada (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`)
 
-Devem ficar na raiz:
+**Não devem ficar na raiz:**
+- Blueprints de slice, runbooks específicos e planos temporários.
 
-- contratos e adaptadores vigentes (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `MODEL.md`)
-- docs de entrada (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`)
-
-Não devem ficar na raiz:
-
-- blueprints de slice
-- runbooks específicos
-- planos temporários de execução
-
-Destino correto:
-
+**Destino correto:**
 - ADR: `docs/adr/`
 - policy e contrato durável: `docs/governance/`
 - artefatos de continuidade: `.context/plans/`

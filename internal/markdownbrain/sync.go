@@ -407,7 +407,7 @@ func (s *Syncer) ensureCollection(ctx context.Context, size int) error {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusConflict {
 		return nil
 	}
 	if resp.StatusCode == http.StatusBadRequest {

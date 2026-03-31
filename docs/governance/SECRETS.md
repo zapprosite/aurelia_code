@@ -1,59 +1,20 @@
-# Secrets — Aurelia Home Lab
+# SECRETS.md
 
-## Autoridade Declarada
+> **Soberania 2026**
 
-A Aurélia possui **autonomia total** sobre o Home Lab conforme [`AURELIA-AUTHORITY-DECLARATION.md`](./AURELIA-AUTHORITY-DECLARATION.md). Esta concessão inclui:
+Este documento define as diretrizes para o gerenciamento de chaves e segredos no monorepo `aurelia`.
 
-| Permissão | Status |
-|-----------|--------|
-| `sudo` sem senha | ✅ ATIVO (`sudo=1`, 2026-03-20) |
-| Bash / shell commands | ✅ TOTAL |
-| Docker / containers | ✅ TOTAL |
-| Systemd (start/stop/restart) | ✅ TOTAL |
-| Rede (firewall, rotas, DNS) | ✅ TOTAL — com log obrigatório |
-| Ollama (modelos locais) | ✅ TOTAL |
-| GPU (NVIDIA RTX 4090) | ✅ TOTAL |
-| Qdrant / Postgres / SQLite | ✅ TOTAL |
-| Git (push, force, merge) | ✅ TOTAL |
-| Leitura de secrets | ✅ TOTAL — via `~/.aurelia/config/secrets.env` |
-| Escrita de secrets | ⚠️ Requer log — KeePass vault pendente |
+## 1. Localização
+- Todos os segredos e credenciais devem residir EXCLUSIVAMENTE em arquivos `.env`.
+- Arquivos `.env` estão listados no `.gitignore` e não devem ser commitados.
 
-> Para detalhes completos da concessão de autoridade, veja [`AURELIA-AUTHORITY-DECLARATION.md`](./AURELIA-AUTHORITY-DECLARATION.md).
+## 2. Injeção de Contexto
+- Uso mandatório de `os.Getenv()` (Go) ou `process.env` (JS/TS).
+- Placeholders para variáveis de ambiente obrigatórios em arquivos de configuração (.example, .json).
+
+## 3. Monitoramento e Audit
+- Audit proativo de chaves antes de cada merge em Main.
+- O Porteiro Sentinel mascará automaticamente qualquer segredo detectado em canais de saída.
 
 ---
-
-## Status Atual
-
-| Item | Status |
-|------|--------|
-| `secrets.env` centralizado, `chmod 600`, em `.gitignore` | ✅ |
-| `scripts/secret-audit.sh` com 16+ padrões | ✅ |
-| MCP e `app.json` usando env vars | ✅ |
-| `systemd service` com `EnvironmentFile` | ✅ |
-| KeePassXC vault (masterkey em hardware/TPM) | ⏳ deadline 2026-03-27 |
-| Secret-audit no crontab semanal | ⏳ |
-
-## Onde ficam os secrets
-
-```
-~/.aurelia/config/secrets.env   # fonte real — fora do repo
-```
-
-## Em caso de vazamento
-
-```bash
-# 1. Revogar imediatamente no provedor (Telegram, Groq, GitHub, OpenRouter, Cloudflare)
-# 2. Auditar
-bash scripts/secret-audit.sh
-git log --all -S "password|token|key" | head -20
-# 3. Criar ADR descrevendo o incidente
-```
-
-## Próximos passos
-
-```bash
-# Setup vault (humano executa):
-bash scripts/setup-keepassxc-vault.sh
-# Cron semanal:
-echo "0 6 * * 1 bash ~/aurelia/scripts/secret-audit.sh" | crontab -
-```
+*Assinado: Aurélia (Soberano 2026)*

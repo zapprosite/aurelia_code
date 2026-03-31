@@ -1,36 +1,55 @@
-# Aurélia — Sovereign 2026.2
+# Documentation Index
 
-Bot Telegram sênior do Will. Engenharia de software + operações + pesquisa, tudo via chat.
+Welcome to the repository knowledge base. Start with the project overview, then dive into specific guides as needed.
 
-## Guias Essenciais
+## Core Guides
+- [Project Overview](./project-overview.md)
+- [Development Workflow](./development-workflow.md)
+- [Testing Strategy](./testing-strategy.md)
+- [Tooling & Productivity Guide](./tooling.md)
 
-- [Visão Geral do Projeto](./project-overview.md)
-- [Arquitetura](./architecture.md)
-- [Fluxo de Dados](./data-flow.md)
-- [Fluxo de Desenvolvimento](./development-workflow.md)
-- [Estratégia de Testes](./testing-strategy.md)
-- [Glossário](./glossary.md)
-- [Segurança](./security.md)
-- [Ferramentas e Produtividade](./tooling.md)
+## Repository Snapshot
+- `AGENTS.md/`
+- `ARCHITECTURE.md/`
+- `assets/`
+- `aurelia-api/`
+- `aurelia-elite/`
+- `bin/`
+- `captain-definition/`
+- `CHANGELOG.md/`
+- `CLAUDE.md/`
+- `cmd/`
+- `configs/`
+- `data/`
+- `docker-compose.yml/`
+- `Dockerfile/`
+- `docs/` — Living documentation produced by this tool.
+- `e2e/`
+- `frontend/`
+- `GEMINI.md/`
+- `go.mod/`
+- `go.sum/`
+- `go.work.sum/`
+- `homelab-bibliotheca/`
+- `image.png/`
+- `iniciar.sh/`
+- `internal/`
+- `knowledge/`
+- `logs/`
+- `Makefile/`
+- `mcp_servers.example.json/`
+- `mcp-servers/`
+- `package-lock.json/`
+- `package.json/`
+- `pkg/`
+- `README.md/`
+- `scripts/`
+- `services/`
 
-## ADR Slices (SOTA 2026)
-
-| Slice | Arquivo | Status |
-|-------|---------|--------|
-| STT local-first | `slices/20260330-stt-local-first-cascade.md` | ✅ Implementado |
-| Kokoro TTS GPU | `slices/20260330-kokoro-tts-gpu-local.md` | ✅ Implementado |
-| Rate limiting | `slices/20260330-rate-limiting-smart-scheduler.md` | ✅ Implementado |
-| Onboarding sênior | `slices/20260330-jarvis-onboarding-senior.md` | ✅ Implementado |
-| Porteiro bypass owner | `slices/20260330-porteiro-owner-bypass.md` | ✅ Implementado |
-| Voice pipeline PT-BR | `slices/20260330-voice-pipeline-ptbr-local.md` | ✅ Implementado |
-| LiteLLM cascade | `slices/20260330-litellm-cascade-qwen36.md` | ✅ Implementado |
-
-## Stack em Produção
-
-```
-LiteLLM proxy (:4000)    ✅  qwen3.5:9b local → qwen3.6-free → groq → paid
-Whisper local (:8020)    ✅  faster-whisper-server → Groq fallback
-Kokoro TTS (:8012)      ✅  ghcr.io/remsky/kokoro-fastapi-gpu
-Redis (:6379)             ✅  Cache + Porteiro
-Qdrant (:6333)           ✅  Memória vetorial
-```
+## Document Map
+| Guide | File | Primary Inputs |
+| --- | --- | --- |
+| Project Overview | `project-overview.md` | Roadmap, README, stakeholder notes |
+| Development Workflow | `development-workflow.md` | Branching rules, CI config, contributing guide |
+| Testing Strategy | `testing-strategy.md` | Test configs, CI gates, known flaky suites |
+| Tooling & Productivity Guide | `tooling.md` | CLI scripts, IDE configs, automation workflows |
