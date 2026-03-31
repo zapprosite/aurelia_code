@@ -25,6 +25,13 @@ func (bc *BotController) handleText(c telebot.Context) error {
 }
 
 func (bc *BotController) handleDocument(c telebot.Context) error {
+	// S-33: Deduplication — skip if message already processed
+	msgID := c.Message().ID
+	if bc.isDuplicateMessage(msgID) {
+		observability.Logger("telegram.input").Debug("duplicate document skipped", slog.Any("msg_id", msgID))
+		return nil
+	}
+
 	doc := c.Message().Document
 	if doc == nil {
 		return SendContextText(c, "Não consegui processar o documento enviado.")
@@ -50,6 +57,13 @@ func (bc *BotController) handleDocument(c telebot.Context) error {
 }
 
 func (bc *BotController) handleVoice(c telebot.Context) error {
+	// S-33: Deduplication — skip if message already processed
+	msgID := c.Message().ID
+	if bc.isDuplicateMessage(msgID) {
+		observability.Logger("telegram.input").Debug("duplicate voice skipped", slog.Any("msg_id", msgID))
+		return nil
+	}
+
 	fileID, filename, ok := resolveAudioAttachment(c)
 	if !ok {
 		return SendContextText(c, "Formato de áudio não suportado. Envie como mensagem de voz ou arquivo .ogg/.mp3.")
