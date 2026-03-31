@@ -1,0 +1,11 @@
+{
+  "owner": "0x-professor",
+  "slug": "agentic-mcp-server-builder",
+  "displayName": "Agentic Mcp Server Builder",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1772129788576,
+    "commit": "https://github.com/openclaw/skills/commit/418d9c1c02b1a6a0cde9b51832f4d6fe432c013a"
+  },
+  "history": []
+}

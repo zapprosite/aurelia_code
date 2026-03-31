@@ -1,0 +1,18 @@
+[Unit]
+Description=Aurelia Sovereign Assistant (Go)
+After=network.target redis.service ollama.service
+
+[Service]
+Type=simple
+User=will
+Group=will
+WorkingDirectory=/home/will/aurelia
+ExecStart=/home/will/aurelia/bin/aurelia live
+Restart=always
+RestartSec=10
+EnvironmentFile=/home/will/aurelia/.env
+StandardOutput=append:/var/log/aurelia/service.log
+StandardError=append:/var/log/aurelia/service.log
+
+[Install]
+WantedBy=multi-user.target

@@ -79,3 +79,28 @@ Todos devem delegar para `AGENTS.md` e para o catálogo em `docs/governance/SKIL
 - Documentation index: `.context/docs/README.md`
 - Agent playbooks: `.context/agents/README.md`
 
+## Guardrails de Codificação Assistida (Enterprise 2026)
+
+> **Referência canônica:** [`.cursorrules`](.cursorrules) + [CONSTITUTION.md](CONSTITUTION.md)
+> **ADR:** [`docs/adr/20260330-enterprise-skills-governance.md`](docs/adr/20260330-enterprise-skills-governance.md)
+
+### Regras Obrigatórias para Agentes
+1. **Leitura obrigatória antes de qualquer código**: `AGENTS.md` → `CONSTITUTION.md` → ADR relevante.
+2. **Zero segredos hardcoded**: Sempre `os.Getenv()` / `.env`. Nunca commitar `.env`.
+3. **ADR antes de ação estrutural**: DB, rede, storage, modelos, deploy — ADR primeiro.
+4. **Verificação de output**: Antes de commitar, validar que nenhum arquivo de governança foi sobrescrito sem ordem explícita.
+5. **Não modificar `.agent/rules/`** sem ordem direta de Will.
+
+### Skills Enterprise (SOTA 2026 Q2)
+- **Arquitetura e Scaffolding**: `.agent/skills/system-architect-enterprise/`
+- **Segurança e Scan**: `.agent/skills/security-guardian-enterprise/`
+- **Guardrails de IA**: `.agent/skills/ai-coding-toolkit/`
+- **Governança Industrial**: `.agent/skills/governance-polish/`
+- **Code Review Sênior**: `.agent/skills/code-review/`
+
+### Padrão de Qualidade de Código
+- Go: `gofmt` + `golangci-lint` obrigatórios.
+- Python: `ruff` + type hints (PEP 484).
+- TS: `eslint` strict + Zod-First para validação.
+- Todos: `.editorconfig` enforçado.
+

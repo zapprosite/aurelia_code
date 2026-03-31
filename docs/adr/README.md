@@ -11,6 +11,10 @@
 
 ## Implementada (código existe e foi validado)
 
+- [20260330-enterprise-skills-governance.md](20260330-enterprise-skills-governance.md) — **Nonstop Slice: Enterprise Skills + Repo Health Audit** — 4 slices, `repo-health-audit` skill criada ✅ — system-architect, security-guardian, ai-coding-toolkit instaladas e executadas ✅
+
+- [ADR-20260330-telegram-formatter-skill.md](ADR-20260330-telegram-formatter-skill.md) — **conformidade Master Skill** — Conversor JSON-to-Markdown 2026 🛰️
+- [ADR-20260329-sota-2026-2-industrialization.md](ADR-20260329-sota-2026-2-industrialization.md) — **Consolidação Industrial 2026.2** — Build estático, segurança e testes unitários. ✅
 - [20260328-adr-semparar-docs-adr-resolve.md](ADR-20260328-adr-semparar-docs-adr-resolve.md) — **conformidade Semparar** — 26 ADRs com links, 6 JSONs taskmaster ✅
 - [20260327-markdown-brain-aurelia-code.md](20260327-markdown-brain-aurelia-code.md) — cérebro Markdown canônico para o `aurelia_code`
 - [20260326-homelab-dashboard-native.md](20260326-homelab-dashboard-native.md) — absorção nativa do monitor do homelab no dashboard da Aurelia

@@ -1,0 +1,18 @@
+[Unit]
+Description=Aurelia Voice Gateway (Python VAD)
+After=network.target
+
+[Service]
+Type=simple
+User=will
+Group=will
+WorkingDirectory=/home/will/aurelia
+# Utiliza o venv do projeto para garantir dependências (numpy)
+ExecStart=/home/will/aurelia/.venv/bin/python3 /home/will/aurelia/scripts/voice-gateway.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/aurelia/voice-gateway.log
+StandardError=append:/var/log/aurelia/voice-gateway.log
+
+[Install]
+WantedBy=multi-user.target
