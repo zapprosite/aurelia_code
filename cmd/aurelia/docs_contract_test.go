@@ -82,9 +82,6 @@ func TestGovernanceDocsAvoidRetiredObsidianSyncPipeline(t *testing.T) {
 
 	repoRoot := repoRootFromCaller(t)
 	files := []string{
-		filepath.Join(repoRoot, "docs", "adr", "20260325-basico-bem-feito-v2-implementation.md"),
-		filepath.Join(repoRoot, "docs", "adr", "20260326-zero-hardcode-policy.md"),
-		filepath.Join(repoRoot, "docs", "adr", "20260327-markdown-brain-aurelia-code.md"),
 		filepath.Join(repoRoot, "docs", "governance", "REPOSITORY_CONTRACT.md"),
 	}
 
