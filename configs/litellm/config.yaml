@@ -113,6 +113,31 @@ model_list:
     model_fallbacks:
       - model_name: groq/llama-3.3-70b-versatile
 
+  # ─── SOTA 2026 HIGH-FIDELITY ALIASES — Quality > Cost ────────────────
+  - model_name: aurelia-top
+    litellm_params:
+      model: openrouter/google/gemini-pro-1.5
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 1000
+    model_info:
+      tier: paid
+      friendly_name: "Gemini 1.5 Pro (via OpenRouter)"
+    model_fallbacks:
+      - model_name: openrouter/google/gemini-2.0-flash-001
+
+  - model_name: aurelia-audio
+    litellm_params:
+      model: openrouter/minimax/minimax-m2.7  # Top for reasoning before TTS
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 1000
+    model_info:
+      tier: paid
+      friendly_name: "Minimax M2.7 (High Fidelity Audio Flow)"
+    model_fallbacks:
+      - model_name: openrouter/anthropic/claude-3.5-sonnet
+
   # ─── EMBEDDINGS ───────────────────────────────────────────────────────
   - model_name: nomic-embed-text
     litellm_params:

@@ -10,6 +10,7 @@ O ecossistema Aurélia é uma infraestrutura de IA soberana, local-first e resil
 -   **ADR-Driven**: Toda mudança estrutural ou decisão arquitetural deve ser precedida por um Registro de Decisão Arquitetural (ADR).
 -   **Container Vitality (03/2026)**: Healthchecks devem usar rotas universais e testadas (ex: `/healthz`, `/`, `ping`) para garantir resiliência imediata do cluster.
 -   **Semantic Memory Sovereignty**: Bancos vetoriais (ex: Qdrant) devem rodar estritamente locais, integrados via embeddings off-line (Transformers.js/HuggingFace), sem dependência de chaves de API externas.
+-   **Quality-Guided Routing (03/2026)**: Tarefas que exigem conformidade SOTA (Markdown 2026, nuances PT-BR, Audio/TTS) devem preferir modelos de Tier 1/Paid (`aurelia-top`) em vez do Tier 0 local, priorizando a fidelidade sobre a latência.
 
 ## 3. Padrões de Segurança
 -   **Secret Isolation**: Proibido o uso de segredos hardcoded. Uso obrigatório de `EnvironmentFile` ou Vault.
