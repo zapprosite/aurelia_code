@@ -471,9 +471,9 @@ func resolveActiveSkill(skills map[string]skill.Skill, targetSkill string) *skil
 // defaultConversationTools is used when no skill or persona specifies a tool list.
 // Limits Groq token usage by excluding the 77 MCP schemas sent by default.
 // MCP tools (github, playwright, filesystem, etc.) are still available via skills.
+// Note: markdown_brain_sync removed from default — only triggered via cron job.
 var defaultConversationTools = []string{
 	"read_file", "write_file", "list_dir", "run_command",
-	"markdown_brain_sync",
 	"web_search", "docker_control", "system_monitor", "service_control",
 	"create_schedule", "list_schedules", "cpf_cnpj",
 }
@@ -565,14 +565,12 @@ func (bc *BotController) persistAssistantAnswer(session inputSession, finalAnswe
 }
 
 func (bc *BotController) deliverFinalAnswer(c telebot.Context, finalAnswer string, requiresAudio bool) error {
-	// S-34: Always send TTS audio when available — user wants voice response every time
-	if bc.tts != nil && bc.tts.IsAvailable() {
-		requiresAudio = true
-	}
-	return bc.deliverWithParallelTTS(bc.bot, c.Chat(), bc.tts, finalAnswer)
+	// S-34: Only send TTS audio when user sent a voice message.
+	// Text messages get text-only responses to avoid duplicate (text + voice) outputs.
+	return bc.deliverWithParallelTTS(bc.bot, c.Chat(), bc.tts, finalAnswer, requiresAudio)
 }
 
 func (bc *BotController) deliverFinalAnswerToChat(chat *telebot.Chat, finalAnswer string, requiresAudio bool) error {
-	// Send text and synthesize TTS in parallel; audio follows once ready.
-	return bc.deliverWithParallelTTS(bc.bot, chat, bc.tts, finalAnswer)
+	// Only send TTS when user sent voice input.
+	return bc.deliverWithParallelTTS(bc.bot, chat, bc.tts, finalAnswer, requiresAudio)
 }

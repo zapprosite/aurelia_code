@@ -2,7 +2,7 @@
 
 **Diretório:** `docs/adr/`
 **Última compactação:** 2026-03-31
-**Total:** 68 → 2 arquivos + 1 índice
+**Total:** 8 arquivos + índice
 
 ---
 
@@ -10,9 +10,15 @@
 
 | Arquivo | Conteúdo | Status |
 |---------|----------|--------|
-| `0001-HISTORY.md` | Decisões implementadas (✅) | Histórico |
-| `PENDING.md` | Slices em espera (📋) | Ativo |
 | `README.md` | Este índice | — |
+| `20260331-architecture-mcp-a2a.md` | Arquitetura + MCP/A2A roadmap | Ativo |
+| `20260331-duplicate-response-fix.md` | Correção respostas duplicadas (S-34) | ✅ Implementado |
+| `20260331-telegram-fix-s34.md` | Deduplicação + TTS (S-33, S-34) | ✅ Implementado |
+| `20260331-sota-industrializacao.md` | Industrialização SOTA 2026 | Ativo |
+| `ADR-20260331-polda-2-industrializacao.md` | Police v2 | Arquivado |
+| `20260331-telegram-duplicate-fix.md` | Duplicado (substituído) | Obsoleto |
+| `0001-HISTORY.md` | Decisões implementadas | Histórico |
+| `PENDING.md` | Slices em espera | Ativo |
 
 ---
 
