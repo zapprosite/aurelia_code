@@ -90,3 +90,4 @@ USER.md
 # vendor/
 .vscode/
 # Workspace file
+.env.aurelia

@@ -10,7 +10,7 @@ WorkingDirectory=/home/will/aurelia
 ExecStart=/home/will/aurelia/bin/aurelia live
 Restart=always
 RestartSec=10
-EnvironmentFile=/home/will/aurelia/.env
+EnvironmentFile=/home/will/aurelia/.env.aurelia
 StandardOutput=append:/var/log/aurelia/service.log
 StandardError=append:/var/log/aurelia/service.log
 
