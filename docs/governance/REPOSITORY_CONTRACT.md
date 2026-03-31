@@ -100,3 +100,42 @@ Quando a slice precisa continuar entre sessões ou agentes, o padrão oficial é
 Scaffold canônico:
 
 - `./scripts/adr-slice-init.sh <slug> --title "Title"`
+# DATA_POLICY.md
+
+> **Padrão Pinned Data Center 2026**
+
+Este documento define a governança de dados para o ecossistema Aurélia.
+
+## 1. Soberania Local
+- **Processamento**: Todos os dados críticos (transcrições, logs, estados de banco) residem no Homelab Ubuntu.
+- **Isolamento**: Uso de instâncias isoladas de Redis e Qdrant por aplicação.
+
+## 2. Gateways Seguros
+- **Rede**: Acesso externo apenas via Cloudflare Tunnel com autenticação de portões (Porteiro).
+- **Secrets**: Proibido o armazenamento de tokens em arquivos `.md`. Uso mandatório de `.env` (Zero Drift).
+
+## 3. Observabilidade
+- **Audit**: Logs estruturados em `/logs/` com rotação periódica.
+- **Monitoramento**: Checagem horária de integridade via `aurelia-system-api`.
+
+*Atualizado: 2026-03-31*
+# SECRETS.md
+
+> **Soberania 2026**
+
+Este documento define as diretrizes para o gerenciamento de chaves e segredos no monorepo `aurelia`.
+
+## 1. Localização
+- Todos os segredos e credenciais devem residir EXCLUSIVAMENTE em arquivos `.env`.
+- Arquivos `.env` estão listados no `.gitignore` e não devem ser commitados.
+
+## 2. Injeção de Contexto
+- Uso mandatório de `os.Getenv()` (Go) ou `process.env` (JS/TS).
+- Placeholders para variáveis de ambiente obrigatórios em arquivos de configuração (.example, .json).
+
+## 3. Monitoramento e Audit
+- Audit proativo de chaves antes de cada merge em Main.
+- O Porteiro Sentinel mascará automaticamente qualquer segredo detectado em canais de saída.
+
+---
+*Assinado: Aurélia (Soberano 2026)*

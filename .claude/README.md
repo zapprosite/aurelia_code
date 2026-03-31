@@ -1,45 +1,27 @@
-# .claude/ — Claude Code SOTA 2026
+# .claude/ — Claude Code Template Pro (Sovereign 2026)
 
-> Estrutura padrão Claude Code para o projeto Aurelia.
+> Estrutura mínima. Skills e commands derivam de `.agent/`.
 
 ## Estrutura
 
 ```
 .claude/
-├── commands/       # Slash commands (/super-git, /pr-review, etc)
-├── skills/          # Symlinks para skills do .agent/skills/
-├── agents/         # Symlinks para workflows do .agent/workflows/
-├── CLAUDE.md       # Instruções do projeto (herdado)
-└── README.md       # Este arquivo
+├── settings.json        # Permissões de ferramentas
+├── settings.local.json  # Override local (não commitado)
+└── README.md            # Este arquivo
 ```
 
-## Commands Disponíveis
+## Fontes Canônicas
 
-| Command | Descrição |
-|---|---|
-| `/super-git` | Combo soberano de build + delivery |
-| `/pr-review` | Review de PRs GitHub |
-| `/adr-semparar` | Workflow de slices nonstop |
-| `/dev` | Inicia implementação técnica |
-| `/sincronizar-tudo` | Sync Git padrão sênior |
-| `/sincronizar-ai-context` | Sincroniza contexto AI |
-| `/git-turbo` | Merge + tag + cleanup |
-| `/git-ship` | Ship para main |
-| `/git-unblock` | Destrava Git |
-
-## Skills Disponíveis (symlinks)
-
-| Skill | Descrição |
-|---|---|
-| `code-review` | Revisão de código |
-| `pr-review` | Review de PRs |
-| `documentation` | Geração de docs |
-| `frontend-design` | UI/UX design |
-| `security-audit` | Auditoria de segurança |
-| `homelab-control` | Controle do homelab |
+| Recurso | Localização |
+|---------|-------------|
+| Skills | `.agent/skills/` (SSOT) |
+| Workflows/Commands | `.agent/workflows/` (SSOT) |
+| Rules | `.agent/rules/` + `AGENTS.md` |
+| Instruções Claude | `CLAUDE.md` (raiz do repo) |
 
 ## Referências
 
-- [.agent/skills/](../.agent/skills/) — Skills completos
-- [.agent/workflows/](../.agent/workflows/) — Workflows completos
 - [AGENTS.md](../AGENTS.md) — Autoridade central
+- [CLAUDE.md](../CLAUDE.md) — Instruções do projeto
+- [.agent/](../.agent/) — Skills, workflows e rules
