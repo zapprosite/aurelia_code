@@ -1,8 +1,9 @@
 ---
 slug: project-structure
 category: architecture
-generatedAt: 2026-03-27T10:44:44.084Z
+generatedAt: 2026-03-31T07:48:19.586Z
 relevantFiles:
+  - .venv/lib/python3.12
   - frontend/src/App.tsx
   - frontend/src/components
   - frontend/src/hooks
@@ -12,7 +13,6 @@ relevantFiles:
   - homelab-bibliotheca/lib/comms.sh
   - homelab-bibliotheca/lib/config.sh
   - homelab-bibliotheca/lib/memory.sh
-  - homelab-bibliotheca/lib/notes.sh
 ---
 
 # How is the codebase organized?
@@ -21,15 +21,18 @@ relevantFiles:
 
 ```
 assets/
+bin/
 build/
 cmd/
+configs/
+data/
 docs/
 e2e/
 frontend/
 homelab-bibliotheca/
 internal/
 knowledge/
-packages/
+logs/
+mcp-servers/
 pkg/
-scripts/
 ```

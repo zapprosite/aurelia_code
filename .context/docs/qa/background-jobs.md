@@ -1,11 +1,9 @@
 ---
 slug: background-jobs
 category: operations
-generatedAt: 2026-03-27T10:44:44.084Z
+generatedAt: 2026-03-31T07:48:20.153Z
 relevantFiles:
-  - ../homelab-bibliotheca/skills/open-claw/skills/harrylabs0913/reading-buddy/src/types.ts
-  - ../homelab-bibliotheca/skills/open-claw/skills/harrylabsj/reading-buddy/src/types.ts
-  - ../homelab-bibliotheca/skills/open-claw/skills/alexrudloff/clawchat-p2p/src/types.ts
+  - ../frontend/src/components/dashboard/ComputerUseTab.tsx
 ---
 
 # How do background jobs work?
@@ -14,6 +12,4 @@ relevantFiles:
 
 ### Implementation Details
 
-- Queue-related symbol: MessageType
-- Queue-related symbol: MessageType
-- Queue-related symbol: MessageType
+- Queue-related symbol: Message

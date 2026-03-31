@@ -49,9 +49,6 @@ type BotController struct {
 	pendingAlbums    map[string]*pendingAlbum
 	mediaMu          sync.Mutex
 	recentMedia      map[string]recentMedia
-	// S-33: Deduplication to prevent duplicate responses (Telegram can retry)
-	seenMu       sync.Mutex
-	seenMessageIDs map[int]time.Time // MessageID -> timestamp
 	personasDir      string
 	healthReporter   HealthReporter
 	inputGuard       *InputGuard
@@ -82,25 +79,27 @@ func (bc *BotController) SetInputGuard(g *InputGuard) {
 	bc.inputGuard = g
 }
 
-// isDuplicateMessage checks if a message ID was recently processed (60s window).
+// isDuplicateMessage checks if a message ID was recently processed using Redis.
 // S-33: Prevents Telegram retry duplicates from causing double responses.
-func (bc *BotController) isDuplicateMessage(msgID int) bool {
-	bc.seenMu.Lock()
-	defer bc.seenMu.Unlock()
-
-	// Clean old entries (>60s)
-	cutoff := time.Now().Add(-60 * time.Second)
-	for id, ts := range bc.seenMessageIDs {
-		if ts.Before(cutoff) {
-			delete(bc.seenMessageIDs, id)
-		}
+func (bc *BotController) isDuplicateMessage(chatID int64, msgID int) bool {
+	if bc.porteiro == nil || bc.porteiro.Redis() == nil {
+		slog.Warn("Porteiro ou Redis não disponível para deduplicação, ignorando check")
+		return false
 	}
 
-	if _, seen := bc.seenMessageIDs[msgID]; seen {
-		return true
+	ctx := context.Background()
+	key := fmt.Sprintf("telegram:seen:%d:%d", chatID, msgID)
+
+	// Atomic Check-and-Set with NX (Set if Not Exists)
+	// EX: 120 seconds (2 minutes) is plenty for Telegram retries
+	ok, err := bc.porteiro.Redis().Client.SetNX(ctx, key, "1", 120*time.Second).Result()
+	if err != nil {
+		slog.Error("falha ao verificar deduplicação no Redis", "err", err)
+		return false // Fail-open: process message if Redis is down
 	}
-	bc.seenMessageIDs[msgID] = time.Now()
-	return false
+
+	// If ok is false, it means the key already existed -> duplicate
+	return !ok
 }
 
 type pendingAlbum struct {

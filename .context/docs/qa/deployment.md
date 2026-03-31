@@ -1,7 +1,7 @@
 ---
 slug: deployment
 category: operations
-generatedAt: 2026-03-27T10:44:47.031Z
+generatedAt: 2026-03-31T07:48:20.732Z
 relevantFiles:
   - Dockerfile
   - docker-compose.yml
@@ -10,9 +10,9 @@ relevantFiles:
   - .github/workflows/gitleaks.yml
   - .github/workflows/golangci-lint.yml
   - .github/workflows/govulncheck.yml
-  - homelab-bibliotheca/skills/open-claw/skills/ivangdavila/docker-compose
-  - homelab-bibliotheca/skills/open-claw/skills/lxgicstudios/docker-compose-gen
-  - homelab-bibliotheca/skills/open-claw/skills/mosonchan2023/docker-compose-manager
+  - mcp-servers/steel/Dockerfile
+  - mcp-servers/steel/docker-compose.yml
+  - services/aurelia-api/Dockerfile
 ---
 
 # How do I deploy this project?

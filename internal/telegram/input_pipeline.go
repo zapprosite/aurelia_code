@@ -51,6 +51,15 @@ func (bc *BotController) processInput(c telebot.Context, text string, requiresAu
 func (bc *BotController) processInputSession(c telebot.Context, session inputSession, requiresAudio bool) error {
 	logger := observability.Logger("telegram.pipeline")
 
+	// S-33: Anti-Retry Deduplication (Essential for Sovereign 2026 stability)
+	if c.Message() != nil {
+		msgID := c.Message().ID
+		if bc.isDuplicateMessage(c.Chat().ID, msgID) {
+			logger.Warn("ignoring duplicate message from Telegram retry", slog.Int("msg_id", msgID))
+			return nil
+		}
+	}
+
 	// P0: Global 90s timeout — prevents infinite hangs (Telegram timeout ~120s).
 	ctx, cancel := context.WithTimeout(session.ctx, 90*time.Second)
 	defer cancel()
@@ -72,6 +81,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 	}
 
 	// [SOTA 2026] Porteiro Sentinel Input Guardrail (Redis + Qwen)
+	// Porteiro Sentinel Input Guardrail (Redis + Qwen)
 	if bc.porteiro != nil && !requiresAudio {
 		// Owner Bypass: Don't block the boss
 		isOwner := false
@@ -88,7 +98,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 				logger.Error("falha no porteiro", slog.Any("err", err))
 			} else if !safe {
 				logger.Warn("input blocked by porteiro", slog.String("session", session.convID))
-				if sendErr := SendError(bc.bot, c.Chat(), " [🛑 BLOQUEIO DE SEGURANÇA: TENTATIVA DE INJECTION DETECTADA] "); sendErr != nil {
+				if sendErr := SendError(bc.bot, c.Chat(), " [BLOQUEIO DE SEGURANÇA: TENTATIVA DE INJECTION DETECTADA] "); sendErr != nil {
 					logger.Warn("failed to send porteiro block message", slog.Any("err", sendErr))
 				}
 				return nil
@@ -96,7 +106,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		}
 	}
 
-	// [SOTA 2026] Context Window Compression Trigger
+	// Context Window Compression Trigger
 	if bc.memory != nil {
 		compressCtx, compressCancel := context.WithTimeout(session.ctx, 5*time.Second)
 		if err := bc.memory.Compress(compressCtx, session.convID); err != nil {
@@ -162,7 +172,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
 
-	// [SOTA 2026] Secret Sentinel Output Guardrail & Polisher
+	// Porteiro Sentinel
 	if bc.porteiro != nil {
 		finalAnswer = bc.porteiro.PolishOutput(session.ctx, finalAnswer)
 		finalAnswer = bc.porteiro.SecureOutput(finalAnswer)
@@ -275,7 +285,7 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		sender := &botChatSender{bot: bc.bot, chat: chat}
 		return bc.handleMediaURL(sender, session)
 	}
-	// [SOTA 2026] Porteiro Sentinel Input Guardrail — bypass for trusted users
+	// Porteiro Sentinel Input Guardrail — bypass for trusted users
 	if bc.porteiro != nil && !requiresAudio {
 		ownerBypass := false
 		for _, id := range bc.allowedUserIDs {
@@ -294,7 +304,7 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		}
 	}
 
-	// [SOTA 2026] Context Window Compression Trigger
+	// Context Window Compression Trigger
 	if bc.memory != nil {
 		compressCtx, compressCancel := context.WithTimeout(ctx, 5*time.Second)
 		_ = bc.memory.Compress(compressCtx, session.convID)
@@ -340,7 +350,7 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 		return err
 	}
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
-	// [SOTA 2026] Secret Sentinel Output Guardrail & Polisher
+	// Porteiro Sentinel Output Guardrail & Polisher
 	if bc.porteiro != nil {
 		finalAnswer = bc.porteiro.PolishOutput(ctx, finalAnswer)
 		finalAnswer = bc.porteiro.SecureOutput(finalAnswer)
