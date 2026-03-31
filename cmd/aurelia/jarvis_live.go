@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"log/slog"
-	"time"
 
 	"github.com/kocar/aurelia/internal/audio"
 	"github.com/kocar/aurelia/internal/streaming"
@@ -41,29 +40,43 @@ func runLiveCommand(args []string, out io.Writer) error {
 
 	log.Printf("[Jarvis] ✅ Todos os sistemas prontos. Pressione Ctrl+C para sair.")
 
-	// 4. Main Interaction Loop
+	// 4. Input Sources
+	keyboardChan := make(chan string)
+	go func() {
+		for {
+			var userInput string
+			if _, err := fmt.Scanln(&userInput); err != nil {
+				if err == io.EOF { return }
+				continue
+			}
+			keyboardChan <- userInput
+		}
+	}()
+
+	log.Printf("[Jarvis] ✅ Todos os sistemas prontos. Pressione Ctrl+C para sair.")
+	log.Printf("[Jarvis] 🎙️ AGUARDANDO VOZ (Her-Mode ativo no background...)")
+
+	// 4. Main Interaction Loop (Reactive)
 	for {
-		fmt.Fprintf(out, "\n[Você] (Modo Texto - Jarvis ouvindo...) ")
+		select {
+		case <-ctx.Done():
+			return nil
 		
-		var userInput string
-		if _, err := fmt.Scanln(&userInput); err != nil {
-			if err == io.EOF { break }
-			continue
-		}
+		case input := <-keyboardChan:
+			if input == "exit" || input == "sair" {
+				return nil
+			}
+			log.Printf("[Você (Teclado)] %s", input)
+			if err := pipeline.Process(ctx, input); err != nil {
+				log.Printf("[Error] Pipeline: %v", err)
+			}
 
-		if userInput == "exit" || userInput == "sair" {
-			break
+		case <-vad.Trigger:
+			// No Her-Mode real, aqui dispararíamos o STT.
+			// Por enquanto, apenas logamos a ativação reativa.
+			log.Printf("[Jarvis] 🔔 VOZ DETECTADA (Barge-in / Activation Signal)")
+			// Futuro: STT -> task -> pipeline.Process(ctx, task)
 		}
-
-		// 5. Execute Pipeline (Think -> Weave -> Speak)
-		// O pipeline gerencia o streaming completo de forma reativa.
-		err := pipeline.Process(ctx, userInput)
-		
-		if err != nil {
-			log.Printf("[Error] Pipeline: %v", err)
-		}
-
-		time.Sleep(200 * time.Millisecond)
 	}
 
 	return nil

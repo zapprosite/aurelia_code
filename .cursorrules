@@ -1,85 +1,55 @@
-# Project Rules and Guidelines
+# Aurélia — Regras Enterprise para Codificação Assistida por IA
+# Padrão: SOTA 2026 Q2 / Sovereign
+# Referência canônica: AGENTS.md + CONSTITUTION.md
 
-> Auto-generated from .context/docs on 2026-03-28T13:47:19.922Z
+## Identidade do Agente
+- Este repositório é o ecossistema `aurelia` (Sovereign 2026).
+- Sempre ler: AGENTS.md → CONSTITUTION.md → docs/adr/README.md antes de qualquer implementação.
+- A autoridade máxima é o operador humano (Will).
 
-## README
+## Padrões de Código
 
-# Documentation Index
+### Go
+- Use gofmt antes de qualquer commit.
+- Erros devem ser verificados explicitamente — nunca usar `_` em retornos de erro críticos.
+- Context propagation obrigatória em goroutines com `ctx context.Context`.
+- Logging estruturado via `log.Printf` formatado ou `slog` (Go 1.21+).
 
-Welcome to the repository knowledge base. Start with the project overview, then dive into specific guides as needed.
+### Python
+- Type hints obrigatórios (PEP 484).
+- Nunca use print() para debug em produção — use logging.
+- Dependências de venv sempre via `.venv/` do projeto.
 
-## Core Guides
-- [Project Overview](./project-overview.md)
-- [Architecture Notes](./architecture.md)
-- [Development Workflow](./development-workflow.md)
-- [Testing Strategy](./testing-strategy.md)
-- [Glossary & Domain Concepts](./glossary.md)
-- [Data Flow & Integrations](./data-flow.md)
-- [Security & Compliance Notes](./security.md)
-- [Tooling & Productivity Guide](./tooling.md)
+### TypeScript/JavaScript
+- Strict mode sempre ligado.
+- Zod schemas são a fonte de verdade para validação de dados.
+- Nunca hardcode URLs ou chaves de API.
 
-## Repository Snapshot
-- `AGENTS.md/`
-- `CLAUDE.md/`
-- `cmd/`
-- `CONTRIBUTING.md/`
-- `docker-compose.yml/`
-- `docs/` — Living documentation produced by this tool.
-- `e2e/`
-- `frontend/`
-- `GEMINI.md/`
-- `homelab-bibliotheca/`
-- `iniciar.sh/`
-- `internal/`
-- `knowledge/`
-- `mcp_servers.example.json/`
-- `MODEL.md/`
-- `package-lock.json/`
-- `package.json/`
-- `packages/` — Workspace packages or modules.
-- `pkg/`
-- `README.md/`
-- `scripts/`
-- `SECURITY.md/`
+## Guardrails de Segurança
 
-## Document Map
-| Guide | File | Primary Inputs |
-| --- | --- | --- |
-| Project Overview | `project-overview.md` | Roadmap, README, stakeholder notes |
-| Architecture Notes | `architecture.md` | ADRs, service boundaries, dependency graphs |
-| Development Workflow | `development-workflow.md` | Branching rules, CI config, contributing guide |
-| Testing Strategy | `testing-strategy.md` | Test configs, CI gates, known flaky suites |
-| Glossary & Domain Concepts | `glossary.md` | Business terminology, user personas, domain rules |
-| Data Flow & Integrations | `data-flow.md` | System diagrams, integration specs, queue topics |
-| Security & Compliance Notes | `security.md` | Auth model, secrets management, compliance requirements |
-| Tooling & Productivity Guide | `tooling.md` | CLI scripts, IDE configs, automation workflows |
+1. NUNCA incluir segredos (API keys, tokens, senhas) em código — use os.Getenv() ou .env.
+2. NUNCA commitar arquivos .env — verificar .gitignore antes de qualquer push.
+3. SEMPRE perguntar antes de modificar: configs/systemd/, .env, docker-compose.yml.
+4. NUNCA deletar arquivos sem confirmação explícita do usuário.
 
+## Fluxo de Trabalho
 
-## README
+- Mudanças estruturais (DB, rede, modelo, storage) → Criar ADR em docs/adr/ primeiro.
+- Novas features → Usar workflow /dev + /git-feature.
+- Refactoring → Ler skill `refactoring` antes de iniciar.
+- Testes → Ler skill `test-generation`.
 
-# Q&A Index
+## Convenções de Nomenclatura
 
-Project type: **library**
+- Branches: `feature/`, `fix/`, `chore/`, `docs/`
+- Commits: Conventional Commits (feat:, fix:, chore:, docs:)
+- ADRs: `YYYYMMDD-slug.md`
+- Skills: pasta com `SKILL.md` + frontmatter YAML obrigatório
 
-Generated: 2026-03-27T10:44:47.032Z
+## Anti-Padrões Proibidos
 
-## Getting-started
-
-- [How do I set up and run this project?](./getting-started.md)
-
-## Architecture
-
-- [How is the codebase organized?](./project-structure.md)
-
-## Features
-
-- [How is data stored and accessed?](./database.md)
-- [What API endpoints are available?](./api-endpoints.md)
-
-## Operations
-
-- [How does caching work?](./caching.md)
-- [How are errors handled?](./error-handling.md)
-- [How do background jobs work?](./background-jobs.md)
-- [How do I deploy this project?](./deployment.md)
-
+- ❌ Hardcode de configurações
+- ❌ Código sem testes para módulos core
+- ❌ Push na main sem ADR para mudanças estruturais
+- ❌ Skills duplicadas entre catálogos
+- ❌ Ignorar erros com `_` in Go

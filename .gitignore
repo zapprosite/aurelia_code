@@ -1,111 +1,92 @@
+
+.aurelia/
+/aurelia
+~/.aurelia/config/secrets.env
+/aurelia-elite
+aurelia-linux-bin
+aurelia-proof
+/bin/
 # Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Test binary, built with `go test -c`
-*.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Workspace file
-go.work
-
-# Go build cache
+bot_test.log
+/build/
+# Build artifacts
 .cache/
-
-# Environment Variables
-.env
-.env.local
-.env.*
-!.env.example
-
+.claude/
+!.claude/agents/          # Versionar agents (symlinks)
+# Claude Code (local dev tooling)
+!.claude/commands/         # Versionar commands
+!.claude/README.md          # Versionar estrutura padrão
+!.claude/skills/          # Versionar skills (symlinks)
+codigo-e-cognicao/
+codigo-exemplo/
+# Custom Ignore (Example Code)
+data/
 # Database
+data/*.db
+data/*.db.*
+data/*.db-journal
+data/qdrant/
+data/*.sqlite
+data/*.sqlite3
+data/*.sqlite3-journal
+data/*.sqlite-journal
 *.db
 *.db.*
+*_debug.txt
+# Dependency directories (remove the comment below to include it)
+*.dll
+.DS_Store
+*.dylib
+.env
+.env.*
+!.env.example
+# Environment Variables
+.env.local
+*.exe
+*.exe~
+# External Skills (Managed via Bibliotheca scripts)
+# Go build cache
+go.work
+homelab-bibliotheca/skills/open-claw/repo/
+homelab-bibliotheca/skills/open-claw/skills/
+!homelab-bibliotheca/skills/open-claw/skills-registry.json
+homelab-bibliotheca/skills/open-claw/temp/
+.idea/
+IDENTITY.md
+# IDEs
+kimi_debug.txt
+# Local planning workspace
+*.log
+logs/
+mcp_servers.json
+# Node and testing artifacts
+node_modules/
+*.out
+# Output of the go coverage tool, specifically when used with LiteIDE
+package.json
+package-lock.json
+# Persona files (instance data — belongs in ~/.aurelia/)
+.planning/
+.playwright-mcp/
+*.png
+scripts/test_tts.py
+# Skills and per-project runtime state
+*.so
+SOUL.md
+specs/
 *.sqlite
 *.sqlite.*
 *.sqlite3
 *.sqlite3.*
-data/*.db
-data/*.db.*
-data/*.sqlite
-data/*.sqlite3
-data/*.db-journal
-data/*.sqlite-journal
-data/*.sqlite3-journal
-
-# Temporary Files
-tmp/
-logs/
-.DS_Store
-kimi_debug.txt
-*_debug.txt
-mcp_servers.json
-
-# IDEs
-.vscode/
-.idea/
-
-# Custom Ignore (Example Code)
-codigo-exemplo/
-codigo-e-cognicao/
-tmp_kimi.go
-
-# Persona files (instance data — belongs in ~/.aurelia/)
-IDENTITY.md
-SOUL.md
-USER.md
-
-# Skills and per-project runtime state
-.aurelia/
-.aurelia/
-specs/
-
-# Claude Code (local dev tooling)
-.claude/
-!.claude/README.md          # Versionar estrutura padrão
-!.claude/commands/         # Versionar commands
-!.claude/skills/          # Versionar skills (symlinks)
-!.claude/agents/          # Versionar agents (symlinks)
-
-# Local planning workspace
-.planning/
-/aurelia
-/aurelia-elite
-~/.aurelia/config/secrets.env
-
-# Node and testing artifacts
-node_modules/
-package.json
-package-lock.json
 stress-test.log
 stress-test-reports/
 stress-test-simulations.js
-scripts/test_tts.py
-
-# Build artifacts
-/build/
-/bin/
-*.png
-aurelia-linux-bin
-aurelia-proof
-bot_test.log
-.playwright-mcp/
-*.log
-
-# External Skills (Managed via Bibliotheca scripts)
-homelab-bibliotheca/skills/open-claw/skills/
-homelab-bibliotheca/skills/open-claw/repo/
-homelab-bibliotheca/skills/open-claw/temp/
-!homelab-bibliotheca/skills/open-claw/skills-registry.json
-.env
-.env
-data/qdrant/
-data/
+# Temporary Files
+*.test
+# Test binary, built with `go test -c`
+tmp/
+tmp_kimi.go
+USER.md
+# vendor/
+.vscode/
+# Workspace file
