@@ -240,7 +240,10 @@ func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer t
 // deliverWithParallelTTS sends text to the user while concurrently synthesizing
 // TTS audio, then sends the audio once both are ready. This hides Kokoro latency
 // (~0.5-1.5s) behind the Telegram SendText round-trip for lower perceived latency.
-func deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string) error {
+// deliverWithParallelTTS sends text to the user while concurrently synthesizing
+// TTS audio, then sends the audio once both are ready. This hides Kokoro latency
+// (~0.5-1.5s) behind the Telegram SendText round-trip for lower perceived latency.
+func (bc *BotController) deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string, opts ...interface{}) error {
 	var ttsCh chan ttsAsyncResult
 	if synthesizer != nil && synthesizer.IsAvailable() {
 		limit := synthesizer.MaxChars()
@@ -256,7 +259,7 @@ func deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesize
 	}
 
 	// Send text while TTS is generating in background.
-	if err := sendTextWithSender(sender, chat, text, telegramMessageLimit); err != nil {
+	if err := sendTextWithSenderAndOptions(sender, chat, text, telegramMessageLimit, opts...); err != nil {
 		return err
 	}
 
@@ -270,6 +273,41 @@ func deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesize
 		return nil
 	}
 	return sendAudioBytes(sender, chat, r.audio, text, true)
+}
+
+func sendTextWithSenderAndOptions(sender messageSender, chat *telebot.Chat, text string, limit int, opts ...interface{}) error {
+	chunks := splitTelegramMarkdown(text, limit)
+	for i, chunk := range chunks {
+		var currentOpts []interface{}
+		if i == len(chunks)-1 {
+			// Append original options (like menus) only to the last chunk
+			currentOpts = opts
+		}
+		
+		htmlChunk := MarkdownToHTML(chunk)
+		msgOpts := append([]interface{}{&telebot.SendOptions{ParseMode: telebot.ModeHTML}}, currentOpts...)
+		_, err := sender.Send(chat, htmlChunk, msgOpts...)
+		if err == nil {
+			time.Sleep(200 * time.Millisecond)
+			continue
+		}
+
+		log.Printf("Send chunk with HTML failed (%v). Retrying as plain text...", err)
+		_, err = sender.Send(chat, chunk, currentOpts...)
+		if err != nil {
+			if floodErr, ok := err.(*telebot.FloodError); ok {
+				log.Printf("Hit rate limit in chunk sending. Retrying in %v...", floodErr.RetryAfter)
+				time.Sleep(time.Duration(floodErr.RetryAfter) * time.Second)
+				if _, retryErr := sender.Send(chat, chunk, currentOpts...); retryErr == nil {
+					time.Sleep(200 * time.Millisecond)
+					continue
+				}
+			}
+			return err
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	return nil
 }
 
 // sendAudioBytes sends a pre-synthesized tts.Audio as a Telegram voice note or audio clip.

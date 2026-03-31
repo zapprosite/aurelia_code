@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kocar/aurelia/internal/agent"
+	"github.com/kocar/aurelia/internal/middleware"
 )
 
 // ChatStreamToken represents a single streaming token or completion event
@@ -34,9 +35,9 @@ func (bc *BotController) StreamChat(ctx context.Context, userID int64, text stri
 
 		// Porteiro security check
 		if bc.porteiro != nil {
-			safe, err := bc.porteiro.IsSafe(ctx, text)
-			if err == nil && !safe {
-				out <- ChatStreamToken{Error: "Mensagem bloqueada pelo sistema de segurança.", Done: true}
+			result, err := bc.porteiro.IsSafe(ctx, text)
+			if err == nil && result != middleware.ResultSafe {
+				out <- ChatStreamToken{Error: bc.porteiro.GetRejectionMessage(result), Done: true}
 				return
 			}
 		}

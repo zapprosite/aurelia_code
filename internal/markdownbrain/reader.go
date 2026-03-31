@@ -2,15 +2,11 @@ package markdownbrain
 
 import (
 	"bufio"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/parser"
 )
 
 const (
@@ -80,30 +76,38 @@ func ReadObsidianVault(vaultPath string) ([]Document, error) {
 		return nil, nil
 	}
 
-	notes, err := obsidian.ReadVault(vaultPath)
-	if err != nil {
-		return nil, err
-	}
-
-	docs := make([]Document, 0, len(notes))
-	for _, note := range notes {
-		frontmatter := make(map[string]string, len(note.Frontmatter))
-		for key, value := range note.Frontmatter {
-			frontmatter[key] = value
+	// Como o internal/obsidian foi removido, tratamos o vault como um repositório markdown padrão.
+	// No futuro, podemos adicionar lógica específica para links [[Obsidian]] aqui.
+	var docs []Document
+	err := filepath.WalkDir(vaultPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-		docs = append(docs, Document{
-			SourceSystem: vaultSourceSystem,
-			SourceKind:   "vault_note",
-			RootPath:     vaultPath,
-			RelPath:      filepath.ToSlash(note.RelPath),
-			Title:        strings.TrimSpace(note.Title),
-			Content:      strings.TrimSpace(note.Content),
-			Tags:         append([]string(nil), note.Tags...),
-			Frontmatter:  frontmatter,
-			ModifiedAt:   note.ModifiedAt,
-		})
-	}
-	return docs, nil
+		if d.IsDir() {
+			if shouldSkipRepoDir(vaultPath, path, d) {
+				return fs.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(strings.ToLower(d.Name()), ".md") {
+			return nil
+		}
+		relPath, err := filepath.Rel(vaultPath, path)
+		if err != nil {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return nil
+		}
+		doc, err := parseMarkdownDocument(path, relPath, vaultPath, vaultSourceSystem, "vault_note", info.ModTime())
+		if err != nil {
+			return nil
+		}
+		docs = append(docs, doc)
+		return nil
+	})
+	return docs, err
 }
 
 func parseMarkdownDocument(path, relPath, rootPath, sourceSystem, sourceKind string, modTime time.Time) (Document, error) {

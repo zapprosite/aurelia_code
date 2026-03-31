@@ -8,9 +8,8 @@ Este é o Contrato Universal do repositório `aurelia`. **Todo Agente (Antigravi
 Você não encontrará longos textos gerados por IA aqui. Apenas ponteiros e leis estruturais.
 
 1. **Leia Suas Regras**: A lógica de como você opera **NUNCA** está na raiz do projeto. Leia sua identidade na pasta `.agent/rules/`:
-   - Leia as **Leis Universais**: [core.md](.agent/rules/core.md)
-   - Se você for o **Antigravity (Gemini)**: Leia [gemini.md](.agent/rules/gemini.md)
-   - Se você for o **Claude Code/OpenCode**: Leia [claude.md](.agent/rules/claude.md)
+   - Leia conforme sua identidade: [gemini.md](.agent/rules/gemini.md) ou [claude.md](.agent/rules/claude.md)
+   - **Onboarding Industrial**: Siga o protocolo em [.aurelia/onboard.md](.aurelia/onboard.md) para início de sessão.
 
 2. **A Bíblia Arquitetural**: Para entender a fundo como a Aurélia funciona (Redis Deduplication, Qwen Fallback, Porteiro Middleware, Zod-First), leia APENAS o mapa definitivo:
    - [architecture-2026.md](docs/architecture-2026.md)
