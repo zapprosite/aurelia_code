@@ -11,6 +11,7 @@ O ecossistema Aurélia é uma infraestrutura de IA soberana, local-first e resil
 -   **Container Vitality (03/2026)**: Healthchecks devem usar rotas universais e testadas (ex: `/healthz`, `/`, `ping`) para garantir resiliência imediata do cluster.
 -   **Semantic Memory Sovereignty**: Bancos vetoriais (ex: Qdrant) devem rodar estritamente locais, integrados via embeddings off-line (Transformers.js/HuggingFace), sem dependência de chaves de API externas.
 -   **Quality-Guided Routing (03/2026)**: Tarefas que exigem conformidade SOTA (Markdown 2026, nuances PT-BR, Audio/TTS) devem preferir modelos de Tier 1/Paid (`aurelia-top`) em vez do Tier 0 local, priorizando a fidelidade sobre a latência.
+-   **Hacker Mode & Modo Liberar (03/2026.2)**: Em ambientes homelab controlados pelo Master (Will), o sistema opera em **Modo Liberar** (PORTEIRO_MODE=LOG_ONLY) e **Hacker Mode** (Interface Técnica/Alta Densidade), priorizando agilidade absoluta e precisão técnica sobre didatismo. [NEW]
 
 ## 3. Padrões de Segurança
 -   **Secret Isolation**: Proibido o uso de segredos hardcoded. Uso obrigatório de `EnvironmentFile` ou Vault.
@@ -24,4 +25,5 @@ Adotamos o **Spec-Driven Development (SDD)** via `spec-kit`:
 4.  **Tarefas** (Execução)
 
 ---
-*Assinado: Aurélia (SOTA 2026.03.30)*
+*Assinado: Aurélia (SOTA 2026.03.31 - HACKER_RELEASE_V2)*
+

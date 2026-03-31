@@ -7,9 +7,9 @@ This repository accepts contributions only when they preserve the architectural,
 Read before opening a PR:
 
 - [AGENTS.md](AGENTS.md)
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)
 - [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md)
-- [docs/LEARNINGS.md](docs/LEARNINGS.md)
+- [docs/LEARNINGS.md](docs/LEARNINGS.md) *(see [docs/adr/0001-HISTORY.md](docs/adr/0001-HISTORY.md) for active decisions)*
 
 ## Contribution Rules
 
@@ -56,16 +56,16 @@ go test ./...
 
 If the change affects performance claims, docs, or release positioning:
 
-- update [docs/BENCHMARKS.md](docs/BENCHMARKS.md) when relevant
+- update [docs/adr/0001-HISTORY.md](docs/adr/0001-HISTORY.md) when relevant
 - keep the README aligned with measured data
 
 ## Documentation Rule
 
 If the change introduces a new architectural rule, coding rule, or recurring operational lesson, update the canonical document that owns it:
 
-- architecture -> [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- architecture -> [ARCHITECTURE.md](ARCHITECTURE.md)
 - implementation rule -> [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md)
-- recurring lesson -> [docs/LEARNINGS.md](docs/LEARNINGS.md)
+- recurring lesson -> [docs/adr/0001-HISTORY.md](docs/adr/0001-HISTORY.md)
 
 ## Pull Request Expectations
 

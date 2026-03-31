@@ -20,7 +20,7 @@ NUNCA importe logicamente uma linguagem na outra (ex: `cgo` ou `node-gyp` para c
 
 ### 📝 Contrato de Dados
 Toda troca de dados entre Go e Node DEVE ser via:
-1. **JSON**: Validado via schemas globais em `packages/zod-schemas/`.
+1. **JSON**: Validado via schemas Go (internal/) ou Zod quando o pacote TypeScript for implementado.
 2. **Markdown**: Para persistência de conhecimento humano e notas.
 
 ## 3. Manutenção da Biblioteca
