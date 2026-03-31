@@ -23,6 +23,8 @@ Cada LLM que opera neste repositório (Claude, Gemini, OpenCode, Antigravity) te
 | **Nível 2 (Paid)** | `glm-5` | OpenRouter | **5** | Engenharia/Lógica Densa |
 | **Nível 2 (Paid)** | `minimax-2.7` | OpenRouter | **6** | Precisão Extrema (Refactor) |
 | **Nível 2 (Paid)** | `kimi-2.5` | OpenRouter | **7** | Contexto Massivo (Arquitetura) |
+| **Nível 3 (SOTA)** | `aurelia-top` | Gemini 1.5 Pro | **8** | Alta Fidelidade (Markdown 2026 / Nuance PT-BR) |
+| **Nível 3 (SOTA)** | `aurelia-audio`| Minimax M2.7 | **9** | Fluxo de Áudio Profissional (TTS context) |
 
 **Embedding**: `nomic-embed-text` (Ollama Local)
 
@@ -71,7 +73,7 @@ Se um agente reintroduzir modelo proibido ou confundir orquestrador com motor in
 gemma3:27b        ← removido em 2026-03-29, substituído por qwen3.5
 gemma3:12b        ← removido em 2026-03-29
 gemma/gemma3-*    ← removido do Tier 1/2
-google/gemini-*   ← removido do motor interno (era placeholder, substituído por DeepSeek/MiniMax/Kimi)
+google/gemini-*   ← Permitido APENAS via alias `aurelia-top` para tarefas de alta fidelidade. Proibido como motor default de baixa latência.
 codex             ← CLI auth removida, não reintroduzir
 
 grep -r "anthropic/claude\|opencode\|antigravity" internal/gateway/ internal/config/
