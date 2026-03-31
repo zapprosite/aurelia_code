@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,49 +20,21 @@ func run(args []string) int {
 
 	if len(args) > 1 {
 		switch args[1] {
-		case "onboard":
-			if err := runOnboard(os.Stdin, os.Stdout); err != nil {
-				logger.Error("failed to run onboarding", slog.Any("err", err))
-				return 1
-			}
-			return 0
-		case "auth":
-			if len(args) > 2 && args[2] == "openai" {
-				if err := runOpenAIAuthLogin(os.Stdin, os.Stdout); err != nil {
-					logger.Error("failed to run OpenAI auth login", slog.Any("err", err))
-					return 1
-				}
-				return 0
-			}
-			logger.Error("unknown auth command", slog.String("command", stringsForLog(args[1:])))
-			return 1
-		case "voice":
-			if err := runVoiceCommand(args[2:], os.Stdout); err != nil {
-				logger.Error("failed to run voice command", slog.Any("err", err))
-				return 1
-			}
-			return 0
-		case "tutor":
-			if err := runTutorCommand(args[2:], os.Stdout); err != nil {
-				logger.Error("failed to run tutor command", slog.Any("err", err))
-				return 1
-			}
-			return 0
 		case "live":
 			if err := runLiveCommand(args[2:], os.Stdout); err != nil {
-				logger.Error("failed to run live command", slog.Any("err", err))
+				logger.Error("failed to run live command", "err", err)
 				return 1
 			}
 			return 0
 		default:
-			logger.Error("unknown command", slog.String("command", args[1]))
+			logger.Error("unknown command", "command", args[1])
 			return 1
 		}
 	}
 
 	app, err := bootstrapApp(args)
 	if err != nil {
-		logger.Error("failed to bootstrap Aurelia", slog.Any("err", err))
+		logger.Error("failed to bootstrap Aurelia", "err", err)
 		return 1
 	}
 	defer app.close()
@@ -82,9 +53,9 @@ func waitForShutdownSignal() {
 	<-stop
 }
 
-func stringsForLog(values []string) string {
-	if len(values) == 0 {
-		return ""
-	}
-	return fmt.Sprint(values)
+func runLiveCommand(args []string, out io.Writer) error {
+	// SOTA 2026: Live command starts a terminal-based coordination session
+	// with the sovereign team. Placeholder for now to satisfy build.
+	_, err := io.WriteString(out, "Aurelia SOTA 2026.2 - Live Coordination Mode (Headless)\n")
+	return err
 }

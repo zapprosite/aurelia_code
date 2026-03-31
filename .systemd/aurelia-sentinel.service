@@ -1,0 +1,14 @@
+[Unit]
+Description=Serviço do Aurélia Sentinel Swarm (SOTA 2026)
+After=network.target docker.service redis.service ollama.service
+
+[Service]
+Type=oneshot
+User=will
+WorkingDirectory=/home/will/aurelia
+ExecStart=/bin/bash /home/will/aurelia/scripts/aurelia-sentinel-master.sh
+StandardOutput=append:/home/will/aurelia/logs/sentinel.log
+StandardError=append:/home/will/aurelia/logs/sentinel.log
+
+[Install]
+WantedBy=multi-user.target

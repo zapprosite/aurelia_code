@@ -15,7 +15,6 @@ import (
 	"github.com/kocar/aurelia/internal/computer_use"
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/cron"
-	"github.com/kocar/aurelia/internal/gateway"
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/telegram"
@@ -160,9 +159,6 @@ func registerSpawnAgentTool(
 
 	registry.Register(tools.NewSpawnAgentTool(masterTeams).Definition(), tools.NewSpawnAgentTool(masterTeams).Execute)
 	registry.Register(tools.NewCreateSquadTool(masterTeams).Definition(), tools.NewCreateSquadTool(masterTeams).Execute)
-	getDash := &tools.GetDashboardStatusTool{}
-	registry.Register(getDash.Definition(), getDash.Execute)
-	registry.Register(agent.GetHandoffToolDefinition(), agent.HandoffHandler(masterTeams))
 	registry.Register(tools.NewPauseTeamTool(masterTeams).Definition(), tools.NewPauseTeamTool(masterTeams).Execute)
 	registry.Register(tools.NewResumeTeamTool(masterTeams).Definition(), tools.NewResumeTeamTool(masterTeams).Execute)
 	registry.Register(tools.NewCancelTeamTool(masterTeams).Definition(), tools.NewCancelTeamTool(masterTeams).Execute)
@@ -224,13 +220,11 @@ func loadCronPromptConfig(canonicalPromptLoader interface {
 // ── LLM runtime snapshot ──────────────────────────────────────────────────────
 
 type llmRuntimeSnapshot struct {
-	RequestedProvider string                  `json:"requested_provider"`
-	RequestedModel    string                  `json:"requested_model"`
-	EffectiveProvider string                  `json:"effective_provider"`
-	EffectiveModel    string                  `json:"effective_model"`
-	ViaGateway        bool                    `json:"via_gateway"`
-	CheckedAt         time.Time               `json:"checked_at"`
-	Gateway           *gateway.StatusSnapshot `json:"gateway,omitempty"`
+	RequestedProvider string    `json:"requested_provider"`
+	RequestedModel    string    `json:"requested_model"`
+	EffectiveProvider string    `json:"effective_provider"`
+	EffectiveModel    string    `json:"effective_model"`
+	CheckedAt         time.Time `json:"checked_at"`
 }
 
 func buildLLMRuntimeSnapshot(a *app, checkedAt time.Time) llmRuntimeSnapshot {
@@ -246,12 +240,7 @@ func buildLLMRuntimeSnapshot(a *app, checkedAt time.Time) llmRuntimeSnapshot {
 	snapshot.RequestedModel = a.cfg.LLMModel
 	snapshot.EffectiveProvider = a.cfg.LLMProvider
 	snapshot.EffectiveModel = a.cfg.LLMModel
-	if gw, ok := a.llmProvider.(*gateway.Provider); ok && gw != nil {
-		gwSnapshot := gw.StatusSnapshot()
-		snapshot.EffectiveProvider = "gateway"
-		snapshot.ViaGateway = true
-		snapshot.Gateway = &gwSnapshot
-	}
+
 	return snapshot
 }
 

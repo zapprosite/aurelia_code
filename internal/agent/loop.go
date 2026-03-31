@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"log/slog"
 
-	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/plan"
 )
@@ -194,13 +192,7 @@ func (l *Loop) RunWithOptionsStream(ctx context.Context, opts LoopOptions) (<-ch
 
 			for _, call := range toolCalls {
 				logger.Info("executing tool", slog.String("tool_name", call.Name))
-				dashboard.Publish(dashboard.Event{
-					Type:      "agent_tool",
-					Agent:     "Aurelia",
-					Action:    "Executando tool: " + call.Name,
-					Payload:   call.Arguments,
-					Timestamp: time.Now().Format("15:04:05"),
-				})
+				// Dashboard publishing removed (Module Pruned)
 
 				resultStr, toolErr := l.registry.Execute(ctx, call.Name, call.Arguments)
 				if toolErr != nil {

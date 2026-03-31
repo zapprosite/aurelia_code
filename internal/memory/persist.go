@@ -9,7 +9,6 @@ import (
 	"time"
 	"log/slog"
 
-	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/observability"
 )
 
@@ -85,14 +84,7 @@ func PersistKnowledgeTool(ctx context.Context, args map[string]interface{}) (str
 		return "", fmt.Errorf("failed to write overview: %w", err)
 	}
 
-	// Notificar Dashboard
-	dashboard.Publish(dashboard.Event{
-		Type:      "memory_update",
-		Agent:     "Aurelia",
-		Action:    "Conhecimento Persistido: " + title,
-		Payload:   map[string]string{"slug": slug, "path": basePath},
-		Timestamp: time.Now().Format("15:04:05"),
-	})
+	// Dashboard event removed (Module Pruned)
 
 	logger.Info("knowledge item persisted", 
 		slog.String("slug", slug),

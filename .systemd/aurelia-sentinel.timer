@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer para Ciclo de Auditoria e Manutenção Autônoma (Aurélia Sentinel Swarm)
+Documentation=https://github.com/will/aurelia/docs/architecture-2026.md
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

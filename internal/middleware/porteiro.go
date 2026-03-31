@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -43,6 +44,20 @@ func NewPorteiroMiddleware(redis *infra.RedisProvider, llm agent.LLMProvider) *P
 
 func (p *PorteiroMiddleware) Redis() *infra.RedisProvider {
 	return p.redis
+}
+
+// Deduplicate impede que a mesma mensagem do usuário seja processada mais de uma vez (locks de rede).
+func (p *PorteiroMiddleware) Deduplicate(ctx context.Context, userID, messageID string) (bool, error) {
+	if messageID == "" {
+		return false, nil
+	}
+	key := fmt.Sprintf("porteiro:dupe:%s:%s", userID, messageID)
+	// Lock de 10 segundos para evitar retries do Telegram
+	isNew, err := p.redis.SetNX(ctx, key, "PROCESSING", 10*time.Second)
+	if err != nil {
+		return false, err
+	}
+	return !isNew, nil
 }
 
 // IsSafe verifica se o prompt é seguro (Input Guardrail).
@@ -109,13 +124,13 @@ Responda APENAS [SAFE] ou [UNSAFE].`
 	return true, nil
 }
 
-// IsOutputSafe verifica vazamentos de segredos.
+// IsOutputSafe verifica vazamentos de segredos usando todos os padrões conhecidos.
 func (p *PorteiroMiddleware) IsOutputSafe(ctx context.Context, content string) (bool, string) {
-	checkStrings := []string{"sk-", "ghp_", "AUR_", "xoxp-", "xoxb-"}
-	for _, s := range checkStrings {
-		if strings.Contains(content, s) {
-			slog.Warn("Porteiro: Possível vazamento detectado", "prefix", s)
-			return false, s
+	for name, pattern := range p.secretPatterns {
+		matched, _ := regexp.MatchString(pattern, content)
+		if matched {
+			slog.Warn("Porteiro: Vazamento detectado via Regex", "tipo", name)
+			return false, name
 		}
 	}
 	return true, ""
@@ -161,16 +176,17 @@ func (p *PorteiroMiddleware) PolishOutput(ctx context.Context, content string) s
 	return polished
 }
 
-// SecureOutput mascara segredos na saída.
+// SecureOutput mascara segredos na saída de forma definitiva.
 func (p *PorteiroMiddleware) SecureOutput(content string) string {
-	checkStrings := []string{"sk-", "ghp_", "AUR_", "xoxp-", "xoxb-"}
-	for _, s := range checkStrings {
-		if strings.Contains(content, s) {
-			slog.Error("🚨 Porteiro: BLOQUEIO DE SEGURANÇA - Segredo detectado!")
-			return " [🔒 CONTEÚDO SENSÍVEL BLOQUEADO] "
+	secured := content
+	for _, pattern := range p.secretPatterns {
+		re := regexp.MustCompile(pattern)
+		if re.MatchString(secured) {
+			slog.Error("🚨 Porteiro: MASCARAMENTO ATIVO - Dados sensíveis detectados!")
+			secured = re.ReplaceAllString(secured, "[🔒 CONTEÚDO SENSÍVEL BLOQUEADO]")
 		}
 	}
-	return content
+	return secured
 }
 
 func (p *PorteiroMiddleware) calcHash(input string) string {

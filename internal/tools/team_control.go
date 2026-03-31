@@ -182,19 +182,3 @@ func (t *CreateSquadTool) Execute(ctx context.Context, args map[string]interface
 	}
 	return fmt.Sprintf("Time pronto para a missao: %s (Key: %s). Agora use 'spawn_agent' para adicionar os especialistas especificos.", mission, teamKey), nil
 }
-
-type GetDashboardStatusTool struct{}
-
-func (t *GetDashboardStatusTool) Definition() agent.Tool {
-	return agent.Tool{
-		Name:        "get_dashboard_status",
-		Description: "Consulta o status atual do gateway de roteamento e memoria visto pelo Dashboard.",
-		JSONSchema:  objectSchema(map[string]any{}),
-	}
-}
-
-func (t *GetDashboardStatusTool) Execute(ctx context.Context, args map[string]interface{}) (string, error) {
-	// Como o dashboard e apenas um emissor de eventos, aqui podemos retornar
-	// informacoes que o Master sabe que estao sendo enviadas pro dash.
-	return "Dashboard ULTRATRINK: Online (porta configurada via DASHBOARD_PORT, padrão 3334). Gateway operando em modo Triple-Tier (MiniMax/DeepSeek/Kimi).", nil
-}

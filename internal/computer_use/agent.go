@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/kocar/aurelia/internal/mcp"
-	"github.com/kocar/aurelia/internal/vision"
 )
 
 // stagehandServerName is the name of the stagehand MCP server
@@ -24,8 +23,6 @@ const stagehandServerName = "stagehand"
 type Agent struct {
 	llm      LLMClient
 	mcpMgr   *mcp.Manager
-	vision   *vision.ScreenshotCapture
-	screen   *vision.ScreenState
 	maxSteps int
 }
 
@@ -58,8 +55,6 @@ func NewAgent(cfg AgentConfig) *Agent {
 	return &Agent{
 		llm:      cfg.LLM,
 		mcpMgr:   cfg.MCPManager,
-		vision:   vision.NewScreenshotCapture(nil),
-		screen:   vision.NewScreenState(),
 		maxSteps: cfg.MaxSteps,
 	}
 }
@@ -102,8 +97,7 @@ func (a *Agent) Run(ctx context.Context, intent string) (*AgentState, error) {
 			continue
 		}
 
-		// Add to screen state
-		a.screen.AddSnapshot(screenshot, 1920, 1080)
+		// 2. Decide - ask LLM what to do next
 
 		// 2. Decide - ask LLM what to do next
 		decision, err := a.decideAction(ctx, state.Intent, screenshot, state.Steps)
@@ -252,7 +246,6 @@ func (a *Agent) executeAction(ctx context.Context, decision *Decision) (string, 
 		if result.IsError {
 			return "", fmt.Errorf("navigate error: %s", result.Content)
 		}
-		a.screen.SetURL(url)
 		return fmt.Sprintf("Navegado para %s", url), nil
 
 	case "act":

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/kocar/aurelia/internal/config"
@@ -29,4 +30,8 @@ func NewRedisProvider(cfg *config.AppConfig) (*RedisProvider, error) {
 	return &RedisProvider{
 		Client: client,
 	}, nil
+}
+
+func (r *RedisProvider) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error) {
+	return r.Client.SetNX(ctx, key, value, expiration).Result()
 }
