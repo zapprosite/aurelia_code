@@ -8,6 +8,8 @@ aurelia-proof
 /bin/
 # Binaries for programs and plugins
 bot_test.log
+aurelia-api
+/services/aurelia-api/aurelia-api
 /build/
 # Build artifacts
 .cache/

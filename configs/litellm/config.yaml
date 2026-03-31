@@ -12,17 +12,15 @@ model_list:
   # ─── TIER 1: LOCAL (RTX 4090 24GB) — lowest rpm para least-busy preferir ──
   - model_name: aurelia-smart
     litellm_params:
-      model: ollama/qwen3.5:9b
-      api_base: http://host.docker.internal:11434
-      timeout: 45
-      rpm: 1  # baixa rpm = menos ocupado = preferível pelo least-busy
-      extra_body:
-        think: false  # desabilita reasoning chain do qwen3.5 → content fica em vez de vazio
+      model: openrouter/qwen/qwen-3.6-plus-preview:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 60
     model_info:
       tier: free
-      friendly_name: "qwen3.5:9b local RTX 4090"
+      friendly_name: "Qwen 3.6 Plus Free (Primary)"
     model_fallbacks:
-      - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
+      - model_name: ollama/qwen3.5:9b
 
   # ─── TIER 2: QWEN 3.6 PLUS FREE (OpenRouter) ──────────────────────────
   - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
@@ -89,54 +87,52 @@ model_list:
   # ─── VISION & FAST aliases (apontam pro mesmo local) ─────────────────
   - model_name: aurelia-vision
     litellm_params:
-      model: ollama/qwen3.5:9b
-      api_base: http://host.docker.internal:11434
-      timeout: 45
-      rpm: 1
-      extra_body:
-        think: false
+      model: openrouter/qwen/qwen-3.6-plus-preview:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 60
     model_info:
       tier: free
+      friendly_name: "Qwen 3.6 Plus Free (Vision Primary)"
     model_fallbacks:
-      - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
+      - model_name: ollama/qwen3.5:9b
 
   - model_name: aurelia-fast
     litellm_params:
-      model: ollama/qwen3.5:9b
-      api_base: http://host.docker.internal:11434
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
       timeout: 30
-      rpm: 1
-      extra_body:
-        think: false
+      rpm: 480
     model_info:
       tier: free
+      friendly_name: "Groq Llama 3.3 70B (Fast Primary)"
     model_fallbacks:
-      - model_name: groq/llama-3.3-70b-versatile
+      - model_name: ollama/qwen3.5:9b
 
   # ─── SOTA 2026 HIGH-FIDELITY ALIASES — Quality > Cost ────────────────
   - model_name: aurelia-top
     litellm_params:
-      model: openrouter/google/gemini-pro-1.5
-      api_key: os.environ/OPENROUTER_API_KEY
+      model: gemini/gemini-1.5-pro
+      api_key: os.environ/GOOGLE_API_KEY
       timeout: 60
       rpm: 1000
     model_info:
       tier: paid
-      friendly_name: "Gemini 1.5 Pro (via OpenRouter)"
+      friendly_name: "Gemini 1.5 Pro (Direct Google API)"
     model_fallbacks:
-      - model_name: openrouter/google/gemini-2.0-flash-001
+      - model_name: groq/llama-3.3-70b-versatile
 
   - model_name: aurelia-audio
     litellm_params:
-      model: openrouter/minimax/minimax-m2.7  # Top for reasoning before TTS
-      api_key: os.environ/OPENROUTER_API_KEY
+      model: gemini/gemini-1.5-flash
+      api_key: os.environ/GOOGLE_API_KEY
       timeout: 60
       rpm: 1000
     model_info:
       tier: paid
-      friendly_name: "Minimax M2.7 (High Fidelity Audio Flow)"
+      friendly_name: "Gemini 1.5 Flash (Direct Google API)"
     model_fallbacks:
-      - model_name: openrouter/anthropic/claude-3.5-sonnet
+      - model_name: groq/llama-3.3-70b-versatile
 
   # ─── EMBEDDINGS ───────────────────────────────────────────────────────
   - model_name: nomic-embed-text
