@@ -15,6 +15,12 @@ import (
 )
 
 func (bc *BotController) handleText(c telebot.Context) error {
+	// S-33: Deduplication — skip if message already processed
+	msgID := c.Message().ID
+	if bc.isDuplicateMessage(msgID) {
+		observability.Logger("telegram.input").Debug("duplicate message skipped", slog.Any("msg_id", msgID))
+		return nil
+	}
 	return bc.processInput(c, c.Text(), false)
 }
 

@@ -1,5 +1,27 @@
 # Secrets — Aurelia Home Lab
 
+## Autoridade Declarada
+
+A Aurélia possui **autonomia total** sobre o Home Lab conforme [`AURELIA-AUTHORITY-DECLARATION.md`](./AURELIA-AUTHORITY-DECLARATION.md). Esta concessão inclui:
+
+| Permissão | Status |
+|-----------|--------|
+| `sudo` sem senha | ✅ ATIVO (`sudo=1`, 2026-03-20) |
+| Bash / shell commands | ✅ TOTAL |
+| Docker / containers | ✅ TOTAL |
+| Systemd (start/stop/restart) | ✅ TOTAL |
+| Rede (firewall, rotas, DNS) | ✅ TOTAL — com log obrigatório |
+| Ollama (modelos locais) | ✅ TOTAL |
+| GPU (NVIDIA RTX 4090) | ✅ TOTAL |
+| Qdrant / Postgres / SQLite | ✅ TOTAL |
+| Git (push, force, merge) | ✅ TOTAL |
+| Leitura de secrets | ✅ TOTAL — via `~/.aurelia/config/secrets.env` |
+| Escrita de secrets | ⚠️ Requer log — KeePass vault pendente |
+
+> Para detalhes completos da concessão de autoridade, veja [`AURELIA-AUTHORITY-DECLARATION.md`](./AURELIA-AUTHORITY-DECLARATION.md).
+
+---
+
 ## Status Atual
 
 | Item | Status |
