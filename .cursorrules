@@ -31,6 +31,8 @@
 2. NUNCA commitar arquivos .env — verificar .gitignore antes de qualquer push.
 3. SEMPRE perguntar antes de modificar: configs/systemd/, .env, docker-compose.yml.
 4. NUNCA deletar arquivos sem confirmação explícita do usuário.
+5. **[NOVO 03/2026]** Ao configurar healthchecks no Docker, preferir endpoints estáveis (`/healthz`, root `/`, ou CLI ping) ao invés de rotas dependentes de versão (`/readyz`), garantindo resiliência.
+6. **[NOVO 03/2026]** Para embeddings e semantic search, priorize stack 100% local (Qdrant + Transformers.js/local models) sem dependência externa.
 
 ## Fluxo de Trabalho
 

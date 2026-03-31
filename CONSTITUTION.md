@@ -8,6 +8,8 @@ O ecossistema Aurélia é uma infraestrutura de IA soberana, local-first e resil
 -   **Local Sovereignty**: Funcionalidades core (VAD, STT, LLM, TTS) devem operar 100% offline ou em infraestrutura privada (Homelab).
 -   **Zod-First Contract**: Esquemas de dados são a única fonte de verdade para validação I/O.
 -   **ADR-Driven**: Toda mudança estrutural ou decisão arquitetural deve ser precedida por um Registro de Decisão Arquitetural (ADR).
+-   **Container Vitality (03/2026)**: Healthchecks devem usar rotas universais e testadas (ex: `/healthz`, `/`, `ping`) para garantir resiliência imediata do cluster.
+-   **Semantic Memory Sovereignty**: Bancos vetoriais (ex: Qdrant) devem rodar estritamente locais, integrados via embeddings off-line (Transformers.js/HuggingFace), sem dependência de chaves de API externas.
 
 ## 3. Padrões de Segurança
 -   **Secret Isolation**: Proibido o uso de segredos hardcoded. Uso obrigatório de `EnvironmentFile` ou Vault.

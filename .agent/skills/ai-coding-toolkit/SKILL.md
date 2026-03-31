@@ -1,3 +1,8 @@
+---
+name: ai-coding-toolkit
+description: Metodologia completa e templates para desenvolvimento 10X assistido por IA. Cobre Cursor, Windsurf, Cline, Aider, Claude Code, etc.
+---
+
 # AI Coding Toolkit — Master Every AI Coding Assistant
 
 > The complete methodology for 10X productivity with AI-assisted development. Covers Cursor, Windsurf, Cline, Aider, Claude Code, GitHub Copilot, and more — tool-agnostic principles that work everywhere.
