@@ -27,7 +27,7 @@ const INITIAL_FEED: FeedItemProps[] = [
     agent: "System",
     action: "Awaiting Live Events...",
     timestamp: "Now",
-    content: "Connected to ULTRATRINK Real-time Engine. Monitoring Aurelia's neural activity.",
+    content: "Connected to Aurelia Real-time Engine. Monitoring neural activity.",
     status: "success"
   }
 ];

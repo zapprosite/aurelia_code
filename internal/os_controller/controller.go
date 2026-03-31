@@ -3,6 +3,7 @@ package os_controller
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 )
@@ -53,10 +54,33 @@ func (c *Controller) ReadLog(ctx context.Context, path string, lines int) ([]str
 }
 
 func (c *Controller) ApplyPatch(ctx context.Context, path, oldContent, newContent string) (*CommandResult, error) {
-	// Aplicação de patch via sed ou escrita temporária segura
-	// Por enquanto, uma implementação via sed simplificada
-	// NOTA: Em produção, o ideal é usar atomic writes em Go.
-	
-	// TODO: Implementar lógica de patch segura
-	return nil, fmt.Errorf("apply_patch not yet implemented")
+	if err := c.guard.Validate("apply_patch " + path); err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read file for patch: %w", err)
+	}
+
+	original := string(data)
+	if !strings.Contains(original, oldContent) {
+		return nil, fmt.Errorf("old content not found in %s", path)
+	}
+
+	patched := strings.Replace(original, oldContent, newContent, 1)
+
+	tmpPath := path + ".aurelia-patch.tmp"
+	if err := os.WriteFile(tmpPath, []byte(patched), 0644); err != nil {
+		return nil, fmt.Errorf("write temp patch file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		_ = os.Remove(tmpPath)
+		return nil, fmt.Errorf("atomic rename patch: %w", err)
+	}
+
+	return &CommandResult{
+		Stdout:   fmt.Sprintf("patched %s: replaced %d bytes", path, len(oldContent)),
+		ExitCode: 0,
+	}, nil
 }
