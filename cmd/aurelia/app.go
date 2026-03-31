@@ -19,8 +19,6 @@ import (
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/cron"
-	"github.com/kocar/aurelia/internal/dashboard"
-	"github.com/kocar/aurelia/internal/gateway"
 	"github.com/kocar/aurelia/internal/health"
 	"github.com/kocar/aurelia/internal/heartbeat"
 	"github.com/kocar/aurelia/internal/infra"
@@ -28,7 +26,6 @@ import (
 	"github.com/kocar/aurelia/internal/mcp"
 	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/middleware"
-	"github.com/kocar/aurelia/internal/metrics"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/runtime"
@@ -205,16 +202,6 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 	}
 	a.mcpManager = mcpManager
 
-	// Perform Preflight
-	if gwProvider, ok := a.llmProvider.(*gateway.Provider); ok {
-		ctxP, cancelP := context.WithTimeout(context.Background(), 3*time.Second)
-		if err := performPreflightCheck(ctxP, a.cfg); err != nil {
-			logger.Warn("preflight check failed, enabling degraded mode", slog.Any("err", err))
-			gwProvider.EnableDegradedMode("Preflight failures: " + err.Error())
-		}
-		cancelP()
-	}
-
 	go performOllamaWarmup(a.cfg)
 
 	cwd, _ := os.Getwd()
@@ -319,7 +306,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		projectPlaybookPath,
 	)
 
-	transcriber, err := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.GroqAPIKey, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage)
+	transcriber, err := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage)
 	if err != nil {
 		return fmt.Errorf("initialize transcriber: %w", err)
 	}
@@ -357,10 +344,6 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	}
 	notificationBot := selectNotificationBot(a.cfg, a.pool, a.primaryBot, logger)
 
-	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
-		a.primaryBot.SetHealthReporter(gw)
-	}
-
 	// S-27: Wire squad + cron status reporters for /status command
 	a.primaryBot.SetSquadReporter(squadStatusAdapter{})
 	a.primaryBot.SetCronJobReporter(&cronNextJobAdapter{store: a.cronStore})
@@ -386,14 +369,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		return fmt.Errorf("register spawn agent tool: %w", err)
 	}
 
-	// S-32: Sync bots to squad
-	botEntries := make([]agent.BotConfigEntry, 0, len(a.cfg.Bots))
-	for _, b := range a.cfg.Bots {
-		botEntries = append(botEntries, agent.BotConfigEntry{
-			ID: b.ID, Name: b.Name, PersonaID: b.PersonaID, FocusArea: b.FocusArea,
-		})
-	}
-	agent.SyncBotsToSquad(botEntries)
+	// Squad sync removed (Module Pruned)
 
 	cronScheduler, cronCtx, cronCancel, err := buildCronScheduler(a.cronStore, loop, canonicalService, notificationBot)
 	if err != nil {
@@ -409,11 +385,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 	seedControleDBCron(context.Background(), a.cronStore, a.cfg.VoiceReplyChatID)
 	reconcileSystemCronCadence(context.Background(), a.cronStore, a.cfg)
 
-	// S-22: Squad Live Load — updates agent metrics every 10s
-	agent.StartLiveLoad(a.cronScheduler, ollamaURL, a.cfg.OpenRouterAPIKey)
-
-	// S-24: Sentinel health probes — updates gemma/sentinel squad status every 30s
-	startSentinelHealthLoop(a.cfg)
+	// Sentinel health probes removed (Simplified in SOTA 2026)
 
 	a.heartbeat = heartbeat.NewHeartbeatService(
 		a.resolver.Root(),
@@ -435,7 +407,7 @@ func (a *app) initVoice(logger *slog.Logger) error {
 		return fmt.Errorf("initialize voice spool: %w", err)
 	}
 
-	transcriber, _ := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.GroqAPIKey, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage)
+	transcriber, _ := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage)
 	var fallback stt.Transcriber
 	if a.cfg.STTFallbackCommand != "" {
 		fallback = stt.NewCommandTranscriber(a.cfg.STTFallbackCommand)
@@ -516,14 +488,8 @@ func selectNotificationBot(cfg *config.AppConfig, pool *telegram.BotPool, primar
 
 func (a *app) initServers(logger *slog.Logger) {
 	healthSrv := health.NewServer(a.cfg.HealthPort)
-	registerAuxiliaryHealthChecks(healthSrv, a.cfg, a.resolver, a.llmProvider)
-
 	healthSrv.RegisterRoute("/metrics", promhttp.Handler())
-	healthSrv.RegisterRoute("/v1/router/dry-run", gateway.NewDryRunHandler(gateway.NewPlanner()))
 
-	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
-		healthSrv.RegisterRoute("/v1/router/status", gw.StatusHandler())
-	}
 	if a.voiceProcessor != nil {
 		healthSrv.RegisterCheck("voice_processor", a.voiceProcessor.HealthCheck)
 		healthSrv.RegisterRoute("/v1/voice/status", a.voiceProcessor.StatusHandler())
@@ -583,141 +549,7 @@ func (a *app) initServers(logger *slog.Logger) {
 
 // registerBotAPIRoutes registers S-32 multi-bot REST endpoints on the dashboard server.
 func (a *app) registerBotAPIRoutes(resolver *runtime.PathResolver, appCfg *config.AppConfig) {
-	corsJSON := func(w http.ResponseWriter) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	}
-
-	// GET /api/bots — list all bots with running status
-	dashboard.RegisterRoute("/api/bots", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions {
-			corsJSON(w)
-			return
-		}
-		if r.Method != http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		corsJSON(w)
-		type botStatus struct {
-			ID                string  `json:"id"`
-			Name              string  `json:"name"`
-			AllowedUserIDs    []int64 `json:"allowed_user_ids"`
-			PersonaID         string  `json:"persona_id"`
-			FocusArea         string  `json:"focus_area"`
-			LLMProvider       string  `json:"llm_provider,omitempty"`
-			LLMModel          string  `json:"llm_model,omitempty"`
-			EffectiveProvider string  `json:"effective_provider,omitempty"`
-			EffectiveModel    string  `json:"effective_model,omitempty"`
-			Enabled           bool    `json:"enabled"`
-			Running           bool    `json:"running"`
-			TokenPresent      bool    `json:"token_present"`
-			TokenPreview      string  `json:"token_preview,omitempty"`
-		}
-		cfgs := a.pool.Configs()
-		out := make([]botStatus, 0, len(cfgs))
-		for _, bc := range cfgs {
-			running := a.pool.Get(bc.ID) != nil
-			effectiveProvider, effectiveModel := a.effectiveBotLLM(bc, appCfg)
-			out = append(out, botStatus{
-				ID:                bc.ID,
-				Name:              bc.Name,
-				AllowedUserIDs:    bc.AllowedUserIDs,
-				PersonaID:         bc.PersonaID,
-				FocusArea:         bc.FocusArea,
-				LLMProvider:       bc.LLMProvider,
-				LLMModel:          bc.LLMModel,
-				EffectiveProvider: effectiveProvider,
-				EffectiveModel:    effectiveModel,
-				Enabled:           bc.Enabled,
-				Running:           running,
-				TokenPresent:      strings.TrimSpace(bc.Token) != "",
-				TokenPreview:      maskTokenPreview(bc.Token),
-			})
-		}
-		_ = json.NewEncoder(w).Encode(out)
-	}))
-
-	// POST /api/bots — create a new bot
-	dashboard.RegisterRoute("/api/bots/create", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions {
-			corsJSON(w)
-			return
-		}
-		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		corsJSON(w)
-		var req config.BotConfig
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid payload: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-		if req.ID == "" || req.Token == "" {
-			http.Error(w, "id and token are required", http.StatusBadRequest)
-			return
-		}
-		req.Enabled = true
-		if err := a.pool.Add(req); err != nil {
-			http.Error(w, err.Error(), http.StatusConflict)
-			return
-		}
-		// Persist
-		all := a.pool.Configs()
-		_ = config.SaveBots(resolver, all)
-		w.WriteHeader(http.StatusCreated)
-		effectiveProvider, effectiveModel := a.effectiveBotLLM(req, appCfg)
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"id":                 req.ID,
-			"name":               req.Name,
-			"allowed_user_ids":   req.AllowedUserIDs,
-			"persona_id":         req.PersonaID,
-			"focus_area":         req.FocusArea,
-			"llm_provider":       req.LLMProvider,
-			"llm_model":          req.LLMModel,
-			"effective_provider": effectiveProvider,
-			"effective_model":    effectiveModel,
-			"enabled":            req.Enabled,
-			"token_present":      strings.TrimSpace(req.Token) != "",
-			"token_preview":      maskTokenPreview(req.Token),
-		})
-	}))
-
-	// DELETE /api/bots/remove?id=xxx
-	dashboard.RegisterRoute("/api/bots/remove", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions {
-			corsJSON(w)
-			return
-		}
-		if r.Method != http.MethodDelete {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		corsJSON(w)
-		id := r.URL.Query().Get("id")
-		if id == "" {
-			http.Error(w, "id query param required", http.StatusBadRequest)
-			return
-		}
-		a.pool.Remove(id)
-		all := a.pool.Configs()
-		_ = config.SaveBots(resolver, all)
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"removed"}`))
-	}))
-
-	// GET /api/personas — list persona templates
-	dashboard.RegisterRoute("/api/personas", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions {
-			corsJSON(w)
-			return
-		}
-		corsJSON(w)
-		_ = json.NewEncoder(w).Encode(persona.BuiltinTemplates())
-	}))
+	// Dashboard routes removed (Module Pruned)
 }
 
 func maskTokenPreview(token string) string {
@@ -749,138 +581,71 @@ func (a *app) effectiveBotLLM(botCfg config.BotConfig, appCfg *config.AppConfig)
 	return telegram.EffectiveBotLLM(botCfg, snapshot.EffectiveProvider, snapshot.EffectiveModel)
 }
 
-// registerChatAPIRoutes registers the Jarvis Chat API for the dashboard web UI.
-// POST /api/chat streams LLM tokens via SSE; GET /api/chat/history returns conversation history.
-func (a *app) registerChatAPIRoutes() {
-	corsSSE := func(w http.ResponseWriter) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	}
-
-	// POST /api/chat — stream LLM response tokens
-	dashboard.RegisterRoute("/api/chat", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions {
-			corsSSE(w)
-			return
-		}
-		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		corsSSE(w)
-
-		var req struct {
-			Message string `json:"message"`
-			BotID   string `json:"bot_id"`
-			UserID  int64  `json:"user_id"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid payload", http.StatusBadRequest)
-			return
-		}
-		if strings.TrimSpace(req.Message) == "" {
-			http.Error(w, "message is required", http.StatusBadRequest)
-			return
-		}
-		// Default user: owner from config
-		if req.UserID == 0 && len(a.cfg.TelegramAllowedUserIDs) > 0 {
-			req.UserID = a.cfg.TelegramAllowedUserIDs[0]
-		}
-
-		// Resolve target bot
-		target := a.primaryBot
-		if req.BotID != "" {
-			if bc := a.pool.Get(req.BotID); bc != nil {
-				target = bc
-			}
-		}
-		if target == nil {
-			http.Error(w, "no bot available", http.StatusServiceUnavailable)
-			return
-		}
-
-		flusher, ok := w.(http.Flusher)
-		if !ok {
-			http.Error(w, "streaming not supported", http.StatusInternalServerError)
-			return
-		}
-
-		tokenCh := target.StreamChat(r.Context(), req.UserID, req.Message)
-		for token := range tokenCh {
-			data, _ := json.Marshal(token)
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			flusher.Flush()
-		}
-	}))
-
-	// GET /api/chat/history — return recent conversation messages
-	dashboard.RegisterRoute("/api/chat/history", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-
-		botID := r.URL.Query().Get("bot_id")
-		target := a.primaryBot
-		if botID != "" {
-			if bc := a.pool.Get(botID); bc != nil {
-				target = bc
-			}
-		}
-		if target == nil {
-			_ = json.NewEncoder(w).Encode([]any{})
-			return
-		}
-
-		var userID int64
-		if len(a.cfg.TelegramAllowedUserIDs) > 0 {
-			userID = a.cfg.TelegramAllowedUserIDs[0]
-		}
-
-		history, err := target.ChatHistory(r.Context(), userID)
-		if err != nil {
-			_ = json.NewEncoder(w).Encode([]any{})
-			return
-		}
-
-		type chatMsg struct {
-			Role    string `json:"role"`
-			Content string `json:"content"`
-		}
-		msgs := make([]chatMsg, 0, len(history))
-		for _, m := range history {
-			if m.Role == "tool" {
-				continue
-			}
-			msgs = append(msgs, chatMsg{Role: m.Role, Content: m.Content})
-		}
-		_ = json.NewEncoder(w).Encode(msgs)
-	}))
-}
+// Chat API routes removed
+func (a *app) registerChatAPIRoutes() {}
 
 func buildLLMProvider(cfg *config.AppConfig, resolver *runtime.PathResolver) (closableLLMProvider, error) {
-	if cfg.LLMProvider == "openrouter" && cfg.OpenRouterAPIKey != "" {
-		return gateway.NewProvider(cfg)
+	var tiers []agent.LLMProvider
+
+	// Tier 1: Primary Cloud Provider (Sovereign Choice)
+	primary, err := instantiateProvider(cfg.LLMProvider, cfg)
+	if err == nil && primary != nil {
+		tiers = append(tiers, primary)
 	}
-	switch cfg.LLMProvider {
+
+	// Tier 2: OpenRouter Failover (if not already primary)
+	if cfg.LLMProvider != "openrouter" && cfg.OpenRouterAPIKey != "" {
+		or, err := instantiateProvider("openrouter", cfg)
+		if err == nil && or != nil {
+			tiers = append(tiers, or)
+		}
+	}
+
+	// Tier 0: Local Sovereignty (Ollama)
+	// Always present as final fallback to ensure zero-drift autonomy.
+	if cfg.LLMProvider != "ollama" {
+		local := llm.NewOllamaProvider(cfg.OllamaURL, cfg.LLMModel)
+		tiers = append(tiers, local)
+	}
+
+	if len(tiers) == 0 {
+		return nil, fmt.Errorf("nenhum provedor de LLM disponível (verifique as chaves de API)")
+	}
+
+	router := agent.NewTieredRouter(tiers...)
+	return &closableTieredRouter{TieredRouter: router, tiers: tiers}, nil
+}
+
+type closableTieredRouter struct {
+	*agent.TieredRouter
+	tiers []agent.LLMProvider
+}
+
+func (r *closableTieredRouter) Close() {
+	for _, t := range r.tiers {
+		if c, ok := t.(interface{ Close() }); ok {
+			c.Close()
+		}
+	}
+}
+
+func instantiateProvider(name string, cfg *config.AppConfig) (agent.LLMProvider, error) {
+	switch name {
 	case "anthropic":
 		return llm.NewAnthropicProvider(cfg.AnthropicAPIKey, cfg.LLMModel), nil
 	case "ollama":
 		return llm.NewOllamaProvider(cfg.OllamaURL, cfg.LLMModel), nil
 	case "openrouter":
+		// Use OpenRouter with default provider or custom one if needed
 		return llm.NewOpenRouterProvider(cfg.OpenRouterAPIKey, cfg.LLMModel), nil
 	case "openai":
 		return llm.NewOpenAIProvider(cfg.OpenAIAPIKey, cfg.LLMModel), nil
 	case "groq":
 		return llm.NewGroqProvider(cfg.GroqAPIKey, cfg.LLMModel), nil
+	case "gemini":
+		return llm.NewGeminiProvider(cfg.GoogleAPIKey, cfg.LLMModel), nil
 	default:
-		return nil, fmt.Errorf("unsupported llm provider %q", cfg.LLMProvider)
+		return nil, fmt.Errorf("unsupported provider %q", name)
 	}
 }
 
@@ -904,62 +669,6 @@ func (a *app) start() {
 		_ = a.voiceCapture.Start()
 	}
 
-	teamRosterHandler := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		_ = json.NewEncoder(w).Encode(agent.GetFixedSquad())
-	}
-	dashboard.RegisterRoute("/api/team", teamRosterHandler)
-	dashboard.RegisterRoute("/api/squad", teamRosterHandler) // legacy alias
-	// Expor gateway status ao dashboard
-	if gw, ok := a.llmProvider.(*gateway.Provider); ok {
-		dashboard.RegisterRoute("/api/router/status", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			_ = json.NewEncoder(w).Encode(gw.StatusSnapshot())
-		})
-	}
-	dashboard.RegisterRoute("/api/commands", dashboard.HandleCommands)
-	dashboard.RegisterRoute("/api/metrics", metrics.Handler())
-	dashboard.RegisterRoute("/api/status", dashboard.NewStatusHandler(func(r *http.Request) dashboard.StatusSnapshot {
-		return buildDashboardStatusSnapshot(a)
-	}))
-	dashboard.RegisterRoute("/api/runtime/llm", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		_ = json.NewEncoder(w).Encode(buildLLMRuntimeSnapshot(a, time.Now().UTC()))
-	}))
-
-	// S-26: The Brain — Qdrant semantic search endpoints
-	qdrantURL := a.cfg.QdrantURL
-	if qdrantURL == "" {
-		qdrantURL = "http://localhost:6333"
-	}
-	qdrantCollection := a.cfg.QdrantCollection
-	if qdrantCollection == "" {
-		qdrantCollection = "conversation_memory"
-	}
-	qdrantAPIKey := a.cfg.QdrantAPIKey
-	dashboard.RegisterRoute("/api/brain/search", buildBrainSearchHandlerForCollections(qdrantURL, []string{qdrantCollection, markdownbrain.DefaultCollection}, qdrantAPIKey, a.cfg.OllamaURL, a.cfg.QdrantEmbeddingModel))
-	dashboard.RegisterRoute("/api/brain/recent", buildBrainRecentHandlerForCollections(qdrantURL, []string{qdrantCollection, markdownbrain.DefaultCollection}, qdrantAPIKey))
-	dashboard.RegisterRoute("/api/homelab", buildHomelabSnapshotHandler())
-	dashboard.RegisterRoute("/api/homelab/status", buildHomelabSnapshotHandler())
-	dashboard.RegisterRoute("/api/vrv", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/?tab=homelab", http.StatusTemporaryRedirect)
-	}))
-	dashboard.RegisterRoute("/api/vrv/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/?tab=homelab", http.StatusTemporaryRedirect)
-	}))
-
-	// Jarvis Chat API — streams LLM responses to the dashboard UI
-	a.registerChatAPIRoutes()
-
-	// S-32: REST API for multi-bot management
-	resolver := a.resolver
-	appCfg := a.cfg
-	a.registerBotAPIRoutes(resolver, appCfg)
-
-	_ = dashboard.StartServer(logger, a.cfg.DashboardPort)
 	a.pool.StartAll()
 }
 

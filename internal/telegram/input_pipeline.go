@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kocar/aurelia/internal/agent"
-	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/memory"
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
@@ -54,7 +53,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 	// S-33: Anti-Retry Deduplication (Essential for Sovereign 2026 stability)
 	if c.Message() != nil {
 		msgID := c.Message().ID
-		if bc.isDuplicateMessage(c.Chat().ID, msgID) {
+		if bc.isDuplicateMessage(session.ctx, c.Sender().ID, msgID) {
 			logger.Warn("ignoring duplicate message from Telegram retry", slog.Int("msg_id", msgID))
 			return nil
 		}
@@ -118,14 +117,6 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 	if err := bc.persistIncomingContext(session, c.Sender().ID); err != nil {
 		logger.Warn("failed to persist incoming context", slog.Any("err", err))
 	}
-
-	dashboard.Publish(dashboard.Event{
-		Type:      "user_message",
-		Agent:     "User",
-		Action:    "Mensagem recebida",
-		Payload:   session.text,
-		Timestamp: time.Now().Format(time.Kitchen),
-	})
 
 	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
 	if err != nil {

@@ -3,10 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/kocar/aurelia/internal/agent"
-	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/observability"
 )
 
@@ -53,18 +50,8 @@ func (t *SetPhaseTool) Execute(ctx context.Context, args map[string]interface{})
 		agentName = "Aurelia"
 	}
 
-	payload := map[string]string{
-		"phase":     phase,
-		"reasoning": reasoning,
-	}
+	// Dashboard phase change event removed (Module Pruned)
 
-	dashboard.Publish(dashboard.Event{
-		Type:      "agent_phase",
-		Agent:     agentName,
-		Action:    "Transitioning to " + phase,
-		Payload:   payload,
-		Timestamp: time.Now().Format(time.Kitchen),
-	})
-
+	// Dashboard phase change event removed (Module Pruned)
 	return fmt.Sprintf("Phase updated to %s. Reason recorded: %s", phase, reasoning), nil
 }

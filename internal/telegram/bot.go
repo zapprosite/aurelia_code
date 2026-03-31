@@ -79,27 +79,21 @@ func (bc *BotController) SetInputGuard(g *InputGuard) {
 	bc.inputGuard = g
 }
 
-// isDuplicateMessage checks if a message ID was recently processed using Redis.
+// isDuplicateMessage checks if a message ID was recently processed using the Porteiro middleware.
 // S-33: Prevents Telegram retry duplicates from causing double responses.
-func (bc *BotController) isDuplicateMessage(chatID int64, msgID int) bool {
-	if bc.porteiro == nil || bc.porteiro.Redis() == nil {
-		slog.Warn("Porteiro ou Redis não disponível para deduplicação, ignorando check")
+func (bc *BotController) isDuplicateMessage(ctx context.Context, userID int64, msgID int) bool {
+	if bc.porteiro == nil {
+		slog.Warn("Porteiro não disponível para deduplicação, ignorando check")
 		return false
 	}
 
-	ctx := context.Background()
-	key := fmt.Sprintf("telegram:seen:%d:%d", chatID, msgID)
-
-	// Atomic Check-and-Set with NX (Set if Not Exists)
-	// EX: 120 seconds (2 minutes) is plenty for Telegram retries
-	ok, err := bc.porteiro.Redis().Client.SetNX(ctx, key, "1", 120*time.Second).Result()
+	isDupe, err := bc.porteiro.Deduplicate(ctx, fmt.Sprintf("%d", userID), fmt.Sprintf("%d", msgID))
 	if err != nil {
-		slog.Error("falha ao verificar deduplicação no Redis", "err", err)
-		return false // Fail-open: process message if Redis is down
+		slog.Error("falha ao verificar deduplicação no Porteiro", "err", err)
+		return false // Fail-open
 	}
 
-	// If ok is false, it means the key already existed -> duplicate
-	return !ok
+	return isDupe
 }
 
 type pendingAlbum struct {

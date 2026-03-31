@@ -91,4 +91,3 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
-replace github.com/kocar/aurelia/internal/os_controller => ./internal/os_controller

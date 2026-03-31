@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kocar/aurelia/internal/dashboard"
 	"github.com/kocar/aurelia/internal/observability"
 )
 
@@ -141,21 +140,7 @@ func (s *Scheduler) runSingleJob(ctx context.Context, now time.Time, job CronJob
 		return err
 	}
 
-	// S-25: publish cron completion event to dashboard SSE
-	status := "ok"
-	if runErr != nil {
-		status = "error"
-	}
-	dashboard.Publish(dashboard.Event{
-		Type:   "agent_comms",
-		Agent:  "cronus",
-		Action: "cron_complete",
-		Payload: map[string]string{
-			"job":    job.ID,
-			"status": status,
-		},
-		Timestamp: finishedAt.Format("15:04:05"),
-	})
+	// Dashboard event publishing removed (Module Pruned)
 
 	return nil
 }

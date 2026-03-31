@@ -2,8 +2,16 @@ package agent
 
 import (
 	"context"
+	"strings"
 	"time"
 )
+
+func CoordinationLabel(modes []string) string {
+	if len(modes) == 0 {
+		return "Default"
+	}
+	return strings.Join(modes, "+")
+}
 
 type TaskStatus string
 
@@ -15,6 +23,14 @@ const (
 	TaskFailed    TaskStatus = "failed"
 	TaskCancelled TaskStatus = "cancelled"
 )
+
+const (
+	TeamStatusActive   = "active"
+	TeamStatusPaused   = "paused"
+	TeamStatusFinished = "finished"
+)
+
+const MasterAgentName = "Aurelia"
 
 type TeamTask struct {
 	ID            string

@@ -17,7 +17,7 @@ import (
 func (bc *BotController) handleText(c telebot.Context) error {
 	// S-33: Deduplication — skip if message already processed
 	msgID := c.Message().ID
-	if bc.isDuplicateMessage(c.Chat().ID, msgID) {
+	if bc.isDuplicateMessage(context.Background(), c.Sender().ID, msgID) {
 		observability.Logger("telegram.input").Debug("duplicate message skipped", slog.Any("msg_id", msgID))
 		return nil
 	}
@@ -27,7 +27,7 @@ func (bc *BotController) handleText(c telebot.Context) error {
 func (bc *BotController) handleDocument(c telebot.Context) error {
 	// S-33: Deduplication — skip if message already processed
 	msgID := c.Message().ID
-	if bc.isDuplicateMessage(c.Chat().ID, msgID) {
+	if bc.isDuplicateMessage(context.Background(), c.Sender().ID, msgID) {
 		observability.Logger("telegram.input").Debug("duplicate document skipped", slog.Any("msg_id", msgID))
 		return nil
 	}
@@ -59,7 +59,7 @@ func (bc *BotController) handleDocument(c telebot.Context) error {
 func (bc *BotController) handleVoice(c telebot.Context) error {
 	// S-33: Deduplication — skip if message already processed
 	msgID := c.Message().ID
-	if bc.isDuplicateMessage(c.Chat().ID, msgID) {
+	if bc.isDuplicateMessage(context.Background(), c.Sender().ID, msgID) {
 		observability.Logger("telegram.input").Debug("duplicate voice skipped", slog.Any("msg_id", msgID))
 		return nil
 	}

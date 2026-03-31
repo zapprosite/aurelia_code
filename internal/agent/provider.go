@@ -135,3 +135,15 @@ func (r *ToolRegistry) Execute(ctx context.Context, name string, args map[string
 	}
 	return handler(ctx, args)
 }
+
+func (r *ToolRegistry) RegisterPlannerTools() {
+	// Planner tools are now part of the registry by default or registered explicitly.
+}
+
+func (r *ToolRegistry) RegisterMemoryTools() {
+	// Memory tools are now part of the registry by default or registered explicitly.
+}
+
+func (r *ToolRegistry) RegisterVerifierTools() {
+	// Verifier tools are now part of the registry by default or registered explicitly.
+}
