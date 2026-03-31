@@ -193,3 +193,7 @@
 {"timestamp":"2026-03-31T15:44:35.764Z","tool":"context","action":"listToFill","status":"success","details":{"params":{"action":"listToFill","target":"agents"},"result":{"success":true}}}
 {"timestamp":"2026-03-31T15:44:40.708Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"agents"},"result":{"success":true}}}
 {"timestamp":"2026-03-31T15:44:45.990Z","tool":"context","action":"getMap","status":"success","details":{"params":{"action":"getMap","section":"stats"},"result":{"success":true}}}
+{"timestamp":"2026-03-31T19:04:43.471Z","tool":"context","action":"check","status":"success","details":{"params":{"action":"check","repoPath":"/home/will/aurelia"}}}
+{"timestamp":"2026-03-31T19:04:45.128Z","tool":"context","action":"listToFill","status":"success","details":{"params":{"action":"listToFill","target":"docs"},"result":{"success":true}}}
+{"timestamp":"2026-03-31T19:05:32.273Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"docs"},"result":{"success":true}}}
+{"timestamp":"2026-03-31T19:05:37.612Z","tool":"context","action":"getMap","status":"success","details":{"params":{"action":"getMap","section":"stats"},"result":{"success":true}}}

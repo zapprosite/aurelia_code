@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/kocar/aurelia/internal/health"
-	"github.com/kocar/aurelia/pkg/stt"
+	"github.com/kocar/aurelia/pkg/voice/stt"
 )
 
 const voiceCooldownOn429 = 15 * time.Minute

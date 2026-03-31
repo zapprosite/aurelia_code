@@ -12,7 +12,7 @@ import (
 
 	"github.com/kocar/aurelia/internal/agent"
 	"github.com/kocar/aurelia/internal/observability"
-	"github.com/kocar/aurelia/pkg/stt"
+	"github.com/kocar/aurelia/pkg/voice/stt"
 )
 
 var (

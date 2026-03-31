@@ -34,7 +34,7 @@ import (
 	"github.com/kocar/aurelia/internal/tools"
 	"github.com/kocar/aurelia/internal/voice"
 	"github.com/kocar/aurelia/pkg/llm"
-	"github.com/kocar/aurelia/pkg/stt"
+	"github.com/kocar/aurelia/pkg/voice/stt"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/telebot.v3"
 )

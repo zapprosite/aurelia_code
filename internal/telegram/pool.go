@@ -10,7 +10,7 @@ import (
 	"github.com/kocar/aurelia/internal/observability"
 	"github.com/kocar/aurelia/internal/persona"
 	"github.com/kocar/aurelia/internal/skill"
-	"github.com/kocar/aurelia/pkg/stt"
+	"github.com/kocar/aurelia/pkg/voice/stt"
 )
 
 // BotPool manages the lifecycle of multiple BotControllers.
