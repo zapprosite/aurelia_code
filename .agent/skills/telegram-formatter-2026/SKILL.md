@@ -3,25 +3,32 @@ name: telegram-formatter-2026
 description: Conversor industrial de JSON (LLM Local) para Markdown 2026 profissional no Telegram.
 ---
 
-# 🛰️ Telegram Formatter 2026: Master Interface
+# 🛰️ Telegram Formatter 2026: Master Interface [HACKER_MODE]
 
-Skill industrial para garantir que nenhuma resposta técnica (JSON) de modelos locais (Qwen) vaze para o usuário final no Telegram sem o devido polimento semântico.
+Skill industrial para interface técnico-operacional. Força a saída em formato de alta densidade tática, otimizada para o Master (Will).
 
-## 🏛️ Padrão Master Command (SOTA 2026)
-As respostas convertidas devem seguir este esquema visual:
+## 🏛️ Padrão Sovereign Command (SOTA 2026.2)
+As respostas devem seguir o layout de terminal industrial:
 
-1. **Header**: `🛰️ [TÍTULO / STATUS]`
-2. **Contexto**: `📊 Métricas & Estado`
-3. **Análise**: `🧠 Insight Industrial`
-4. **Próxima Ação**: `🚀 Próximo Passo`
+```text
+🛰️ [AURELIA_OS_V2] :: <STATUS_CODE>
+─────────────────────────────────────
+📊 SYST: <METRICS_HEX> | VRAM: <VRAM_STATE>
+🧠 CMD: <ACTION_TYPE>
+🚀 NEXT: <STEP_ID>
+─────────────────────────────────────
+<PROMPT_OUTPUT_BLOCK_CLEANED>
+```
 
 ## 🛠️ Mecanismo de Intercepção
-Toda saída que começar com `{` ou `{"status":` deve ser enviada ao `Porteiro (Sentinel)` com o modelo Qwen 0.5b para re-formatação imediata antes do envio.
+Toda saída bruta (técnica ou JSON) deve ser refinada pelo `Porteiro (Sentinel)` em modo `LOG_ONLY` (Bypass), garantindo que o conteúdo chegue sem amarras (Modo Liberar), mas visualmente polido.
 
-## 📍 Regras de Estilo
-- **Emoji First**: Use emojis para categorizar seções (📊, 🧠, ⚙️, 🚀).
-- **Zero JSON**: É terminantemente proibido exibir colchetes, chaves ou aspas duplas de estruturação técnica ao usuário.
-- **Tone**: Engenheiro Sênior (Soberano 2026), direto e construtivo.
+## 📍 Regras de Estilo Hacker
+- **Monospace Required**: Use blocos de código (```) para dados brutos e métricas.
+- **Hex Codes**: Identifique status via códigos hexadecimais (ex: 0x001 para Success, 0x999 para Warning).
+- **Dense Info**: Evite explicações didáticas. Vá direto ao ponto técnico.
+- **Tone**: Sovereign Operator (Soberano), autoritário e preciso.
 
 ## 🚀 Como Ativar
-Esta skill é integrada nativamente na camada `internal/telegram/output.go` e `send.go`.
+Integrado em `internal/telegram/output.go`. A porta `8080` (Aurelia System API) monitora a paridade das regras.
+
