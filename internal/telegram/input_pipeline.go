@@ -89,31 +89,8 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		return err
 	}
 
-	// [SOTA 2026] Porteiro Sentinel Input Guardrail (Redis + Qwen)
-	// Porteiro Sentinel Input Guardrail (Redis + Qwen)
-	if bc.porteiro != nil && !requiresAudio {
-		// Owner Bypass: Don't block the boss
-		isOwner := false
-		for _, id := range bc.allowedUserIDs {
-			if id == c.Sender().ID {
-				isOwner = true
-				break
-			}
-		}
-
-		if !isOwner {
-			result, err := bc.porteiro.IsSafe(session.ctx, session.text)
-			if err != nil {
-				logger.Error("falha no porteiro", slog.Any("err", err))
-			} else if result != middleware.ResultSafe {
-				logger.Warn("input blocked by porteiro", slog.String("session", session.convID), slog.String("result", string(result)))
-				msg := bc.porteiro.GetRejectionMessage(result)
-				if sendErr := SendError(bc.bot, c.Chat(), msg); sendErr != nil {
-					logger.Warn("failed to send porteiro block message", slog.Any("err", sendErr))
-				}
-				return nil
-			}
-		}
+	if blocked := bc.enforcePorteiroInput(c, session, requiresAudio); blocked {
+		return nil
 	}
 
 	// Context Window Compression Trigger
@@ -139,37 +116,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 
 	finalAnswer, err := bc.executeConversation(c, session, activeSkill, history, systemPrompt, allowedTools)
 	if err != nil {
-		logger.Error("conversation execution failed",
-			slog.Any("err", err),
-			slog.String("user", c.Sender().Username),
-			slog.String("text", session.text),
-			slog.String("error_type", fmt.Sprintf("%T", err)),
-		)
-		// Se for erro de provider/gateway, tenta usar a resposta mesmo que incompleta
-		gatewayFailure := strings.Contains(err.Error(), "provider error") ||
-			strings.Contains(err.Error(), "all gateway routes failed") ||
-			strings.Contains(err.Error(), "route breaker open") ||
-			strings.Contains(err.Error(), "budget exceeded") ||
-			strings.Contains(err.Error(), "empty guarded content")
-		if gatewayFailure && finalAnswer != "" {
-			logger.Info("using partial answer despite gateway failure",
-				slog.String("partial_answer_len", fmt.Sprintf("%d", len(finalAnswer))),
-			)
-			finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
-			bc.persistAssistantAnswer(session, finalAnswer)
-			return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
-		}
-		// P0: Timeout-specific friendly message
-		if ctx.Err() != nil {
-			if sendErr := SendError(bc.bot, c.Chat(), "Desculpe, demorei demais para processar. Tente novamente."); sendErr != nil {
-				logger.Warn("failed to send timeout fallback", slog.Any("err", sendErr))
-			}
-			return nil
-		}
-		if sendErr := SendError(bc.bot, c.Chat(), err.Error()); sendErr != nil {
-			logger.Warn("failed to send error to user", slog.Any("err", sendErr))
-		}
-		return nil
+		return bc.handleExecuteConversationError(c, session, err, finalAnswer, ctx, requiresAudio)
 	}
 
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
@@ -182,6 +129,71 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 
 	bc.persistAssistantAnswer(session, finalAnswer)
 	return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
+}
+
+func (bc *BotController) enforcePorteiroInput(c telebot.Context, session inputSession, requiresAudio bool) bool {
+	if bc.porteiro == nil || requiresAudio {
+		return false
+	}
+	isOwner := false
+	for _, id := range bc.allowedUserIDs {
+		if id == c.Sender().ID {
+			isOwner = true
+			break
+		}
+	}
+	if isOwner {
+		return false
+	}
+
+	logger := observability.Logger("telegram.pipeline")
+	result, err := bc.porteiro.IsSafe(session.ctx, session.text)
+	if err != nil {
+		logger.Error("falha no porteiro", slog.Any("err", err))
+		return false
+	}
+	if result != middleware.ResultSafe {
+		logger.Warn("input blocked by porteiro", slog.String("session", session.convID), slog.String("result", string(result)))
+		msg := bc.porteiro.GetRejectionMessage(result)
+		if sendErr := SendError(bc.bot, c.Chat(), msg); sendErr != nil {
+			logger.Warn("failed to send porteiro block message", slog.Any("err", sendErr))
+		}
+		return true
+	}
+	return false
+}
+
+func (bc *BotController) handleExecuteConversationError(c telebot.Context, session inputSession, err error, finalAnswer string, ctx context.Context, requiresAudio bool) error {
+	logger := observability.Logger("telegram.pipeline")
+	logger.Error("conversation execution failed",
+		slog.Any("err", err),
+		slog.String("user", c.Sender().Username),
+		slog.String("text", session.text),
+		slog.String("error_type", fmt.Sprintf("%T", err)),
+	)
+	gatewayFailure := strings.Contains(err.Error(), "provider error") ||
+		strings.Contains(err.Error(), "all gateway routes failed") ||
+		strings.Contains(err.Error(), "route breaker open") ||
+		strings.Contains(err.Error(), "budget exceeded") ||
+		strings.Contains(err.Error(), "empty guarded content")
+	if gatewayFailure && finalAnswer != "" {
+		logger.Info("using partial answer despite gateway failure",
+			slog.String("partial_answer_len", fmt.Sprintf("%d", len(finalAnswer))),
+		)
+		finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
+		bc.persistAssistantAnswer(session, finalAnswer)
+		return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
+	}
+	if ctx.Err() != nil {
+		if sendErr := SendError(bc.bot, c.Chat(), "Desculpe, demorei demais para processar. Tente novamente."); sendErr != nil {
+			logger.Warn("failed to send timeout fallback", slog.Any("err", sendErr))
+		}
+		return nil
+	}
+	if sendErr := SendError(bc.bot, c.Chat(), err.Error()); sendErr != nil {
+		logger.Warn("failed to send error to user", slog.Any("err", sendErr))
+	}
+	return nil
 }
 
 func newInputSession(c telebot.Context, text string) inputSession {
