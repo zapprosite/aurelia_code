@@ -9,15 +9,12 @@ Adaptador fino para Gemini no repositório `aurelia`.
 ## Ordem de leitura
 
 1. [`AGENTS.md`](AGENTS.md)
-2. [`docs/governance/REPOSITORY_CONTRACT.md`](docs/governance/REPOSITORY_CONTRACT.md)
-3. [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md)
-4. [`.agent/rules/README.md`](.agent/rules/README.md)
-5. [`docs/adr/README.md`](docs/adr/README.md)
+2. [`.agent/rules/README.md`](.agent/rules/README.md)
+3. [`docs/adr/0001-HISTORY.md`](docs/adr/0001-HISTORY.md)
 
 ## Contrato
 
 - A autoridade máxima reside em [`AGENTS.md`](AGENTS.md).
 - Planejamento, handoff e execução devem respeitar a governança local da Aurélia.
 - Use exclusivamente [`.agent/skills/`](.agent/skills), [`.agent/workflows/`](.agent/workflows) e [`.agent/rules/`](.agent/rules) como fontes canônicas.
-- Skills, embeddings, Qdrant e auditoria do catálogo são governados por [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md).
 - Mantenha documentação e planos em português do Brasil, salvo exigência explícita em contrário.
