@@ -18,7 +18,7 @@ import (
 
 const (
 	defaultLocalSTTBaseURL  = "http://localhost:8020"
-	defaultLocalSTTModel    = "Systran/faster-whisper-large-v3"
+	defaultLocalSTTModel    = "large-v3" // GPU: faster-whisper on RTX 4090
 	defaultLocalSTTLanguage = "pt"
 )
 
