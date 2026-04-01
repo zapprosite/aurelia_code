@@ -6,7 +6,6 @@
 
 | Slice | Descrição | Dependência |
 |---|---|---|
-| S-40 | gemma3:27b pull + Ollama register (HF token) | gemma3 no Ollama |
 | S-41 | configs/litellm/config.yaml — router 3 camadas | S-40 |
 | S-42 | cron 5h homelab — seed_crons.go ajuste | S-41 |
 

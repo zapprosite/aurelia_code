@@ -11,3 +11,4 @@ Período: 24/03/2026 – 01/04/2026
 | S-37 | 20260331-sota-industrializacao.md | Headless Appliance | ✅ |
 | S-38 | 20260401-industrializacao-opencode.md | OpenCode SSOT | ✅ |
 | S-39 | 20260401-smart-router-homelab-cron.md | Smart Router 3-camadas | ✅ |
+| S-40 | — | gemma3:27b pull + Ollama register (HF token) | ✅ |
