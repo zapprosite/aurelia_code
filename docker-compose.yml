@@ -132,6 +132,7 @@ services:
       - ./.env:/app/.env:ro
       - ./.env.example:/app/.env.example:ro
       - ./data:/app/data
+      - ./knowledge:/tmp/.aurelia/memory/personas:ro # Contém IDENTITY.md e HEARTBEAT.md
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8484/health || exit 1"]
       interval: 30s
