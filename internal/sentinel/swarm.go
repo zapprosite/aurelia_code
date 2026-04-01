@@ -25,7 +25,7 @@ func NewSwarm() *Swarm {
 func (s *Swarm) RunOnce(ctx context.Context) error {
 	s.logger.Info("starting sovereign maintenance round")
 
-	s.checkSupabase(ctx)
+	// checkAntigoDB(ctx) removido (migrado para SQLite)
 	s.checkQdrant(ctx)
 	s.checkGPU(ctx)
 	s.checkLiteLLM(ctx)
@@ -34,32 +34,6 @@ func (s *Swarm) RunOnce(ctx context.Context) error {
 	return nil
 }
 
-func (s *Swarm) checkSupabase(ctx context.Context) {
-	s.logger.Info("checking Supabase stability")
-	
-	// 1. Container status check
-	cmd := exec.CommandContext(ctx, "docker", "inspect", "-f", "{{.State.Status}}", "supabase_db_aurelia")
-	out, err := cmd.Output()
-	if err != nil {
-		s.logger.Error("Supabase container is missing or unreachable", slog.Any("err", err))
-		return
-	}
-	status := strings.TrimSpace(string(out))
-	if status != "running" {
-		s.logger.Warn("Supabase container is not running", slog.String("status", status))
-	} else {
-		s.logger.Info("Supabase status verified", slog.String("status", "running"))
-	}
-
-	// 2. Performance Outlier Check (Industrial)
-	s.logger.Info("auditing database query performance")
-	perfCmd := exec.CommandContext(ctx, "supabase", "db", "outliers", "-n", "3")
-	if out, err := perfCmd.Output(); err == nil {
-		s.logger.Info("database performance report generated", slog.String("outliers", string(out)))
-	} else {
-		s.logger.Warn("could not fetch db outliers from Supabase CLI")
-	}
-}
 
 func (s *Swarm) checkQdrant(ctx context.Context) {
 	s.logger.Info("checking Qdrant vector storage")
