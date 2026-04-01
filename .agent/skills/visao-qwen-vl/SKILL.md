@@ -1,4 +1,5 @@
 ---
+name: visao-qwen-vl
 descricao: Visao com Qwen3.5-9B VL — Analise de telas e screenshots via Ollama local
 ---
 

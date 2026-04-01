@@ -1,4 +1,5 @@
 ---
+name: master-response-2026
 description: Master Response 2026 — Força Markdown profissional + Kokoro TTS local GPU
 ---
 

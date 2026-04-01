@@ -205,3 +205,5 @@
 {"timestamp":"2026-04-01T07:31:19.190Z","tool":"context","action":"getMap","status":"success","details":{"params":{"action":"getMap","section":"stats"},"result":{"success":true}}}
 {"timestamp":"2026-04-01T08:12:40.135Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
 {"timestamp":"2026-04-01T20:04:55.717Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","repoPath":"/home/will/aurelia","target":"all"},"result":{"success":true}}}
+{"timestamp":"2026-04-01T20:22:15.566Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
+{"timestamp":"2026-04-01T20:31:36.434Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
