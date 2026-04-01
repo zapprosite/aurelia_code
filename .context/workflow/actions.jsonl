@@ -208,3 +208,4 @@
 {"timestamp":"2026-04-01T20:22:15.566Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
 {"timestamp":"2026-04-01T20:31:36.434Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
 {"timestamp":"2026-04-01T20:37:02.519Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
+{"timestamp":"2026-04-01T20:53:49.376Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","repoPath":"/home/will/aurelia","target":"all"},"result":{"success":true}}}
