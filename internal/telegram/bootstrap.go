@@ -60,27 +60,18 @@ func (bc *BotController) handleStart(c telebot.Context) error {
 		_ = bc.seedBootstrapIdentity(c, preset)
 	}
 
-	welcome := `🛰️ **AURELIA SOVEREIGN ENGINE [v2.2.0-SOTA]**
----
-**IDENTIDADE**: Engenheira Sênior e Sombra Digital do Will.
-**PROTOCOLO**: Industrial Homelab Governance (Sovereign 2026).
-**STATUS**: Online e Sincronizada com NVIDIA RTX / Ollama.
+	welcome := `Aurelia Sovereign — Online.
 
-Mestra em **Go, tRPC, Zod e Infraestrutura Autônoma**. 
-Pronta para agir no monorepo e no homelab com autoridade total.
-
-> [ONBOARDING] Defina o escopo da Feature para iniciarmos a execução.
----
-Capacidades ativas: /status, /master-skill, Vision, Parallel-TTS.`
+Como posso ajudar?`
 
 	menu := &telebot.ReplyMarkup{}
 	btnDashboard := menu.URL("Dashboard", "https://aurelia.zappro.site/")
-	btnStatus := menu.Data("Status do Sistema", "btn_status")
+	btnStatus := menu.Data("Status", "btn_status")
 	menu.Inline(
 		menu.Row(btnDashboard, btnStatus),
 	)
 
-	// SOTA 2026: Entrega premium com áudio paralelo (Kododo)
+	// ChatGPT style: texto primeiro, audio soh se pedir
 	return bc.deliverWithParallelTTS(bc.bot, c.Chat(), bc.tts, welcome, false, menu)
 }
 

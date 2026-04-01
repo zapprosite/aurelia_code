@@ -1,33 +1,23 @@
 package telegram
 
 const (
-	unsupportedDocumentMessage = "⚠️ **Formato não suportado**\n\n" +
-		"Para garantir a melhor análise, no momento consigo processar os seguintes formatos:\n" +
-		"- Documentos Markdown (`.md`)\n" +
-		"- Arquivos PDF (`.pdf`)\n" +
-		"- Mensagens de áudio e voz\n" +
-		"- Imagens e fotos (incluindo álbuns)\n"
+	unsupportedDocumentMessage = "Formato não suportado. Envie .md, .pdf, áudio ou imagem."
 
-	downloadFailureMessage = "❌ **Falha no processamento**\n\n" +
-		"Não foi possível baixar o arquivo enviado. Por favor, tente encaminhar novamente."
+	downloadFailureMessage = "Não consegui baixar o arquivo. Tente novamente."
 
-	audioNotConfiguredMessage = "⚠️ **Módulo de Áudio não configurado**\n\n" +
-		"O serviço de transcrição ainda não foi ativado.\n\n" +
-		"Para habilitar, configure a `groq_api_key` em suas definições de sistema."
+	audioNotConfiguredMessage = "Áudio não disponível. Configure GROQ_API_KEY."
 
-	audioProcessingFailureMessage = "🎙️ **Serviço de Voz**\n\n" +
-		"Desculpe, não consegui converter seu áudio em texto com a clareza necessária agora. Poderia repetir ou enviar uma mensagem de texto?"
+	audioProcessingFailureMessage = "Não consegui transcrever. Pode repetir ou enviar texto?"
 
-	emptyAudioMessage = "⚠️ **Áudio sem conteúdo**\n\n" +
-		"O arquivo de áudio parece estar vazio ou inaudível. Poderia verificar e reenviar?"
+	emptyAudioMessage = "Áudio vazio ou inaudível."
 
-	alreadyConfiguredMessage = "**Aurélia online.** Manda sua tarefa."
+	alreadyConfiguredMessage = "Aurelia online. Manda sua tarefa."
 
-	bootstrapWelcomeMessage = "**Aurélia** — selecione o perfil:"
+	bootstrapWelcomeMessage = "Aurelia — selecione o perfil:"
 
-	bootstrapFailureMessage = "Erro ao criar identidade. Tenta `/start` novamente."
+	bootstrapFailureMessage = "Erro. Tente /start novamente."
 
-	bootstrapProfileMessage = "Perfil configurado. Qual é o seu nome e como prefere ser tratado?"
+	bootstrapProfileMessage = "Perfil configurado. Como prefere ser tratado?"
 
-	bootstrapSuccessMessage = "Pronta. Manda sua tarefa — texto, áudio, imagem ou comando."
+	bootstrapSuccessMessage = "Pronto. Manda sua tarefa."
 )
