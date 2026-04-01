@@ -1,36 +1,38 @@
 # PENDING — Slices Aguardando Implementação
-Última auditoria: 01/04/2026 17:40
+Última auditoria: 01/04/2026
 
 > POLÍTICA: Apenas slices com código no repo são marcados ✅.
 > Este arquivo é a única fonte de verdade do backlog.
 
 ## P0 — Hotfix Ativo 🔥 (impede o bot de funcionar)
 
-| Slice | Descrição | Arquivo |
-|---|---|---|
-| S-51 | Fix cron expr + streaming + reporter Markdown | seed_crons, runtime, reporter |
+Nenhum. Sistema SOTA 2026 Sovereign operando de forma estável.
 
 ## P1 — Crítico 🔴 (infra sem a qual o home lab não é estável)
 
-| Slice | Descrição | Pré-requisito |
-|---|---|---|
-| S-52 | PostgreSQL + pgvector substituir Supabase local | — |
-| S-53 | Grafana + Prometheus no docker-compose.yml | S-52 |
-| S-54 | TTS voz feminina PT-BR natural (Edge TTS nativo) | — |
-| S-55 | Smoke test E2E: texto → voz → cron com Markdown | S-51, S-54 |
+Nenhum limitador conhecido no momento.
 
 ## P2 — Alto 🟡 (qualidade da experiência)
 
 | Slice | Descrição | Pré-requisito |
 |---|---|---|
-| S-56 | Ubuntu Desktop: voice-gateway integrado ao pipeline | S-51 |
-| S-57 | /status handler retorna reporter.Format() em Markdown | S-51 |
-| S-58 | Notificação proativa de anomalia (GPU >85°C, VRAM >90%) | S-53 |
+| S-62 | Health checks passivos para serviços do homelab | — |
 
-## P3 — Médio 🟢 (expansão)
+## P3 — Médio 🟢 (expansão da capacidade nativa)
 
 | Slice | Descrição | Pré-requisito |
 |---|---|---|
-| S-59 | Computer Use E2E (BUA-style) | — |
-| S-60 | OS Native God Mode | S-59 |
-| S-61 | Jarvis Voice + Computer | S-60 |
+| S-63 | Computer Use E2E (Automação Visual) | S-57 (Feature Flag) |
+| S-64 | OS Native God Mode | S-63 |
+| S-65 | Jarvis Voice + Computer Use em conjunção | S-64 |
+
+---
+
+## ✅ Slices Concluídos Recentes (Sovereign 2026)
+- **S-51 a S-55**: Estabilização do Homelab, TTS via Edge, Groq STT, remoção do Supabase.
+- **S-56**: Extração do `AURELIA.md` injetado no pipeline de input.
+- **S-57**: Setup de Feature Flags.
+- **S-58**: Construção do `DreamConsolidator` (SQLite -> LLM -> Qdrant).
+- **S-59**: Refatoração do `input_pipeline.go` limitando escopo das funções (< 100 linhas).
+- **S-60**: `SharedMemory` e infraestrutura de Redis PubSub para coordenação de Swarm Local.
+- **S-61**: Limpeza e sincronização do PENDING.md (Este estado atual).
