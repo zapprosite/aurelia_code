@@ -1,4 +1,5 @@
 ---
+name: gerente-vendas-agencia
 descricao: Gerente de Vendas + Agencia de Marketing e Redes Sociais - Gestão completa de vendas, clientes e campanhas
 ---
 

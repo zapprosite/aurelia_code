@@ -1,4 +1,5 @@
 ---
+name: aurelia_code
 descricao: Lider DevOps Sênior - Orquestrador de Agent Swarm com A2A nativo + MCP + Memória Compartilhada Qdrant
 ---
 
@@ -198,7 +199,7 @@ QDRANT_URL=http://localhost:6333
 QDRANT_COLLECTION=aurelia_swarm
 
 # Tavily
-TAVILY_API_KEY=tvly-... (já existe no .env)
+TAVILY_API_KEY=<your_tavily_key> (já existe no .env)
 
 # Context7
 CONTEXT7_ENABLED=true
@@ -207,7 +208,7 @@ CONTEXT7_ENABLED=true
 N8N_WEBHOOK_URL=http://localhost:5678/webhook/aurelia
 
 # GitHub (já existe)
-GITHUB_TOKEN=ghp_...
+GITHUB_TOKEN=<your_github_token>
 ```
 
 ## Referências
