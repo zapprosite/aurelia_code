@@ -120,8 +120,6 @@ type AppConfig struct {
 	OllamaURL                string
 	DashboardPort            int
 	HealthPort               int
-	SupabaseURL              string
-	SupabaseEnabled          bool
 	ObsidianVaultPath        string
 	ObsidianSyncEnabled      bool
 	AureliaMode              string // "sovereign" or "lite"
@@ -189,8 +187,6 @@ type fileConfig struct {
 	OllamaURL                string  `json:"ollama_url"`
 	DashboardPort            int     `json:"dashboard_port"`
 	HealthPort               int     `json:"health_port"`
-	SupabaseURL              string  `json:"supabase_url"`
-	SupabaseEnabled          bool    `json:"supabase_enabled"`
 	ObsidianVaultPath        string  `json:"obsidian_vault_path"`
 	ObsidianSyncEnabled      bool    `json:"obsidian_sync_enabled"`
 	AureliaMode              string  `json:"aurelia_mode"`
@@ -313,9 +309,6 @@ func applyEnvOverrides(cfg *fileConfig) {
 	}
 	if env := os.Getenv("LITELLM_MASTER_KEY"); env != "" {
 		cfg.LiteLLMKey = env
-	}
-	if env := os.Getenv("SUPABASE_URL"); env != "" {
-		cfg.SupabaseURL = env
 	}
 	if env := os.Getenv("OBSIDIAN_VAULT_PATH"); env != "" {
 		cfg.ObsidianVaultPath = env
@@ -783,8 +776,6 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 		OllamaURL:                cfg.OllamaURL,
 		DashboardPort:            cfg.DashboardPort,
 		HealthPort:               cfg.HealthPort,
-		SupabaseURL:              cfg.SupabaseURL,
-		SupabaseEnabled:          cfg.SupabaseEnabled,
 		ObsidianVaultPath:        cfg.ObsidianVaultPath,
 		ObsidianSyncEnabled:      cfg.ObsidianSyncEnabled,
 		AureliaMode:              cfg.AureliaMode,

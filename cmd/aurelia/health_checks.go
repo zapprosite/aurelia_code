@@ -15,7 +15,6 @@ import (
 	"github.com/kocar/aurelia/internal/config"
 	"github.com/kocar/aurelia/internal/health"
 	"github.com/kocar/aurelia/internal/runtime"
-	"github.com/kocar/aurelia/internal/store"
 )
 
 const geminiSmokeFreshness = 24 * time.Hour
@@ -46,26 +45,6 @@ func registerAuxiliaryHealthChecks(healthSrv *health.Server, cfg *config.AppConf
 	}
 
 	healthSrv.RegisterCheck("gemini_api", buildGeminiHealthCheck(cfg, geminiSmokeStatusPath(resolver)))
-
-	if cfg.SupabaseEnabled && cfg.SupabaseURL != "" {
-		healthSrv.RegisterCheck("supabase_db", buildSupabaseHealthCheck(cfg.SupabaseURL))
-	}
-}
-
-// buildSupabaseHealthCheck returns a health check function that pings Supabase.
-// The store is created on demand to avoid holding a pool just for the health check;
-// the real pool is managed by the app startup.
-func buildSupabaseHealthCheck(dsn string) func() health.CheckResult {
-	return func() health.CheckResult {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		s, err := store.Connect(ctx, dsn, nil)
-		if err != nil {
-			return health.CheckResult{Status: "error", Message: "supabase unreachable: " + err.Error()}
-		}
-		defer s.Close()
-		return health.CheckResult{Status: "ok", Message: "supabase connected"}
-	}
 }
 
 func buildPrimaryLLMHealthCheck(cfg *config.AppConfig, provider any) func() health.CheckResult {
