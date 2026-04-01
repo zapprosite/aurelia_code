@@ -1,0 +1,75 @@
+{
+  "version": "2026.04.01",
+  "description": "Fila soberana de slices — execute com //pipeline",
+  "policy": {
+    "stop_on_failure": true,
+    "smoke_on_each": true,
+    "max_retries": 1,
+    "commit_on_each": true
+  },
+  "queue": [
+    {
+      "id": "S-56",
+      "title": "AURELIA.md — system prompt editável sem rebuild",
+      "priority": "P1",
+      "status": "pending",
+      "smoke": {
+        "cmd": "grep -c 'Aurélia' AURELIA.md && go build ./cmd/aurelia/... && echo SMOKE_OK"
+      },
+      "instructions": "1. Extraia o valor de defaultSystemPrompt de internal/telegram/input_pipeline.go e salve em AURELIA.md na raiz do repo. 2. Modifique input_pipeline.go para ler AURELIA.md em runtime com os.ReadFile. Se o arquivo não existir, usa o hardcoded como fallback. 3. go build deve passar."
+    },
+    {
+      "id": "S-57",
+      "title": "Feature flags via .env — FEAT_VOICE, FEAT_DREAM, FEAT_KAIROS",
+      "priority": "P1",
+      "status": "pending",
+      "depends_on": "S-56",
+      "smoke": {
+        "cmd": "grep -c 'FEAT_VOICE' internal/config/config.go && go build ./internal/config/... && echo SMOKE_OK"
+      },
+      "instructions": "Crie internal/config/features.go com struct Features { VoiceEnabled bool, DreamEnabled bool, KAIROSEnabled bool, ComputerUseEnabled bool } lidos via env FEAT_VOICE, FEAT_DREAM, FEAT_KAIROS, FEAT_COMPUTER_USE. Injete Features no AppConfig. Adicione no .env.example com todos false como padrão seguro."
+    },
+    {
+      "id": "S-58",
+      "title": "Dream — consolidação de memória em background",
+      "priority": "P1",
+      "status": "pending",
+      "depends_on": "S-57",
+      "smoke": {
+        "cmd": "go build ./internal/memory/... && grep -c 'DreamConsolidator' internal/memory/dream.go && echo SMOKE_OK"
+      },
+      "instructions": "Crie internal/memory/dream.go com struct DreamConsolidator. Deve rodar em goroutine. Gates de execução: 1) 24h desde o último run (persiste timestamp em SQLite), 2) 5+ sessões novas desde o último run, 3) sync.Mutex para evitar concorrência. Ação: busca mensagens antigas > 7 dias no SQLite, gera resumo via LLM (usa ops-cron alias, sem stream), upsert no Qdrant como knowledge. Respeita cfg.Features.DreamEnabled — se false, não roda."
+    },
+    {
+      "id": "S-59",
+      "title": "input_pipeline.go — refatorar funções > 100 linhas",
+      "priority": "P2",
+      "status": "pending",
+      "smoke": {
+        "cmd": "go build ./internal/telegram/... && go test ./internal/telegram/... && echo SMOKE_OK"
+      },
+      "instructions": "Abra internal/telegram/input_pipeline.go (577 linhas). Extraia cada bloco lógico para funções nomeadas com responsabilidade única. Nenhuma função pode ter mais de 100 linhas. Não mude comportamento — só extrai. Todos os testes existentes devem passar."
+    },
+    {
+      "id": "S-60",
+      "title": "Shared memory Redis pub/sub — base do swarm",
+      "priority": "P2",
+      "status": "pending",
+      "depends_on": "S-57",
+      "smoke": {
+        "cmd": "go build ./internal/memory/... && grep -c 'SharedMemory' internal/memory/shared_memory.go && echo SMOKE_OK"
+      },
+      "instructions": "Crie internal/memory/shared_memory.go com interface SharedMemory { Publish(ctx, topic, msg), Subscribe(ctx, topic) <-chan Message, SearchCross(ctx, query, k) []Chunk }. Implemente SharedMemoryRedis usando o cliente Redis já existente em internal/infra/redis.go. O SearchCross delega ao Qdrant via internal/memory/semantic_search.go. Respeita cfg.Features.KAIROSEnabled."
+    },
+    {
+      "id": "S-61",
+      "title": "PENDING.md — sincronizar com estado real + novos slices",
+      "priority": "P1",
+      "status": "pending",
+      "smoke": {
+        "cmd": "grep -c 'S-56' docs/PENDING.md && grep -c 'S-60' docs/PENDING.md && echo SMOKE_OK"
+      },
+      "instructions": "Reescreva docs/PENDING.md com o estado real: marque S-51, S-52, S-54, S-55 como concluídos. Adicione S-56 a S-60 como pendentes com prioridades corretas. Remova S-53 (Grafana/Prometheus foi descartado em favor de SQLite puro). Mantenha o formato de tabela existente."
+    }
+  ]
+}
