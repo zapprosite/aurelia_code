@@ -882,9 +882,9 @@ func defaultLLMModelForProvider(provider string) string {
 	case "google":
 		return "gemini-2.5-pro"
 	case "ollama":
-		return "qwen3.5"
+		return "gemma3:27b-it-qat"
 	case "openrouter":
-		return "openrouter/auto"
+		return "openrouter/nvidia/nemotron-3-super-120b-a12b:free"
 	case "openai":
 		return "gpt-5.4"
 	default:
