@@ -143,7 +143,4 @@ litellm_settings:
   drop_params: true
   set_verbose: false
   cache: true
-  cache_params:
-    type: redis
-    host: redis
-    port: 6379
+# Removido cache_params via redis para rodar self-contained local

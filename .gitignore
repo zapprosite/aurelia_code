@@ -83,13 +83,22 @@ specs/
 stress-test.log
 stress-test-reports/
 stress-test-simulations.js
-# Temporary Files
-*.test
-# Test binary, built with `go test -c`
-tmp/
-tmp_kimi.go
-USER.md
-# vendor/
-.vscode/
-# Workspace file
-.env.aurelia
+# Build artifacts
+/build/
+/bin/
+*.png
+aurelia-linux-bin
+aurelia-proof
+bot_test.log
+.playwright-mcp/
+*.log
+
+# External Skills (Managed via Bibliotheca scripts)
+homelab-bibliotheca/skills/open-claw/skills/
+homelab-bibliotheca/skills/open-claw/repo/
+homelab-bibliotheca/skills/open-claw/temp/
+!homelab-bibliotheca/skills/open-claw/skills-registry.json
+.env
+data/qdrant/
+data/
+scripts/test_tts.py
