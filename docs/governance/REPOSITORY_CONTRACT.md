@@ -27,9 +27,8 @@ Este é o índice central de governança para humanos e agentes.
 3. [Skill Catalog](./SKILL-CATALOG.md)
 4. [CLAUDE.md](../../CLAUDE.md)
 5. [GEMINI.md](../../GEMINI.md)
-6. [MODEL.md](../../MODEL.md)
-7. [.agent/rules/README.md](../../.agent/rules/README.md)
-8. [ADR Index](../adr/README.md)
+6. [.agent/rules/README.md](../../.agent/rules/README.md)
+7. [ADR Index](../adr/README.md)
 9. [.context/docs/README.md](../../.context/docs/README.md)
 
 ## 3. Fontes Permanentes de Governança
@@ -58,7 +57,7 @@ Comando canônico: `./scripts/sync-ai-context.sh`
 ## 5. Higiene da Raiz
 
 **Devem ficar na raiz:**
-- Contratos e adaptadores vigentes (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `MODEL.md`)
+- Contratos e adaptadores vigentes (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`)
 - Docs de entrada (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`)
 
 **Não devem ficar na raiz:**

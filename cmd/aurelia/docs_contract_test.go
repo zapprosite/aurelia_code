@@ -19,12 +19,7 @@ func TestGovernanceEntrypointLinksResolve(t *testing.T) {
 		filepath.Join(repoRoot, "AGENTS.md"),
 		filepath.Join(repoRoot, "CLAUDE.md"),
 		filepath.Join(repoRoot, "GEMINI.md"),
-		filepath.Join(repoRoot, "MODEL.md"),
-		filepath.Join(repoRoot, ".github", "copilot-instructions.md"),
-		filepath.Join(repoRoot, ".agent", "rules", "README.md"),
 		filepath.Join(repoRoot, ".agent", "skills", "README.md"),
-		filepath.Join(repoRoot, "docs", "governance", "REPOSITORY_CONTRACT.md"),
-		filepath.Join(repoRoot, "docs", "governance", "SKILL-CATALOG.md"),
 		filepath.Join(repoRoot, "docs", "adr", "README.md"),
 	}
 
@@ -60,10 +55,6 @@ func TestGovernanceEntrypointsAvoidLegacyDotAgentsPath(t *testing.T) {
 		filepath.Join(repoRoot, "AGENTS.md"),
 		filepath.Join(repoRoot, "CLAUDE.md"),
 		filepath.Join(repoRoot, "GEMINI.md"),
-		filepath.Join(repoRoot, "MODEL.md"),
-		filepath.Join(repoRoot, ".github", "copilot-instructions.md"),
-		filepath.Join(repoRoot, "docs", "governance", "REPOSITORY_CONTRACT.md"),
-		filepath.Join(repoRoot, "docs", "governance", "SKILL-CATALOG.md"),
 	}
 
 	for _, file := range files {

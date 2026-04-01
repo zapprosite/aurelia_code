@@ -277,12 +277,8 @@ func (a *app) initSkills(logger *slog.Logger) (*agent.Loop, error) {
 	registry.Register(installSkillTool.Definition(), installSkillTool.Execute)
 
 	// Porteiro
-	if a.redis != nil {
-		// Criar um provider de LLM dedicado ao Porteiro usando o modelo leve Qwen 0.5b
-		p := llm.NewOllamaProvider(a.cfg.OllamaURL, "qwen2.5:0.5b")
-		a.porteiro = middleware.NewPorteiroMiddleware(a.redis, p)
-		logger.Info("Porteiro SOTA 2026 inicializado com sucesso", slog.String("model", "qwen2.5:0.5b"))
-	}
+	a.porteiro = middleware.NewPorteiroMiddleware()
+	logger.Info("Porteiro SOTA 2026 (In-Memory) inicializado com sucesso")
 
 	return loop, nil
 }
@@ -355,7 +351,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 
 	if a.porteiro != nil {
 		a.primaryBot.SetPorteiro(a.porteiro)
-		logger.Info("Proteção de entrada migrada para o Porteiro (Qwen 0.5b + Redis)")
+		logger.Info("Proteção de entrada ativa - Porteiro (In-Memory + Regex)")
 	}
 
 	// InputGuard removed: deduplication is handled by Porteiro middleware.
