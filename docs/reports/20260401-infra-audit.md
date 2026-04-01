@@ -8,7 +8,7 @@
 
 | Serviço | Status | Observação |
 |---------|--------|------------|
-| **Ollama** | ✅ rodando | qwen3.5:9b, qwen2.5vl:7b, nomic-embed |
+| **Ollama** | ✅ rodando | gemma3:27b-it-qat, gemma3:27b-it-qat, nomic-embed |
 | **Qdrant** | ✅ rodando | 2 collections |
 | **LiteLLM** | ✅ rodando | porta 4000, 8484, 3334 |
 | **TTS Kokoro** | ✅ rodando | porta 8012 |
@@ -143,8 +143,8 @@ litellm-db              ✅
 │  Hardware: RTX 4090 24GB | Ryzen 9 7900X | 30GB RAM        │
 ├─────────────────────────────────────────────────────────────┤
 │  LLM Layer (Ollama)                                        │
-│  ├── qwen3.5:9b (6.6GB) - Linguagem                         │
-│  ├── qwen2.5vl:7b (6.0GB) - VL                             │
+│  ├── gemma3:27b-it-qat (6.6GB) - Linguagem                         │
+│  ├── gemma3:27b-it-qat (6.0GB) - VL                             │
 │  └── nomic-embed (274MB) - Embeddings                       │
 ├─────────────────────────────────────────────────────────────┤
 │  Voice Layer                                                 │
