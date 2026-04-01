@@ -1,5 +1,8 @@
 # ADR History — Decisões Implementadas
 
+> [!CAUTION]
+> **AVISO DE INTEGRIDADE**: Apenas slices com código verificado fisicamente no repositório são marcados com ✅neste documento. 
+
 Período: 24/03/2026 – 01/04/2026
 
 | Slice | ADR | Descrição | Status |
@@ -14,10 +17,5 @@ Período: 24/03/2026 – 01/04/2026
 | S-40 | — | gemma3:27b pull + Ollama register (HF token) | ✅ |
 | S-41 | — | configs/litellm/config.yaml — router 3 camadas | ✅ |
 | S-42 | — | cron 5h homelab — seed_crons.go ajuste | ✅ |
-| S-43 | — | PostgreSQL + pgvector substituir Supabase local | ✅ |
-| S-44 | — | Grafana dashboard rota ativa LiteLLM | ✅ |
 | S-45 | — | .aurelia/onboard.md commit no repo | ✅ |
 | S-46 | — | .opencode/agents/ aurelia + fiscal | ✅ |
-| S-47 | — | Computer Use E2E (BUA-style) | ✅ |
-| S-48 | — | OS Native God Mode | ✅ |
-| S-49 | — | Jarvis Voice + Computer | ✅ |

@@ -16,7 +16,7 @@ const (
 	defaultMemoryWindowSize = 20
 	defaultLLMProvider      = "openai_compatible"
 	defaultLLMModel         = "aurelia-smart"
-	defaultSTTProvider      = "local" // GPU: faster-whisper large-v3 on RTX 4090
+	defaultSTTProvider      = "groq" // GPU: faster-whisper large-v3 on RTX 4090 (Fallback)
 	defaultSTTLanguage      = "pt"
 	defaultGroqSTTBaseURL   = "https://api.groq.com/openai/v1"
 	defaultGroqSTTModel     = "whisper-large-v3-turbo"
@@ -328,6 +328,9 @@ func applyEnvOverrides(cfg *fileConfig) {
 	}
 	if env := os.Getenv("STT_PROVIDER"); env != "" {
 		cfg.STTProvider = env
+	}
+	if env := os.Getenv("STT_BASE_URL"); env != "" {
+		cfg.STTBaseURL = env
 	}
 	if env := os.Getenv("STT_MODEL"); env != "" {
 		cfg.STTModel = env
