@@ -67,10 +67,10 @@ func TestBuildHomelabServices_Healthy(t *testing.T) {
 	})
 
 	assertCanonicalServices(t, services)
-	if summary.Status != homelabStatusHealthy || summary.Healthy != 3 || summary.Degraded != 0 || summary.Offline != 0 {
+	if summary.Status != homelabStatusHealthy || summary.Healthy != 2 || summary.Degraded != 0 || summary.Offline != 0 {
 		t.Fatalf("summary = %#v", summary)
 	}
-	if counts.Services != 3 || counts.Containers != 4 || counts.UpContainers != 4 {
+	if counts.Services != 2 || counts.Containers != 4 || counts.UpContainers != 4 {
 		t.Fatalf("counts = %#v", counts)
 	}
 	for _, service := range services {
@@ -90,20 +90,17 @@ func TestBuildHomelabServices_Degraded(t *testing.T) {
 	})
 
 	assertCanonicalServices(t, services)
-	if summary.Status != homelabStatusDegraded || summary.Healthy != 1 || summary.Degraded != 1 || summary.Offline != 1 {
+	if summary.Status != homelabStatusDegraded || summary.Healthy != 1 || summary.Degraded != 0 || summary.Offline != 1 {
 		t.Fatalf("summary = %#v", summary)
 	}
-	if counts.Services != 3 || counts.Containers != 3 || counts.UpContainers != 2 || counts.RestartingContainers != 1 {
+	if counts.Services != 2 || counts.Containers != 3 || counts.UpContainers != 2 || counts.RestartingContainers != 1 {
 		t.Fatalf("counts = %#v", counts)
 	}
-	if services[0].Status != homelabStatusDegraded {
-		t.Fatalf("supabase expected degraded, got %#v", services[0])
+	if services[0].Status != homelabStatusHealthy {
+		t.Fatalf("qdrant expected healthy, got %#v", services[0])
 	}
-	if services[1].Status != homelabStatusHealthy {
-		t.Fatalf("qdrant expected healthy, got %#v", services[1])
-	}
-	if services[2].Status != homelabStatusOffline {
-		t.Fatalf("caprover expected offline, got %#v", services[2])
+	if services[1].Status != homelabStatusOffline {
+		t.Fatalf("caprover expected offline, got %#v", services[1])
 	}
 }
 
@@ -117,10 +114,10 @@ func TestBuildHomelabServices_Offline(t *testing.T) {
 	})
 
 	assertCanonicalServices(t, services)
-	if summary.Status != homelabStatusOffline || summary.Healthy != 0 || summary.Degraded != 0 || summary.Offline != 3 {
+	if summary.Status != homelabStatusOffline || summary.Healthy != 0 || summary.Degraded != 0 || summary.Offline != 2 {
 		t.Fatalf("summary = %#v", summary)
 	}
-	if counts.Services != 3 || counts.Containers != 3 || counts.UpContainers != 0 || counts.RestartingContainers != 1 || counts.ExitedContainers != 1 || counts.DeadContainers != 1 {
+	if counts.Services != 2 || counts.Containers != 3 || counts.UpContainers != 0 || counts.RestartingContainers != 1 || counts.ExitedContainers != 1 || counts.DeadContainers != 1 {
 		t.Fatalf("counts = %#v", counts)
 	}
 	for _, service := range services {
@@ -130,16 +127,16 @@ func TestBuildHomelabServices_Offline(t *testing.T) {
 	}
 }
 
-func TestBuildHomelabServices_EmitsExactlyThreeCanonicalServices(t *testing.T) {
+func TestBuildHomelabServices_EmitsExactlyTwoCanonicalServices(t *testing.T) {
 	t.Parallel()
 
 	services, summary, counts := buildHomelabServices(nil)
 
 	assertCanonicalServices(t, services)
-	if summary.Status != homelabStatusOffline || summary.Healthy != 0 || summary.Degraded != 0 || summary.Offline != 3 {
+	if summary.Status != homelabStatusOffline || summary.Healthy != 0 || summary.Degraded != 0 || summary.Offline != 2 {
 		t.Fatalf("summary = %#v", summary)
 	}
-	if counts.Services != 3 || counts.Containers != 0 {
+	if counts.Services != 2 || counts.Containers != 0 {
 		t.Fatalf("counts = %#v", counts)
 	}
 }
@@ -147,10 +144,10 @@ func TestBuildHomelabServices_EmitsExactlyThreeCanonicalServices(t *testing.T) {
 func assertCanonicalServices(t *testing.T, services []HomelabService) {
 	t.Helper()
 
-	if len(services) != 3 {
+	if len(services) != 2 {
 		t.Fatalf("len(services) = %d", len(services))
 	}
-	want := []string{homelabServiceSupabase, homelabServiceQdrant, homelabServiceCaprover}
+	want := []string{homelabServiceQdrant, homelabServiceCaprover}
 	for i, service := range services {
 		if service.Name != want[i] {
 			t.Fatalf("service[%d].Name = %q, want %q", i, service.Name, want[i])

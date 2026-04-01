@@ -1,34 +1,51 @@
 # Documentation Index
 
-Bem-vindo à base de conhecimento da Aurélia. Comece com a visão geral do projeto e explore os guias específicos conforme necessário.
+Welcome to the repository knowledge base. Start with the project overview, then dive into specific guides as needed.
 
 ## Core Guides
-- [Visão Geral do Projeto](./project-overview.md)
-- [Workflow de Desenvolvimento](./development-workflow.md)
-- [Estratégia de Testes](./testing-strategy.md)
-- [Guia de Ferramentas & Produtividade](./tooling.md)
+- [Project Overview](./project-overview.md)
+- [Development Workflow](./development-workflow.md)
+- [Testing Strategy](./testing-strategy.md)
+- [Tooling & Productivity Guide](./tooling.md)
 
-## Snapshot do Repositório (Contexto Semântico)
+## Repository Snapshot
+- `AGENTS.md/`
+- `assets/`
+- `aurelia/`
+- `AURELIA.md/`
+- `bin/`
+- `CHANGELOG.md/`
+- `CLAUDE.md/`
+- `cmd/`
+- `configs/`
+- `data/`
+- `docker-compose.yml/`
+- `Dockerfile/`
+- `docs/` — Living documentation produced by this tool.
+- `e2e/`
+- `frontend/`
+- `GEMINI.md/`
+- `go.mod/`
+- `go.sum/`
+- `go.work.sum/`
+- `homelab-bibliotheca/`
+- `internal/`
+- `knowledge/`
+- `logs/`
+- `Makefile/`
+- `package-lock.json/`
+- `package.json/`
+- `packages/` — Workspace packages or modules.
+- `pkg/`
+- `rascunho.md/`
+- `README.md/`
+- `scripts/`
+- `test_output.txt/`
 
-### Arquitetura
-- **Modelos**: `packages/zod-schemas`
-- **Utils**: `frontend/src/lib`
-- **Componentes**: `frontend/src/components/ui`, `frontend/src/sidebar`, `frontend/src/dashboard`
-
-### API Pública e Símbolos Principais
-- `SentinelEvent` (Zod Schema) @ `packages/zod-schemas/index.ts`
-- `useSystemMetrics` (React Hook) @ `frontend/src/hooks/useSystemMetrics.ts`
-- `HomelabTab` (Dashboard) @ `frontend/src/components/dashboard/HomelabTab.tsx`
-- `wakeword` (Voice Gateway) @ `cmd/voice-gateway/wakeword.py`
-- `skill-indexer` (Core) @ `cmd/skill-indexer/main.py`
-
-## Mapa de Documentação
-| Guia | Arquivo | Entradas Primárias |
+## Document Map
+| Guide | File | Primary Inputs |
 | --- | --- | --- |
-| Visão Geral do Projeto | `project-overview.md` | Roadmap, README, notas de stakeholders |
-| Workflow de Desenvolvimento | `development-workflow.md` | Regras de branching, config CI, guia de contribuição |
-| Estratégia de Testes | `testing-strategy.md` | Configs de teste, gates de CI, suites instáveis |
-| Guia de Ferramentas | `tooling.md` | Scripts CLI, configs de IDE, workflows de automação |
-
----
-*Última sincronização completa do codebase-map: 2026-04-01*
+| Project Overview | `project-overview.md` | Roadmap, README, stakeholder notes |
+| Development Workflow | `development-workflow.md` | Branching rules, CI config, contributing guide |
+| Testing Strategy | `testing-strategy.md` | Test configs, CI gates, known flaky suites |
+| Tooling & Productivity Guide | `tooling.md` | CLI scripts, IDE configs, automation workflows |
