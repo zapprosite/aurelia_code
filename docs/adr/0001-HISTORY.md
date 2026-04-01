@@ -12,3 +12,12 @@ Período: 24/03/2026 – 01/04/2026
 | S-38 | 20260401-industrializacao-opencode.md | OpenCode SSOT | ✅ |
 | S-39 | 20260401-smart-router-homelab-cron.md | Smart Router 3-camadas | ✅ |
 | S-40 | — | gemma3:27b pull + Ollama register (HF token) | ✅ |
+| S-41 | — | configs/litellm/config.yaml — router 3 camadas | ✅ |
+| S-42 | — | cron 5h homelab — seed_crons.go ajuste | ✅ |
+| S-43 | — | PostgreSQL + pgvector substituir Supabase local | ✅ |
+| S-44 | — | Grafana dashboard rota ativa LiteLLM | ✅ |
+| S-45 | — | .aurelia/onboard.md commit no repo | ✅ |
+| S-46 | — | .opencode/agents/ aurelia + fiscal | ✅ |
+| S-47 | — | Computer Use E2E (BUA-style) | ✅ |
+| S-48 | — | OS Native God Mode | ✅ |
+| S-49 | — | Jarvis Voice + Computer | ✅ |
