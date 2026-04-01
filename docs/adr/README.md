@@ -19,8 +19,8 @@ Ou manualmente usando TEMPLATE-NONSTOP-SLICE.md.
 
 | Arquivo | Slice | Status |
 |---|---|---|
-| 0001-HISTORY.md | S-33 a S-40 | ✅ Histórico |
-| PENDING.md | S-41 a S-49 | 📋 Pendente |
+| 0001-HISTORY.md | S-33 a S-49 | ✅ Histórico |
+| PENDING.md | — | 🔵 Vazio |
 | 20260331-architecture-mcp-a2a.md | S-35 | Ativo |
 | 20260331-duplicate-response-fix.md | S-34 | ✅ |
 | 20260331-remover-redis-qwen-porteiro.md | S-36 | ✅ |
