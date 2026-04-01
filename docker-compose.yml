@@ -97,7 +97,7 @@ services:
     ports:
       - "8020:8000"
     environment:
-      - WHISPER_MODEL=large-v3
+      - WHISPER_MODEL=medium
       - WHISPER_DEVICE=cpu
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
