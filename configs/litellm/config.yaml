@@ -80,7 +80,7 @@ router_settings:
 
   context_window_fallbacks:
     - {"chat-default": ["chat-paid-kimi"]}
-    - {"ops-cron":     ["chat-paid-kimi"]}
+
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

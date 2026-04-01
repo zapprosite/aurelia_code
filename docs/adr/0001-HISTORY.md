@@ -1,8 +1,7 @@
 # ADR History — Decisões Implementadas
 
-> [!CAUTION]
-> **AVISO DE INTEGRIDADE**: Apenas slices com código verificado fisicamente no repositório são marcados com ✅neste documento. 
-
+> POLÍTICA: Apenas slices com código verificado no repositório
+> são marcados como ✅. Última auditoria: 01/04/2026.
 Período: 24/03/2026 – 01/04/2026
 
 | Slice | ADR | Descrição | Status |
