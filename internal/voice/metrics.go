@@ -58,7 +58,7 @@ func defaultVoiceMetrics() *voiceMetrics {
 				Namespace: "aurelia",
 				Subsystem: "voice",
 				Name:      "mirror_failures_total",
-				Help:      "Falhas de mirror para Supabase/Qdrant no pipeline de voz.",
+				Help:      "Falhas de mirror (agora SQLite) no pipeline de voz.",
 			})),
 			budgetUsage: mustRegisterVoiceCollector(prometheus.NewGauge(prometheus.GaugeOpts{
 				Namespace: "aurelia",

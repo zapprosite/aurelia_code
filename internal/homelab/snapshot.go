@@ -23,7 +23,7 @@ const (
 	maxChangeLogLines   = 20
 	maxZpoolStatusLines = 10
 
-	homelabServiceSupabase = "supabase"
+	// service_S_ubabase removido (migrado para SQLite)
 	homelabServiceQdrant   = "qdrant"
 	homelabServiceCaprover = "caprover"
 
@@ -193,13 +193,7 @@ func buildHomelabServices(containers []ContainerStatus) ([]HomelabService, Homel
 		label string
 		match func(ContainerStatus) bool
 	}{
-		{
-			name:  homelabServiceSupabase,
-			label: "Supabase",
-			match: func(container ContainerStatus) bool {
-				return strings.HasPrefix(container.Name, "supabase-") || container.Name == "realtime-dev.supabase-realtime"
-			},
-		},
+		// Antigo_DB removido (migrado para SQLite)
 		{
 			name:  homelabServiceQdrant,
 			label: "Qdrant",
