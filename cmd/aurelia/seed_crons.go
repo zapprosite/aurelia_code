@@ -11,7 +11,7 @@ import (
 	"github.com/kocar/aurelia/internal/observability"
 )
 
-const systemMonitorCronExpr = "*/180 * * * *"
+const systemMonitorCronExpr = "0 */3 * * *"
 
 // systemCronDefs define os cron jobs sistêmicos gerenciados pela Aurélia.
 // Cada job é identificado por um marcador [sys:nome] no início do prompt.
@@ -24,6 +24,7 @@ var homelabMonitorCron = cron.CronJob{
 	Prompt: "[sys:homelab-monitor] Use a ferramenta homelab_status para verificar o estado do homelab." +
 		" Reporte apenas se houver componente degradado ou offline." +
 		" Se todos estiverem saudáveis, NÃO envie mensagem (STAY SILENT).",
+	LLMAlias: "ops-cron",
 }
 
 var controleDBCron = cron.CronJob{
@@ -37,6 +38,7 @@ var controleDBCron = cron.CronJob{
 		" 5) Cheque WAL size." +
 		" 6) Grave o relatório em db_audit_log com action=INVENTORY." +
 		" Se tudo estiver OK, NÃO envie mensagem (STAY SILENT). Se houver problema, detalhe risco e ação sugerida.",
+	LLMAlias: "ops-cron",
 }
 
 var repoGuardianCron = cron.CronJob{
@@ -47,6 +49,7 @@ var repoGuardianCron = cron.CronJob{
 		" Use mcp__ai-context__explore para descoberta semântica e mcp__ai-context__sync para regenerar o codebase-map." +
 		" Reporte apenas se houver problemas encontrados ou ações corretivas tomadas." +
 		" Se tudo estiver em ordem, NÃO envie mensagem (STAY SILENT).",
+	LLMAlias: "ops-cron",
 }
 
 var systemCronDefs = []cron.CronJob{
@@ -57,6 +60,7 @@ var systemCronDefs = []cron.CronJob{
 			" **Ações**: 1. Execute 'nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader'. 2. Verifique 'docker ps'." +
 			" **Análise**: Use o motor local gemma3:27b-it-qat. Se temp > 75°C, execute 'docker stop $(docker ps --format \"{{.ID}}\")' e ALERTE IMEDIATAMENTE." +
 			" Se tudo estiver OK, NÃO envie mensagem (STAY SILENT).",
+		LLMAlias: "ops-cron",
 	},
 	{
 		ScheduleType: "cron",
@@ -65,6 +69,7 @@ var systemCronDefs = []cron.CronJob{
 			" Smoke test diário completo: bash /home/will/aurelia/scripts/smoke-test-homelab.sh" +
 			" Gere relatório executivo apenas se houver falha, degradação ou drift operacional." +
 			" Se tudo estiver saudável, NÃO envie mensagem (STAY SILENT).",
+		LLMAlias: "ops-cron",
 	},
 	{
 		ScheduleType: "cron",
@@ -73,6 +78,7 @@ var systemCronDefs = []cron.CronJob{
 			" Verifique Qdrant: curl -s http://localhost:6333/collections/conversation_memory" +
 			" Alerte apenas se estiver offline, count=0 ou houver drift relevante." +
 			" Se tudo estiver saudável, NÃO envie mensagem (STAY SILENT).",
+		LLMAlias: "ops-cron",
 	},
 	{
 		ScheduleType: "cron",
@@ -82,6 +88,7 @@ var systemCronDefs = []cron.CronJob{
 			" **Análise**: Use o motor local gemma3:27b-it-qat para analisar o dashboard de métricas." +
 			" Envie resumo executivo somente se detectar instabilidade, saturação, erro ou tendência anômala." +
 			" Se tudo estiver estável, NÃO envie mensagem (STAY SILENT).",
+		LLMAlias: "ops-cron",
 	},
 	{
 		ScheduleType: "cron",
@@ -90,6 +97,7 @@ var systemCronDefs = []cron.CronJob{
 			" Health check do daemon Aurelia: curl -s http://localhost:8484/health" +
 			" Responda em 1 linha com: status, LLM provider ativo e voz habilitada." +
 			" Só notifique se status != ok.",
+		LLMAlias: "ops-cron",
 	},
 }
 
@@ -147,6 +155,7 @@ func seedMarkdownBrainCron(ctx context.Context, store *cron.SQLiteCronStore, cfg
 			" Sincronize os `.md` do repositório e, se houver vault configurado, as notas externas também." +
 			" Reporte repo_docs, vault_docs, synced_docs, synced_chunks e removed_docs." +
 			" Se nenhuma mudança ocorrer, responda: '✓ Markdown Brain sincronizado (sem mudanças)'.",
+		LLMAlias: "ops-cron",
 	}
 	if _, err := svc.CreateJob(ctx, job); err != nil {
 		logger.Warn("seed_markdown_brain: failed to create cron", slog.Any("err", err))

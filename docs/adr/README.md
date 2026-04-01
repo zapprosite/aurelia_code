@@ -2,7 +2,7 @@
 
 **Diretório:** `docs/adr/`
 **Última atualização:** 01/04/2026
-**Próximo slice:** S-50
+**Próximo slice:** S-62
 
 ---
 
@@ -20,6 +20,7 @@ Ou manualmente usando TEMPLATE-NONSTOP-SLICE.md.
 | Arquivo | Slice | Status |
 |---|---|---|
 | 0001-HISTORY.md | S-33 a S-49 | ✅ Histórico |
+| ADR-20260401-fix-cron-streaming.md | S-51 | ✅ |
 | PENDING.md | — | 🔵 Vazio |
 | 20260331-architecture-mcp-a2a.md | S-35 | Ativo |
 | 20260331-duplicate-response-fix.md | S-34 | ✅ |

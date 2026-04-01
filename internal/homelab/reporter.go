@@ -58,94 +58,56 @@ func Collect(ctx context.Context) Report {
 }
 
 func (r Report) Format() string {
-	hora := r.Timestamp.Format("02/01/2026 às 15:04")
-
-	containers := r.Containers
-	if containers == "" {
-		containers = "N/A"
+	grafana := r.GrafanaURL
+	if grafana == "" {
+		grafana = "https://monitor.zappro.site"
 	}
 
-	vramPct := calcPercent(r.GPUVRAMUsed, r.GPUVRAMTotal)
-	ramPct := calcPercent(r.RAMUsed, r.RAMTotal)
+	return fmt.Sprintf(`*🏠 Home Lab — %s*
 
-	return fmt.Sprintf(`🎛️ *Aurélia Home Lab — Status* 🖥️
+*GPU*
+├ Temp: %s | Util: %s | Power: %s
+└ VRAM: %s / %s
 
-**%s**
+*Sistema*
+├ RAM: %s / %s
+└ Containers: %s
 
----
-
-### 🚀 *Recursos do Sistema*
-
-| Recurso | Uso | Status |
-|---------|-----|--------|
-| **CPU** | %s | %s |
-| **GPU** | %s @ %s | %s |
-| **VRAM** | %s / %s (%s%%) | %s |
-| **RAM** | %s / %s (%s%%) | %s |
-
----
-
-### 🐳 *Containers* (%s ativos)
+*Serviços*
+├ Ollama: %s
+├ LiteLLM: %s
+├ Qdrant: %s
+└ Redis: %s
 
 %s
 
----
-
-### 🧠 *Serviços de IA*
-
-| Serviço | Endpoint | Status |
-|---------|----------|--------|
-| Ollama | localhost:11434 | %s |
-| LiteLLM | localhost:4000 | %s |
-| Qdrant | localhost:6333 | %s |
-| Redis | localhost:6379 | %s |
-
----
-
-### 💾 *Armazenamento*
-
-- **ZFS (tank):** %s disponível
-
----
-
-### 📊 *Links*
-
-[📈 Ver Grafana](%s) • [🖥️ Access CapRover](https://cap.zappro.site)
-
----
-
-_*Aurélia — Monitoramento Sovereign 2026*_`,
-		hora,
-		r.CPUTemp, r.statusIconGPU(r.GPUTemp),
-		r.GPUUtil, r.GPUPower, r.statusIconGPU(r.GPUTemp),
-		r.GPUVRAMUsed, r.GPUVRAMTotal, vramPct, r.statusIconVRAM(vramPct),
-		r.RAMUsed, r.RAMTotal, ramPct, r.statusIconRAM(ramPct),
-		containers, r.formatContainerList(),
-		statusIcon(r.Ollama),
-		statusIcon(r.LiteLLM),
-		statusIcon(r.Qdrant),
-		statusIcon(r.Redis),
-		r.ZFS,
-		r.GrafanaURL,
+[📊 Grafana](%s)`,
+		r.Timestamp.Format("02/01 15:04"),
+		r.GPUTemp, r.GPUUtil, r.GPUPower,
+		r.GPUVRAMUsed, r.GPUVRAMTotal,
+		r.RAMUsed, r.RAMTotal,
+		r.Containers,
+		statusEmoji(r.Ollama),
+		statusEmoji(r.LiteLLM),
+		statusEmoji(r.Qdrant),
+		statusEmoji(r.Redis),
+		zfsLine(r.ZFS),
+		grafana,
 	)
 }
 
-func (r Report) statusIconGPU(temp string) string {
-	if temp == "N/A" {
-		return "⚪"
+func statusEmoji(s string) string {
+	if s == "ok" || s == "healthy" {
+		return "✅"
 	}
-	var t int
-	fmt.Sscanf(temp, "%d", &t)
-	switch {
-	case t < 50:
-		return "🟢"
-	case t < 70:
-		return "🟡"
-	case t < 80:
-		return "🟠"
-	default:
-		return "🔴"
+	return "🔴 " + s
+}
+
+func zfsLine(zfs string) string {
+	if zfs == "" {
+		return ""
 	}
+	return fmt.Sprintf("*ZFS* livre: %s", zfs)
 }
 
 func (r Report) statusIconVRAM(pct string) string {
