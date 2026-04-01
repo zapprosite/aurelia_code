@@ -51,6 +51,14 @@ model_list:
       timeout: 120
       rpm: 1
 
+  - model_name: ops-cron-retry
+    litellm_params:
+      model: ollama/gemma3:27b-it-qat
+      api_base: http://172.17.0.1:11434
+      stream: false
+      timeout: 240
+      rpm: 1
+
   # ── EMBEDDING: nomic-embed-text local ────────────────────────────────────
   - model_name: embedding
     litellm_params:
@@ -68,7 +76,7 @@ router_settings:
   fallbacks:
     - {"chat-default":     ["chat-free-second", "chat-paid-minimax", "chat-paid-glm", "chat-paid-kimi"]}
     - {"chat-free-second": ["chat-paid-minimax", "chat-paid-glm", "chat-paid-kimi"]}
-    - {"ops-cron":         ["chat-free-second", "chat-paid-glm"]}
+    - {"ops-cron":         ["ops-cron-retry"]}
 
   context_window_fallbacks:
     - {"chat-default": ["chat-paid-kimi"]}

@@ -88,12 +88,25 @@ services:
     networks:
       - aurelia-net
 
-  # Whisper STT — 100% local (faster-whisper-server GPU)
+  # Whisper STT — 100% local (faster-whisper-server CPU fallback)
   # ADR: 20260330-stt-local-first-cascade.md
-  # Whisper STT — Removido em favor do Groq STT para estabilidade de VRAM (01/04/2026)
-  # whisper-stt:
-  #   container_name: whisper-local
-  #   ... (comentado)
+  whisper-stt:
+    image: fedirz/faster-whisper-server:latest-cpu
+    container_name: whisper-local
+    restart: always
+    ports:
+      - "8020:8000"
+    environment:
+      - WHISPER_MODEL=large-v3
+      - WHISPER_DEVICE=cpu
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - aurelia-net
+
   # ─── CORE 2: AURELIA SYSTEM API (GOVERNANCE GATEWAY) ───────────────────
   aurelia-api:
     build:
@@ -110,6 +123,7 @@ services:
       - AURELIA_HOME=/tmp/.aurelia
       - STT_PROVIDER=groq
       - STT_MODEL=whisper-large-v3-turbo
+      - STT_BASE_URL=https://api.groq.com/openai/v1
       - STT_LANGUAGE=pt
       - REDIS_URL=redis://aurelia-redis-1:6379
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}

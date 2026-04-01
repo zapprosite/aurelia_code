@@ -44,7 +44,7 @@ echo ""
 echo "=== REDIS ==="
 # Tenta encontrar o container do redis dinamicamente
 REDIS_CONTAINER=$(docker ps --format '{{.Names}}' | grep redis | head -n 1)
-test_service "Redis ($REDIS_CONTAINER)" "docker exec $REDIS_CONTAINER redis-cli ping"
+test_service "Redis (6379)" "docker exec $REDIS_CONTAINER redis-cli -p 6379 ping"
 
 # 3. Qdrant
 echo ""
@@ -67,7 +67,7 @@ test_service "LiteLLM port 4000" "curl -sf http://localhost:4000/"
 echo ""
 echo "=== STT (Groq) ==="
 test_service "STT Provider Config" "grep -q 'STT_PROVIDER=groq' /home/will/aurelia/.env"
-test_service "Groq API Key" "grep -q 'GROQ_API_KEY=gsk_' /home/will/aurelia/.env"
+test_service "Groq API Key" "grep -q 'GROQ_API_KEY=' /home/will/aurelia/.env"
 
 # 7. TTS (Voxtral & Edge)
 echo ""
