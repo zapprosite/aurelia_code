@@ -150,10 +150,34 @@ func (l *Loop) RunWithOptionsStream(ctx context.Context, opts LoopOptions) (<-ch
 			currentPhase, _ := PrevPhaseFromContext(ctx)
 			dynamicSystemPrompt := augmentSystemPromptWithPhase(opts.SystemPrompt, currentPhase)
 
-			stream, err := l.llm.GenerateStream(ctx, dynamicSystemPrompt, currentHistory, opts.ToolDefinitions)
-			if err != nil {
-				ch <- StreamResponse{Err: fmt.Errorf("generate stream error: %w", err)}
-				return
+			runOpts, _ := RunOptionsFromContext(ctx)
+			var stream <-chan StreamResponse
+			var err error
+
+			if runOpts.DisableStream {
+			    // usa Generate sem stream
+			    resp, genErr := l.llm.GenerateContent(ctx, dynamicSystemPrompt, currentHistory, opts.ToolDefinitions)
+			    if genErr != nil {
+			        ch <- StreamResponse{Err: fmt.Errorf("generate content error: %w", genErr)}
+			        return
+			    }
+			    fakeCh := make(chan StreamResponse, 1)
+			    fakeCh <- StreamResponse{
+			        Content: resp.Content,
+			        Done: true,
+			        ToolCalls: resp.ToolCalls,
+			        InputTokens: resp.InputTokens,
+			        OutputTokens: resp.OutputTokens,
+			    }
+			    close(fakeCh)
+			    stream = fakeCh
+			} else {
+			    // usa stream normal
+			    stream, err = l.llm.GenerateStream(ctx, dynamicSystemPrompt, currentHistory, opts.ToolDefinitions)
+			    if err != nil {
+				    ch <- StreamResponse{Err: fmt.Errorf("generate stream error: %w", err)}
+				    return
+			    }
 			}
 
 			var fullContent strings.Builder

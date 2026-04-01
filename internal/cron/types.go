@@ -15,6 +15,7 @@ type CronJob struct {
 	CronExpr     string
 	RunAt        *time.Time
 	Prompt       string
+	LLMAlias     string `json:"llm_alias,omitempty"`
 	Active       bool
 	LastRunAt    *time.Time
 	NextRunAt    *time.Time

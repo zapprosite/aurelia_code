@@ -61,7 +61,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 	}
 
 	// P0: Global 90s timeout — prevents infinite hangs (Telegram timeout ~120s).
-	ctx, cancel := context.WithTimeout(session.ctx, 90*time.Second)
+	ctx, cancel := context.WithTimeout(session.ctx, 120*time.Second)
 	defer cancel()
 	session.ctx = ctx
 

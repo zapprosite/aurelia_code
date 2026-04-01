@@ -66,15 +66,20 @@ func (r *AgentCronRuntime) ExecuteJob(ctx context.Context, job CronJob) (string,
 	)
 
 	// Forçar execução em LLM Local (Tier 0) para evitar custos de nuvem em tarefas automáticas
-	ctx = agent.WithRunOptions(ctx, agent.RunOptions{LocalOnly: true})
+	disableStream := job.LLMAlias == "ops-cron" || strings.Contains(job.LLMAlias, "cron")
+	ctx = agent.WithRunOptions(ctx, agent.RunOptions{LocalOnly: true, DisableStream: disableStream})
 
 	history, finalAnswer, err := r.executor.Execute(ctx, systemPrompt, []agent.Message{{
 		Role:    "user",
 		Content: analysisPrompt,
 	}}, allowedTools)
 	if err != nil {
-		logger.Error("visual analysis failed", slog.Any("err", err))
-		return "Falha na análise visual: " + err.Error(), nil, err
+		logger.Error("cron execution failed", slog.String("alias", job.LLMAlias), slog.Any("err", err))
+		if job.LastError != "" && strings.Contains(job.LastError, err.Error()) {
+			// Já notificado, silenciando repetições
+			return "", nil, err
+		}
+		return fmt.Sprintf("Falha no Job [%s]: %v", job.ID, err), nil, err
 	}
 
 	// Extract media parts from the last assistant message if any

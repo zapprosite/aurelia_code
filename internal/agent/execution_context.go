@@ -25,8 +25,9 @@ const (
 )
 
 type RunOptions struct {
-	LocalOnly  bool
-	OutputMode string
+	LocalOnly     bool
+	OutputMode    string
+	DisableStream bool
 }
 
 func WithTeamContext(ctx context.Context, teamKey, userID string) context.Context {
