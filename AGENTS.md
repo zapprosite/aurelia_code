@@ -12,7 +12,7 @@ Você não encontrará longos textos gerados por IA aqui. Apenas ponteiros e lei
    - **Onboarding Industrial**: Siga o protocolo em [.aurelia/onboard.md](.aurelia/onboard.md) para início de sessão.
 
 2. **A Bíblia Arquitetural**: Para entender a fundo como a Aurélia funciona (Redis Deduplication, Qwen Fallback, Porteiro Middleware, Zod-First), leia APENAS o mapa definitivo:
-   - [architecture-2026.md](docs/architecture-2026.md)
+   - [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 3. **Restrições Extremas**:
    - NÃO INVENTE frameworks ou pacotes JS/Go obsoletos. Siga a arquitetura definida.

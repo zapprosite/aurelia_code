@@ -9,10 +9,8 @@ Adaptador fino para Claude Code no repositório `aurelia`.
 ## Ordem de leitura
 
 1. [`AGENTS.md`](AGENTS.md)
-2. [`docs/governance/REPOSITORY_CONTRACT.md`](docs/governance/REPOSITORY_CONTRACT.md)
-3. [`docs/governance/SKILL-CATALOG.md`](docs/governance/SKILL-CATALOG.md)
-4. [`.agent/rules/README.md`](.agent/rules/README.md)
-5. [`docs/adr/README.md`](docs/adr/README.md)
+2. [`.agent/rules/README.md`](.agent/rules/README.md)
+3. [`docs/adr/0001-HISTORY.md`](docs/adr/0001-HISTORY.md)
 
 ## Contrato
 
