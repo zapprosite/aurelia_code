@@ -243,9 +243,8 @@ func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer t
 // Audio is always sent below text unless: text is too short (<50 chars) or TTS unavailable.
 func (bc *BotController) deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string, requiresAudio bool, opts ...interface{}) error {
 	var ttsCh chan ttsAsyncResult
-	_ = requiresAudio // S-34: requiresAudio kept for future per-user preference
 
-	// Skip audio for very short messages (<50 chars) to save GPU resources
+	// S-35: Always send TTS audio after text (unless too short < 50 chars)
 	skipAudio := len([]rune(text)) < 50
 
 	if !skipAudio && synthesizer != nil && synthesizer.IsAvailable() {
