@@ -384,7 +384,7 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		GroqHardCapDaily:         defaultGroqHardCapDaily,
 		QdrantCollection:         defaultQdrantCollection,
 		QdrantEmbeddingModel:     defaultQdrantEmbeddingModel,
-		OllamaURL:                "http://127.0.0.1:4000/v1",
+		OllamaURL:                "http://127.0.0.1:4000",
 		DashboardPort:            defaultDashboardPort,
 		HealthPort:               defaultHealthPort,
 		AureliaMode:              "sovereign",
