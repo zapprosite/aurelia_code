@@ -326,6 +326,24 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("REDIS_URL"); env != "" {
 		cfg.RedisURL = env
 	}
+	if env := os.Getenv("STT_PROVIDER"); env != "" {
+		cfg.STTProvider = env
+	}
+	if env := os.Getenv("STT_MODEL"); env != "" {
+		cfg.STTModel = env
+	}
+	if env := os.Getenv("STT_LANGUAGE"); env != "" {
+		cfg.STTLanguage = env
+	}
+	if env := os.Getenv("TTS_PROVIDER"); env != "" {
+		cfg.TTSProvider = env
+	}
+	if env := os.Getenv("TTS_BASE_URL"); env != "" {
+		cfg.TTSBaseURL = env
+	}
+	if env := os.Getenv("TTS_MODEL"); env != "" {
+		cfg.TTSModel = env
+	}
 }
 
 func defaultFileConfig(r *runtime.PathResolver) fileConfig {

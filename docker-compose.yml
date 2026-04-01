@@ -30,7 +30,7 @@ services:
 
   smart-router:
     container_name: aurelia-smart-router
-    image: ghcr.io/berriai/litellm:v1.34.0
+    image: ghcr.io/berriai/litellm:main-stable
     ports:
       - "4000:4000"
       - "8484:8484"
@@ -62,90 +62,71 @@ services:
 
   # Voxtral TTS — Mistral 4B, voice cloning zero-shot, PT-BR nativo
   # ADR: 20260331-voxtral-replaces-kokoro.md
-  voxtral-tts:
-    container_name: aurelia-voxtral
+  voxtral:
     image: vllm/vllm-openai:v0.18.0
-    command: >
-      vllm serve mistralai/Voxtral-4B-TTS-2603
-      --omni
-      --gpu-memory-utilization 0.45
-      --trust-remote-code
-      --port 8880
+    container_name: aurelia-voxtral
+    restart: always
     ports:
-      - "8012:8880"
+      - "8012:8000"
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
       - CUDA_VISIBLE_DEVICES=0
       - HF_TOKEN=${HF_TOKEN}
-      - VLLM_WORKER_MULTIPROC_METHOD=spawn
-    volumes:
-      - ${HOME}/.cache/huggingface:/root/.cache/huggingface
-      - ./assets/voice:/app/voices:ro
+    command: 
+      - "serve"
+      - "mistralai/Voxtral-4B-TTS-2603"
+      - "--gpu-memory-utilization"
+      - "0.10"
+      - "--max-model-len"
+      - "4096"
     deploy:
       resources:
-        limits:
-          memory: 3G
         reservations:
-          memory: 1G
-    runtime: nvidia
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8880/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s
-
-  # Whisper STT — 100% local (faster-whisper-server GPU)
-  # ADR: 20260330-stt-local-first-cascade.md
-  whisper-stt:
-    container_name: whisper-local
-    mem_limit: 4G
-    mem_reservation: 1G
-    image: fedirz/faster-whisper-server:0.6.0-rc.3-cuda
-    ports:
-      - "127.0.0.1:8020:8000"
-    volumes:
-      - ${HOME}/.cache/huggingface:/root/.cache/huggingface:ro
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - CUDA_VISIBLE_DEVICES=0
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 1G
           devices:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    networks:
+      - aurelia-net
+
+  # Whisper STT — 100% local (faster-whisper-server GPU)
+  # ADR: 20260330-stt-local-first-cascade.md
+  # Whisper STT — Removido em favor do Groq STT para estabilidade de VRAM (01/04/2026)
+  # whisper-stt:
+  #   container_name: whisper-local
+  #   ... (comentado)
   # ─── CORE 2: AURELIA SYSTEM API (GOVERNANCE GATEWAY) ───────────────────
   aurelia-api:
     build:
-      context: services/aurelia-api
+      context: .
+      dockerfile: Dockerfile
     container_name: aurelia-api
     restart: always
     ports:
-      - "${AURELIA_API_PORT:-8080}:8080"
+      - "8080:8484"
     environment:
       - GOMEMLIMIT=512MiB
       - GOGC=100
-      - AURELIA_API_PORT=8080
+      - AURELIA_API_PORT=8484
+      - AURELIA_HOME=/tmp/.aurelia
+      - STT_PROVIDER=groq
+      - STT_MODEL=whisper-large-v3-turbo
+      - STT_LANGUAGE=pt
+      - REDIS_URL=redis://aurelia-redis-1:6379
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GROQ_API_KEY=${GROQ_API_KEY}
     volumes:
-      - ./.env:/home/will/aurelia/.env:ro
-      - ./.env.example:/home/will/aurelia/.env.example:ro
+      - ./.env:/app/.env:ro
+      - ./.env.example:/app/.env.example:ro
+      - ./data:/app/data
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8484/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-    # networks:
-    #   - aurelia-net # Using default for now or add if needed
+    networks:
+      - aurelia-net
 
+networks:
+  aurelia-net:
+    name: aurelia-net
+    driver: bridge

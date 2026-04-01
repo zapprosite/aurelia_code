@@ -1,0 +1,11 @@
+.git
+.venv
+.aurelia
+.agent
+.cursor
+.context
+node_modules
+data
+logs
+build
+bin

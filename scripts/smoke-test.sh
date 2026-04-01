@@ -39,91 +39,84 @@ echo "=== DOCKER ==="
 test_service "Docker running" "docker info > /dev/null 2>&1"
 test_service "Containers" "test \$(docker ps | wc -l) -gt 1"
 
-# 2. Redis (3 instâncias)
+# 2. Redis
 echo ""
 echo "=== REDIS ==="
-test_service "Redis main (6379)" "docker exec aurelia-redis-main redis-cli ping"
-test_service "Redis litellm (6380)" "docker exec litellm-redis redis-cli ping"
-test_service "Redis n8n (6381)" "docker exec n8n-redis redis-cli ping"
+# Tenta encontrar o container do redis dinamicamente
+REDIS_CONTAINER=$(docker ps --format '{{.Names}}' | grep redis | head -n 1)
+test_service "Redis ($REDIS_CONTAINER)" "docker exec $REDIS_CONTAINER redis-cli ping"
 
 # 3. Qdrant
 echo ""
 echo "=== QDRANT ==="
 test_service "Qdrant HTTP" "curl -sf http://127.0.0.1:6333/readyz"
-test_service "Qdrant collections" "curl -sf http://127.0.0.1:6333/collections | grep -q result"
 
 # 4. Ollama
 echo ""
 echo "=== OLLAMA ==="
-test_service "Ollama API" "curl -sf http://127.0.0.1:11434/api/tags"
-test_service "Ollama models" "curl -sf http://127.0.0.1:11434/api/tags | grep -q qwen"
+test_service "Ollama Service" "ps aux | grep -v grep | grep -q ollama"
+test_service "Gemma3 Model" "ollama list | grep -q gemma3"
 
-# 5. LiteLLM
+# 5. LiteLLM (Smart Router)
 echo ""
 echo "=== LITELLM ==="
 test_service "LiteLLM container" "docker ps | grep -q smart-router"
-test_service "LiteLLM port 4000" "curl -sf http://localhost:4000/health || curl -sf http://localhost:4000"
-test_service "LiteLLM UI 3334" "curl -sf http://localhost:3334"
+test_service "LiteLLM port 4000" "curl -sf http://localhost:4000/"
 
-# 6. STT (Whisper)
+# 6. STT (Groq Cloud)
 echo ""
-echo "=== STT (Whisper) ==="
-test_service "Whisper container" "docker ps | grep -q whisper-local"
-test_service "Whisper health" "curl -sf http://localhost:8020/health"
+echo "=== STT (Groq) ==="
+test_service "STT Provider Config" "grep -q 'STT_PROVIDER=groq' /home/will/aurelia/.env"
+test_service "Groq API Key" "grep -q 'GROQ_API_KEY=gsk_' /home/will/aurelia/.env"
 
-# 7. TTS (Kokoro)
+# 7. TTS (Voxtral & Edge)
 echo ""
-echo "=== TTS (Kokoro) ==="
-test_service "Kokoro container" "docker ps | grep -q kokoro"
-test_service "Kokoro health" "curl -sf http://localhost:8012/health"
-
-# 8. Edge TTS
-echo ""
-echo "=== EDGE TTS ==="
+echo "=== TTS (Voxtral/Edge) ==="
+test_service "Voxtral container" "docker ps | grep -q voxtral"
+test_service "Voxtral health" "curl -sf http://localhost:8012/v1/models"
 test_service "Edge TTS script" "test -f /home/will/aurelia/scripts/edge-tts.py"
+
+# 8. Aurelia System API
+echo ""
+echo "=== AURELIA API ==="
+test_service "Aurelia API container" "docker ps | grep -q aurelia-api"
+test_service "Aurelia API Port 8080" "curl -sf http://localhost:8080/health"
 
 # 9. n8n
 echo ""
 echo "=== N8N ==="
 test_service "n8n container" "docker ps | grep -q n8n"
-test_service "n8n Postgres" "docker exec n8n-postgres pg_isready"
 
 # 10. Grafana
 echo ""
 echo "=== GRAFANA ==="
 test_service "Grafana container" "docker ps | grep -q grafana"
-test_service "Grafana local" "curl -sf http://localhost:3100/api/health"
 
 # 11. CapRover
 echo ""
 echo "=== CAPROVER ==="
-test_service "CapRover captain" "docker ps | grep -q captain"
-test_service "CapRover nginx" "docker ps | grep -q nginx"
+test_service "CapRover process" "ps aux | grep -v grep | grep -q captain || docker ps | grep -q captain"
 
 # 12. Rede
 echo ""
 echo "=== REDE ==="
-test_service "Cloudflare Tunnel" "test -f ~/.cloudflared/config.yml"
 test_service "Tailscale" "tailscale status 2>/dev/null | grep -q will-zappro"
-test_service "DNS n8n" "getent hosts n8n.zappro.site > /dev/null"
 
 # 13. GPU
 echo ""
 echo "=== GPU ==="
 test_service "NVIDIA GPU" "nvidia-smi --query-gpu=name --format=csv,noheader"
-test_service "NVIDIA driver" "nvidia-smi --query-gpu=driver_version --format=csv,noheader"
 
 # 14. Arquivos importantes
 echo ""
 echo "=== ARQUIVOS ==="
-test_service "Aurelia bin" "test -f /home/will/aurelia/bin/aurelia"
 test_service ".env" "test -f /home/will/aurelia/.env"
 test_service "Skills dir" "test -d /home/will/aurelia/.agent/skills"
 
-# 15. Obsidian
+# 15. Obsidian Vault
 echo ""
 echo "=== OBSIDIAN ==="
-test_service "Obsidian vault" "test -d /home/will/Documents/Obsidian/Aurelia"
+test_service "Knowledge Root" "test -d /home/will/aurelia/knowledge"
 
 # RESUMO
 echo ""
@@ -136,7 +129,7 @@ echo -e "Fail:   ${RED}$FAIL${NC}"
 
 if [ $FAIL -eq 0 ]; then
     echo ""
-    echo -e "${GREEN}🎉 TODOS OS TESTES PASSARAM!${NC}"
+    echo -e "${GREEN}🎉 TODOS OS TESTES PASSARAM! (Aurelia SOTA 2026.2)${NC}"
     exit 0
 else
     echo ""

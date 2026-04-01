@@ -3,12 +3,13 @@ package stt
 import "fmt"
 
 // NewTranscriber builds a Transcriber based on the provider name.
-// For SOTA 2026, we prioritize the local "faster-whisper-server".
-func NewTranscriber(provider, baseURL, model, language string) (Transcriber, error) {
-	local := NewLocalTranscriber(baseURL, model, language)
-
+// For SOTA 2026, we prioritize the local "faster-whisper-server" but support Groq for stability.
+func NewTranscriber(provider, baseURL, model, language, apiKey string) (Transcriber, error) {
 	switch provider {
+	case "groq":
+		return NewGroqTranscriber(baseURL, model, language, apiKey), nil
 	case "local", "faster-whisper", "":
+		local := NewLocalTranscriber(baseURL, model, language)
 		if local.IsAvailable() {
 			return local, nil
 		}
