@@ -42,9 +42,8 @@ test_service "Containers" "test \$(docker ps | wc -l) -gt 1"
 # 2. Redis
 echo ""
 echo "=== REDIS ==="
-# Tenta encontrar o container do redis dinamicamente
-REDIS_CONTAINER=$(docker ps --format '{{.Names}}' | grep redis | head -n 1)
-test_service "Redis (6379)" "docker exec $REDIS_CONTAINER redis-cli -p 6379 ping"
+test_service "Redis (6379)" "redis-cli -p 6379 ping"
+# litellm-redis e n8n-redis: pendente S-43/S-44
 
 # 3. Qdrant
 echo ""
