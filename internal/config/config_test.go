@@ -316,7 +316,7 @@ func TestSaveEditable_PreservesManagedPaths(t *testing.T) {
 	if cfg.DBPath != filepath.Join(tmpDir, "data", "aurelia.db") {
 		t.Fatalf("DBPath = %q, want managed default", cfg.DBPath)
 	}
-	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "qwen3.5" || cfg.STTProvider != "groq" {
+	if cfg.LLMProvider != "ollama" || cfg.LLMModel != "gemma3:27b-it-qat" || cfg.STTProvider != "groq" {
 		t.Fatalf("unexpected providers llm=%q model=%q stt=%q", cfg.LLMProvider, cfg.LLMModel, cfg.STTProvider)
 	}
 	if cfg.MCPConfigPath != filepath.Join(tmpDir, "config", "mcp_servers.json") {
