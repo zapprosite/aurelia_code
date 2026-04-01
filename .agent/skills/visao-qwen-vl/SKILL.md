@@ -5,7 +5,7 @@ descricao: Visao com Qwen3.5-9B VL — Analise de telas e screenshots via Ollama
 # Skill: visao-qwen-vl
 
 > **Autoridade**: Visao Local | **Data**: 01/04/2026
-> **Modelo**: qwen3.5:9b (Ollama local, VL enabled, zero API)
+> **Modelo**: gemma3:27b-it-qat (Ollama local, VL enabled, zero API)
 
 ## Proposito
 
@@ -46,7 +46,7 @@ Usar o modelo de visao Qwen3.5-9B VL para analisar:
 # Modelo ja disponivel
 ollama list
 # NAME                       ID              SIZE      MODIFIED   
-# qwen3.5:9b                 6488c96fa5fa    6.6 GB    3 days ago    
+# gemma3:27b-it-qat                 6488c96fa5fa    6.6 GB    3 days ago    
 ```
 
 ## Fluxo de Execucao
@@ -71,7 +71,7 @@ scrot -s /tmp/vl-capture.png
 curl -s http://127.0.0.1:11434/api/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3.5:9b",
+    "model": "gemma3:27b-it-qat",
     "prompt": "Descreva o que voce ve nesta imagem em detalhes.",
     "images": ["'"$(base64 -w0 /tmp/vl-capture.png)"'"]
   }'
@@ -81,7 +81,7 @@ curl -s http://127.0.0.1:11434/api/generate \
 
 ```json
 {
-  "model": "qwen3.5:9b",
+  "model": "gemma3:27b-it-qat",
   "response": "A imagem mostra uma interface de terminal...",
   "done": true
 }
@@ -105,7 +105,7 @@ PROMPT="${2:-Analise esta imagem e descreva o que voce ve.}"
 curl -s http://127.0.0.1:11434/api/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3.5:9b",
+    "model": "gemma3:27b-it-qat",
     "prompt": "'"$PROMPT"'",
     "images": ["'"$(base64 -w0 "$IMG")"'"],
     "stream": false
@@ -146,7 +146,7 @@ echo "/tmp/vl-url.png"
 | Recurso | Status |
 |---------|--------|
 | Ollama | ✅ rodando na 11434 |
-| qwen3.5:9b | ✅ ja instalado (6.6GB) |
+| gemma3:27b-it-qat | ✅ ja instalado (6.6GB) |
 | GPU RTX 4090 | ✅ 24GB VRAM |
 | scrot | ✅ instalado |
 | Playwright | Opcional para /vl-url |
@@ -156,7 +156,7 @@ echo "/tmp/vl-url.png"
 ```bash
 # .env
 OLLAMA_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=qwen3.5:9b
+OLLAMA_MODEL=gemma3:27b-it-qat
 VISION_ENABLED=true
 ```
 
@@ -170,7 +170,7 @@ curl -s http://127.0.0.1:11434/api/tags | jq '.models[].name'
 curl -s http://127.0.0.1:11434/api/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3.5:9b",
+    "model": "gemma3:27b-it-qat",
     "prompt": "Hello",
     "stream": false
   }'
@@ -180,7 +180,7 @@ curl -s http://127.0.0.1:11434/api/generate \
 
 | Erro | Solucao |
 |------|---------|
-| Model not found | `ollama pull qwen3.5:9b` |
+| Model not found | `ollama pull gemma3:27b-it-qat` |
 | No GPU | Usar CPU (mais lento) |
 | Image too large | Redimensionar: `convert img.png -resize 2048x2048 img.png` |
 | Timeout | Reduzir prompt ou tamanho imagem |

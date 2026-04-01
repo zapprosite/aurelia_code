@@ -12,45 +12,71 @@ model_list:
   # ─── TIER 1: LOCAL (RTX 4090 24GB) — lowest rpm para least-busy preferir ──
   - model_name: aurelia-smart
     litellm_params:
-      model: ollama/qwen3.5:9b
-      api_base: http://host.docker.internal:11434
-      timeout: 45
+      model: ollama/gemma3:27b-it-qat
+      api_base: http://172.17.0.1:11434
+      timeout: 120
       rpm: 1  # baixa rpm = menos ocupado = preferível pelo least-busy
       extra_body:
-        think: false  # desabilita reasoning chain do qwen3.5 → content fica em vez de vazio
+        think: false
     model_info:
       tier: free
-      friendly_name: "qwen3.5:9b local RTX 4090"
-    model_fallbacks:
-      - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
-
-  # ─── TIER 2: QWEN 3.6 PLUS FREE (OpenRouter) ──────────────────────────
-  - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
-    litellm_params:
-      model: openrouter/qwen/qwen-3.6-plus-preview:free
-      api_key: os.environ/OPENROUTER_API_KEY
-      timeout: 60
-      rpm: 60
-    model_info:
-      tier: free
-      friendly_name: "Qwen 3.6 Plus Free"
-    model_fallbacks:
-      - model_name: openrouter/minimax/minimax-2.5:free
-
-  # ─── TIER 3: MINIMAX 2.5 FREE (OpenRouter) ──────────────────────────
-  - model_name: openrouter/minimax/minimax-2.5:free
-    litellm_params:
-      model: openrouter/minimax/minimax-2.5:free
-      api_key: os.environ/OPENROUTER_API_KEY
-      timeout: 60
-      rpm: 60
-    model_info:
-      tier: free
-      friendly_name: "Minimax 2.5 Free"
+      friendly_name: "gemma3:27b-it-qat local RTX 4090"
     model_fallbacks:
       - model_name: groq/llama-3.3-70b-versatile
 
-  # ─── TIER 4: GROQ FREE ────────────────────────────────────────────────
+  # ─── VISION & FAST aliases (apontam pro mesmo local) ─────────────────
+  - model_name: aurelia-vision
+    litellm_params:
+      model: ollama/gemma3:27b-it-qat
+      api_base: http://172.17.0.1:11434
+      timeout: 120
+      rpm: 1
+      extra_body:
+        think: false
+    model_info:
+      tier: free
+    model_fallbacks:
+      - model_name: openrouter/google/gemma-3-27b-it:free
+
+  - model_name: aurelia-fast
+    litellm_params:
+      model: ollama/gemma3:27b-it-qat
+      api_base: http://172.17.0.1:11434
+      timeout: 120
+      rpm: 1
+      extra_body:
+        think: false
+    model_info:
+      tier: free
+    model_fallbacks:
+      - model_name: openrouter/google/gemma-3-27b-it:free
+
+  # ─── EMBEDDINGS ───────────────────────────────────────────────────────
+  - model_name: nomic-embed-text
+    litellm_params:
+      model: ollama/nomic-embed-text
+      api_base: http://172.17.0.1:11434
+    model_info:
+      mode: embedding
+      tier: free
+      friendly_name: "gemma3:27b-it-qat local RTX 4090"
+    model_fallbacks:
+      - model_name: groq/llama-3.3-70b-versatile
+
+  # ─── TIER 2: GEMMA 3 27B FREE (OpenRouter) ───────────────────────────
+  - model_name: openrouter/google/gemma-3-27b-it:free
+    litellm_params:
+      model: openrouter/google/gemma-3-27b-it:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 30
+    model_info:
+      tier: free
+      friendly_name: "Gemma 3 27B Free"
+    model_fallbacks:
+      - model_name: groq/llama-3.3-70b-versatile
+
+  # ─── TIER 3: GROQ FREE ────────────────────────────────────────────────
   - model_name: groq/llama-3.3-70b-versatile
     litellm_params:
       model: groq/llama-3.3-70b-versatile
@@ -60,6 +86,19 @@ model_list:
     model_info:
       tier: free
       friendly_name: "Groq Llama 3.3 70B"
+    model_fallbacks:
+      - model_name: openrouter/meta-llama/llama-3.2-90b-vision-instruct:free
+
+  # ─── TIER 4: LLAMA 3.2 90B VISION FREE (OpenRouter) ──────────────────
+  - model_name: openrouter/meta-llama/llama-3.2-90b-vision-instruct:free
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.2-90b-vision-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 60
+      rpm: 30
+    model_info:
+      tier: free
+      friendly_name: "Llama 3.2 90B Vision Free"
     model_fallbacks:
       - model_name: openrouter/minimax/minimax-m2.7
 
@@ -89,29 +128,29 @@ model_list:
   # ─── VISION & FAST aliases (apontam pro mesmo local) ─────────────────
   - model_name: aurelia-vision
     litellm_params:
-      model: ollama/qwen3.5:9b
+      model: ollama/gemma3:27b-it-qat
       api_base: http://host.docker.internal:11434
-      timeout: 45
+      timeout: 120
       rpm: 1
       extra_body:
         think: false
     model_info:
       tier: free
     model_fallbacks:
-      - model_name: openrouter/qwen/qwen-3.6-plus-preview:free
+      - model_name: openrouter/google/gemma-3-27b-it:free
 
   - model_name: aurelia-fast
     litellm_params:
-      model: ollama/qwen3.5:9b
+      model: ollama/gemma3:27b-it-qat
       api_base: http://host.docker.internal:11434
-      timeout: 30
+      timeout: 120
       rpm: 1
       extra_body:
         think: false
     model_info:
       tier: free
     model_fallbacks:
-      - model_name: groq/llama-3.3-70b-versatile
+      - model_name: openrouter/google/gemma-3-27b-it:free
 
   # ─── EMBEDDINGS ───────────────────────────────────────────────────────
   - model_name: nomic-embed-text
@@ -142,5 +181,4 @@ router_settings:
 litellm_settings:
   drop_params: true
   set_verbose: false
-  cache: true
-# Removido cache_params via redis para rodar self-contained local
+  cache: false  # Redis não configurado, desabilitado

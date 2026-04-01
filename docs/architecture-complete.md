@@ -90,8 +90,8 @@
 
 | Modelo | Params | Quant | VRAM | Contexto |
 |--------|--------|-------|------|----------|
-| `qwen3.5:9b` | 9.65B | Q4_K_M | ~6.5 GB | **262K tokens** |
-| `qwen2.5vl:7b` | 7B | Q4_K_M | ~6.0 GB | Vision |
+| `gemma3:27b-it-qat` | 9.65B | Q4_K_M | ~6.5 GB | **262K tokens** |
+| `gemma3:27b-it-qat` | 7B | Q4_K_M | ~6.0 GB | Vision |
 | `nomic-embed-text` | 566M | F16 | ~1.2 GB | Embeddings |
 
 ---

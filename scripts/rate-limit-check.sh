@@ -43,7 +43,7 @@ echo ""
 
 # 4. Qwen3.5-9B (VL)
 echo "=== QWEN VL (9B) ==="
-echo "Modelo: qwen3.5:9b"
+echo "Modelo: gemma3:27b-it-qat"
 echo "Tamanho: 6.6GB"
 VRAM_DISPONIVEL=22821
 TAMANHO_MODELO=6600
