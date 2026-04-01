@@ -302,7 +302,7 @@ func (a *app) initFeatures(loop *agent.Loop, logger *slog.Logger) error {
 		projectPlaybookPath,
 	)
 
-	transcriber, err := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage)
+	transcriber, err := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage, a.cfg.GroqAPIKey)
 	if err != nil {
 		return fmt.Errorf("initialize transcriber: %w", err)
 	}
@@ -398,7 +398,7 @@ func (a *app) initVoice(logger *slog.Logger) error {
 		return fmt.Errorf("initialize voice spool: %w", err)
 	}
 
-	transcriber, _ := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage)
+	transcriber, _ := stt.NewTranscriber(a.cfg.STTProvider, a.cfg.STTBaseURL, a.cfg.STTModel, a.cfg.STTLanguage, a.cfg.GroqAPIKey)
 	var fallback stt.Transcriber
 	if a.cfg.STTFallbackCommand != "" {
 		fallback = stt.NewCommandTranscriber(a.cfg.STTFallbackCommand)
