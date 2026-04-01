@@ -1,0 +1,169 @@
+{
+  "agents": [
+    {
+      "id": "pesquisador",
+      "name": "Pesquisador",
+      "description": "Agente especializado em pesquisa web, análise de documentação e gathering de informações",
+      "url": "http://localhost:8081/agent",
+      "version": "1.0.0",
+      "capabilities": {
+        "streaming": true,
+        "pushNotifications": true
+      },
+      "skills": [
+        "web_search",
+        "doc_lookup",
+        "analysis",
+        "summarization"
+      ],
+      "tools": [
+        {
+          "name": "tavily_search",
+          "description": "Pesquisa web via Tavily",
+          "enabled": true
+        },
+        {
+          "name": "context7_docs",
+          "description": "Busca docs atualizadas",
+          "enabled": true
+        }
+      ],
+      "parameters": {
+        "max_results": 10,
+        "timeout_seconds": 120
+      }
+    },
+    {
+      "id": "coder",
+      "name": "Coder",
+      "description": "Agente especializado em implementação de código, features, bugs e refatoração",
+      "url": "http://localhost:8082/agent",
+      "version": "1.0.0",
+      "capabilities": {
+        "streaming": true,
+        "pushNotifications": true
+      },
+      "skills": [
+        "coding",
+        "implementation",
+        "testing",
+        "refactoring"
+      ],
+      "tools": [
+        {
+          "name": "read_file",
+          "description": "Ler arquivos do projeto",
+          "enabled": true
+        },
+        {
+          "name": "write_file",
+          "description": "Escrever arquivos",
+          "enabled": true
+        },
+        {
+          "name": "run_command",
+          "description": "Executar comandos",
+          "enabled": true
+        },
+        {
+          "name": "docker_exec",
+          "description": "Executar em Docker",
+          "enabled": true
+        },
+        {
+          "name": "gh_create_pr",
+          "description": "Criar PR no GitHub",
+          "enabled": true
+        }
+      ],
+      "parameters": {
+        "max_file_size": 1000000,
+        "allowed_extensions": [".go", ".ts", ".js", ".py", ".yml", ".yaml", ".json", ".md"]
+      }
+    },
+    {
+      "id": "revisor",
+      "name": "Revisor",
+      "description": "Agente especializado em code review, verificação de qualidade e testes",
+      "url": "http://localhost:8083/agent",
+      "version": "1.0.0",
+      "capabilities": {
+        "streaming": true,
+        "pushNotifications": true
+      },
+      "skills": [
+        "code_review",
+        "testing",
+        "security_audit",
+        "quality_assurance"
+      ],
+      "tools": [
+        {
+          "name": "read_file",
+          "description": "Ler arquivos para review",
+          "enabled": true
+        },
+        {
+          "name": "run_command",
+          "description": "Executar testes",
+          "enabled": true
+        },
+        {
+          "name": "gh_get_pr",
+          "description": "Buscar PR details",
+          "enabled": true
+        },
+        {
+          "name": "gh_list_prs",
+          "description": "Listar PRs",
+          "enabled": true
+        }
+      ],
+      "parameters": {
+        "review_focus": ["security", "testing", "performance", "style"],
+        "min_test_coverage": 80
+      }
+    }
+  ],
+  "leader": {
+    "id": "aurelia_code",
+    "name": "aurelia_code",
+    "description": "Líder DevOps Sênior - Orquestrador de Agent Swarm",
+    "url": "http://localhost:8080/agent",
+    "version": "1.0.0",
+    "capabilities": {
+      "streaming": true,
+      "pushNotifications": true
+    },
+    "orchestration": {
+      "max_concurrent_agents": 3,
+      "default_timeout": 600,
+      "retry_policy": {
+        "max_retries": 2,
+        "backoff_seconds": 5
+      }
+    },
+    "tools": [
+      {
+        "name": "a2a_send_task",
+        "description": "Delegar tarefa via A2A",
+        "enabled": true
+      },
+      {
+        "name": "a2a_get_task",
+        "description": "Buscar status de tarefa",
+        "enabled": true
+      },
+      {
+        "name": "qdrant_write",
+        "description": "Escrever na memória swarm",
+        "enabled": true
+      },
+      {
+        "name": "qdrant_read",
+        "description": "Ler da memória swarm",
+        "enabled": true
+      }
+    ]
+  }
+}

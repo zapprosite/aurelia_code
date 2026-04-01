@@ -16,14 +16,14 @@ const (
 	defaultMemoryWindowSize = 20
 	defaultLLMProvider      = "openai_compatible"
 	defaultLLMModel         = "aurelia-smart"
-	defaultSTTProvider      = "local"
+	defaultSTTProvider      = "local" // GPU: faster-whisper large-v3 on RTX 4090
 	defaultSTTLanguage      = "pt"
 	defaultGroqSTTBaseURL   = "https://api.groq.com/openai/v1"
 	defaultGroqSTTModel     = "whisper-large-v3-turbo"
 	defaultTTSProvider      = "openai_compatible"
-	defaultLocalTTSBaseURL  = "http://127.0.0.1:8012" // Voxtral TTS via vLLM-Omni
-	defaultLocalTTSModel    = "mistralai/Voxtral-4B-TTS-2603"
-	defaultLocalTTSVoice    = "aurelia-jarvis" // Cloned feminine PT-BR voice from assets/voice/aurelia.mp3
+	defaultLocalTTSBaseURL  = "http://127.0.0.1:8012"           // Kokoro/Kodoro TTS GPU
+	defaultLocalTTSModel    = "kokoro"                          // Kokoro-82M ONNX
+	defaultLocalTTSVoice    = "pt-BR-ThalitaMultilingualNeural" // S-35: ONLY Thalita, PT-BR native
 	defaultTTSLanguage      = "pt"
 	defaultLocalTTSFormat   = "opus"
 
@@ -43,7 +43,7 @@ const (
 	defaultQdrantEmbeddingModel = "nomic-embed-text"
 	defaultDashboardPort        = 3334
 	defaultHealthPort           = 8484
-	defaultRedisURL            = "localhost:6379"
+	defaultRedisURL             = "localhost:6379"
 )
 
 // BotConfig holds per-bot Telegram configuration for multi-bot support.
@@ -343,10 +343,10 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		TTSLanguage:            defaultTTSLanguage,     // pt
 		TTSFormat:              defaultLocalTTSFormat,  // opus
 		TTSSpeed:               defaultTTSSpeed,
-		PremiumTTSProvider:     "disabled", // Kokoro is now default, no premium needed
+		PremiumTTSProvider:     "disabled", // S-35: Only Edge TTS Thalita
 		PremiumTTSBaseURL:      "http://127.0.0.1:8012",
 		PremiumTTSModel:        "kokoro",
-		PremiumTTSVoice:        "pt-br",
+		PremiumTTSVoice:        "pt-BR-ThalitaMultilingualNeural", // S-35: Force Thalita
 		TelegramAllowedUserIDs: []int64{},
 
 		MaxIterations:            defaultMaxIterations,
@@ -391,10 +391,10 @@ func DefaultEditableConfig() EditableConfig {
 		TTSLanguage:            defaultTTSLanguage,
 		TTSFormat:              defaultTTSFormatForProvider(defaultTTSProvider),
 		TTSSpeed:               defaultTTSSpeed,
-		PremiumTTSProvider:     "openai_compatible",
+		PremiumTTSProvider:     "disabled", // S-35: Only Edge TTS Thalita
 		PremiumTTSBaseURL:      "http://127.0.0.1:8012",
 		PremiumTTSModel:        "kokoro",
-		PremiumTTSVoice:        "pt-br",
+		PremiumTTSVoice:        "pt-BR-ThalitaMultilingualNeural", // S-35: Force Thalita
 		TelegramAllowedUserIDs: []int64{},
 
 		MaxIterations:            defaultMaxIterations,
