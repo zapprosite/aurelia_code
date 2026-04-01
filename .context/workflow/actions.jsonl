@@ -212,3 +212,5 @@
 {"timestamp":"2026-04-01T21:29:12.518Z","tool":"context","action":"check","status":"success","details":{"params":{"action":"check","repoPath":"/home/will/aurelia"}}}
 {"timestamp":"2026-04-01T21:29:22.261Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
 {"timestamp":"2026-04-01T22:09:13.247Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}
+{"timestamp":"2026-04-01T22:17:05.230Z","tool":"context","action":"init","status":"success","details":{"params":{"action":"init","repoPath":"/home/will/aurelia","type":"both","skipContentGeneration":true},"result":{"status":"incomplete"}}}
+{"timestamp":"2026-04-01T22:17:16.894Z","tool":"context","action":"fill","status":"success","details":{"params":{"action":"fill","target":"all"},"result":{"success":true}}}

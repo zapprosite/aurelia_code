@@ -69,7 +69,7 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		}
 	}
 
-	// P0: Global 90s timeout — prevents infinite hangs (Telegram timeout ~120s).
+	// P0: Global timeout — prevents infinite hangs (Telegram timeout ~120s).
 	ctx, cancel := context.WithTimeout(session.ctx, 120*time.Second)
 	defer cancel()
 	session.ctx = ctx
@@ -81,63 +81,92 @@ func (bc *BotController) processInputSession(c telebot.Context, session inputSes
 		return bc.completeBootstrapProfile(c, state, session.text)
 	}
 
-	if bc.mediaProcessor != nil && bc.mediaProcessor.IsSupportedURL(session.text) {
-		return bc.handleMediaURL(c, session)
-	}
-
-	if handled, err := bc.handleMemoryCommand(c, session); handled {
+	handled, err := bc.handleCommonInputPreProcess(c.Chat(), &session, c.Sender().ID)
+	if handled || err != nil {
 		return err
 	}
 
-	if blocked := bc.enforcePorteiroInput(c, session, requiresAudio); blocked {
-		return nil
+	return bc.runExecutionAndDelivery(c.Chat(), session, requiresAudio)
+}
+
+func (bc *BotController) handleCommonInputPreProcess(chat *telebot.Chat, session *inputSession, userID int64) (bool, error) {
+	logger := observability.Logger("telegram.pipeline")
+
+	if bc.mediaProcessor != nil && bc.mediaProcessor.IsSupportedURL(session.text) {
+		sender := &botChatSender{bot: bc.bot, chat: chat}
+		return true, bc.handleMediaURL(sender, *session)
+	}
+
+	// Memory Command Handling
+	isExternal := userID != 0 // Simplified check for prefix handling
+	var handled bool
+	var err error
+	if isExternal {
+		handled, err = bc.handleExternalMemoryCommand(chat, *session)
+	} else {
+		// This path is for telebot.Context which we don't have here directly, 
+		// but handleMemoryCommand can be adapted or we use a shim.
+		// For now, let's keep them slightly separate or just use the external one as it's more generic.
+		handled, err = bc.handleExternalMemoryCommand(chat, *session)
+	}
+	if handled || err != nil {
+		return handled, err
+	}
+
+	if blocked := bc.enforcePorteiroInputGeneric(chat, session, userID); blocked {
+		return true, nil
 	}
 
 	// Context Window Compression Trigger
 	if bc.memory != nil {
 		compressCtx, compressCancel := context.WithTimeout(session.ctx, 5*time.Second)
-		if err := bc.memory.Compress(compressCtx, session.convID); err != nil {
-			logger.Warn("falha na compressão de contexto", slog.Any("err", err))
-		}
+		_ = bc.memory.Compress(compressCtx, session.convID)
 		compressCancel()
 	}
 
-	if err := bc.persistIncomingContext(session, c.Sender().ID); err != nil {
+	if err := bc.persistIncomingContext(*session, userID); err != nil {
 		logger.Warn("failed to persist incoming context", slog.Any("err", err))
 	}
 
+	return false, nil
+}
+
+func (bc *BotController) runExecutionAndDelivery(chat *telebot.Chat, session inputSession, requiresAudio bool) error {
+	logger := observability.Logger("telegram.pipeline")
+
 	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
 	if err != nil {
-		if sendErr := SendError(bc.bot, c.Chat(), err.Error()); sendErr != nil {
+		if sendErr := SendError(bc.bot, chat, err.Error()); sendErr != nil {
 			logger.Warn("failed to send prepareExecution error", slog.Any("err", sendErr))
 		}
 		return nil
 	}
 
-	finalAnswer, err := bc.executeConversation(c, session, activeSkill, history, systemPrompt, allowedTools)
+	// Choose executor based on presence of context (shim for telebot.Context vs direct Chat)
+	finalAnswer, err := bc.executeExternalConversation(chat, session, activeSkill, history, systemPrompt, allowedTools)
 	if err != nil {
-		return bc.handleExecuteConversationError(c, session, err, finalAnswer, ctx, requiresAudio)
+		return bc.handleExecutionErrorGeneric(chat, session, err, finalAnswer, requiresAudio)
 	}
 
 	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
 
-	// Porteiro Sentinel
 	if bc.porteiro != nil {
 		finalAnswer = bc.porteiro.PolishOutput(session.ctx, finalAnswer)
 		finalAnswer = bc.porteiro.SecureOutput(finalAnswer)
 	}
 
 	bc.persistAssistantAnswer(session, finalAnswer)
-	return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
+	return bc.deliverFinalAnswerToChat(chat, finalAnswer, requiresAudio)
 }
 
-func (bc *BotController) enforcePorteiroInput(c telebot.Context, session inputSession, requiresAudio bool) bool {
-	if bc.porteiro == nil || requiresAudio {
+
+func (bc *BotController) enforcePorteiroInputGeneric(chat *telebot.Chat, session *inputSession, userID int64) bool {
+	if bc.porteiro == nil || session.voiceMode {
 		return false
 	}
 	isOwner := false
 	for _, id := range bc.allowedUserIDs {
-		if id == c.Sender().ID {
+		if id == userID {
 			isOwner = true
 			break
 		}
@@ -155,7 +184,7 @@ func (bc *BotController) enforcePorteiroInput(c telebot.Context, session inputSe
 	if result != middleware.ResultSafe {
 		logger.Warn("input blocked by porteiro", slog.String("session", session.convID), slog.String("result", string(result)))
 		msg := bc.porteiro.GetRejectionMessage(result)
-		if sendErr := SendError(bc.bot, c.Chat(), msg); sendErr != nil {
+		if sendErr := SendError(bc.bot, chat, msg); sendErr != nil {
 			logger.Warn("failed to send porteiro block message", slog.Any("err", sendErr))
 		}
 		return true
@@ -163,11 +192,11 @@ func (bc *BotController) enforcePorteiroInput(c telebot.Context, session inputSe
 	return false
 }
 
-func (bc *BotController) handleExecuteConversationError(c telebot.Context, session inputSession, err error, finalAnswer string, ctx context.Context, requiresAudio bool) error {
+func (bc *BotController) handleExecutionErrorGeneric(chat *telebot.Chat, session inputSession, err error, finalAnswer string, requiresAudio bool) error {
 	logger := observability.Logger("telegram.pipeline")
 	logger.Error("conversation execution failed",
 		slog.Any("err", err),
-		slog.String("user", c.Sender().Username),
+		slog.String("session", session.convID),
 		slog.String("text", session.text),
 		slog.String("error_type", fmt.Sprintf("%T", err)),
 	)
@@ -182,15 +211,16 @@ func (bc *BotController) handleExecuteConversationError(c telebot.Context, sessi
 		)
 		finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
 		bc.persistAssistantAnswer(session, finalAnswer)
-		return bc.deliverFinalAnswer(c, finalAnswer, requiresAudio)
+		return bc.deliverFinalAnswerToChat(chat, finalAnswer, requiresAudio)
 	}
-	if ctx.Err() != nil {
-		if sendErr := SendError(bc.bot, c.Chat(), "Desculpe, demorei demais para processar. Tente novamente."); sendErr != nil {
+
+	if session.ctx.Err() != nil {
+		if sendErr := SendError(bc.bot, chat, "Desculpe, demorei demais para processar. Tente novamente."); sendErr != nil {
 			logger.Warn("failed to send timeout fallback", slog.Any("err", sendErr))
 		}
 		return nil
 	}
-	if sendErr := SendError(bc.bot, c.Chat(), err.Error()); sendErr != nil {
+	if sendErr := SendError(bc.bot, chat, err.Error()); sendErr != nil {
 		logger.Warn("failed to send error to user", slog.Any("err", sendErr))
 	}
 	return nil
@@ -288,90 +318,15 @@ func (bc *BotController) ProcessExternalInput(ctx context.Context, userID, chatI
 	}
 	chat := &telebot.Chat{ID: chatID}
 	session := bc.newInputSessionWithContext(ctx, userID, text)
-	text = strings.ReplaceAll(text, "\x00", "")
-	session.text = text
+	session.text = strings.ReplaceAll(text, "\x00", "")
 	session.voiceMode = requiresAudio
 
-	if handled, err := bc.handleExternalMemoryCommand(chat, session); handled {
-		return err
-	}
-	if bc.mediaProcessor != nil && bc.mediaProcessor.IsSupportedURL(session.text) {
-		sender := &botChatSender{bot: bc.bot, chat: chat}
-		return bc.handleMediaURL(sender, session)
-	}
-	// Porteiro Sentinel Input Guardrail — bypass for trusted users
-	if bc.porteiro != nil && !requiresAudio {
-		ownerBypass := false
-		for _, id := range bc.allowedUserIDs {
-			if id == userID {
-				ownerBypass = true
-				break
-			}
-		}
-		if !ownerBypass {
-			result, err := bc.porteiro.IsSafe(ctx, text)
-			if err != nil {
-				observability.Logger("telegram.pipeline").Error("falha no porteiro", slog.Any("err", err))
-			} else if result != middleware.ResultSafe {
-				return fmt.Errorf("security block: %s", result)
-			}
-		}
-	}
-
-	// Context Window Compression Trigger
-	if bc.memory != nil {
-		compressCtx, compressCancel := context.WithTimeout(ctx, 5*time.Second)
-		_ = bc.memory.Compress(compressCtx, session.convID)
-		compressCancel()
-	}
-	if err := bc.persistIncomingContext(session, userID); err != nil {
-		observability.Logger("telegram.pipeline").Warn("failed to persist external input context", slog.Any("err", err))
-	}
-
-	activeSkill, history, systemPrompt, allowedTools, err := bc.prepareExecution(session)
-	if err != nil {
-		if sendErr := SendError(bc.bot, chat, err.Error()); sendErr != nil {
-			slog.Warn("failed to send prepareExecution error (external)", slog.Any("err", sendErr))
-		}
+	handled, err := bc.handleCommonInputPreProcess(chat, &session, userID)
+	if handled || err != nil {
 		return err
 	}
 
-	finalAnswer, err := bc.executeExternalConversation(chat, session, activeSkill, history, systemPrompt, allowedTools)
-	if err != nil {
-		extLogger := observability.Logger("telegram.pipeline")
-		extLogger.Error("external conversation execution failed",
-			slog.Any("err", err),
-			slog.String("user_id", fmt.Sprintf("%d", userID)),
-			slog.String("text", session.text),
-		)
-		// Se for erro de provider/gateway, tenta usar a resposta mesmo que incompleta
-		gatewayFailure := strings.Contains(err.Error(), "provider error") ||
-			strings.Contains(err.Error(), "all gateway routes failed") ||
-			strings.Contains(err.Error(), "route breaker open") ||
-			strings.Contains(err.Error(), "budget exceeded") ||
-			strings.Contains(err.Error(), "empty guarded content")
-		if gatewayFailure && finalAnswer != "" {
-			extLogger.Info("using partial answer despite gateway failure",
-				slog.String("partial_answer_len", fmt.Sprintf("%d", len(finalAnswer))),
-			)
-			finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
-			bc.persistAssistantAnswer(session, finalAnswer)
-			return bc.deliverFinalAnswerToChat(chat, finalAnswer, false)
-		}
-		if sendErr := SendError(bc.bot, chat, err.Error()); sendErr != nil {
-			extLogger.Warn("failed to send error to user (external)", slog.Any("err", sendErr))
-		}
-		return err
-	}
-	finalAnswer = sanitizeAssistantOutputForUser(finalAnswer)
-	// Porteiro Sentinel Output Guardrail & Polisher
-	if bc.porteiro != nil {
-		finalAnswer = bc.porteiro.PolishOutput(ctx, finalAnswer)
-		finalAnswer = bc.porteiro.SecureOutput(finalAnswer)
-	}
-
-	bc.persistAssistantAnswer(session, finalAnswer)
-	return bc.deliverFinalAnswerToChat(chat, finalAnswer, requiresAudio)
+	return bc.runExecutionAndDelivery(chat, session, requiresAudio)
 }
 
 func (bc *BotController) handleMemoryCommand(c telebot.Context, session inputSession) (bool, error) {

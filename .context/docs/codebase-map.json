@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generated": "2026-03-31T07:48:18.758Z",
+  "generated": "2026-04-01T22:17:05.062Z",
   "stack": {
     "primaryLanguage": "typescript",
     "languages": [
@@ -24,27 +24,27 @@
     "runtimeEnvironment": "node"
   },
   "structure": {
-    "totalFiles": 17013,
+    "totalFiles": 16909,
     "rootPath": ".",
     "topDirectories": [
       {
         "name": "assets",
-        "fileCount": 2,
+        "fileCount": 6,
         "description": "Static assets (images, fonts)"
       },
       {
-        "name": "aurelia-api",
+        "name": "aurelia",
         "fileCount": 1,
-        "description": "API endpoints and handlers"
+        "description": "Module directory"
       },
       {
         "name": "bin",
-        "fileCount": 4,
+        "fileCount": 5,
         "description": "CLI binaries and executables"
       },
       {
         "name": "cmd",
-        "fileCount": 22,
+        "fileCount": 20,
         "description": "Module directory"
       },
       {
@@ -54,17 +54,17 @@
       },
       {
         "name": "data",
-        "fileCount": 267,
+        "fileCount": 237,
         "description": "Module directory"
       },
       {
         "name": "docs",
-        "fileCount": 14,
+        "fileCount": 15,
         "description": "Documentation files"
       },
       {
         "name": "e2e",
-        "fileCount": 4,
+        "fileCount": 7,
         "description": "Module directory"
       },
       {
@@ -79,7 +79,7 @@
       },
       {
         "name": "internal",
-        "fileCount": 280,
+        "fileCount": 207,
         "description": "Module directory"
       },
       {
@@ -89,34 +89,29 @@
       },
       {
         "name": "logs",
-        "fileCount": 5,
+        "fileCount": 6,
         "description": "Log definitions"
       },
       {
-        "name": "mcp-servers",
-        "fileCount": 5,
-        "description": "MCP server implementation"
+        "name": "packages",
+        "fileCount": 1,
+        "description": "Package definitions"
       },
       {
         "name": "pkg",
-        "fileCount": 26,
+        "fileCount": 28,
         "description": "Module directory"
       },
       {
         "name": "scripts",
-        "fileCount": 54,
+        "fileCount": 57,
         "description": "Build and utility scripts"
-      },
-      {
-        "name": "services",
-        "fileCount": 7,
-        "description": "Business logic and orchestration services"
       }
     ],
     "languageDistribution": [
       {
         "extension": ".js",
-        "count": 8801
+        "count": 8800
       },
       {
         "extension": ".map",
@@ -124,7 +119,7 @@
       },
       {
         "extension": ".ts",
-        "count": 2075
+        "count": 2076
       },
       {
         "extension": ".mjs",
@@ -132,23 +127,23 @@
       },
       {
         "extension": ".json",
-        "count": 464
+        "count": 455
       },
       {
         "extension": ".md",
-        "count": 360
+        "count": 362
       },
       {
         "extension": ".go",
-        "count": 330
-      },
-      {
-        "extension": ".css",
-        "count": 145
+        "count": 253
       },
       {
         "extension": ".cts",
         "count": 145
+      },
+      {
+        "extension": ".css",
+        "count": 144
       },
       {
         "extension": ".cjs",
@@ -158,6 +153,15 @@
   },
   "architecture": {
     "layers": [
+      {
+        "name": "Models",
+        "description": "Data structures and domain objects",
+        "directories": [
+          "packages/zod-schemas"
+        ],
+        "symbolCount": 1,
+        "dependsOn": []
+      },
       {
         "name": "Utils",
         "description": "Shared utilities and helpers",
@@ -183,10 +187,12 @@
     ],
     "patterns": [],
     "entryPoints": [
+      "packages/zod-schemas/index.ts",
       "frontend/src/main.tsx"
     ],
     "mainEntryPoints": [],
     "moduleExports": [
+      "packages/zod-schemas/index.ts",
       "frontend/src/main.tsx"
     ]
   },
@@ -359,14 +365,14 @@
       {
         "name": "arecord",
         "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 51,
         "exported": true
       },
       {
         "name": "build_output_path",
         "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 115,
         "exported": true
       },
@@ -380,14 +386,14 @@
       {
         "name": "detect_wakeword",
         "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 96,
         "exported": true
       },
       {
         "name": "get_embedding",
         "kind": "function",
-        "file": "scripts/semantic-skill-indexer.py",
+        "file": "cmd/skill-indexer/main.py",
         "line": 15,
         "exported": true
       },
@@ -406,66 +412,66 @@
         "exported": true
       },
       {
-        "name": "list_voices",
+        "name": "main",
         "kind": "function",
-        "file": "scripts/test_tts.py",
-        "line": 9,
+        "file": "scripts/edge-tts.py",
+        "line": 23,
         "exported": true
       },
       {
         "name": "main",
         "kind": "function",
-        "file": "scripts/voice-gateway.py",
-        "line": 14,
-        "exported": true
-      },
-      {
-        "name": "main",
-        "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 121,
         "exported": true
       },
       {
         "name": "main",
         "kind": "function",
-        "file": "scripts/semantic-skill-indexer.py",
+        "file": "cmd/voice-gateway/main.py",
+        "line": 14,
+        "exported": true
+      },
+      {
+        "name": "main",
+        "kind": "function",
+        "file": "cmd/skill-indexer/main.py",
         "line": 26,
         "exported": true
       },
       {
         "name": "merge_audio",
         "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 109,
         "exported": true
       },
       {
         "name": "parse_args",
         "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 28,
         "exported": true
       },
       {
         "name": "read_wav",
         "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 72,
         "exported": true
       },
       {
         "name": "resolve_model_name",
         "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 46,
         "exported": true
       },
       {
-        "name": "test_speech",
+        "name": "synthesize",
         "kind": "function",
-        "file": "scripts/test_tts.py",
-        "line": 19,
+        "file": "scripts/edge-tts.py",
+        "line": 13,
         "exported": true
       },
       {
@@ -478,7 +484,7 @@
       {
         "name": "write_wav",
         "kind": "function",
-        "file": "scripts/voice-capture-openwakeword.py",
+        "file": "cmd/voice-gateway/wakeword.py",
         "line": 87,
         "exported": true
       },
@@ -569,6 +575,13 @@
         "exported": true
       },
       {
+        "name": "SentinelEvent",
+        "kind": "type",
+        "file": "packages/zod-schemas/index.ts",
+        "line": 16,
+        "exported": true
+      },
+      {
         "name": "SquadAgent",
         "kind": "type",
         "file": "frontend/src/components/dashboard/SquadGrid.tsx",
@@ -652,7 +665,7 @@
     {
       "name": "arecord",
       "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
+      "file": "cmd/voice-gateway/wakeword.py",
       "line": 51,
       "exported": true
     },
@@ -673,7 +686,7 @@
     {
       "name": "build_output_path",
       "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
+      "file": "cmd/voice-gateway/wakeword.py",
       "line": 115,
       "exported": true
     },
@@ -694,7 +707,7 @@
     {
       "name": "detect_wakeword",
       "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
+      "file": "cmd/voice-gateway/wakeword.py",
       "line": 96,
       "exported": true
     },
@@ -715,7 +728,7 @@
     {
       "name": "get_embedding",
       "kind": "function",
-      "file": "scripts/semantic-skill-indexer.py",
+      "file": "cmd/skill-indexer/main.py",
       "line": 15,
       "exported": true
     },
@@ -741,44 +754,44 @@
       "exported": true
     },
     {
-      "name": "list_voices",
+      "name": "main",
       "kind": "function",
-      "file": "scripts/test_tts.py",
-      "line": 9,
+      "file": "scripts/edge-tts.py",
+      "line": 23,
       "exported": true
     },
     {
       "name": "main",
       "kind": "function",
-      "file": "scripts/voice-gateway.py",
-      "line": 14,
-      "exported": true
-    },
-    {
-      "name": "main",
-      "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
+      "file": "cmd/voice-gateway/wakeword.py",
       "line": 121,
       "exported": true
     },
     {
       "name": "main",
       "kind": "function",
-      "file": "scripts/semantic-skill-indexer.py",
+      "file": "cmd/voice-gateway/main.py",
+      "line": 14,
+      "exported": true
+    },
+    {
+      "name": "main",
+      "kind": "function",
+      "file": "cmd/skill-indexer/main.py",
       "line": 26,
       "exported": true
     },
     {
       "name": "merge_audio",
       "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
+      "file": "cmd/voice-gateway/wakeword.py",
       "line": 109,
       "exported": true
     },
     {
       "name": "parse_args",
       "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
+      "file": "cmd/voice-gateway/wakeword.py",
       "line": 28,
       "exported": true
     },
@@ -792,15 +805,22 @@
     {
       "name": "read_wav",
       "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
+      "file": "cmd/voice-gateway/wakeword.py",
       "line": 72,
       "exported": true
     },
     {
       "name": "resolve_model_name",
       "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
+      "file": "cmd/voice-gateway/wakeword.py",
       "line": 46,
+      "exported": true
+    },
+    {
+      "name": "SentinelEvent",
+      "kind": "type",
+      "file": "packages/zod-schemas/index.ts",
+      "line": 16,
       "exported": true
     },
     {
@@ -808,6 +828,13 @@
       "kind": "type",
       "file": "frontend/src/components/dashboard/SquadGrid.tsx",
       "line": 7,
+      "exported": true
+    },
+    {
+      "name": "synthesize",
+      "kind": "function",
+      "file": "scripts/edge-tts.py",
+      "line": 13,
       "exported": true
     },
     {
@@ -825,24 +852,10 @@
       "exported": true
     },
     {
-      "name": "test_speech",
-      "kind": "function",
-      "file": "scripts/test_tts.py",
-      "line": 19,
-      "exported": true
-    },
-    {
       "name": "useSystemMetrics",
       "kind": "function",
       "file": "frontend/src/hooks/useSystemMetrics.ts",
       "line": 25,
-      "exported": true
-    },
-    {
-      "name": "write_wav",
-      "kind": "function",
-      "file": "scripts/voice-capture-openwakeword.py",
-      "line": 87,
       "exported": true
     }
   ],
@@ -935,9 +948,9 @@
     ]
   },
   "stats": {
-    "totalSymbols": 80,
-    "exportedSymbols": 30,
-    "analysisTimeMs": 137
+    "totalSymbols": 81,
+    "exportedSymbols": 31,
+    "analysisTimeMs": 125
   },
   "keyFiles": [
     {
@@ -947,6 +960,11 @@
     },
     {
       "path": "bin/aurelia-api",
+      "description": "CLI executable",
+      "category": "entrypoint"
+    },
+    {
+      "path": "bin/aurelia-sentinel",
       "description": "CLI executable",
       "category": "entrypoint"
     },
@@ -963,6 +981,11 @@
     {
       "path": "frontend/src/main.tsx",
       "description": "Source code root",
+      "category": "entrypoint"
+    },
+    {
+      "path": "packages/zod-schemas/index.ts",
+      "description": "Module exports",
       "category": "entrypoint"
     },
     {
@@ -1079,16 +1102,6 @@
       "path": "frontend/node_modules/@typescript-eslint/eslint-plugin/dist/rules/array-type.d.ts",
       "description": "Type definitions",
       "category": "types"
-    },
-    {
-      "path": "frontend/node_modules/@typescript-eslint/eslint-plugin/dist/rules/explicit-function-return-type.d.ts",
-      "description": "Type definitions",
-      "category": "types"
-    },
-    {
-      "path": "frontend/node_modules/@typescript-eslint/eslint-plugin/dist/rules/explicit-module-boundary-types.d.ts",
-      "description": "Type definitions",
-      "category": "types"
     }
   ],
   "navigation": {
@@ -1107,9 +1120,9 @@
       "frontend/node_modules/vite/client.d.ts",
       "frontend/node_modules/vfile-message/index.d.ts",
       "frontend/node_modules/vfile/index.d.ts",
-      "frontend/node_modules/update-browserslist-db/index.d.ts",
       "frontend/node_modules/unist-util-visit-parents/index.d.ts",
-      "frontend/node_modules/unist-util-visit/index.d.ts"
+      "frontend/node_modules/update-browserslist-db/index.d.ts",
+      "frontend/node_modules/unist-util-stringify-position/index.d.ts"
     ],
     "mainLogic": [
       "src"
