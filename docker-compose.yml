@@ -39,6 +39,10 @@ services:
       - ./configs/litellm/config.yaml:/app/config.yaml
     env_file:
       - .env
+    environment:
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6380
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     command: ["--config", "/app/config.yaml"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
