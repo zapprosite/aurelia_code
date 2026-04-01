@@ -70,6 +70,58 @@
         "cmd": "grep -c 'S-56' docs/PENDING.md && grep -c 'S-60' docs/PENDING.md && echo SMOKE_OK"
       },
       "instructions": "Reescreva docs/PENDING.md com o estado real: marque S-51, S-52, S-54, S-55 como concluídos. Adicione S-56 a S-60 como pendentes com prioridades corretas. Remova S-53 (Grafana/Prometheus foi descartado em favor de SQLite puro). Mantenha o formato de tabela existente."
+    },
+    {
+      "id": "S-62",
+      "title": "Fix cron repo_guardian — expressão 5→6 campos",
+      "priority": "P0",
+      "status": "pending",
+      "smoke": {
+        "cmd": "grep -r '0 0 */6' internal/ cmd/ | grep -c '.' && go build ./... && echo SMOKE_OK"
+      },
+      "instructions": "Busque em todo o projeto (internal/ e cmd/) a string '0 */6 * * *'. Troque por '0 0 */6 * * *'. Apenas essa mudança. go build deve passar."
+    },
+    {
+      "id": "S-63",
+      "title": "IDENTITY.md — persistir em volume Docker",
+      "priority": "P1",
+      "status": "pending",
+      "depends_on": "S-62",
+      "smoke": {
+        "cmd": "grep -c 'IDENTITY' docker-compose.yml && echo SMOKE_OK"
+      },
+      "instructions": "1. Crie o arquivo knowledge/IDENTITY.md na raiz do repo com o conteúdo: 'Você é Aurélia, Engenheira Sênior Soberana do Will. Homelab: SOTA 2026 | RTX 4090 | Gemma3 27B'. 2. No docker-compose.yml bloco aurelia-api, adicione o volume: './knowledge:/tmp/.aurelia/memory/personas:ro' nos volumes existentes. 3. go build deve passar."
+    },
+    {
+      "id": "S-64",
+      "title": "HEARTBEAT.md — template no volume",
+      "priority": "P1",
+      "status": "pending",
+      "depends_on": "S-63",
+      "smoke": {
+        "cmd": "grep -c 'HEARTBEAT' docker-compose.yml && cat knowledge/HEARTBEAT.md && echo SMOKE_OK"
+      },
+      "instructions": "1. Crie knowledge/HEARTBEAT.md com o conteúdo: 'Reporte status do homelab: GPU, memória, containers críticos e qualquer anomalia. Seja concisa. Formato: emoji + métrica + status.'. 2. No docker-compose.yml bloco aurelia-api, o volume './knowledge' já foi adicionado no S-63 — apenas confirma que o arquivo existe."
+    },
+    {
+      "id": "S-65",
+      "title": "ZFS supabase datasets — remover referências do codebase",
+      "priority": "P2",
+      "status": "pending",
+      "smoke": {
+        "cmd": "grep -rn 'supabase' internal/ cmd/ pkg/ | grep -v '_test.go' | wc -l | grep -x '0' && echo SMOKE_OK"
+      },
+      "instructions": "Busque em internal/, cmd/ e pkg/ qualquer referência residual a 'supabase' (case-insensitive) que não seja em arquivos _test.go. Remova ou substitua por comentário explicando que foi migrado para SQLite. go build deve passar. NÃO mexa em .env nem em docker-compose.yml."
+    },
+    {
+      "id": "S-66",
+      "title": "config.go — OllamaURL default sem /v1 + commit fix",
+      "priority": "P0",
+      "status": "pending",
+      "smoke": {
+        "cmd": "grep -c '4000\"' internal/config/config.go && go build ./... && echo SMOKE_OK"
+      },
+      "instructions": "Confirme que a linha 387 de internal/config/config.go tem OllamaURL: 'http://127.0.0.1:4000' SEM /v1 no final. Se ainda tiver /v1, remove. Depois: git add internal/config/config.go && git commit -m 'fix(config): remove /v1 duplicate from OllamaURL default [S-66][01/04/2026]' && git push origin main."
     }
   ]
 }
