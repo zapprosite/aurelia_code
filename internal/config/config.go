@@ -61,6 +61,7 @@ type BotConfig struct {
 
 // AppConfig holds all runtime configuration needed for the application.
 type AppConfig struct {
+	Features                  Features // FEAT_VOICE, FEAT_DREAM, FEAT_KAIROS, FEAT_COMPUTER_USE
 	Bots                      []BotConfig
 	LLMProvider               string
 	LLMModel                  string
@@ -717,6 +718,7 @@ func toAppConfig(cfg fileConfig) *AppConfig {
 	}
 
 	return &AppConfig{
+		Features:                  LoadFeatures(),
 		Bots:                      bots,
 		LLMProvider:               cfg.LLMProvider,
 		LLMModel:                  cfg.LLMModel,
