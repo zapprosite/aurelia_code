@@ -227,34 +227,24 @@ func decodeJSON(r io.Reader, v any) error {
 }
 
 // BuildSTTConfigFromEnv creates STT config from environment variables
-// ADR: 20260328-whisper-groq-gpu-budget
+// ADR: 20260328-whisper-gpu-local-first
+// S-35: Only local Whisper GPU, no cloud STT
 func BuildSTTConfigFromEnv() *STTConfig {
 	sttCfg := &STTConfig{}
 
-	// Primary: Groq (cloud - fast, low latency)
-	if apiKey := os.Getenv("GROQ_API_KEY"); apiKey != "" {
-		model := os.Getenv("GROQ_STT_MODEL")
-		if model == "" {
-			model = "whisper-large-v3"
-		}
-		lang := os.Getenv("STT_LANGUAGE")
-		if lang == "" {
-			lang = "pt-BR"
-		}
-		sttCfg.Primary = NewGroqSTT(apiKey, model, lang)
-		sttCfg.ActiveProvider = "groq"
-	}
-
-	// Fallback: Whisper local (sovereign) - using medium to save VRAM
+	// Primary: Whisper local GPU (sovereign)
 	model := os.Getenv("WHISPER_LOCAL_MODEL")
 	if model == "" {
-		model = "medium"
+		model = "large-v3" // S-35: GPU has VRAM, use large
 	}
 	lang := os.Getenv("STT_LANGUAGE")
 	if lang == "" {
-		lang = "pt-BR"
+		lang = "pt"
 	}
-	sttCfg.Fallback = NewWhisperLocalSTT(model, lang)
+	sttCfg.Primary = NewWhisperLocalSTT(model, lang)
+	sttCfg.ActiveProvider = "local"
+
+	// S-35: No cloud STT, only local GPU
 
 	return sttCfg
 }

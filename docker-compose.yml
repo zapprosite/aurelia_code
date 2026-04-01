@@ -83,10 +83,7 @@ services:
           memory: 3G
         reservations:
           memory: 1G
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    runtime: nvidia
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8880/health || exit 1"]

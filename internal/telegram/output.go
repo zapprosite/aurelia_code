@@ -240,12 +240,15 @@ func sendAudioWithSender(sender messageSender, chat *telebot.Chat, synthesizer t
 // deliverWithParallelTTS sends text to the user while concurrently synthesizing
 // TTS audio, then sends the audio once both are ready. This hides Kokoro latency
 // (~0.5-1.5s) behind the Telegram SendText round-trip for lower perceived latency.
-// Audio is only sent if requiresAudio is true (i.e., user sent a voice message).
+// Audio is always sent below text unless: text is too short (<50 chars) or TTS unavailable.
 func (bc *BotController) deliverWithParallelTTS(sender messageSender, chat *telebot.Chat, synthesizer tts.Synthesizer, text string, requiresAudio bool, opts ...interface{}) error {
 	var ttsCh chan ttsAsyncResult
+	_ = requiresAudio // S-34: requiresAudio kept for future per-user preference
 
-	// Only synthesize audio when user sent a voice message.
-	if requiresAudio && synthesizer != nil && synthesizer.IsAvailable() {
+	// Skip audio for very short messages (<50 chars) to save GPU resources
+	skipAudio := len([]rune(text)) < 50
+
+	if !skipAudio && synthesizer != nil && synthesizer.IsAvailable() {
 		limit := synthesizer.MaxChars()
 		if speechText := sanitizeTextForSpeech(text, limit); speechText != "" {
 			ttsCh = make(chan ttsAsyncResult, 1)
@@ -267,6 +270,9 @@ func (bc *BotController) deliverWithParallelTTS(sender messageSender, chat *tele
 		return nil
 	}
 
+	// Small delay before sending audio to show as "below text"
+	time.Sleep(300 * time.Millisecond)
+
 	r := <-ttsCh
 	if r.err != nil {
 		log.Printf("TTS synthesis failed (%v).", r.err)
@@ -283,7 +289,7 @@ func sendTextWithSenderAndOptions(sender messageSender, chat *telebot.Chat, text
 			// Append original options (like menus) only to the last chunk
 			currentOpts = opts
 		}
-		
+
 		htmlChunk := MarkdownToHTML(chunk)
 		msgOpts := append([]interface{}{&telebot.SendOptions{ParseMode: telebot.ModeHTML}}, currentOpts...)
 		_, err := sender.Send(chat, htmlChunk, msgOpts...)
@@ -375,10 +381,10 @@ func sendAudioBytes(sender messageSender, chat *telebot.Chat, audio tts.Audio, f
 }
 
 var (
-	markdownLinkPattern       = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
-	codeFencePattern          = regexp.MustCompile("(?s)```[a-z]*\n?(.*?)```")
-	inlineCodePattern         = regexp.MustCompile("`([^`]+)`")
-	multiSpacePattern         = regexp.MustCompile(`\s+`)
+	markdownLinkPattern = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
+	codeFencePattern    = regexp.MustCompile("(?s)```[a-z]*\n?(.*?)```")
+	inlineCodePattern   = regexp.MustCompile("`([^`]+)`")
+	multiSpacePattern   = regexp.MustCompile(`\s+`)
 
 	// speechSymbolReplacer converts symbols/punctuation to spoken equivalents.
 	speechSymbolReplacer = strings.NewReplacer(
@@ -444,13 +450,13 @@ func sanitizeTextForSpeech(text string, limit int) string {
 	runes := []rune(sanitized)
 	if len(runes) > limit {
 		window := string(runes[:limit])
-		// Optimization: only search for sentence ends in the last 1000 characters 
+		// Optimization: only search for sentence ends in the last 1000 characters
 		// of the window to avoid discarding huge chunks of text.
 		searchStart := 0
 		if limit > 1000 {
 			searchStart = limit - 1000
 		}
-		
+
 		found := false
 		for _, sep := range []string{". ", "! ", "? ", ".\n", "!\n", "?\n"} {
 			if idx := strings.LastIndex(window, sep); idx >= searchStart {

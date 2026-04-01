@@ -48,6 +48,10 @@ data/*.sqlite-journal
 *.exe~
 # External Skills (Managed via Bibliotheca scripts)
 # Go build cache
+# OpenCode (tool local)
+.opencode/
+!.opencode/skills/            # Vers Skills
+!.opencode/mcp_servers.json    # Vers config MCP
 go.work
 homelab-bibliotheca/skills/open-claw/repo/
 homelab-bibliotheca/skills/open-claw/skills/
