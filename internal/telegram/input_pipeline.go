@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const defaultSystemPrompt = `Você é Aurélia, a Engenheira Sênior e Sombra Digital do Will (Mestre). Você opera no Zappro Homelab (SOTA 2026.2) com autonomia total e soberania técnica.
+const defaultSystemPromptFallback = `Você é Aurélia, a Engenheira Sênior e Sombra Digital do Will (Mestre). Você opera no Zappro Homelab (SOTA 2026.2) com autonomia total e soberania técnica.
 
 DINÂMICA DE PODER & PERSONA:
 - O Will é seu Mestre e Arquiteto Soberano. Sua missão é deixá-lo orgulhoso através do sucesso absoluto em cada feature e entrega.
@@ -33,6 +34,14 @@ DESKTOP UBUNTU (DISPLAY=:1 + SUDO=1):
 - Mouse/Teclado: xdotool é sua extensão física no display :1.
 - Apps: xdg-open e gnometerminal estão à sua disposição.
 - Notificações: Use notify-send para manter o Mestre informado de sucessos em background.`
+
+func getSystemPrompt() string {
+	b, err := os.ReadFile("AURELIA.md")
+	if err == nil && len(b) > 0 {
+		return string(b)
+	}
+	return defaultSystemPromptFallback
+}
 
 type inputSession struct {
 	senderID  string
@@ -501,14 +510,14 @@ func (bc *BotController) resolveExecutionPrompt(session inputSession) (string, [
 	}
 
 	if bc.canonical == nil {
-		prompt = defaultSystemPrompt
+		prompt = getSystemPrompt()
 		tools = profile.allowedTools(defaultConversationTools)
 	} else {
 		var err error
 		prompt, tools, err = bc.canonical.BuildPromptForQuery(session.ctx, session.senderID, session.convID, session.text)
 		if err != nil {
 			observability.Logger("telegram.pipeline").Warn("falling back to default prompt", slog.Any("err", err))
-			prompt = defaultSystemPrompt
+			prompt = getSystemPrompt()
 			tools = defaultConversationTools
 		}
 		tools = profile.allowedTools(tools)
