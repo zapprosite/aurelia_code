@@ -1,0 +1,8 @@
+=== RUN   TestAuditCatalog_RepositoryCanonicalCatalogIsClean
+=== PAUSE TestAuditCatalog_RepositoryCanonicalCatalogIsClean
+=== CONT  TestAuditCatalog_RepositoryCanonicalCatalogIsClean
+    audit_test.go:53: expected clean canonical catalog, got []skill.AuditIssue{skill.AuditIssue{Severity:"error", Code:"broken_link", SkillName:"homelab-stabilizer", Path:"/home/will/aurelia/.agent/skills/homelab-stabilizer/SKILL.md", Message:"file:///srv/monorepo/docs/adr/20240401-governanca-homelab.md -> stat /home/will/aurelia/.agent/skills/homelab-stabilizer/file:/srv/monorepo/docs/adr/20240401-governanca-homelab.md: no such file or directory"}, skill.AuditIssue{Severity:"error", Code:"broken_link", SkillName:"homelab-stabilizer", Path:"/home/will/aurelia/.agent/skills/homelab-stabilizer/SKILL.md", Message:"file:///home/will/.gemini/antigravity/brain/9a05a888-06d6-4aa8-8dfb-1ec57f2d3233/walkthrough.md -> stat /home/will/aurelia/.agent/skills/homelab-stabilizer/file:/home/will/.gemini/antigravity/brain/9a05a888-06d6-4aa8-8dfb-1ec57f2d3233/walkthrough.md: no such file or directory"}}
+--- FAIL: TestAuditCatalog_RepositoryCanonicalCatalogIsClean (0.00s)
+FAIL
+FAIL	github.com/kocar/aurelia/internal/skill	0.003s
+FAIL

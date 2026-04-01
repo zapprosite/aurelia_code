@@ -6,13 +6,12 @@ services:
       - "6334:6334"
     volumes:
       - ./data/qdrant:/qdrant/storage:z
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
 
   redis:
     image: redis:7.2.4-alpine
@@ -44,15 +43,18 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: always
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python3 -c \"import httpx; r = httpx.get('http://localhost:4000/health', timeout=5); exit(0 if r.status_code in (200, 401) else 1)\""]
       interval: 30s
       timeout: 15s
       retries: 5
       start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
 
   # Voxtral TTS — Mistral 4B, voice cloning zero-shot, PT-BR nativo
   # ADR: 20260331-voxtral-replaces-kokoro.md
@@ -77,7 +79,10 @@ services:
       - ./assets/voice:/app/voices:ro
     deploy:
       resources:
+        limits:
+          memory: 3G
         reservations:
+          memory: 1G
           devices:
             - driver: nvidia
               count: 1
@@ -94,6 +99,8 @@ services:
   # ADR: 20260330-stt-local-first-cascade.md
   whisper-stt:
     container_name: whisper-local
+    mem_limit: 4G
+    mem_reservation: 1G
     image: fedirz/faster-whisper-server:0.6.0-rc.3-cuda
     ports:
       - "127.0.0.1:8020:8000"
@@ -104,7 +111,10 @@ services:
       - CUDA_VISIBLE_DEVICES=0
     deploy:
       resources:
+        limits:
+          memory: 4G
         reservations:
+          memory: 1G
           devices:
             - driver: nvidia
               count: 1
@@ -138,5 +148,3 @@ services:
     # networks:
     #   - aurelia-net # Using default for now or add if needed
 
-volumes:
-  redis_data:
