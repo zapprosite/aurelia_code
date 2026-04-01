@@ -33,6 +33,4 @@ O catálogo deve permanecer limpo:
 
 ## Referências
 
-- Contrato do catálogo: [`../../docs/governance/SKILL-CATALOG.md`](../../docs/governance/SKILL-CATALOG.md)
-- Contrato do repositório: [`../../docs/governance/REPOSITORY_CONTRACT.md`](../../docs/governance/REPOSITORY_CONTRACT.md)
 - Governança principal: [`../../AGENTS.md`](../../AGENTS.md)

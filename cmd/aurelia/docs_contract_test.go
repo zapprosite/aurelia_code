@@ -20,7 +20,7 @@ func TestGovernanceEntrypointLinksResolve(t *testing.T) {
 		filepath.Join(repoRoot, "CLAUDE.md"),
 		filepath.Join(repoRoot, "GEMINI.md"),
 		filepath.Join(repoRoot, ".agent", "skills", "README.md"),
-		filepath.Join(repoRoot, "docs", "adr", "README.md"),
+		filepath.Join(repoRoot, "docs", "adr", "0001-HISTORY.md"),
 	}
 
 	for _, file := range files {
@@ -68,34 +68,6 @@ func TestGovernanceEntrypointsAvoidLegacyDotAgentsPath(t *testing.T) {
 	}
 }
 
-func TestGovernanceDocsAvoidRetiredObsidianSyncPipeline(t *testing.T) {
-	t.Parallel()
-
-	repoRoot := repoRootFromCaller(t)
-	files := []string{
-		filepath.Join(repoRoot, "docs", "governance", "REPOSITORY_CONTRACT.md"),
-	}
-
-	disallowed := []string{
-		"obsidian_sync",
-		"internal/obsidian/sync.go",
-		"obsidian_sync_state",
-		"antes de qualquer persistência em disco",
-	}
-
-	for _, file := range files {
-		content, err := os.ReadFile(file)
-		if err != nil {
-			t.Fatalf("read %s: %v", file, err)
-		}
-		text := string(content)
-		for _, needle := range disallowed {
-			if strings.Contains(text, needle) {
-				t.Fatalf("retired governance drift %q found in %s", needle, file)
-			}
-		}
-	}
-}
 
 func repoRootFromCaller(t *testing.T) string {
 	t.Helper()
