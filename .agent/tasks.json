@@ -122,6 +122,49 @@
         "cmd": "grep -c '4000\"' internal/config/config.go && go build ./... && echo SMOKE_OK"
       },
       "instructions": "Confirme que a linha 387 de internal/config/config.go tem OllamaURL: 'http://127.0.0.1:4000' SEM /v1 no final. Se ainda tiver /v1, remove. Depois: git add internal/config/config.go && git commit -m 'fix(config): remove /v1 duplicate from OllamaURL default [S-66][01/04/2026]' && git push origin main."
+    },
+    {
+      "id": "S-67",
+      "title": "Ollama models → tank/models (OLLAMA_MODELS=/srv/models)",
+      "priority": "P1",
+      "status": "pending",
+      "smoke": {
+        "cmd": "grep -c 'OLLAMA_MODELS' /etc/systemd/system/ollama.service.d/override.conf && ollama list && echo SMOKE_OK"
+      },
+      "instructions": "1. Pare o serviço Ollama: sudo systemctl stop ollama. 2. Mova os blobs existentes: sudo rsync -av /usr/share/ollama/.ollama/models/ /srv/models/ && sudo rm -rf /usr/share/ollama/.ollama/models. 3. Em /etc/systemd/system/ollama.service.d/override.conf (crie se não existir), adicione: [Service]\nEnvironment=OLLAMA_MODELS=/srv/models. 4. Recarregue e inicie: sudo systemctl daemon-reload && sudo systemctl start ollama. 5. Confirme com: ollama list (deve listar gemma3:27b-it-qat e nomic-embed-text). 6. Não altere docker-compose.yml — Ollama roda via systemd, não Docker."
+    },
+    {
+      "id": "S-68",
+      "title": "SearXNG como tool search_web_local na Aurélia",
+      "priority": "P2",
+      "status": "pending",
+      "depends_on": "S-67",
+      "smoke": {
+        "cmd": "grep -c 'search_web_local' internal/tools/searxng.go && go build ./internal/tools/... && echo SMOKE_OK"
+      },
+      "instructions": "1. Crie internal/tools/searxng.go com func SearchWebLocal(ctx context.Context, query string, maxResults int) ([]SearchResult, error). Use http.Get para {SEARXNG_URL}/search?q={query}&format=json&language=auto. Struct SearchResult { Title, URL, Snippet string }. 2. Registre como tool 'search_web_local' no tool registry existente (busque onde as outras tools são registradas no projeto). 3. Adicione SEARXNG_URL=http://localhost:8888 no .env.example. 4. Leia a URL via cfg (não hardcode). 5. go build ./... deve passar."
+    },
+    {
+      "id": "S-69",
+      "title": "Grafana datasource Prometheus via provisioning",
+      "priority": "P2",
+      "status": "pending",
+      "depends_on": "S-70",
+      "smoke": {
+        "cmd": "curl -s http://localhost:3100/api/datasources | grep -c 'prometheus' && echo SMOKE_OK"
+      },
+      "instructions": "1. Crie o diretório grafana/provisioning/datasources/ na raiz do repo. 2. Crie grafana/provisioning/datasources/prometheus.yaml com conteúdo: apiVersion: 1 / datasources: / - name: Prometheus / type: prometheus / access: proxy / url: http://host.docker.internal:9090 / isDefault: true / editable: false. 3. No docker-compose.yml bloco grafana, adicione o volume: ./grafana/provisioning:/etc/grafana/provisioning:ro. 4. Se não existir serviço prometheus no docker-compose.yml, adicione com image: prom/prometheus:latest, porta 9090, scrape de cadvisor :9250 e node-exporter. 5. Suba com docker compose up -d grafana prometheus."
+    },
+    {
+      "id": "S-70",
+      "title": "litellm-db volume → tank/postgres (/srv/data/postgres)",
+      "priority": "P1",
+      "status": "pending",
+      "depends_on": "S-67",
+      "smoke": {
+        "cmd": "docker inspect litellm-db | grep -c '/srv/data/postgres' && docker exec litellm-db pg_isready && echo SMOKE_OK"
+      },
+      "instructions": "1. Dump de segurança: docker exec litellm-db pg_dump -U litellm litellm > /srv/backups/litellm-db-$(date +%Y%m%d).sql. 2. Pare o container: docker compose stop litellm-db. 3. No docker-compose.yml bloco litellm-db, substitua o volume Docker volume pelo bind mount: - /srv/data/postgres:/var/lib/postgresql/data. 4. Confirme ZFS montado: df -h /srv/data/postgres. 5. Suba: docker compose up -d litellm-db. 6. Se o banco estava vazio (128K), pule o restore. Senão: cat /srv/backups/litellm-db-*.sql | docker exec -i litellm-db psql -U litellm litellm."
     }
   ]
 }
