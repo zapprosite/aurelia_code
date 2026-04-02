@@ -1,147 +1,253 @@
+networks:
+  aurelia-net:
+    driver: bridge
+    name: aurelia-net
 services:
-  qdrant:
-    image: qdrant/qdrant:v1.17.1
+  aurelia-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aurelia-api
+    environment:
+    - GOMEMLIMIT=512MiB
+    - GOGC=100
+    - AURELIA_API_PORT=8484
+    - AURELIA_HOME=/home/aurelia/.aurelia
+    - STT_PROVIDER=groq
+    - STT_MODEL=whisper-large-v3-turbo
+    - STT_BASE_URL=https://api.groq.com/openai/v1
+    - STT_LANGUAGE=pt
+    - REDIS_URL=redis://aurelia-redis-1:6379
+    - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    - GROQ_API_KEY=${GROQ_API_KEY}
+    healthcheck:
+      interval: 30s
+      retries: 3
+      test:
+      - CMD-SHELL
+      - wget --no-verbose --tries=1 --spider http://localhost:8484/health || exit
+        1
+      timeout: 10s
+    networks:
+    - aurelia-net
     ports:
-      - "6333:6333"
-      - "6334:6334"
+    - 8080:8484
+    restart: always
     volumes:
-      - ./data/qdrant:/qdrant/storage:z
+    - ./.env:/app/.env:ro
+    - ./.env.example:/app/.env.example:ro
+    - ./data:/app/data
+    - ./data/aurelia-runtime:/home/aurelia/.aurelia
+    - ./knowledge:/home/aurelia/.aurelia/memory/personas:ro
+  qdrant:
     deploy:
       resources:
         limits:
           memory: 2G
         reservations:
           memory: 512M
-
-  redis:
-    image: redis:7.2.4-alpine
-    restart: always
+    image: qdrant/qdrant:v1.17.1
     ports:
-      - "6379:6379"
+    - 6333:6333
+    - 6334:6334
     volumes:
-      - ./data/redis:/data
+    - /srv/data/qdrant:/qdrant/storage:z
+  redis:
     command: redis-server --dir /data --appendonly yes --appendfsync everysec
     healthcheck:
-      test: ["CMD", "redis-cli", "-h", "localhost", "ping"]
       interval: 10s
-      timeout: 5s
       retries: 5
       start_period: 10s
-
-  smart-router:
-    container_name: aurelia-smart-router
-    image: ghcr.io/berriai/litellm:main-stable
+      test:
+      - CMD
+      - redis-cli
+      - -h
+      - localhost
+      - ping
+      timeout: 5s
+    image: redis:7.2.4-alpine
     ports:
-      - "4000:4000"
-      - "8484:8484"
-      - "3334:3334"
-    volumes:
-      - ./configs/litellm/config.yaml:/app/config.yaml
-    env_file:
-      - .env
-    environment:
-      - REDIS_HOST=host.docker.internal
-      - REDIS_PORT=6380
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-    command: ["--config", "/app/config.yaml"]
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    - 6379:6379
     restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import httpx; r = httpx.get('http://localhost:4000/health', timeout=5); exit(0 if r.status_code in (200, 401) else 1)\""]
-      interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 30s
+    volumes:
+    - ./data/redis:/data
+  smart-router:
+    command:
+    - --config
+    - /app/config.yaml
+    container_name: aurelia-smart-router
     deploy:
       resources:
         limits:
           memory: 1G
         reservations:
           memory: 256M
-
-  # Voxtral TTS — Mistral 4B, voice cloning zero-shot, PT-BR nativo
-  # ADR: 20260331-voxtral-replaces-kokoro.md
-  voxtral:
-    image: vllm/vllm-openai:v0.18.0
-    container_name: aurelia-voxtral
-    restart: always
-    ports:
-      - "8012:8000"
+    env_file:
+    - .env
     environment:
-      - CUDA_VISIBLE_DEVICES=0
-      - HF_TOKEN=${HF_TOKEN}
-    command: 
-      - "serve"
-      - "mistralai/Voxtral-4B-TTS-2603"
-      - "--gpu-memory-utilization"
-      - "0.10"
-      - "--max-model-len"
-      - "4096"
+    - REDIS_HOST=host.docker.internal
+    - REDIS_PORT=6380
+    - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    extra_hosts:
+    - host.docker.internal:host-gateway
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 30s
+      test:
+      - CMD-SHELL
+      - python3 -c "import httpx; r = httpx.get('http://localhost:4000/health', timeout=5);
+        exit(0 if r.status_code in (200, 401) else 1)"
+      timeout: 15s
+    image: ghcr.io/berriai/litellm:main-stable
+    ports:
+    - 4000:4000
+    - 8484:8484
+    - 3334:3334
+    restart: always
+    volumes:
+    - ./configs/litellm/config.yaml:/app/config.yaml
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
+    container_name: aurelia-kokoro
     deploy:
       resources:
         reservations:
           devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    networks:
-      - aurelia-net
-
-  # Whisper STT — 100% local (faster-whisper-server CPU fallback)
-  # ADR: 20260330-stt-local-first-cascade.md
-  whisper-stt:
-    image: fedirz/faster-whisper-server:latest-cpu
-    container_name: whisper-local
-    restart: always
-    ports:
-      - "8020:8000"
+          - capabilities:
+            - gpu
+            count: 1
+            driver: nvidia
     environment:
-      - WHISPER_MODEL=medium
-      - WHISPER_DEVICE=cpu
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    - NVIDIA_VISIBLE_DEVICES=0
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     networks:
-      - aurelia-net
-
-  # ─── CORE 2: AURELIA SYSTEM API (GOVERNANCE GATEWAY) ───────────────────
-  aurelia-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: aurelia-api
-    restart: always
+    - aurelia-net
     ports:
-      - "8080:8484"
-    environment:
-      - GOMEMLIMIT=512MiB
-      - GOGC=100
-      - AURELIA_API_PORT=8484
-      - AURELIA_HOME=/tmp/.aurelia
-      - STT_PROVIDER=groq
-      - STT_MODEL=whisper-large-v3-turbo
-      - STT_BASE_URL=https://api.groq.com/openai/v1
-      - STT_LANGUAGE=pt
-      - REDIS_URL=redis://aurelia-redis-1:6379
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-    volumes:
-      - ./.env:/app/.env:ro
-      - ./.env.example:/app/.env.example:ro
-      - ./data:/app/data
-      - ./knowledge:/tmp/.aurelia/memory/personas:ro # Contém IDENTITY.md e HEARTBEAT.md
+    - 8012:8880
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8484/health || exit 1"]
+      test:
+      - CMD-SHELL
+      - wget --no-verbose --tries=1 --spider http://localhost:8880/health || exit 1
       interval: 30s
       timeout: 10s
       retries: 3
-    networks:
-      - aurelia-net
+      start_period: 120s
+    restart: always
+    volumes:
+    - /srv/models/kokoro:/app/api/src/models
 
-networks:
-  aurelia-net:
-    name: aurelia-net
-    driver: bridge
+  n8n-postgres:
+    image: postgres:16-alpine
+    container_name: n8n-postgres
+    environment:
+    - POSTGRES_DB=n8n
+    - POSTGRES_USER=n8n
+    - POSTGRES_PASSWORD=${N8N_DB_PASSWORD:-n8n_secret_change_me}
+    volumes:
+    - /srv/data/n8n-postgres:/var/lib/postgresql/data
+    networks:
+    - aurelia-net
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n -d n8n"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    environment:
+    - DB_TYPE=postgresdb
+    - DB_POSTGRESDB_HOST=n8n-postgres
+    - DB_POSTGRESDB_DATABASE=n8n
+    - DB_POSTGRESDB_USER=n8n
+    - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD:-n8n_secret_change_me}
+    - N8N_HOST=n8n.zappro.site
+    - N8N_PORT=5678
+    - N8N_PROTOCOL=https
+    - WEBHOOK_URL=https://n8n.zappro.site/
+    - GENERIC_TIMEZONE=America/Sao_Paulo
+    ports:
+    - 5678:5678
+    volumes:
+    - /srv/data/n8n:/home/node/.n8n
+    networks:
+    - aurelia-net
+    restart: always
+    depends_on:
+      n8n-postgres:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+    - 3100:3000
+    volumes:
+    - /srv/data/grafana:/var/lib/grafana
+    networks:
+    - aurelia-net
+    restart: always
+    environment:
+    - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    - GF_USERS_ALLOW_SIGN_UP=false
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+    - 127.0.0.1:9090:9090
+    volumes:
+    - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    - /srv/data/prometheus:/prometheus
+    extra_hosts:
+    - host.docker.internal:host-gateway
+    networks:
+    - aurelia-net
+    restart: always
+    command:
+    - --config.file=/etc/prometheus/prometheus.yml
+    - --storage.tsdb.path=/prometheus
+    - --storage.tsdb.retention.time=30d
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+    - 127.0.0.1:9250:8080
+    volumes:
+    - /:/rootfs:ro
+    - /var/run:/var/run:rw
+    - /sys:/sys:ro
+    - /srv/docker-data:/var/lib/docker:ro
+    networks:
+    - aurelia-net
+    restart: always
+    privileged: true
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    network_mode: host
+    volumes:
+    - /proc:/host/proc:ro
+    - /sys:/host/sys:ro
+    - /:/rootfs:ro
+    command:
+    - --path.procfs=/host/proc
+    - --path.sysfs=/host/sys
+    - --collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)
+    restart: always
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    ports:
+    - 8888:8080
+    volumes:
+    - ./configs/searxng:/etc/searxng
+    networks:
+    - aurelia-net
+    restart: always

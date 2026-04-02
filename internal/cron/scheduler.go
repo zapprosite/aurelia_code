@@ -161,6 +161,15 @@ func computeNextRun(expr string, after time.Time) (time.Time, error) {
 			return time.Time{}, fmt.Errorf("unsupported cron expression: %s", expr)
 		}
 		return after.UTC().Truncate(time.Minute).Add(interval), nil
+	case minutePart == "0" && strings.HasPrefix(hourPart, "*/"):
+		n, err := strconv.Atoi(strings.TrimPrefix(hourPart, "*/"))
+		if err != nil || n <= 0 {
+			return time.Time{}, fmt.Errorf("unsupported cron expression: %s", expr)
+		}
+		interval := time.Duration(n) * time.Hour
+		truncated := after.UTC().Truncate(interval)
+		next := truncated.Add(interval)
+		return next, nil
 	case isExactNumber(minutePart) && isExactNumber(hourPart):
 		minute, _ := parseInt(minutePart)
 		hour, _ := parseInt(hourPart)
