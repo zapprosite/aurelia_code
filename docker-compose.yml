@@ -12,7 +12,7 @@ services:
     - GOMEMLIMIT=512MiB
     - GOGC=100
     - AURELIA_API_PORT=8484
-    - AURELIA_HOME=/home/will/.aurelia
+    - AURELIA_HOME=/home/aurelia/.aurelia
     - STT_PROVIDER=groq
     - STT_MODEL=whisper-large-v3-turbo
     - STT_BASE_URL=https://api.groq.com/openai/v1
@@ -107,54 +107,27 @@ services:
     restart: always
     volumes:
     - ./configs/litellm/config.yaml:/app/config.yaml
-  voxtral:
-    command:
-    - serve
-    - mistralai/Voxtral-4B-TTS-2603
-    - --gpu-memory-utilization
-    - '0.10'
-    - --max-model-len
-    - '4096'
-    container_name: aurelia-voxtral
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
+    container_name: aurelia-kokoro
     deploy:
       resources:
         reservations:
           devices:
           - capabilities:
             - gpu
-            count: all
+            count: 1
             driver: nvidia
     environment:
-    - CUDA_VISIBLE_DEVICES=0
-    - HF_TOKEN=${HF_TOKEN}
-    - NVIDIA_VISIBLE_DEVICES=all
+    - NVIDIA_VISIBLE_DEVICES=0
     - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    image: vllm/vllm-openai:v0.18.0
     networks:
     - aurelia-net
     ports:
-    - 8012:8000
+    - 8012:8880
     restart: always
-  whisper-stt:
-    container_name: whisper-local
-    environment:
-    - WHISPER_MODEL=medium
-    - WHISPER_DEVICE=cpu
-    healthcheck:
-      interval: 30s
-      retries: 5
-      test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8000/health
-      timeout: 10s
-    image: fedirz/faster-whisper-server:latest-cpu
-    networks:
-    - aurelia-net
-    ports:
-    - 8020:8000
-    restart: always
+    volumes:
+    - /srv/models/kokoro:/app/api/src/models
 
   n8n-postgres:
     image: postgres:16-alpine
