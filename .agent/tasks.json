@@ -127,17 +127,17 @@
       "id": "S-67",
       "title": "Ollama models → tank/models (OLLAMA_MODELS=/srv/models)",
       "priority": "P1",
-      "status": "pending",
+      "status": "done",
       "smoke": {
-        "cmd": "grep -c 'OLLAMA_MODELS' /etc/systemd/system/ollama.service.d/override.conf && ollama list && echo SMOKE_OK"
+        "cmd": "grep -c 'OLLAMA_MODELS=/srv/models' /etc/systemd/system/ollama.service.d/override.conf && ollama list && echo SMOKE_OK"
       },
-      "instructions": "1. Pare o serviço Ollama: sudo systemctl stop ollama. 2. Mova os blobs existentes: sudo rsync -av /usr/share/ollama/.ollama/models/ /srv/models/ && sudo rm -rf /usr/share/ollama/.ollama/models. 3. Em /etc/systemd/system/ollama.service.d/override.conf (crie se não existir), adicione: [Service]\nEnvironment=OLLAMA_MODELS=/srv/models. 4. Recarregue e inicie: sudo systemctl daemon-reload && sudo systemctl start ollama. 5. Confirme com: ollama list (deve listar gemma3:27b-it-qat e nomic-embed-text). 6. Não altere docker-compose.yml — Ollama roda via systemd, não Docker."
+      "instructions": "1. Pare o serviço Ollama: sudo systemctl stop ollama. 2. Garanta o diretório destino: sudo mkdir -p /srv/models. 3. Mova os blobs existentes: sudo rsync -aH --info=progress2 /usr/share/ollama/.ollama/models/ /srv/models/. 4. Crie o override do systemd em /etc/systemd/system/ollama.service.d/override.conf com: [Service]\\nEnvironment=OLLAMA_MODELS=/srv/models. 5. Recarregue o systemd: sudo systemctl daemon-reload. 6. Inicie o Ollama: sudo systemctl start ollama. 7. Valide com: systemctl show ollama --property=Environment | grep OLLAMA_MODELS ; ollama list. 8. Só remova /usr/share/ollama/.ollama/models antigo depois que ollama list funcionar corretamente."
     },
     {
       "id": "S-68",
       "title": "SearXNG como tool search_web_local na Aurélia",
       "priority": "P2",
-      "status": "pending",
+      "status": "done",
       "depends_on": "S-67",
       "smoke": {
         "cmd": "grep -c 'search_web_local' internal/tools/searxng.go && go build ./internal/tools/... && echo SMOKE_OK"
