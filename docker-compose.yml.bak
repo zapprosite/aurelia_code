@@ -1,0 +1,147 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.17.1
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./data/qdrant:/qdrant/storage:z
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+  redis:
+    image: redis:7.2.4-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    command: redis-server --dir /data --appendonly yes --appendfsync everysec
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "localhost", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  smart-router:
+    container_name: aurelia-smart-router
+    image: ghcr.io/berriai/litellm:main-stable
+    ports:
+      - "4000:4000"
+      - "8484:8484"
+      - "3334:3334"
+    volumes:
+      - ./configs/litellm/config.yaml:/app/config.yaml
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6380
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    command: ["--config", "/app/config.yaml"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import httpx; r = httpx.get('http://localhost:4000/health', timeout=5); exit(0 if r.status_code in (200, 401) else 1)\""]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  # Voxtral TTS — Mistral 4B, voice cloning zero-shot, PT-BR nativo
+  # ADR: 20260331-voxtral-replaces-kokoro.md
+  voxtral:
+    image: vllm/vllm-openai:v0.18.0
+    container_name: aurelia-voxtral
+    restart: always
+    ports:
+      - "8012:8000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - HF_TOKEN=${HF_TOKEN}
+    command: 
+      - "serve"
+      - "mistralai/Voxtral-4B-TTS-2603"
+      - "--gpu-memory-utilization"
+      - "0.10"
+      - "--max-model-len"
+      - "4096"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - aurelia-net
+
+  # Whisper STT — 100% local (faster-whisper-server CPU fallback)
+  # ADR: 20260330-stt-local-first-cascade.md
+  whisper-stt:
+    image: fedirz/faster-whisper-server:latest-cpu
+    container_name: whisper-local
+    restart: always
+    ports:
+      - "8020:8000"
+    environment:
+      - WHISPER_MODEL=medium
+      - WHISPER_DEVICE=cpu
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - aurelia-net
+
+  # ─── CORE 2: AURELIA SYSTEM API (GOVERNANCE GATEWAY) ───────────────────
+  aurelia-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aurelia-api
+    restart: always
+    ports:
+      - "8080:8484"
+    environment:
+      - GOMEMLIMIT=512MiB
+      - GOGC=100
+      - AURELIA_API_PORT=8484
+      - AURELIA_HOME=/tmp/.aurelia
+      - STT_PROVIDER=groq
+      - STT_MODEL=whisper-large-v3-turbo
+      - STT_BASE_URL=https://api.groq.com/openai/v1
+      - STT_LANGUAGE=pt
+      - REDIS_URL=redis://aurelia-redis-1:6379
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./.env.example:/app/.env.example:ro
+      - ./data:/app/data
+      - ./knowledge:/tmp/.aurelia/memory/personas:ro # Contém IDENTITY.md e HEARTBEAT.md
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8484/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - aurelia-net
+
+networks:
+  aurelia-net:
+    name: aurelia-net
+    driver: bridge

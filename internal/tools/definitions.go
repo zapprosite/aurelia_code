@@ -60,6 +60,20 @@ func WebSearchDefinition() agent.Tool {
 	}
 }
 
+func SearchWebLocalDefinition() agent.Tool {
+	return agent.Tool{
+		Name:        "search_web_local",
+		Description: "Pesquisa na internet usando uma instancia local do SearXNG. Mais rapida e centrada em privacidade/soberania.",
+		JSONSchema: objectSchema(
+			map[string]any{
+				"query": stringProperty("Termo de busca"),
+				"count": numberProperty("Maximo de resultados (ate 10)"),
+			},
+			"query",
+		),
+	}
+}
+
 func RunCommandDefinition() agent.Tool {
 	return agent.Tool{
 		Name:        "run_command",
@@ -214,6 +228,7 @@ func RegisterCoreTools(registry *agent.ToolRegistry) {
 	registry.Register(ServiceControlDefinition(), ServiceControlHandler)
 	registry.Register(OllamaControlDefinition(), OllamaControlHandler)
 	registry.Register(CPFCNPJDefinition(), CPFCNPJHandler)
+	registry.Register(SearchWebLocalDefinition(), SearchWebLocalHandler)
 
 	// Computer Use tools via Stagehand MCP
 	// ADR: 20260328-mcp-go-client-stagehand-computer-use
