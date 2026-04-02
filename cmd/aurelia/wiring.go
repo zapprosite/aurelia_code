@@ -65,6 +65,7 @@ func buildToolRegistry() *agent.ToolRegistry {
 }
 
 func registerHomelabTool(cfg *config.AppConfig, registry *agent.ToolRegistry) {
+	tools.SetSearXNGURL(cfg.SearXNGURL)
 	tools.RegisterHomelabTool(registry, cfg.OllamaURL, cfg.QdrantURL)
 }
 

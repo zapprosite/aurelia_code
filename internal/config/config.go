@@ -119,6 +119,7 @@ type AppConfig struct {
 	QdrantCollection         string
 	QdrantEmbeddingModel     string
 	OllamaURL                string
+	SearXNGURL               string
 	DashboardPort            int
 	HealthPort               int
 	ObsidianVaultPath        string
@@ -186,6 +187,7 @@ type fileConfig struct {
 	QdrantCollection         string  `json:"qdrant_collection"`
 	QdrantEmbeddingModel     string  `json:"qdrant_embedding_model"`
 	OllamaURL                string  `json:"ollama_url"`
+	SearXNGURL               string  `json:"searxng_url"`
 	DashboardPort            int     `json:"dashboard_port"`
 	HealthPort               int     `json:"health_port"`
 	ObsidianVaultPath        string  `json:"obsidian_vault_path"`
@@ -305,6 +307,9 @@ func applyEnvOverrides(cfg *fileConfig) {
 	if env := os.Getenv("OLLAMA_URL"); env != "" {
 		cfg.OllamaURL = env
 	}
+	if env := os.Getenv("SEARXNG_URL"); env != "" {
+		cfg.SearXNGURL = env
+	}
 	if env := os.Getenv("MINIMAX_API_KEY"); env != "" {
 		cfg.MiniMaxAPIKey = env
 	}
@@ -385,6 +390,7 @@ func defaultFileConfig(r *runtime.PathResolver) fileConfig {
 		QdrantCollection:         defaultQdrantCollection,
 		QdrantEmbeddingModel:     defaultQdrantEmbeddingModel,
 		OllamaURL:                "http://127.0.0.1:4000",
+		SearXNGURL:               "http://localhost:8888",
 		DashboardPort:            defaultDashboardPort,
 		HealthPort:               defaultHealthPort,
 		AureliaMode:              "sovereign",

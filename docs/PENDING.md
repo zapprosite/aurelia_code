@@ -35,4 +35,5 @@ Nenhum pendente.
 - **S-64**: Persistência de `HEARTBEAT.md` via volume Docker RO.
 - **S-65**: Remoção total de referências residuais ao Supabase.
 - **S-66**: Fix `OllamaURL` default e estabilização do roteamento LiteLLM local.
-
+- **S-67**: Ollama models → tank/models (OLLAMA_MODELS=/srv/models)
+- **S-68**: SearXNG como tool search_web_local na Aurélia

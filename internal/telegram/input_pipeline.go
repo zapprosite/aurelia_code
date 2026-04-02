@@ -450,7 +450,7 @@ func resolveActiveSkill(skills map[string]skill.Skill, targetSkill string) *skil
 // Note: markdown_brain_sync removed from default — only triggered via cron job.
 var defaultConversationTools = []string{
 	"read_file", "write_file", "list_dir", "run_command",
-	"web_search", "docker_control", "system_monitor", "service_control",
+	"web_search", "search_web_local", "docker_control", "system_monitor", "service_control",
 	"create_schedule", "list_schedules", "cpf_cnpj",
 }
 
