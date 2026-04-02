@@ -1,8 +1,26 @@
-=== RUN   TestAuditCatalog_RepositoryCanonicalCatalogIsClean
-=== PAUSE TestAuditCatalog_RepositoryCanonicalCatalogIsClean
-=== CONT  TestAuditCatalog_RepositoryCanonicalCatalogIsClean
-    audit_test.go:53: expected clean canonical catalog, got []skill.AuditIssue{skill.AuditIssue{Severity:"error", Code:"broken_link", SkillName:"homelab-stabilizer", Path:"/home/will/aurelia/.agent/skills/homelab-stabilizer/SKILL.md", Message:"file:///srv/monorepo/docs/adr/20240401-governanca-homelab.md -> stat /home/will/aurelia/.agent/skills/homelab-stabilizer/file:/srv/monorepo/docs/adr/20240401-governanca-homelab.md: no such file or directory"}, skill.AuditIssue{Severity:"error", Code:"broken_link", SkillName:"homelab-stabilizer", Path:"/home/will/aurelia/.agent/skills/homelab-stabilizer/SKILL.md", Message:"file:///home/will/.gemini/antigravity/brain/9a05a888-06d6-4aa8-8dfb-1ec57f2d3233/walkthrough.md -> stat /home/will/aurelia/.agent/skills/homelab-stabilizer/file:/home/will/.gemini/antigravity/brain/9a05a888-06d6-4aa8-8dfb-1ec57f2d3233/walkthrough.md: no such file or directory"}}
---- FAIL: TestAuditCatalog_RepositoryCanonicalCatalogIsClean (0.00s)
-FAIL
-FAIL	github.com/kocar/aurelia/internal/skill	0.003s
-FAIL
+ok  	github.com/kocar/aurelia/internal/agent	0.002s
+ok  	github.com/kocar/aurelia/internal/browser	0.498s
+?   	github.com/kocar/aurelia/internal/computer_use	[no test files]
+ok  	github.com/kocar/aurelia/internal/config	0.006s
+ok  	github.com/kocar/aurelia/internal/cron	0.045s
+ok  	github.com/kocar/aurelia/internal/health	0.002s
+?   	github.com/kocar/aurelia/internal/heartbeat	[no test files]
+ok  	github.com/kocar/aurelia/internal/homelab	0.002s
+?   	github.com/kocar/aurelia/internal/infra	[no test files]
+ok  	github.com/kocar/aurelia/internal/markdownbrain	0.025s
+ok  	github.com/kocar/aurelia/internal/mcp	0.002s
+?   	github.com/kocar/aurelia/internal/media	[no test files]
+ok  	github.com/kocar/aurelia/internal/memory	0.012s
+?   	github.com/kocar/aurelia/internal/metrics	[no test files]
+?   	github.com/kocar/aurelia/internal/middleware	[no test files]
+ok  	github.com/kocar/aurelia/internal/observability	0.002s
+ok  	github.com/kocar/aurelia/internal/persona	0.029s
+?   	github.com/kocar/aurelia/internal/plan	[no test files]
+ok  	github.com/kocar/aurelia/internal/runtime	0.011s
+?   	github.com/kocar/aurelia/internal/sentinel	[no test files]
+ok  	github.com/kocar/aurelia/internal/skill	0.007s
+ok  	github.com/kocar/aurelia/internal/telegram	0.506s
+ok  	github.com/kocar/aurelia/internal/tools	2.010s
+ok  	github.com/kocar/aurelia/internal/voice	0.038s
+ok  	github.com/kocar/aurelia/cmd/aurelia	0.008s
+?   	github.com/kocar/aurelia/cmd/aurelia-sentinel	[no test files]

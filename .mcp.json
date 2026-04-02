@@ -1,15 +1,5 @@
 {
   "mcpServers": {
-    "supabase": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql://postgres:e719cdbeb82c4ab1a7d964cb5328e2c0@localhost:5435/postgres"
-      ],
-      "env": {}
-    },
     "qdrant": {
       "type": "stdio",
       "command": "/home/will/.local/venv-qdrant-mcp/bin/mcp-server-qdrant",

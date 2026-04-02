@@ -43,7 +43,7 @@ var controleDBCron = cron.CronJob{
 
 var repoGuardianCron = cron.CronJob{
 	ScheduleType: "cron",
-	CronExpr:     "0 0 */6 * * *",
+	CronExpr:     "0 */6 * * *",
 	Prompt: "[sys:repo-guardian] Você é o guardião do repositório Aurelia." +
 		" Execute a skill repo-guardian: audite todos os arquivos .md, verifique links quebrados, ADRs órfãs e arquivos fora do lugar." +
 		" Use mcp__ai-context__explore para descoberta semântica e mcp__ai-context__sync para regenerar o codebase-map." +
