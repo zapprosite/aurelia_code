@@ -12,7 +12,7 @@ echo ""
 
 # 1. Rate Limit Telegram
 echo "=== TELEGRAM RATE LIMITS ==="
-BOT_TOKEN="8793928549:AAEr3tjaarijUWxu-iru0Vcm6N6DkwjndL4"
+BOT_TOKEN="TELEGRAM_BOT_TOKEN_PLACEHOLDER"
 
 # GetChatMemberCount (30 msg/segundo)
 echo "Chat member count..."

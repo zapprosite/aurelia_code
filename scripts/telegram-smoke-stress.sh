@@ -9,7 +9,7 @@ set -e
 
 COUNT=${1:-50}
 DELAY_MS=${2:-500}
-BOT_TOKEN="8793928549:AAEr3tjaarijUWxu-iru0Vcm6N6DkwjndL4"
+BOT_TOKEN="TELEGRAM_BOT_TOKEN_PLACEHOLDER"
 CHAT_ID="7220607041"
 
 echo "=========================================="
